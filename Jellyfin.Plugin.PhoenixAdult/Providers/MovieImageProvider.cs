@@ -41,7 +41,6 @@ namespace PhoenixAdult.Providers
 #endif
         {
             IEnumerable<RemoteImageInfo> images = new List<RemoteImageInfo>();
-
             if (item == null)
             {
                 return images;
