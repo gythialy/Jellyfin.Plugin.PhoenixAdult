@@ -158,12 +158,39 @@ namespace PhoenixAdult.Sites
             }
 
             var sceneURL = Helper.Decode(sceneID[0]);
+            Logger.Debug($"SceneURL: {sceneURL}");
             if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
+
+            var photoLink = sceneData.SelectNodesSafe("//a[i[@class='icon-camera']]")[0];
+            var photoPageURL = $"https://nubiles-porn.com{photoLink.Attributes["href"].Value}";
+            Logger.Debug($"Getting posters: {photoPageURL}");
+            var photoPage = await HTML.ElementFromURL(photoPageURL, cancellationToken).ConfigureAwait(false);
+            var sceneImages = photoPage.SelectNodesSafe("//div[@class='img-wrapper']//source[1]");
+            foreach (var sceneImage in sceneImages)
+            {
+                var posterURL = sceneImage.Attributes["src"]?.Value;
+                if (string.IsNullOrEmpty(posterURL))
+                {
+                    posterURL = sceneImage.Attributes["srcset"].Value;
+                }
+
+                Logger.Debug($"Found poster: {posterURL}");
+                result.Add(new RemoteImageInfo
+                {
+                    Url = $"https:{posterURL}",
+                    Type = ImageType.Backdrop,
+                });
+                result.Add(new RemoteImageInfo
+                {
+                    Url = $"https:{posterURL}",
+                    Type = ImageType.Primary,
+                });
+            }
 
             var poster = sceneData.SelectSingleText("//video/@poster");
             if (!string.IsNullOrEmpty(poster))
@@ -173,18 +200,9 @@ namespace PhoenixAdult.Sites
                     Url = poster,
                     Type = ImageType.Primary,
                 });
-            }
-
-            var photoPageURL = "https://nubiles-porn.com/photo/gallery/" + sceneID[0];
-            var photoPage = await HTML.ElementFromURL(photoPageURL, cancellationToken).ConfigureAwait(false);
-            var sceneImages = photoPage.SelectNodesSafe("//div[@class='img-wrapper']//source[1]");
-            foreach (var sceneImage in sceneImages)
-            {
-                var posterURL = sceneImage.Attributes["src"].Value;
-
                 result.Add(new RemoteImageInfo
                 {
-                    Url = posterURL,
+                    Url = poster,
                     Type = ImageType.Backdrop,
                 });
             }
