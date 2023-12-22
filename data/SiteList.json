@@ -770,6 +770,14 @@
             "2": [ "Erotica X", "https://www.erotica.com" ],
             "3": [ "Hard X", "https://www.hardx.com" ],
             "4": [ "Lesbian X", "https://www.lesbianx.com" ]
+        },
+        "54": {
+            "0": [ "Blowpass", "https://www.blowpass.com", "https://tsmkfa364q-3.algolianet.com/1/indexes/*/queries" ],
+            "1": [ "1000 Facials", "https://www.1000facials.com" ],
+            "2": [ "Blowbangs", "https://www.blowbangs.com" ],
+            "3": [ "Mommy Blows Best", "https://www.mommyblowsbest.com" ],
+            "4": [ "Only Teen Blowjobs", "https://www.onlyteenblowjobs.com" ],
+            "5": [ "Throated", "https://www.throated.com" ]
         }
     },
     "SiteIDList": {
@@ -826,7 +834,8 @@
         "50": "SiteManyVids",
         "51": "SiteData18",
         "52": "SiteFamilyTherapyXXX",
-        "53": "NetworkGammaEnt"
+        "53": "NetworkGammaEnt",
+        "54": "NetworkGammaEnt"
     },
     "Abbrieviations": {
         "^18og": "18OnlyGirls",
