@@ -11,12 +11,18 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace PhoenixAdult.Sites
 {
     public class SiteNewSensations : IProviderBase
     {
+        enum Site
+        {
+            Default,
+            FamilyXXX,
+            HotWifeXXX,
+        }
+
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
@@ -78,6 +84,16 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
+            var searchSite = Helper.GetSearchSiteName(siteNum);
+            Logger.Info($"Search site: {searchSite}");
+            var site = searchSite switch
+            {
+                "Family XXX" => Site.FamilyXXX,
+                "HotwifeXXX" => Site.HotWifeXXX,
+                _ => Site.Default
+            };
+            Logger.Info(site.ToString());
+
             if (sceneID.Length > 1)
             {
                 sceneDate = sceneID[1];
@@ -85,30 +101,106 @@ namespace PhoenixAdult.Sites
 
             result.Item.ExternalId = sceneURL;
             result.Item.AddStudio("New Sensations");
-
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
-            result.Item.Name = sceneData.SelectSingleText("//div[@class='sceneRight']//div[@class='indScene']//h1");
-
-            var dateNode = sceneData.SelectSingleText("//div[@class='sceneRight']//div[@class='indScene']//div[@class='sceneDateP']//span").TrimEnd(',');
-            if (DateTime.TryParseExact(dateNode, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+            switch (site)
             {
-                result.Item.PremiereDate = sceneDateObj;
-            }
+                case Site.FamilyXXX:
+                    {
+                        result.Item.AddStudio("Family XXX");
+                        result.Item.Name = sceneData.SelectSingleText("//div[@class='sceneRight']//div[@class='indScene']//h2");
 
-            var descriptionNodes = sceneData.SelectNodesSafe("//div[@class='description']//h2");
-            var overview = descriptionNodes[0].InnerText.Trim();
-            result.Item.Overview = overview;
+                        var dateNode = sceneData.SelectSingleText("//div[@class='sceneRight']//div[@class='indScene']//div[@class='sceneDateP']//span").TrimEnd(',');
+                        if (DateTime.TryParseExact(dateNode, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+                        {
+                            result.Item.PremiereDate = sceneDateObj;
+                        }
 
-            // performers
-            var performerNodes = sceneData.SelectNodesSafe("//div[@class='sceneRight']//div[@class='indScene']//div[@class='sceneTextLink']//p//span//a");
+                        var descriptionNode = sceneData.SelectNodesSafe("//div[@class='description']//p");
+                        var overview = descriptionNode[0].InnerText.Trim();
 
-            foreach (var performerNode in performerNodes)
-            {
-                result.People.Add(new PersonInfo
-                {
-                    Name = performerNode.InnerText,
-                });
+                        // remove <span>Description:</span> from beginning
+                        overview = overview.Substring(13);
+                        result.Item.Overview = overview;
+
+                        // performers
+                        var performerNodes = sceneData.SelectNodesSafe("//div[@class='sceneRight']//div[@class='indScene']//div[@class='sceneTextLink']//p//span//a");
+
+                        foreach (var performerNode in performerNodes)
+                        {
+                            var performerUrl = performerNode.Attributes["href"].Value;
+                            var performerPage = await HTML.ElementFromURL(performerUrl, cancellationToken).ConfigureAwait(false);
+                            var performerImg = performerPage.SelectSingleNode("//div[contains(@class, 'modelBioPic')]/img");
+                            result.People.Add(new PersonInfo
+                            {
+                                Name = performerNode.InnerText,
+                                ImageUrl = performerImg.Attributes["src0_1x"].Value,
+                            });
+                        }
+
+                        break;
+                    }
+
+                case Site.HotWifeXXX:
+                    {
+                        result.Item.AddStudio("HotwifeXXX");
+                        result.Item.Name = sceneData.SelectSingleText("//div[@class='trailerInfo']/h2");
+
+                        var dateNodeText = sceneData.SelectSingleText("//div[@class='trailerInfo']//div[contains(@class, 'released2')]");
+                        var date = dateNodeText.Substring(0, dateNodeText.IndexOf(','));
+                        if (DateTime.TryParseExact(date, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+                        {
+                            result.Item.PremiereDate = sceneDateObj;
+                        }
+
+                        var descriptionNode = sceneData.SelectNodesSafe("//div[@class='dvdDescription']//p");
+                        var overview = descriptionNode[0].InnerText.Trim();
+
+                        // remove <span>Description:</span> from beginning
+                        overview = overview.Substring(13);
+                        result.Item.Overview = overview;
+
+                        // performers
+                        var performerNodes = sceneData.SelectNodesSafe("//div[@class='trailerInfo']//span[@class='tour_update_models']/a");
+
+                        foreach (var performerNode in performerNodes)
+                        {
+                            result.People.Add(new PersonInfo
+                            {
+                                Name = performerNode.InnerText,
+                            });
+                        }
+
+                        break;
+                    }
+
+                default:
+                    {
+                        result.Item.Name = sceneData.SelectSingleText("//div[@class='sceneRight']//div[@class='indScene']//h1");
+
+                        var dateNode = sceneData.SelectSingleText("//div[@class='sceneRight']//div[@class='indScene']//div[@class='sceneDateP']//span").TrimEnd(',');
+                        if (DateTime.TryParseExact(dateNode, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+                        {
+                            result.Item.PremiereDate = sceneDateObj;
+                        }
+
+                        var descriptionNodes = sceneData.SelectNodesSafe("//div[@class='description']//h2");
+                        var overview = descriptionNodes[0].InnerText.Trim();
+                        result.Item.Overview = overview;
+
+                        // performers
+                        var performerNodes = sceneData.SelectNodesSafe("//div[@class='sceneRight']//div[@class='indScene']//div[@class='sceneTextLink']//p//span//a");
+
+                        foreach (var performerNode in performerNodes)
+                        {
+                            result.People.Add(new PersonInfo
+                            {
+                                Name = performerNode.InnerText,
+                            });
+                        }
+
+                        break;
+                    }
             }
 
             return result;
@@ -132,7 +224,6 @@ namespace PhoenixAdult.Sites
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             var posterNode = sceneData.SelectSingleNode("//span[@id='trailer_thumb']//span//img");
-            Logger.Info($"Found poster: {posterNode}");
             result.Add(new RemoteImageInfo
             {
                 Url = posterNode.Attributes["src"].Value,
