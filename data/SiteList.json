@@ -783,6 +783,9 @@
             "0": [ "New Sensations", "https://www.newsensations.com", "/tour_ns/updates/" ],
             "1": [ "Family XXX", "https://www.familyxxx.com", "/tour_famxxx/updates/" ],
             "2": [ "HotwifeXXX", "https://www.hotwifexxx.com", "/tour_hwxxx/updates/" ]
+        },
+        "56": {
+            "0": [ "Fit18", "https://fit18.com", "/videos/" ],
         }
     },
     "SiteIDList": {
@@ -841,7 +844,8 @@
         "52": "SiteFamilyTherapyXXX",
         "53": "NetworkGammaEnt",
         "54": "NetworkGammaEnt",
-        "55": "SiteNewSensations"
+        "55": "SiteNewSensations",
+        "56": "SiteFit18"
     },
     "Abbrieviations": {
         "^18og": "18OnlyGirls",
