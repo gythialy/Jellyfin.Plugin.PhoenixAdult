@@ -14,7 +14,7 @@ using PhoenixAdult.Helpers.Utils;
 
 namespace PhoenixAdult.Sites
 {
-    public class SiteFit18 : IProviderBase
+    public class SiteAbbyWinters : IProviderBase
     {
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
@@ -25,14 +25,24 @@ namespace PhoenixAdult.Sites
             }
 
             var rootUrl = Helper.GetSearchSearchURL(siteNum);
+            var searchUrls = new List<string>
+            {
+                rootUrl + "girls_and_their_boys",
+                rootUrl + "girl_girl",
+                rootUrl + "video_masturbation",
+                rootUrl + "nude_girls",
+            };
             var searchResultsURLs = new List<string>();
 
             var searchResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken).ConfigureAwait(false);
             foreach (var searchResult in searchResults)
             {
-                if (searchResult.StartsWith(rootUrl))
+                foreach (var searchUrl in searchUrls)
                 {
-                    searchResultsURLs.Add(searchResult);
+                    if (searchResult.StartsWith(searchUrl))
+                    {
+                        searchResultsURLs.Add(searchResult);
+                    }
                 }
             }
 
@@ -84,39 +94,41 @@ namespace PhoenixAdult.Sites
             }
 
             result.Item.ExternalId = sceneURL;
-            result.Item.AddStudio("Fit18");
+            result.Item.AddStudio("Abby Winters");
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
-            var title = sceneData.SelectSingleText("//div[@class='info']/h1").Trim();
+            var title = sceneData.SelectSingleText("//div[contains(@class, 'page-heading')]//h1").Trim();
             result.Item.Name = title;
+
+            var section = sceneData.SelectSingleText("//section[@class='section-intro']//tr[th[text() = 'Section']]/td/a");
+            result.Item.AddStudio(section);
 
             if (string.IsNullOrEmpty(sceneDate))
             {
-                // get date from MetadataApi
-                var metadataApiProvider = Helper.GetProviderBySiteID(48);
-                var searchResults = await metadataApiProvider.Search(new int[] { 48, 0 }, title, null, cancellationToken);
-
-                result.Item.PremiereDate = searchResults[0].PremiereDate;
+                var date = sceneData.SelectSingleText("//section[@class='section-intro']//tr[th[text() = 'Release date']]/td");
+                if (DateTime.TryParseExact(date, "dd MMM yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+                {
+                    result.Item.PremiereDate = sceneDateObj;
+                }
             }
             else
             {
                 result.Item.PremiereDate = DateTime.Parse(sceneDate);
             }
 
-            var description = sceneData.SelectSingleText("//div[@class='info']/p").Trim();
+            var description = sceneData.SelectSingleText("//section[@class='section-intro']//div[contains(@class, 'description')]").Trim();
             result.Item.Overview = description;
 
             // performers
-            var performerNodes = sceneData.SelectNodesSafe("//div[@class='info']/h3//a");
+            var performerNodes = sceneData.SelectNodesSafe("//section[@class='section-intro']//tr[th[text() = 'Girls in this Scene']]/td/a");
 
             foreach (var performerNode in performerNodes)
             {
                 var name = performerNode.InnerText;
-                var performerUrl = Helper.GetSearchBaseURL(siteNum) + performerNode.Attributes["href"].Value;
+                var performerUrl = performerNode.Attributes["href"].Value;
                 var performerPage = await HTML.ElementFromURL(performerUrl, cancellationToken).ConfigureAwait(false);
-
-                var performerImageNode = performerPage.SelectSingleNode("//picture/img");
+                var performerImageNode = performerPage.SelectSingleNode("//div[@class='feature-image']//img");
                 result.People.Add(new PersonInfo
                 {
                     Name = name,
@@ -143,12 +155,51 @@ namespace PhoenixAdult.Sites
             }
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
-            var posterNode = sceneData.SelectSingleNode("//a[div[@class='play']]/img");
-            result.Add(new RemoteImageInfo
+            var posterNode = sceneData.SelectSingleNode("//section[@class='section-intro']//div[@class='feature-image']//img");
+            if (posterNode != null)
             {
-                Url = posterNode.Attributes["src"].Value,
-                Type = ImageType.Primary,
-            });
+                result.Add(new RemoteImageInfo
+                {
+                    Url = posterNode.Attributes["src"].Value,
+                    Type = ImageType.Primary,
+                });
+                result.Add(new RemoteImageInfo
+                {
+                    Url = posterNode.Attributes["src"].Value,
+                    Type = ImageType.Backdrop,
+                });
+            }
+            else
+            {
+                posterNode = sceneData.SelectSingleNode("//section[@class='section-intro']//div[@class='feature-image']//div[contains(@class, 'video-player-container')]");
+                var posterUrl = posterNode.Attributes["data-poster"].Value;
+                posterUrl = posterUrl.Replace("&amp;", "&");
+                result.Add(new RemoteImageInfo
+                {
+                    Url = posterUrl,
+                    Type = ImageType.Primary,
+                });
+                result.Add(new RemoteImageInfo
+                {
+                    Url = posterUrl,
+                    Type = ImageType.Backdrop,
+                });
+            }
+
+            var galleryImages = sceneData.SelectNodesSafe("//section[contains(@class, 'section-images')]//div[contains(@class, 'tile-image')]/img");
+            foreach (var image in galleryImages)
+            {
+                result.Add(new RemoteImageInfo
+                {
+                    Url = image.Attributes["src"].Value,
+                    Type = ImageType.Primary,
+                });
+                result.Add(new RemoteImageInfo
+                {
+                    Url = image.Attributes["src"].Value,
+                    Type = ImageType.Backdrop,
+                });
+            }
 
             return result;
         }

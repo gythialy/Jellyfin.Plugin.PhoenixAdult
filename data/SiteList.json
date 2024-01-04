@@ -785,7 +785,10 @@
             "2": [ "HotwifeXXX", "https://www.hotwifexxx.com", "/tour_hwxxx/updates/" ]
         },
         "56": {
-            "0": [ "Fit18", "https://fit18.com", "/videos/" ],
+            "0": [ "Fit18", "https://fit18.com", "/videos/" ]
+        },
+        "57": {
+            "0": [ "Abby Winters", "https://www.abbywinters.com", "/" ]
         }
     },
     "SiteIDList": {
@@ -845,7 +848,8 @@
         "53": "NetworkGammaEnt",
         "54": "NetworkGammaEnt",
         "55": "SiteNewSensations",
-        "56": "SiteFit18"
+        "56": "SiteFit18",
+        "57": "SiteAbbyWinters"
     },
     "Abbrieviations": {
         "^18og": "18OnlyGirls",
