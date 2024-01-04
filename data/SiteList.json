@@ -789,6 +789,12 @@
         },
         "57": {
             "0": [ "Abby Winters", "https://www.abbywinters.com", "/" ]
+        },
+        "58": {
+            "0": [ "ExploitedCollegeGirls", "https://exploitedcollegegirls.com", "/trailers/" ],
+            "1": [ "BackroomCastingCouch", "https://www.backroomcastingcouch.com", "/trailers/" ],
+            "2": [ "BBCSurprise", "https://bbcsurprise.com/", "/trailers/" ],
+            "3": [ "BlackAmbush", "https://bbcsurprise.com/", "/trailers/" ]
         }
     },
     "SiteIDList": {
@@ -849,7 +855,8 @@
         "54": "NetworkGammaEnt",
         "55": "SiteNewSensations",
         "56": "SiteFit18",
-        "57": "SiteAbbyWinters"
+        "57": "SiteAbbyWinters",
+        "58": "NetworkExploitedX"
     },
     "Abbrieviations": {
         "^18og": "18OnlyGirls",
