@@ -25,7 +25,8 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            searchTitle = searchTitle.Replace(" ", "+", StringComparison.OrdinalIgnoreCase);
+            searchTitle = searchTitle.Replace(" ", "+", StringComparison.OrdinalIgnoreCase)
+                .Replace("'", string.Empty, StringComparison.OrdinalIgnoreCase);
             var url = Helper.GetSearchSearchURL(siteNum) + searchTitle;
             Logger.Info($"Searching for scene: {url}");
             var data = await HTML.ElementFromURL(url, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
@@ -119,7 +120,6 @@ namespace PhoenixAdult.Sites
                 Logger.Info($"Loading performer page: {performerURL}");
                 var performerData = await HTML.ElementFromURL(performerURL, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
                 var performerImage = performerData.SelectSingleNode("//img[contains(@class, 'model_bio_thumb')]");
-                Logger.Info(performerImage.OuterHtml);
                 result.AddPerson(new PersonInfo
                 {
                     Name = performer.InnerText,
@@ -149,6 +149,7 @@ namespace PhoenixAdult.Sites
 
             var siteUrl = Helper.GetSearchBaseURL(siteNum);
 
+            Logger.Info($"Loading scene for images {sceneURL}");
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
 
             var imagesRootNode = sceneData.SelectSingleNode("//div[@class='update_image']");
@@ -168,16 +169,32 @@ namespace PhoenixAdult.Sites
             var extraImages = imagesRootNode.SelectNodesSafe("./div[@class='left']/a/img");
             foreach (var extraImage in extraImages)
             {
-                result.Add(new RemoteImageInfo
+                if (extraImage.Attributes.Contains("src0_2x"))
                 {
-                    Url = siteUrl + extraImage.Attributes["src0_2x"].Value,
-                    Type = ImageType.Primary,
-                });
-                result.Add(new RemoteImageInfo
+                    result.Add(new RemoteImageInfo
+                    {
+                        Url = siteUrl + extraImage.Attributes["src0_2x"].Value,
+                        Type = ImageType.Primary,
+                    });
+                    result.Add(new RemoteImageInfo
+                    {
+                        Url = siteUrl + extraImage.Attributes["src0_3x"].Value,
+                        Type = ImageType.Backdrop,
+                    });
+                }
+                else
                 {
-                    Url = siteUrl + extraImage.Attributes["src0_3x"].Value,
-                    Type = ImageType.Backdrop,
-                });
+                    result.Add(new RemoteImageInfo
+                    {
+                        Url = siteUrl + extraImage.Attributes["src"].Value,
+                        Type = ImageType.Primary,
+                    });
+                    result.Add(new RemoteImageInfo
+                    {
+                        Url = siteUrl + extraImage.Attributes["src"].Value,
+                        Type = ImageType.Backdrop,
+                    });
+                }
             }
 
             return result;
