@@ -50,6 +50,8 @@ namespace PhoenixAdult.Configuration
             this.MetadataAPIToken = string.Empty;
 
             this.DisableActors = false;
+            this.TagActors = true;
+            this.TagActorValue = "XXX";
             this.DisableGenres = false;
             this.DisableImageValidation = false;
             this.DisableImageSize = false;
@@ -95,6 +97,10 @@ namespace PhoenixAdult.Configuration
         public string MetadataAPIToken { get; set; }
 
         public bool DisableActors { get; set; }
+
+        public bool TagActors { get; set; }
+
+        public string TagActorValue { get; set; }
 
         public bool DisableGenres { get; set; }
 
