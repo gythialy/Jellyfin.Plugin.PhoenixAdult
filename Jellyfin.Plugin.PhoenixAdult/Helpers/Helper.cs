@@ -359,5 +359,10 @@ namespace PhoenixAdult.Helpers
 
             return default;
         }
+
+        public static IProviderBase GetMetadataAPIProvider()
+        {
+            return GetProviderBySiteID(48);
+        }
     }
 }

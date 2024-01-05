@@ -795,6 +795,9 @@
             "1": [ "BackroomCastingCouch", "https://www.backroomcastingcouch.com", "/trailers/" ],
             "2": [ "BBCSurprise", "https://bbcsurprise.com/", "/trailers/" ],
             "3": [ "BlackAmbush", "https://bbcsurprise.com/", "/trailers/" ]
+        },
+        "59": {
+            "0": [ "Tonights Girlfriend", "https://www.tonightsgirlfriend.com", "/search?term=" ]
         }
     },
     "SiteIDList": {
@@ -856,7 +859,8 @@
         "55": "SiteNewSensations",
         "56": "SiteFit18",
         "57": "SiteAbbyWinters",
-        "58": "NetworkExploitedX"
+        "58": "NetworkExploitedX",
+        "59": "SiteTonightsGirlfriend"
     },
     "Abbrieviations": {
         "^18og": "18OnlyGirls",
