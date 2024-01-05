@@ -28,6 +28,7 @@ namespace PhoenixAdult.Sites
             { "GirlCum", new[] { "Orgasms", "Girl Orgasm", "Multiple Orgasms" } },
             { "PassionHD", new[] { "Hardcore" } },
             { "BBCPie", new[] { "Interracial", "BBC", "Creampie" } },
+            { "Facials4k", new[] { "Facial" } },
         };
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
@@ -82,14 +83,24 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
+            var subSite = Helper.GetSearchSiteName(siteNum);
+
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             result.Item.ExternalId = sceneURL;
 
             result.Item.Name = sceneData.SelectSingleText("//h1");
-            result.Item.Overview = sceneData.SelectSingleText("//div[contains(@id, 'description')]");
+            var description = sceneData.SelectSingleText("//div[contains(@id, 'description')]");
+            if (string.IsNullOrEmpty(description))
+            {
+                // povd
+                description = sceneData.SelectSingleText("//div[contains(@class, 'scene-info')]//div[@class='w-full flex flex-row space-x-4 items-start']/span");
+            }
+
+            result.Item.Overview = description;
 
             result.Item.AddStudio("Porn Pros");
+            result.Item.AddStudio(subSite);
 
             string date = sceneData.SelectSingleText("//div[@class='d-inline d-lg-block mb-1']/span"),
                 sceneDate = string.Empty,
@@ -116,7 +127,6 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var subSite = Helper.GetSearchSiteName(siteNum);
             if (Genres.ContainsKey(subSite))
             {
                 foreach (var genreLink in Genres[subSite])
@@ -128,14 +138,32 @@ namespace PhoenixAdult.Sites
             }
 
             var actorsNode = sceneData.SelectNodesSafe("//div[contains(@class, 'pt-md')]//a[contains(@href, '/girls/')]");
-            foreach (var actorLink in actorsNode)
+            if (actorsNode.Any())
             {
-                var actorName = actorLink.InnerText;
-
-                result.People.Add(new PersonInfo
+                foreach (var actorLink in actorsNode)
                 {
-                    Name = actorName,
-                });
+                    var actorName = actorLink.InnerText;
+
+                    result.People.Add(new PersonInfo
+                    {
+                        Name = actorName,
+                    });
+                }
+            }
+            else
+            {
+                actorsNode = sceneData.SelectNodesSafe("//div[contains(@class, 'scene-info')]//a");
+                foreach (var actorLink in actorsNode)
+                {
+                    var actorName = actorLink.InnerText;
+
+                    result.AddPerson(new PersonInfo
+                    {
+                        Name = actorName,
+                        Type = "Actor",
+                        Role = "Performer",
+                    });
+                }
             }
 
             return result;
@@ -174,6 +202,23 @@ namespace PhoenixAdult.Sites
                 result.Add(new RemoteImageInfo
                 {
                     Url = img,
+                    Type = ImageType.Backdrop,
+                });
+            }
+
+            var gallery = sceneData.SelectNodesSafe("//div[@id='trailer_player']//div[@class='hidden w-full lg:flex flex-row mt-2']/a/img");
+            foreach (var image in gallery)
+            {
+                var url = image.Attributes["src"].Value;
+                var uri = new Uri(url);
+                result.Add(new RemoteImageInfo
+                {
+                    Url = uri.GetLeftPart(UriPartial.Path),
+                    Type = ImageType.Primary,
+                });
+                result.Add(new RemoteImageInfo
+                {
+                    Url = uri.GetLeftPart(UriPartial.Path),
                     Type = ImageType.Backdrop,
                 });
             }
