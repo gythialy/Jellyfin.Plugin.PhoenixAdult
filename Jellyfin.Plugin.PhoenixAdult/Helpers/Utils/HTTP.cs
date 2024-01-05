@@ -90,7 +90,7 @@ namespace PhoenixAdult.Helpers.Utils
         public static string GetUserAgent()
             => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36";
 
-        public static async Task<HTTPResponse> Request(string url, HttpMethod method, HttpContent param, IDictionary<string, string> headers, IDictionary<string, string> cookies, CancellationToken cancellationToken)
+        public static async Task<HTTPResponse> Request(string url, HttpMethod method, HttpContent param, IDictionary<string, string> headers, IDictionary<string, string> cookies, CancellationToken cancellationToken, params HttpStatusCode[] additionalSuccessStatusCodes)
         {
             var result = new HTTPResponse()
             {
@@ -155,7 +155,8 @@ namespace PhoenixAdult.Helpers.Utils
 
             if (response != null)
             {
-                result.IsOK = response.IsSuccessStatusCode;
+                result.IsOK = response.IsSuccessStatusCode || additionalSuccessStatusCodes.Contains(response.StatusCode);
+                result.StatusCode = response.StatusCode;
 #if __EMBY__
                 result.Content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 result.ContentStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -170,14 +171,14 @@ namespace PhoenixAdult.Helpers.Utils
             return result;
         }
 
-        public static async Task<HTTPResponse> Request(string url, HttpMethod method, HttpContent param, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null)
-            => await Request(url, method, param, headers, cookies, cancellationToken).ConfigureAwait(false);
+        public static async Task<HTTPResponse> Request(string url, HttpMethod method, HttpContent param, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, params HttpStatusCode[] additionalSuccessStatusCodes)
+            => await Request(url, method, param, headers, cookies, cancellationToken, additionalSuccessStatusCodes).ConfigureAwait(false);
 
-        public static async Task<HTTPResponse> Request(string url, HttpMethod method, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null)
-            => await Request(url, method, null, headers, cookies, cancellationToken).ConfigureAwait(false);
+        public static async Task<HTTPResponse> Request(string url, HttpMethod method, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, params HttpStatusCode[] additionalSuccessStatusCodes)
+            => await Request(url, method, null, headers, cookies, cancellationToken, additionalSuccessStatusCodes).ConfigureAwait(false);
 
-        public static async Task<HTTPResponse> Request(string url, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null)
-            => await Request(url, null, null, headers, cookies, cancellationToken).ConfigureAwait(false);
+        public static async Task<HTTPResponse> Request(string url, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, params HttpStatusCode[] additionalSuccessStatusCodes)
+            => await Request(url, null, null, headers, cookies, cancellationToken, additionalSuccessStatusCodes).ConfigureAwait(false);
 
         internal struct HTTPResponse
         {
@@ -186,6 +187,8 @@ namespace PhoenixAdult.Helpers.Utils
             public Stream ContentStream { get; set; }
 
             public bool IsOK { get; set; }
+
+            public HttpStatusCode StatusCode { get; set; }
 
             public IEnumerable<Cookie> Cookies { get; set; }
 
