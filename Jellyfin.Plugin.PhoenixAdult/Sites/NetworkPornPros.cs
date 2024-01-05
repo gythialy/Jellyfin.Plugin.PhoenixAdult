@@ -160,8 +160,6 @@ namespace PhoenixAdult.Sites
                     result.AddPerson(new PersonInfo
                     {
                         Name = actorName,
-                        Type = "Actor",
-                        Role = "Performer",
                     });
                 }
             }

@@ -112,8 +112,6 @@ namespace PhoenixAdult.Sites
             {
                 result.AddPerson(new PersonInfo
                 {
-                    Type = "Actor",
-                    Role = "Performer",
                     Name = performerName,
                 });
             }

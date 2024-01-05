@@ -123,8 +123,6 @@ namespace PhoenixAdult.Sites
                 result.AddPerson(new PersonInfo
                 {
                     Name = performer.InnerText,
-                    Type = "Actor",
-                    Role = "Performer",
                     ImageUrl = siteUrl + performerImage.Attributes["src0_2x"].Value,
                 });
             }

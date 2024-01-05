@@ -215,6 +215,11 @@ namespace PhoenixAdult.Providers
                     {
                         result.Item.ProductionYear = result.Item.PremiereDate.Value.Year;
                     }
+
+                    if (Plugin.Instance.Configuration.TagActors)
+                    {
+                        result.Item.AddTag(Plugin.Instance.Configuration.TagActorValue);
+                    }
                 }
             }
 
