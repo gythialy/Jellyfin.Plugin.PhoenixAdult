@@ -799,6 +799,9 @@
         },
         "59": {
             "0": [ "Tonights Girlfriend", "https://www.tonightsgirlfriend.com", "/search?term=" ]
+        },
+        "60": {
+            "0": [ "She Seduced Me", "https://sheseducedme.com", "/search.php?query=" ]
         }
     },
     "SiteIDList": {
@@ -861,7 +864,8 @@
         "56": "SiteFit18",
         "57": "SiteAbbyWinters",
         "58": "NetworkExploitedX",
-        "59": "SiteTonightsGirlfriend"
+        "59": "SiteTonightsGirlfriend",
+        "60": "SiteSheSeducedMe"
     },
     "Abbrieviations": {
         "^18og": "18OnlyGirls",
