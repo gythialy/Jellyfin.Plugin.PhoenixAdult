@@ -130,7 +130,6 @@ namespace PhoenixAdult.Sites
             foreach (var image in galleryImages)
             {
                 var imageUrl = "https:" + image.Attributes["href"].Value;
-                Logger.Info($"Adding image: {imageUrl}");
                 result.Add(new RemoteImageInfo
                 {
                     Url = imageUrl,
