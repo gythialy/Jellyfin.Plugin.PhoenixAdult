@@ -110,8 +110,10 @@ namespace PhoenixAdult.Sites
 
             foreach (var performerName in performerNames)
             {
-                result.People.Add(new PersonInfo
+                result.AddPerson(new PersonInfo
                 {
+                    Type = "Actor",
+                    Role = "Performer",
                     Name = performerName,
                 });
             }
