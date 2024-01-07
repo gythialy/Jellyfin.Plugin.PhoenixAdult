@@ -802,6 +802,9 @@
         },
         "60": {
             "0": [ "She Seduced Me", "https://sheseducedme.com", "/search.php?query=" ]
+        },
+        "61": {
+            "0": [ "PurgatoryX", "https://tour.purgatoryx.com", "/search/" ]
         }
     },
     "SiteIDList": {
@@ -865,7 +868,8 @@
         "57": "SiteAbbyWinters",
         "58": "NetworkExploitedX",
         "59": "SiteTonightsGirlfriend",
-        "60": "SiteSheSeducedMe"
+        "60": "SiteSheSeducedMe",
+        "61": "SitePurgatoryX"
     },
     "Abbrieviations": {
         "^18og": "18OnlyGirls",
