@@ -94,7 +94,13 @@ namespace PhoenixAdult.Sites
             result.Item.ExternalId = sceneURL;
 
             result.Item.Name = sceneData.SelectSingleText("//h1/text()");
-            result.Item.Overview = sceneData.SelectSingleText("//h4[contains(@class, 'synopsis')]");
+            var overview = sceneData.SelectSingleText("//h4[contains(@class, 'synopsis')]");
+            if (string.IsNullOrEmpty(overview))
+            {
+                overview = sceneData.SelectSingleText("//div[@class='synopsis-content']/p");
+            }
+
+            result.Item.Overview = overview;
 
             var studioName = sceneData.SelectSingleText("//a[@label='Studio']");
             if (!string.IsNullOrEmpty(studioName))
