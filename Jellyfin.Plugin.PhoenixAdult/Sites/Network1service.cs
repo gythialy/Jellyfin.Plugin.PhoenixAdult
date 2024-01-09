@@ -81,10 +81,15 @@ namespace PhoenixAdult.Sites
                 { "Instance", instance },
             };
 
+            Logger.Info($"Requesting data: {url}");
             var http = await HTTP.Request(url, cancellationToken, headers).ConfigureAwait(false);
             if (http.IsOK)
             {
                 json = JObject.Parse(http.Content);
+            }
+            else
+            {
+                Logger.Error($"Failed to get data ({http.StatusCode}): {http.Content}");
             }
 
             return json;

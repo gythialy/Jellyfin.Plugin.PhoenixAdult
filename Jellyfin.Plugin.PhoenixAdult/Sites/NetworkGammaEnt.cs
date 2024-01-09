@@ -132,7 +132,8 @@ namespace PhoenixAdult.Sites
                 }
                 else
                 {
-                    searchParams = $"query={searchTitle}";
+                    var searchTitleCleaned = searchTitle.Replace("'", string.Empty, StringComparison.OrdinalIgnoreCase);
+                    searchParams = $"query={searchTitleCleaned}";
                 }
 
                 var url = $"{Helper.GetSearchSearchURL(siteNum)}?x-algolia-application-id=TSMKFA364Q&x-algolia-api-key={apiKEY}";
