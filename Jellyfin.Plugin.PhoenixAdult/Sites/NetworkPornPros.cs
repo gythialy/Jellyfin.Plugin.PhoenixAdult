@@ -89,7 +89,8 @@ namespace PhoenixAdult.Sites
 
             result.Item.ExternalId = sceneURL;
 
-            result.Item.Name = sceneData.SelectSingleText("//h1");
+            var title = sceneData.SelectSingleText("//h1");
+            result.Item.Name = title;
             var description = sceneData.SelectSingleText("//div[contains(@id, 'description')]");
             if (string.IsNullOrEmpty(description))
             {
@@ -125,6 +126,16 @@ namespace PhoenixAdult.Sites
                 {
                     result.Item.PremiereDate = sceneDateObj;
                 }
+            }
+            else
+            {
+                Logger.Warning($"Could not get date for '{title}'. Pulling for Metadata API");
+
+                // get date from MetadataApi
+                var metadataApiProvider = Helper.GetMetadataAPIProvider();
+                var searchResults = await metadataApiProvider.Search(new int[] { 48, 0 }, title, null, cancellationToken);
+
+                result.Item.PremiereDate = searchResults[0].PremiereDate;
             }
 
             if (Genres.ContainsKey(subSite))
