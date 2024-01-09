@@ -61,6 +61,10 @@ namespace PhoenixAdult.Sites
                     json = (JObject)JObject.Parse(regEx.Groups[1].Value)["content"];
                 }
             }
+            else
+            {
+                Logger.Error($"Failed to load page {url} ({http.StatusCode})");
+            }
 
             return json;
         }
@@ -89,16 +93,20 @@ namespace PhoenixAdult.Sites
             }
 
             directURL = Helper.GetSearchSearchURL(siteNum) + directURL;
+            Logger.Info($"Direct url: {directURL}");
             var searchResultsURLs = new List<string>
             {
                 directURL,
             };
 
+            Logger.Info($"Performing Google search: {searchTitle}");
             var searchResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken).ConfigureAwait(false);
             foreach (var searchResult in searchResults)
             {
+                Logger.Info($"Checking result {searchResult}");
                 if (searchResult.Contains("/movies/", StringComparison.OrdinalIgnoreCase) && !searchResultsURLs.Contains(searchResult))
                 {
+                    Logger.Info($"Possible result {searchResult}");
                     searchResultsURLs.Add(searchResult);
                 }
             }
@@ -149,6 +157,7 @@ namespace PhoenixAdult.Sites
                 sceneDate = sceneID[1];
             }
 
+            Logger.Info($"Loading scene data {sceneURL}");
             var sceneData = await GetJSONfromPage(sceneURL, cancellationToken).ConfigureAwait(false);
             if (sceneData == null)
             {
