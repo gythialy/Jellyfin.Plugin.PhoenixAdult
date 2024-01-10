@@ -813,6 +813,9 @@
         },
         "61": {
             "0": [ "PurgatoryX", "https://tour.purgatoryx.com", "/search/" ]
+        },
+        "62": {
+            "0": [ "TS Playground", "https://tsplayground.com", "/search/" ]
         }
     },
     "SiteIDList": {
@@ -877,7 +880,8 @@
         "58": "NetworkExploitedX",
         "59": "SiteTonightsGirlfriend",
         "60": "SiteSheSeducedMe",
-        "61": "SitePurgatoryX"
+        "61": "SitePurgatoryX",
+        "62": "SiteTSPlayground"
     },
     "Abbrieviations": {
         "^18og": "18OnlyGirls",
