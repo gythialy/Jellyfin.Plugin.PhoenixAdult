@@ -10,22 +10,21 @@ on:
 
 jobs:
   jellyfin:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.1
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
 
       - name: Build app for release
-        run: MSBuild -t:Restore,Build -p:RestorePackagesConfig=true -property:Configuration=Release
-
-      - name: Rename Files
-        run: ren Jellyfin.Plugin.PhoenixAdult/bin/Release/net6.0/PhoenixAdult.dll Jellyfin.Plugin.PhoenixAdult.dll && ren Jellyfin.Plugin.PhoenixAdult/bin/Release/net6.0/PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult.pdb
+        run: dotnet build -c Release && mv Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/PhoenixAdult.dll Jellyfin.Plugin.PhoenixAdult.dll && mv Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult.pdb
 
       - uses: vimtor/action-zip@v1
         with:
-          files: Jellyfin.Plugin.PhoenixAdult/bin/Release/net6.0/Jellyfin.Plugin.PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release/net6.0/Jellyfin.Plugin.PhoenixAdult.dll
+          files: Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.dll
           dest: Jellyfin.Plugin.PhoenixAdult.zip
 
       - uses: actions/upload-artifact@v3
