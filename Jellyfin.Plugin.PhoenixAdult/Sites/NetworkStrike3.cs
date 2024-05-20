@@ -28,11 +28,16 @@ namespace PhoenixAdult.Sites
             JObject json = null;
 
             var param = new StringContent($"{{\"query\":\"{query}\",\"variables\":{variables}}}", Encoding.UTF8, "application/json");
+
+            Logger.Debug($"{url}, {query}, {variables}");
+
             var http = await HTTP.Request(url, HttpMethod.Post, param, cancellationToken).ConfigureAwait(false);
 
             if (http.IsOK)
             {
+                Logger.Debug("http.Content: " + http.Content);
                 json = (JObject)JObject.Parse(http.Content)["data"];
+                Logger.Debug("content to jobject ok");
             }
 
             return json;
@@ -48,6 +53,7 @@ namespace PhoenixAdult.Sites
 
             var variables = string.Format(this.searchVariables, searchTitle, Helper.GetSearchSiteName(siteNum).ToUpper());
             var url = Helper.GetSearchSearchURL(siteNum);
+            Logger.Debug($"search: {variables}, {url}");
             var searchResults = await GetDataFromAPI(url, this.searchQuery, variables, cancellationToken).ConfigureAwait(false);
             if (searchResults == null)
             {
@@ -89,10 +95,11 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var sceneURL = Helper.Decode(sceneID[0]);
+            var sceneURL = Helper.Decode(sceneID[0]).TrimStart('/');
 
             var variables = string.Format(this.updateVariables, sceneURL, Helper.GetSearchSiteName(siteNum).ToUpper());
             var url = Helper.GetSearchSearchURL(siteNum);
+            Logger.Debug($"update: {variables}, {url}");
             var sceneData = await GetDataFromAPI(url, this.updateQuery, variables, cancellationToken).ConfigureAwait(false);
             if (sceneData == null)
             {
@@ -144,10 +151,11 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var sceneURL = Helper.Decode(sceneID[0]);
+            var sceneURL = Helper.Decode(sceneID[0]).TrimStart('/');
 
             var variables = string.Format(this.updateVariables, sceneURL, Helper.GetSearchSiteName(siteNum).ToUpper());
             var url = Helper.GetSearchSearchURL(siteNum);
+            Logger.Debug($"get images: {variables}, {url}");
             var sceneData = await GetDataFromAPI(url, this.updateQuery, variables, cancellationToken).ConfigureAwait(false);
             if (sceneData == null)
             {
