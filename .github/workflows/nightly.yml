@@ -1,0 +1,71 @@
+name: Build nightly 
+on:
+  push:
+    branches:
+      - master
+    tags: ["v*"]
+    paths:
+      - Jellyfin.Plugin.PhoenixAdult/**
+      - .github/**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.x"
+
+      - name: Build Jellyfin Plugin for release
+        run: |
+          dotnet build -c Release && \
+          cp Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/PhoenixAdult.dll Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.dll && \
+          cp Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.pdb && \
+          ls -al Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0
+
+      - name: pack Jellyfin Plugin
+        uses: vimtor/action-zip@v1.2
+        with:
+          files: Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.dll
+          dest: Jellyfin.Plugin.PhoenixAdult.zip
+
+      - name: Build Emby Plugin for release
+        run: |
+          dotnet build -c Release.Emby && \
+          cp Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/PhoenixAdult.dll Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/Emby.Plugins.PhoenixAdult.dll && \
+          cp Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0//Emby.Plugins.PhoenixAdult.pdb
+
+      - name: pack Emby Plugin
+        uses: vimtor/action-zip@v1.2
+        with:
+          files: Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/Emby.Plugins.PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/Emby.Plugins.PhoenixAdult.dll
+          dest: Emby.Plugins.PhoenixAdult.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          name: Jellyfin
+          retention-days: 90
+          path: |
+            **/Emby.Plugins.PhoenixAdult.zip
+            **/Jellyfin.Plugin.PhoenixAdult.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "nightly"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            **/Jellyfin.Plugin.PhoenixAdult.zip
+            **/Emby.Plugins.PhoenixAdult.zip

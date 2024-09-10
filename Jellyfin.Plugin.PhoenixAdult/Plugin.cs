@@ -62,7 +62,7 @@ namespace PhoenixAdult
 
         public override string Name => "PhoenixAdult";
 
-        public override Guid Id => Guid.Parse("dc40637f-6ebd-4a34-b8a1-8799629120cf");
+        public override Guid Id => Guid.Parse("8f97371f-8617-463c-9859-a33072182494");
 
         public IEnumerable<PluginPageInfo> GetPages()
             => new[]
