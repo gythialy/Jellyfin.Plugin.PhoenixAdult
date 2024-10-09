@@ -1,0 +1,20 @@
+[
+    {
+        "category": "Metadata",
+        "guid": "8f97371f-8617-463c-9859-a33072182494",
+        "name": "PhoenixAdult",
+        "description": "This metadata provider helps fill Jellyfin/Emby with information for your adult videos by pulling from the original site.",
+        "owner": "Andrer757",
+        "overview": "Manage Your Adult Videos in Jellyfin/Emby",
+        "versions": [
+            {
+                "checksum": "0A78F7C49E6063AF874F8B8B5CCDE403D099F4A8D360DEA84906BBE3914AD871",
+                "changelog": "Minor Changes",
+                "targetAbi": "10.9.0.0",
+                "sourceUrl": "https://github.com/Andrer757/Jellyfin.Plugin.PhoenixAdult/releases/download/v2024.1009.1154.0/Jellyfin.PhoenixAdult@v2024.1009.1154.0.zip",
+                "timestamp": "2024-10-09 12:55:00",
+                "version": "v2024.1009.1154.0"
+            }
+        ]
+    }
+]
