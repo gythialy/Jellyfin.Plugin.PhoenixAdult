@@ -25,7 +25,7 @@ jobs:
 
       - name: Build Jellyfin Plugin for release
         run: |
-          dotnet build -c Release && \
+          dotnet build -c Release /p:Version=${{ steps.shell.outputs.version }} && \
           cp Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/PhoenixAdult.dll Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.dll && \
           cp Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.pdb
 
@@ -37,7 +37,7 @@ jobs:
 
       - name: Build Emby Plugin for release
         run: |
-          dotnet build -c Release.Emby && \
+          dotnet build -c Release.Emby /p:Version=${{ steps.shell.outputs.version }} && \
           cp Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/PhoenixAdult.dll Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/Emby.Plugins.PhoenixAdult.dll && \
           cp Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/Emby.Plugins.PhoenixAdult.pdb
 
