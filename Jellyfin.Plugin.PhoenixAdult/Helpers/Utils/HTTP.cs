@@ -17,12 +17,17 @@ namespace PhoenixAdult.Helpers.Utils
 {
     internal static class HTTP
     {
+        private const int DefaultTimeoutSeconds = 120;
+
         static HTTP()
         {
-            CloudflareHandler = new ClearanceHandler(Plugin.Instance.Configuration.FlareSolverrURL)
+            if (!string.IsNullOrEmpty(Plugin.Instance.Configuration.FlareSolverrURL))
             {
-                MaxTimeout = (int)TimeSpan.FromSeconds(120).TotalMilliseconds,
-            };
+                CloudflareHandler = new ClearanceHandler(Plugin.Instance.Configuration.FlareSolverrURL)
+                {
+                    MaxTimeout = (int)TimeSpan.FromSeconds(DefaultTimeoutSeconds).TotalMilliseconds,
+                };
+            }
 
             if (Plugin.Instance.Configuration.ProxyEnable && !string.IsNullOrEmpty(Plugin.Instance.Configuration.ProxyHost) && Plugin.Instance.Configuration.ProxyPort > 0)
             {
@@ -61,19 +66,26 @@ namespace PhoenixAdult.Helpers.Utils
             {
                 Logger.Debug("Caching Enabled");
                 CacheHandler = new InMemoryCacheHandler(HttpHandler, CacheExpirationProvider.CreateSimple(TimeSpan.FromSeconds(60), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(5)));
-                CloudflareHandler.InnerHandler = CacheHandler;
             }
             else
             {
                 Logger.Debug("Caching Disabled");
-                CloudflareHandler.InnerHandler = HttpHandler;
             }
 
-            Http = new HttpClient(CloudflareHandler)
+            if (CloudflareHandler != null)
             {
-                Timeout = TimeSpan.FromSeconds(120),
-            };
+                CloudflareHandler.InnerHandler = CacheHandler != null ? (HttpMessageHandler)CacheHandler : HttpHandler;
+                Http = new HttpClient(CloudflareHandler);
+            }
+            else
+            {
+                Http = new HttpClient(CacheHandler != null ? (HttpMessageHandler)CacheHandler : HttpHandler);
+            }
+
+            Http.Timeout = TimeSpan.FromSeconds(DefaultTimeoutSeconds);
         }
+
+        private static ClearanceHandler CloudflareHandler { get; set; }
 
         private static CookieContainer CookieContainer { get; } = new CookieContainer();
 
@@ -82,8 +94,6 @@ namespace PhoenixAdult.Helpers.Utils
         private static HttpClientHandler HttpHandler { get; set; }
 
         private static InMemoryCacheHandler CacheHandler { get; set; }
-
-        private static ClearanceHandler CloudflareHandler { get; set; }
 
         private static HttpClient Http { get; set; }
 
