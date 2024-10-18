@@ -1,4 +1,4 @@
-name: Build nightly 
+name: Build nightly
 on:
   push:
     branches:
@@ -10,6 +10,8 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,53 +21,31 @@ jobs:
         with:
           dotnet-version: "8.x"
 
+      - name: Set nightly version
+        id: shell
+        run: |
+          echo "VERSION=100.0.0-nightly" >> $GITHUB_OUTPUT
+
       - name: Build Jellyfin Plugin for release
         run: |
-          dotnet build -c Release && \
-          cp Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/PhoenixAdult.dll Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.dll && \
-          cp Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.pdb && \
-          ls -al Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0
-
-      - name: pack Jellyfin Plugin
-        uses: vimtor/action-zip@v1.2
-        with:
-          files: Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.dll
-          dest: Jellyfin.Plugin.PhoenixAdult.zip
+          dotnet build -c Release /p:Version=${{ steps.shell.outputs.version }}
 
       - name: Build Emby Plugin for release
         run: |
-          dotnet build -c Release.Emby && \
-          cp Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/PhoenixAdult.dll Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/Emby.Plugins.PhoenixAdult.dll && \
-          cp Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0//Emby.Plugins.PhoenixAdult.pdb
+          dotnet build -c Release.Emby /p:Version=${{ steps.shell.outputs.version }}
 
-      - name: pack Emby Plugin
-        uses: vimtor/action-zip@v1.2
+      - name: Print Folder Tree
+        uses: jaywcjlove/github-action-folder-tree@main
         with:
-          files: Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/Emby.Plugins.PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/Emby.Plugins.PhoenixAdult.dll
-          dest: Emby.Plugins.PhoenixAdult.zip
+          exclude: "obj|.git"
+          path: .
+          depth: 8
 
-      - uses: actions/upload-artifact@v4
+      - uses: softprops/action-gh-release@v2
         with:
-          if-no-files-found: error
-          name: Jellyfin
-          retention-days: 90
-          path: |
-            **/Emby.Plugins.PhoenixAdult.zip
-            **/Jellyfin.Plugin.PhoenixAdult.zip
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [build]
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-
-      - uses: marvinpinto/action-automatic-releases@latest
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "nightly"
           prerelease: true
-          title: "Development Build"
+          tag_name: nightly
+          body: "Nightly Build"
           files: |
-            **/Jellyfin.Plugin.PhoenixAdult.zip
-            **/Emby.Plugins.PhoenixAdult.zip
+            **/Jellyfin.Plugin.PhoenixAdult@v${{ steps.shell.outputs.version }}.zip
+            **/Emby.Plugin.PhoenixAdult@v${{ steps.shell.outputs.version }}.zip
