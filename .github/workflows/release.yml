@@ -25,27 +25,11 @@ jobs:
 
       - name: Build Jellyfin Plugin for release
         run: |
-          dotnet build -c Release /p:Version=${{ steps.shell.outputs.version }} && \
-          cp Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/PhoenixAdult.dll Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.dll && \
-          cp Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.pdb
-
-      - name: pack Jellyfin Plugin
-        uses: vimtor/action-zip@v1.2
-        with:
-          files: Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/Jellyfin.Plugin.PhoenixAdult.dll
-          dest: Jellyfin.PhoenixAdult@v${{ steps.shell.outputs.version }}.zip
+          dotnet build -c Release /p:Version=${{ steps.shell.outputs.version }}
 
       - name: Build Emby Plugin for release
         run: |
-          dotnet build -c Release.Emby /p:Version=${{ steps.shell.outputs.version }} && \
-          cp Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/PhoenixAdult.dll Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/Emby.Plugins.PhoenixAdult.dll && \
-          cp Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/Emby.Plugins.PhoenixAdult.pdb
-
-      - name: pack Emby Plugin
-        uses: vimtor/action-zip@v1.2
-        with:
-          files: Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/Emby.Plugins.PhoenixAdult.pdb Jellyfin.Plugin.PhoenixAdult/bin/Release.Emby/net6.0/Emby.Plugins.PhoenixAdult.dll
-          dest: Emby.PhoenixAdult@v${{ steps.shell.outputs.version }}.zip
+          dotnet build -c Release.Emby /p:Version=${{ steps.shell.outputs.version }}
 
       - name: Print Folder Tree
         uses: jaywcjlove/github-action-folder-tree@main
@@ -56,7 +40,7 @@ jobs:
 
       - name: Generate Manifest
         run: |
-          python3 scripts/manifest.py Jellyfin.PhoenixAdult@v${{ steps.shell.outputs.version }}.zip
+          python3 scripts/manifest.py Jellyfin.Plugin.PhoenixAdult@v${{ steps.shell.outputs.version }}.zip
 
       - name: Publish Manifest
         run: |
@@ -77,5 +61,5 @@ jobs:
           prerelease: false
           title: v${{ steps.shell.outputs.version }}
           files: |
-            **/Jellyfin.PhoenixAdult@v${{ steps.shell.outputs.version }}.zip
-            **/Emby.PhoenixAdult@v${{ steps.shell.outputs.version }}.zip
+            **/Jellyfin.Plugin.PhoenixAdult@v${{ steps.shell.outputs.version }}.zip
+            **/Emby.Plugin.PhoenixAdult@v${{ steps.shell.outputs.version }}.zip
