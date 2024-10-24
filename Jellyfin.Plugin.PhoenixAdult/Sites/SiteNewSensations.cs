@@ -16,7 +16,7 @@ namespace PhoenixAdult.Sites
 {
     public class SiteNewSensations : IProviderBase
     {
-        enum Site
+        private enum Site
         {
             Default,
             FamilyXXX,

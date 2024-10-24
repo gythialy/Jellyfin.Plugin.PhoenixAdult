@@ -2,9 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">net8.0</TargetFramework>
-    <TargetFramework Condition="'$(Configuration)'=='Debug.Emby' or '$(Configuration)'=='Release.Emby'">net6.0</TargetFramework>
+    <TargetFramework
+      Condition="'$(Configuration)'=='Debug.Emby' or '$(Configuration)'=='Release.Emby'">net6.0</TargetFramework>
     <RootNamespace>PhoenixAdult</RootNamespace>
-    <Version>$([System.DateTime]::UtcNow.ToString(yyyy.Mdd.Hmm.0))</Version>
+    <Version Condition="'$(Version)' == ''">1.0.0.0</Version>
+    <AssemblyVersion Condition="'$(Version)' == ''">1.0.0.0</AssemblyVersion>
+    <FileVersion Condition="'$(Version)' == ''">1.0.0.0</FileVersion>
     <SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ss:fffZ"))</SourceRevisionId>
     <PackageIcon>thumb.png</PackageIcon>
     <Copyright>© DirtyRacer</Copyright>
@@ -35,6 +38,65 @@
     <WarningsAsErrors>NU1605</WarningsAsErrors>
   </PropertyGroup>
 
+  <Target Name="PostBuildRelease" AfterTargets="ILRepackTarget"
+    Condition="'$(Configuration)'=='Release'">
+    <PropertyGroup>
+      <ZipPath>$(OutputPath)zip</ZipPath>
+      <ProjectRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)'))</ProjectRoot>
+    </PropertyGroup>
+    <Copy SourceFiles="$(OutputPath)PhoenixAdult.dll"
+      DestinationFiles="$(ZipPath)\Jellyfin.Plugin.PhoenixAdult.dll" />
+    <Copy SourceFiles="$(OutputPath)PhoenixAdult.pdb"
+      DestinationFiles="$(ZipPath)\Jellyfin.Plugin.PhoenixAdult.pdb" />
+    <ZipDirectory SourceDirectory="$(ZipPath)"
+      DestinationFile="$(ProjectRoot)\..\Jellyfin.Plugin.PhoenixAdult@v$(Version).zip"
+      Overwrite="true" />
+  </Target>
+
+  <Target Name="ILRepackTarget" AfterTargets="Build"
+    Condition="'$(Configuration)'=='Release' or '$(Configuration)'=='Release.Emby'">
+    <ItemGroup>
+      <InputAssemblies Include="$(OutputPath)$(AssemblyName).dll" />
+      <InputAssemblies Include="$(OutputPath)FlareSolverrSharp.dll" />
+      <InputAssemblies Include="$(OutputPath)HtmlAgilityPack.dll" />
+      <InputAssemblies Include="$(OutputPath)HttpClient.Caching.dll" />
+      <InputAssemblies Include="$(OutputPath)MihaZupan.HttpToSocks5Proxy.dll" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">
+      <!--<InputAssemblies
+      Include="$(OutputPath)Sentry.dll" />-->
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(Configuration)'=='Debug.Emby' or '$(Configuration)'=='Release.Emby'">
+      <InputAssemblies Include="$(OutputPath)Newtonsoft.Json.dll" />
+    </ItemGroup>
+
+    <ILRepack
+      Parallel="true"
+      Internalize="true"
+      DebugInfo="true"
+      InputAssemblies="@(InputAssemblies)"
+      LibraryPath="$(OutputPath)"
+      TargetKind="Dll"
+      OutputFile="$(OutputPath)$(AssemblyName).dll"
+    />
+  </Target>
+
+  <Target Name="PostBuildReleaseEmby" AfterTargets="Build"
+    Condition="'$(Configuration)'=='Release.Emby'">
+    <PropertyGroup>
+      <ZipPath>$(OutputPath)zip</ZipPath>
+      <ProjectRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)'))</ProjectRoot>
+    </PropertyGroup>
+    <Copy SourceFiles="$(OutputPath)PhoenixAdult.dll"
+      DestinationFiles="$(ZipPath)\Emby.Plugin.PhoenixAdult.dll" />
+    <Copy SourceFiles="$(OutputPath)PhoenixAdult.pdb"
+      DestinationFiles="$(ZipPath)\Emby.Plugin.PhoenixAdult.pdb" />
+    <ZipDirectory SourceDirectory="$(ZipPath)"
+      DestinationFile="$(ProjectRoot)\..\Emby.Plugin.PhoenixAdult@v$(Version).zip" Overwrite="true" />
+  </Target>
+
   <ItemGroup>
     <PackageReference Include="FlareSolverrSharp" Version="3.0.7" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.67" />
@@ -45,7 +107,7 @@
 
   <ItemGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">
     <PackageReference Include="Jellyfin.Controller" Version="10.9.11" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
     <PackageReference Include="SkiaSharp" Version="2.88.8" />
   </ItemGroup>
 
