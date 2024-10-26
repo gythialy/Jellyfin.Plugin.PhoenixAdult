@@ -90,7 +90,7 @@ namespace PhoenixAdult.Sites
 
             Logger.Info($"sceneData: {sceneData}");
 
-            var applicationLD = sceneData.SelectSingleText("//script[@id='applicationLD']");
+            var applicationLD = sceneData.SelectSingleText("//script[@type='application/ld+json']");
             Logger.Info($"applicationLD: {applicationLD}");
             var metadata = JsonConvert.DeserializeObject<ManyVidsMetadata>(applicationLD);
 
@@ -208,7 +208,7 @@ namespace PhoenixAdult.Sites
             {
                 public string Name { get; set; }
 
-                public string ProfileUrl { get; set; }
+                public string Url { get; set; }
             }
         }
     }
