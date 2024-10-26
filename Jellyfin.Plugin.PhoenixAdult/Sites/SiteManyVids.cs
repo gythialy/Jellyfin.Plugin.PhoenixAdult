@@ -91,6 +91,7 @@ namespace PhoenixAdult.Sites
             Logger.Info($"sceneData: {sceneData}");
 
             var applicationLD = sceneData.SelectSingleText("//script[@id='applicationLD']");
+            Logger.Info($"applicationLD: {applicationLD}");
             var metadata = JsonConvert.DeserializeObject<ManyVidsMetadata>(applicationLD);
 
             if (metadata.Name.EndsWith(TitleWatermark))
