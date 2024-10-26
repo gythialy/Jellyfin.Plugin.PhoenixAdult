@@ -44,18 +44,6 @@ jobs:
         run: |
           python3 scripts/manifest.py Jellyfin.Plugin.PhoenixAdult@v${{ steps.shell.outputs.version }}.zip
 
-      - name: Publish Manifest
-        run: |
-          git config --global user.name  'phoenixadult-bot'
-          git config --global user.email 'phoenixadult-bot@users.noreply.github.com'
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}
-
-          git checkout --orphan dist
-          git rm -rf .
-          git add manifest.json
-          git commit -m "Auto Updated by Actions"
-          git push -f -u origin dist
-
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.shell.outputs.version }}
