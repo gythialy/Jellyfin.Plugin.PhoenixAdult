@@ -66,6 +66,10 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
+            Logger.Info($"site: {siteNum})");
+            Logger.Info($"searched ID: {sceneID}");
+            Logger.Info($"cancellationToken: {cancellationToken}");
+
             string sceneURL = Helper.Decode(sceneID[0]),
                 sceneDate = string.Empty;
 
@@ -79,7 +83,12 @@ namespace PhoenixAdult.Sites
                 sceneDate = sceneID[1];
             }
 
+            Logger.Info($"sceneURL: {sceneURL}");
+            Logger.Info($"sceneDate: {sceneDate}");
+
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
+
+            Logger.Info($"sceneData: {sceneData}");
 
             var applicationLD = sceneData.SelectSingleText("//script[@id='applicationLD']");
             var metadata = JsonConvert.DeserializeObject<ManyVidsMetadata>(applicationLD);
