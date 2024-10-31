@@ -12,6 +12,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -20,7 +21,6 @@ namespace PhoenixAdult.Sites
     public class SiteManyVids : IProviderBase
     {
         private const string TitleWatermark = " - Manyvids";
-        private readonly Regex tagsListMatch = new Regex("tagsIdsList = \"([\\d,]+)\"", RegexOptions.Compiled);
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
@@ -36,12 +36,19 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var sceneURL = new Uri(Helper.GetSearchBaseURL(siteNum) + $"/Video/{sceneIDx}");
+            var sceneURL = new Uri(Helper.GetSearchBaseURL(siteNum) + $"/video/{sceneIDx}");
             var sceneID = new List<string> { Helper.Encode(sceneURL.AbsolutePath) };
 
             if (searchDate.HasValue)
             {
                 sceneID.Add(searchDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+            }
+            else
+            {
+                var sceneData = await HTML.ElementFromURL(sceneURL.AbsolutePath, cancellationToken).ConfigureAwait(false);
+                var applicationLD = sceneData.SelectSingleText("//script[@type='application/ld+json']");
+                var metadata = JsonConvert.DeserializeObject<ManyVidsMetadata>(applicationLD);
+                sceneID.Add(DateTime.Parse(metadata.UploadDate).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
             }
 
             var searchResult = await Helper.GetSearchResultsFromUpdate(this, siteNum, sceneID.ToArray(), searchDate, cancellationToken).ConfigureAwait(false);
@@ -73,51 +80,30 @@ namespace PhoenixAdult.Sites
             string sceneURL = Helper.Decode(sceneID[0]),
                 sceneDate = string.Empty;
 
-            if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            var searchResults = await GetDataFromAPI("https://www.manyvids.com/bff/store" + sceneURL, cancellationToken).ConfigureAwait(false);
+            if (searchResults == null)
             {
-                sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+                return result;
             }
 
-            if (sceneID.Length > 1)
-            {
-                sceneDate = sceneID[1];
-            }
+            var videoPageElements = searchResults["data"];
 
-            Logger.Info($"sceneURL: {sceneURL}");
-            Logger.Info($"sceneDate: {sceneDate}");
-
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
-
-            Logger.Info($"sceneData: {sceneData}");
-
-            var applicationLD = sceneData.SelectSingleText("//script[@type='application/ld+json']");
-            Logger.Info($"applicationLD: {applicationLD}");
-            var metadata = JsonConvert.DeserializeObject<ManyVidsMetadata>(applicationLD);
-
-            if (metadata.Name.EndsWith(TitleWatermark))
-            {
-                metadata.Name = metadata.Name.Substring(0, metadata.Name.Length - TitleWatermark.Length);
-            }
-
-            result.Item.ExternalId = sceneURL;
-            result.Item.Name = metadata.Name;
-            result.Item.Overview = metadata.Description;
+            result.Item.ExternalId = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+            result.Item.Name = (string)videoPageElements["title"];
+            result.Item.Overview = (string)videoPageElements["description"];
 
             result.Item.AddStudio("ManyVids");
-            result.Item.AddStudio(metadata.Creator.Name);
+            var actor = new PersonInfo { Name = (string)videoPageElements["model"]["displayName"] };
+            result.People.Add(actor);
 
-            if (!string.IsNullOrEmpty(sceneDate))
+            if (DateTime.TryParseExact((string)videoPageElements["launchDate"], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
             {
-                if (DateTime.TryParseExact(sceneDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
-                {
-                    result.Item.PremiereDate = sceneDateObj;
-                }
-            }
+                result.Item.PremiereDate = sceneDateObj;
+             }
 
-            var keywords = await this.GetKeywords(siteNum, sceneData, cancellationToken).ConfigureAwait(false);
-            foreach (var genre in keywords)
+            foreach (var genre in videoPageElements["tagList"])
             {
-                result.Item.AddGenre(genre);
+                result.Item.AddGenre((string)genre["label"]);
             }
 
             return result;
@@ -133,14 +119,14 @@ namespace PhoenixAdult.Sites
             }
 
             var sceneURL = Helper.Decode(sceneID[0]);
-            if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            var searchResults = await GetDataFromAPI("https://www.manyvids.com/bff/store" + sceneURL, cancellationToken).ConfigureAwait(false);
+            if (searchResults == null)
             {
-                sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+                return result;
             }
 
-            var data = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
-
-            var imgUrl = data.SelectSingleText("//div[@id='rmpPlayer']/@data-video-screenshot");
+            var videoPageElements = searchResults["data"];
+            var imgUrl = (string)videoPageElements["screenshot"];
             if (!string.IsNullOrEmpty(imgUrl))
             {
                 result.Add(new RemoteImageInfo
@@ -153,63 +139,27 @@ namespace PhoenixAdult.Sites
             return result;
         }
 
-        private async Task<IEnumerable<string>> GetKeywords(int[] siteNum, HtmlNode rootNode, CancellationToken cancellationToken)
+        public static async Task<JObject> GetDataFromAPI(string url, CancellationToken cancellationToken)
         {
-            var result = Enumerable.Empty<string>();
+            JObject json = null;
 
-            var tagsListNode = rootNode.SelectNodesSafe("//script").FirstOrDefault(node => node.InnerHtml.Contains("tagsIdsList"));
-            if (tagsListNode == default)
-            {
-                return result;
-            }
-
-            var tagsListMatch = this.tagsListMatch.Match(tagsListNode.InnerHtml);
-            if (!tagsListMatch.Success || tagsListMatch.Groups.Count != 2)
-            {
-                return result;
-            }
-
-            var tagsList = tagsListMatch.Groups[1].Captures[0].Value.Split(",").Select(val => int.Parse(val));
-
-            var mvToken = rootNode.SelectSingleText("html/@data-mvtoken");
-            var headers = new Dictionary<string, string>
-            {
-                { "x-requested-with", "XMLHttpRequest" },
-            };
-            var url = Helper.GetSearchBaseURL(siteNum) + $"/includes/json/vid_categories.php?mvtoken={mvToken}";
-            var http = await HTTP.Request(url, cancellationToken, headers).ConfigureAwait(false);
+            Logger.Info($"Requesting data: {url}");
+            var http = await HTTP.Request(url, cancellationToken).ConfigureAwait(false);
             if (http.IsOK)
             {
-                var allKeywords = JsonConvert.DeserializeObject<ManyVidsKeyword[]>(http.Content).ToDictionary(keyword => keyword.Id, keyword => keyword.Label);
-                result = tagsList.Select(keywordId => allKeywords[keywordId]);
+                json = JObject.Parse(http.Content);
+            }
+            else
+            {
+                Logger.Error($"Failed to get data ({http.StatusCode}): {http.Content}");
             }
 
-            return result;
-        }
-
-        private class ManyVidsKeyword
-        {
-            public string Label { get; set; }
-
-            public int Id { get; set; }
+            return json;
         }
 
         private class ManyVidsMetadata
         {
-            public string Name { get; set; }
-
-            public string Description { get; set; }
-
-            public List<string> Keywords { get; set; }
-
-            public ManyVidsMetadataCreator Creator { get; set; }
-
-            internal class ManyVidsMetadataCreator
-            {
-                public string Name { get; set; }
-
-                public string Url { get; set; }
-            }
+            public string UploadDate { get; set; }
         }
     }
 }

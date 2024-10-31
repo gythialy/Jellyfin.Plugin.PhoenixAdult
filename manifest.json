@@ -8,20 +8,28 @@
         "overview": "Manage Your Adult Videos in Jellyfin/Emby",
         "versions": [
             {
-                "checksum": "73F45D12B67AE17ED9CDF206E72EBE85",
+                "checksum": "6907B948A59762924A850FF87C9ED146",
                 "changelog": "Minor Changes",
                 "targetAbi": "10.9.0.0",
-                "sourceUrl": "https://github.com/Andrer757/Jellyfin.Plugin.PhoenixAdult/releases/download/v2024.1026.1903.0/Jellyfin.Plugin.PhoenixAdult@v2024.1026.1903.0.zip",
+                "sourceUrl": "https://github.com/Andrer757/Jellyfin.Plugin.PhoenixAdult/releases/download/v2024.1031.1710.0/Jellyfin.Plugin.PhoenixAdult@v2024.1031.1710.0.zip",
+                "timestamp": "2024-10-31 12:55:00",
+                "version": "2024.1031.1710.0"
+            },
+            {
+                "checksum": "930FDC1BC2FE29D9823AC8336B6ACDD1",
+                "changelog": "Minor Changes",
+                "targetAbi": "10.9.0.0",
+                "sourceUrl": "https://github.com/Andrer757/Jellyfin.Plugin.PhoenixAdult/releases/download/v2024.1026.1922.0/Jellyfin.Plugin.PhoenixAdult@v2024.1026.1922.0.zip",
                 "timestamp": "2024-10-09 12:55:00",
-                "version": "2024.1026.1903.0"
+                "version": "2024.1026.1922.0"
             },
             {
                 "checksum": "73F45D12B67AE17ED9CDF206E72EBE85",
                 "changelog": "Minor Changes",
                 "targetAbi": "10.9.0.0",
-                "sourceUrl": "https://github.com/Andrer757/Jellyfin.Plugin.PhoenixAdult/releases/download/v2024.1026.1903.0/Jellyfin.Plugin.PhoenixAdult@v2024.1026.1903.0.zip",
+                "sourceUrl": "https://github.com/Andrer757/Jellyfin.Plugin.PhoenixAdult/releases/download/v2024.1026.1725.0/Jellyfin.Plugin.PhoenixAdult@v2024.1026.1725.0.zip",
                 "timestamp": "2024-10-09 12:55:00",
-                "version": "2024.1026.1903.0"
+                "version": "2024.1026.1725.0"
             },
             {
                 "checksum": "CEAC4C882DE138E2F4615B196E6A3175",
