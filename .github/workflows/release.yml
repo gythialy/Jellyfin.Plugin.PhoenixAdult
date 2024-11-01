@@ -48,7 +48,7 @@ jobs:
         run: |
           git config --global user.name  'phoenixadult-bot'
           git config --global user.email 'phoenixadult-bot@users.noreply.github.com'
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${vars.REPOSITORY}
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Andrer757/Jellyfin.Plugin.PhoenixAdult.git
 
           git checkout --orphan dist
           git rm -rf .
