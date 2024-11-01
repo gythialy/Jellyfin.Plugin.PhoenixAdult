@@ -36,7 +36,8 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var sceneURL = new Uri(Helper.GetSearchBaseURL(siteNum) + $"/video/{sceneIDx}");
+            var url = Helper.GetSearchBaseURL(siteNum) + $"/video/{sceneIDx}";
+            var sceneURL = new Uri(url);
             var sceneID = new List<string> { Helper.Encode(sceneURL.AbsolutePath) };
 
             if (searchDate.HasValue)
@@ -45,7 +46,7 @@ namespace PhoenixAdult.Sites
             }
             else
             {
-                var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
+                var sceneData = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
                 var applicationLD = sceneData.SelectSingleText("//script[@type='application/ld+json']");
                 var metadata = JsonConvert.DeserializeObject<ManyVidsMetadata>(applicationLD);
                 Logger.Info($"sceneData: {sceneData})");
