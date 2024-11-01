@@ -48,6 +48,9 @@ namespace PhoenixAdult.Sites
                 var sceneData = await HTML.ElementFromURL(sceneURL.AbsolutePath, cancellationToken).ConfigureAwait(false);
                 var applicationLD = sceneData.SelectSingleText("//script[@type='application/ld+json']");
                 var metadata = JsonConvert.DeserializeObject<ManyVidsMetadata>(applicationLD);
+                Logger.Info($"sceneData: {sceneData})");
+                Logger.Info($"applicationLD: {applicationLD}");
+                Logger.Info($"metadata: {metadata.UploadDate}");
                 sceneID.Add(DateTime.Parse(metadata.UploadDate).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
             }
 
