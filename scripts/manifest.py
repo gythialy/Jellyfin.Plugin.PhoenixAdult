@@ -29,7 +29,7 @@ def main():
         .removeprefix('v') \
         .removesuffix('.zip')
 
-    with urlopen('https://raw.githubusercontent.com/Andrer757/Jellyfin.Plugin.PhoenixAdult/dist/manifest.json') as f:
+    with urlopen('https://raw.githubusercontent.com/Andrer757/Jellyfin.Plugin.PhoenixAdult/refs/heads/master/manifest.json') as f:
         manifest = json.load(f)
 
     manifest[0]['versions'].insert(0, generate(filename, version))
