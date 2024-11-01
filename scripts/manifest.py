@@ -16,7 +16,7 @@ def generate(filename, version):
         'checksum': md5sum(filename),
         'changelog': 'Auto Released by Actions',
         'targetAbi': '10.9.0.0',
-        'sourceUrl': 'https://github.com/gythialy/Jellyfin.Plugin.PhoenixAdult/releases/download/'
+        'sourceUrl': 'https://github.com/Andrer757/Jellyfin.Plugin.PhoenixAdult/releases/download/'
                      f'v{version}/Jellyfin.plugin.PhoenixAdult@v{version}.zip',
         'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
         'version': version
@@ -29,7 +29,7 @@ def main():
         .removeprefix('v') \
         .removesuffix('.zip')
 
-    with urlopen('https://raw.githubusercontent.com/gythialy/Jellyfin.Plugin.PhoenixAdult/dist/manifest.json') as f:
+    with urlopen('https://raw.githubusercontent.com/Andrer757/Jellyfin.Plugin.PhoenixAdult/dist/manifest.json') as f:
         manifest = json.load(f)
 
     manifest[0]['versions'].insert(0, generate(filename, version))
