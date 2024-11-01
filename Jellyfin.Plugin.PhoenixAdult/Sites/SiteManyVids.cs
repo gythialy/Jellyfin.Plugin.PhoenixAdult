@@ -45,7 +45,7 @@ namespace PhoenixAdult.Sites
             }
             else
             {
-                var sceneData = await HTML.ElementFromURL(sceneURL.AbsolutePath, cancellationToken).ConfigureAwait(false);
+                var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
                 var applicationLD = sceneData.SelectSingleText("//script[@type='application/ld+json']");
                 var metadata = JsonConvert.DeserializeObject<ManyVidsMetadata>(applicationLD);
                 Logger.Info($"sceneData: {sceneData})");
