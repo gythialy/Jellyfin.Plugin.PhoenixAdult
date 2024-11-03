@@ -100,10 +100,8 @@ namespace PhoenixAdult.Sites
             var actor = new PersonInfo { Name = (string)videoPageElements["model"]["displayName"] };
             result.People.Add(actor);
 
-            if (DateTime.TryParseExact((string)videoPageElements["launchDate"], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
-            {
-                result.Item.PremiereDate = sceneDateObj;
-             }
+            var launchDate = (string)videoPageElements["launchDate"];
+            result.Item.PremiereDate = DateTime.Parse(launchDate, null, DateTimeStyles.AssumeUniversal);
 
             foreach (var genre in videoPageElements["tagList"])
             {
@@ -137,6 +135,11 @@ namespace PhoenixAdult.Sites
                 {
                     Url = imgUrl,
                     Type = ImageType.Primary,
+                });
+                result.Add(new RemoteImageInfo
+                {
+                    Url = imgUrl,
+                    Type = ImageType.Backdrop,
                 });
             }
 
