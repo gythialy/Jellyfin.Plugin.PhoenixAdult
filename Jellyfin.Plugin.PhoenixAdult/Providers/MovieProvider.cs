@@ -282,9 +282,17 @@ namespace PhoenixAdult.Providers
                 if (result.HasMetadata)
                 {
                     result.Item.OfficialRating = "XXX";
-                    result.Item.ProviderIds.Update(this.Name, sceneID[this.Name]);
 
-                    result.Item.Name = HttpUtility.HtmlDecode(result.Item.Name).Trim();
+                    // Add null check before accessing sceneID
+                    if (sceneID != null && sceneID.ContainsKey(this.Name))
+                    {
+                        result.Item.ProviderIds.Update(this.Name, sceneID[this.Name]);
+                    }
+
+                    if (result.Item.Name != null)
+                    {
+                        result.Item.Name = HttpUtility.HtmlDecode(result.Item.Name).Trim();
+                    }
 
                     if (!string.IsNullOrEmpty(result.Item.Overview))
                     {
