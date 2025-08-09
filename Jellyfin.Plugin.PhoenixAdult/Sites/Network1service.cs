@@ -104,7 +104,6 @@ namespace PhoenixAdult.Sites
             }
 
             var searchSceneID = searchTitle.Split()[0];
-            var sceneTypes = new List<string> { "scene", "movie", "serie" };
             if (!int.TryParse(searchSceneID, out _))
             {
                 searchSceneID = null;
@@ -116,6 +115,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
+            var sceneTypes = new List<string> { "scene", "movie", "serie", "trailer" };
             foreach (var sceneType in sceneTypes)
             {
                 string url;
@@ -138,7 +138,7 @@ namespace PhoenixAdult.Sites
                 {
                     string sceneID = (string)searchResult["id"],
                             curID = $"{sceneID}#{sceneType}",
-                            sceneName = (string)searchResult["title"],
+                            sceneName = ((string)searchResult["title"]).Replace("ï¿½", "\'"),
                             scenePoster = string.Empty;
                     var sceneDateObj = (DateTime)searchResult["dateReleased"];
 
@@ -228,8 +228,19 @@ namespace PhoenixAdult.Sites
 
             result.Item.ExternalId = sceneURL;
 
-            result.Item.Name = (string)sceneData["title"];
-            result.Item.Overview = (string)sceneData["description"];
+            var description = String.Empty;
+            if (sceneData.ContainsKey("description"))
+            {
+                description = (string)sceneData["description"];
+            }
+            else if (sceneData.ContainsKey("parent") && ((JObject)sceneData["parent"]).ContainsKey("description"))
+            {
+                description = (string)sceneData["parent"]["description"];
+            }
+
+            result.Item.Name = ((string)sceneData["title"]).Replace("ï¿½", "\'");
+            result.Item.SortName = ((string)sceneData["title"]).Replace("ï¿½", "\'");
+            result.Item.Overview = description;
             result.Item.AddStudio((string)sceneData["brand"]);
             if (sceneData.ContainsKey("collections") && sceneData["collections"].Type == JTokenType.Array)
             {
@@ -239,7 +250,13 @@ namespace PhoenixAdult.Sites
                 }
             }
 
+            if (sceneData.ContainsKey("parent") && ((JObject)sceneData["parent"]).ContainsKey("title"))
+            {
+                result.Item.AddStudio((string)sceneData["parent"]["title"]);
+            }
+
             var sceneDateObj = (DateTime)sceneData["dateReleased"];
+            result.Item.ProductionYear = sceneDateObj.Year;
             result.Item.PremiereDate = sceneDateObj;
 
             foreach (var genreLink in sceneData["tags"])
@@ -259,7 +276,7 @@ namespace PhoenixAdult.Sites
 
                     var actor = new PersonInfo
                     {
-                        Name = (string)actorLink["name"],
+                        Name = (string)actorData["name"],
                     };
 
                     if (actorData["images"] != null && actorData["images"].Type == JTokenType.Object)

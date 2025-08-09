@@ -24,7 +24,7 @@ namespace PhoenixAdult.Sites
             if (!string.IsNullOrEmpty(Plugin.Instance.Configuration.MetadataAPIToken))
             {
                 headers.Add("Authorization", $"Bearer {Plugin.Instance.Configuration.MetadataAPIToken}");
-                headers.Add("User-Agent", $"{Consts.PluginInstance}/{Consts.PluginVersion}");
+                headers.Add("Accept", "application/json");
             }
 
             var http = await HTTP.Request(url, cancellationToken, headers).ConfigureAwait(false);
