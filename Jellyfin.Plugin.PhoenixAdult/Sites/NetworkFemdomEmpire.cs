@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using HtmlAgilityPack;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -15,61 +18,55 @@ namespace PhoenixAdult.Sites
 {
     public class NetworkFemdomEmpire : IProviderBase
     {
+        private static readonly Dictionary<string, (string curID, string name)> ManualMatch = new Dictionary<string, (string, string)>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Extreme Strap on Training", ("https://femdomempire.com/tour/trailers/EXTREMEStrap-OnTraining.html", "EXTREME Strap-On Training [Femdom Empire] 2012-04-11") },
+            { "Cock Locked", ("https://femdomempire.com/tour/trailers/CockLocked.html", "Cock Locked [Femdom Empire] 2012-04-20") },
+            { "Oral Servitude", ("https://femdomempire.com/tour/trailers/OralServitude.html", "Oral Servitude [Femdom Empire] 2012-04-08") },
+        };
+
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            if (siteNum == null)
+            if (siteNum == null) return result;
+
+            if (ManualMatch.TryGetValue(searchTitle, out var match))
             {
+                result.Add(new RemoteSearchResult
+                {
+                    ProviderIds = { { Plugin.Instance.Name, Helper.Encode(match.curID) } },
+                    Name = match.name,
+                    SearchProviderName = Plugin.Instance.Name
+                });
                 return result;
             }
 
-            var url = Helper.GetSearchSearchURL(siteNum) + searchTitle;
-            var data = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
+            var url = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
+            var data = await HTML.ElementFromURL(url, cancellationToken);
+            if (data == null) return result;
 
-            var searchResults = data.SelectNodesSafe("//div[contains(@class, 'item') and contains(@class, 'hover')]");
+            var searchResults = data.SelectNodes("//div[contains(@class, 'item-info')]");
+            if (searchResults == null) return result;
+
             foreach (var searchResult in searchResults)
             {
-                var sceneURL = new Uri(searchResult.SelectSingleText(".//a/@href"));
-                string curID = Helper.Encode(sceneURL.AbsolutePath),
-                    sceneName = searchResult.SelectSingleText(".//div[contains(@class, 'item-info')]//a"),
-                    sceneDate = searchResult.SelectSingleText(".//span[@class='date']"),
-                    scenePoster = string.Empty;
+                var sceneURLNode = searchResult.SelectSingleNode(".//a");
+                var sceneDateNode = searchResult.SelectSingleNode(".//span[@class='date']");
+                if (sceneURLNode == null || sceneDateNode == null) continue;
 
-                var res = new RemoteSearchResult
-                {
-                    ProviderIds = { { Plugin.Instance.Name, curID } },
-                    Name = sceneName,
-                };
+                string curID = Helper.Encode(sceneURLNode.GetAttributeValue("href", ""));
+                string sceneName = sceneURLNode.InnerText.Trim();
 
-                var scenePosterNode = searchResult.SelectSingleNode(".//img");
-                if (scenePosterNode.Attributes.Contains("src0_1x"))
+                if (DateTime.TryParseExact(sceneDateNode.InnerText.Trim(), "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var releaseDate))
                 {
-                    scenePoster = scenePosterNode.Attributes["src0_1x"].Value;
-                }
-                else
-                {
-                    if (scenePosterNode.Attributes.Contains("src"))
+                    result.Add(new RemoteSearchResult
                     {
-                        scenePoster = scenePosterNode.Attributes["src"].Value;
-                    }
+                        ProviderIds = { { Plugin.Instance.Name, curID } },
+                        Name = $"{sceneName} [Femdom Empire] {releaseDate:yyyy-MM-dd}",
+                        SearchProviderName = Plugin.Instance.Name,
+                        PremiereDate = releaseDate
+                    });
                 }
-
-                if (!string.IsNullOrEmpty(scenePoster))
-                {
-                    if (!scenePoster.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                    {
-                        scenePoster = Helper.GetSearchBaseURL(siteNum) + scenePoster;
-                    }
-
-                    res.ImageUrl = scenePoster;
-                }
-
-                if (DateTime.TryParseExact(sceneDate, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
-                {
-                    res.PremiereDate = sceneDateObj;
-                }
-
-                result.Add(res);
             }
 
             return result;
@@ -83,62 +80,49 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            if (sceneID == null)
-            {
-                return result;
-            }
-
-            var sceneURL = Helper.Decode(sceneID[0]);
-            if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-            {
+            string sceneURL = Helper.Decode(sceneID[0]);
+            if (!sceneURL.StartsWith("http"))
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken);
+            if (sceneData == null) return result;
+
+            var movie = (Movie)result.Item;
+            movie.Name = sceneData.SelectSingleNode("//div[contains(@class, 'videoDetails')]//h3")?.InnerText.Trim();
+            movie.Overview = sceneData.SelectSingleNode("//div[contains(@class, 'videoDetails')]//p")?.InnerText.Trim();
+            movie.AddStudio("Femdom Empire");
+
+            string tagline = Helper.GetSearchSiteName(siteNum);
+            movie.AddTag(tagline);
+
+            var dateNode = sceneData.SelectSingleNode("//div[@class='videoInfo clear']//p")?.InnerText.Replace("Date Added:", "").Trim();
+            if (DateTime.TryParseExact(dateNode, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+            {
+                movie.PremiereDate = sceneDateObj;
+                movie.ProductionYear = sceneDateObj.Year;
             }
 
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
-
-            result.Item.ExternalId = sceneURL;
-
-            result.Item.Name = sceneData.SelectSingleText("//div[contains(@class, 'videoDetails')]//h3");
-            result.Item.Overview = sceneData.SelectSingleText("//div[contains(@class, 'videoDetails')]//p");
-
-            var dateNode = sceneData.SelectSingleText("//div[contains(@class, 'videoInfo')]//p");
-            if (!string.IsNullOrEmpty(dateNode))
+            var genreNodes = sceneData.SelectNodes("//div[contains(@class, 'featuring')][2]//ul//li/a");
+            if (genreNodes != null)
             {
-                var date = dateNode.Replace("Date Added:", string.Empty, StringComparison.OrdinalIgnoreCase).Trim();
-                if (DateTime.TryParseExact(date, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+                foreach (var genreLink in genreNodes)
                 {
-                    result.Item.PremiereDate = sceneDateObj;
+                    movie.AddGenre(genreLink.InnerText.Trim());
+                }
+            }
+            movie.AddGenre("Femdom");
+
+            var actorsNode = sceneData.SelectNodes("//div[contains(@class, 'featuring')][1]/ul/li/a");
+            if (actorsNode != null)
+            {
+                foreach (var actorLink in actorsNode)
+                {
+                    result.People.Add(new PersonInfo { Name = actorLink.InnerText.Trim(), Type = PersonType.Actor });
                 }
             }
 
-            var genreNode = sceneData.SelectNodesSafe("//div[contains(@class, 'featuring')][2]//ul//li");
-            foreach (var genreLink in genreNode)
-            {
-                var genreName = genreLink.InnerText
-                    .Replace("categories:", string.Empty, StringComparison.OrdinalIgnoreCase)
-                    .Replace("tags:", string.Empty, StringComparison.OrdinalIgnoreCase);
-
-                if (!string.IsNullOrEmpty(genreName))
-                {
-                    result.Item.AddGenre(genreName);
-                }
-            }
-
-            result.Item.AddGenre("Femdom");
-
-            var actorsNode = sceneData.SelectNodesSafe("//div[contains(@class, 'featuring')][1]/ul/li");
-            foreach (var actorLink in actorsNode)
-            {
-                var actorName = actorLink.InnerText.Replace("Featuring:", string.Empty, StringComparison.OrdinalIgnoreCase);
-
-                if (!string.IsNullOrEmpty(actorName))
-                {
-                    result.People.Add(new PersonInfo
-                    {
-                        Name = actorName,
-                    });
-                }
-            }
+            if (movie.Name.Equals("Owned by Alexis", StringComparison.OrdinalIgnoreCase))
+                result.People.Add(new PersonInfo { Name = "Alexis Monroe", Type = PersonType.Actor });
 
             return result;
         }
@@ -146,40 +130,26 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var result = new List<RemoteImageInfo>();
-
-            if (sceneID == null)
-            {
-                return result;
-            }
-
-            var sceneURL = Helper.Decode(sceneID[0]);
-            if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-            {
+            string sceneURL = Helper.Decode(sceneID[0]);
+            if (!sceneURL.StartsWith("http"))
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
-            }
 
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken);
+            if (sceneData == null) return result;
 
-            var image = sceneData.SelectSingleText("//a[@class='fake_trailer']//img/@src0_1x");
-            if (!string.IsNullOrEmpty(image))
+            var imageNode = sceneData.SelectSingleNode("//a[@class='fake_trailer']//img");
+            if (imageNode != null)
             {
-                if (!image.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                string image = imageNode.GetAttributeValue("src0_1x", "");
+                if (!string.IsNullOrEmpty(image))
                 {
-                    image = Helper.GetSearchBaseURL(siteNum) + image;
+                    if (!image.StartsWith("http"))
+                        image = Helper.GetSearchBaseURL(siteNum) + image;
+
+                    result.Add(new RemoteImageInfo { Url = image, Type = ImageType.Primary });
+                    result.Add(new RemoteImageInfo { Url = image, Type = ImageType.Backdrop });
                 }
-
-                result.Add(new RemoteImageInfo
-                {
-                    Url = image,
-                    Type = ImageType.Primary,
-                });
-                result.Add(new RemoteImageInfo
-                {
-                    Url = image,
-                    Type = ImageType.Backdrop,
-                });
             }
-
             return result;
         }
     }

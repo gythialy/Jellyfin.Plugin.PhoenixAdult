@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Entities;
@@ -9,6 +10,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Newtonsoft.Json.Linq;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -16,11 +18,9 @@ namespace PhoenixAdult.Sites
 {
     public class NetworkMetadataAPI : IProviderBase
     {
-        public static async Task<JObject> GetDataFromAPI(string url, CancellationToken cancellationToken)
+        private async Task<JObject> GetDataFromAPI(string url, CancellationToken cancellationToken)
         {
-            JObject json = null;
             var headers = new Dictionary<string, string>();
-
             if (!string.IsNullOrEmpty(Plugin.Instance.Configuration.MetadataAPIToken))
             {
                 headers.Add("Authorization", $"Bearer {Plugin.Instance.Configuration.MetadataAPIToken}");
@@ -28,55 +28,36 @@ namespace PhoenixAdult.Sites
             }
 
             var http = await HTTP.Request(url, cancellationToken, headers).ConfigureAwait(false);
-            if (http.IsOK)
-            {
-                json = JObject.Parse(http.Content);
-            }
-
-            return json;
+            return http.IsOK ? JObject.Parse(http.Content) : null;
         }
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
             if (siteNum == null || string.IsNullOrEmpty(searchTitle))
-            {
                 return result;
-            }
 
-            if (searchDate.HasValue)
-            {
-                searchTitle += searchDate.Value.ToString("yyyy-MM-dd");
-            }
-
-            string url = Helper.GetSearchSearchURL(siteNum) + $"/scenes?parse={searchTitle}";
-            var searchResults = await GetDataFromAPI(url, cancellationToken).ConfigureAwait(false);
-            if (searchResults == null)
-            {
+            string url = $"{Helper.GetSearchSearchURL(siteNum)}/scenes?parse={Uri.EscapeDataString(searchTitle)}";
+            var searchResults = await GetDataFromAPI(url, cancellationToken);
+            if (searchResults?["data"] == null)
                 return result;
-            }
 
-            foreach (var (idx, searchResult) in searchResults["data"].WithIndex())
+            foreach (var searchResult in searchResults["data"])
             {
-                string curID = (string)searchResult["_id"],
-                    sceneName = (string)searchResult["title"],
-                    sceneDate = (string)searchResult["date"],
-                    scenePoster = (string)searchResult["poster"];
+                string curID = (string)searchResult["_id"];
+                string titleNoFormatting = (string)searchResult["title"];
+                string siteName = (string)searchResult["site"]?["name"];
+                string sceneDate = (string)searchResult["date"];
+                DateTime.TryParseExact(sceneDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var releaseDate);
 
-                var res = new RemoteSearchResult
+                result.Add(new RemoteSearchResult
                 {
                     ProviderIds = { { Plugin.Instance.Name, curID } },
-                    Name = sceneName,
-                    ImageUrl = scenePoster,
-                    IndexNumberEnd = idx,
-                };
-
-                if (DateTime.TryParseExact(sceneDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
-                {
-                    res.PremiereDate = sceneDateObj;
-                }
-
-                result.Add(res);
+                    Name = $"{titleNoFormatting} [MetadataAPI/{siteName}] {releaseDate:yyyy-MM-dd}",
+                    PremiereDate = releaseDate,
+                    SearchProviderName = Plugin.Instance.Name,
+                    ImageUrl = (string)searchResult["poster"]
+                });
             }
 
             return result;
@@ -90,71 +71,67 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            if (sceneID == null)
-            {
+            string url = $"{Helper.GetSearchSearchURL(siteNum)}/scenes/{sceneID[0]}";
+            var sceneData = await GetDataFromAPI(url, cancellationToken);
+            if (sceneData?["data"] == null)
                 return result;
-            }
 
-            var url = Helper.GetSearchSearchURL(siteNum) + $"/scenes/{sceneID[0]}";
-            var sceneData = await GetDataFromAPI(url, cancellationToken).ConfigureAwait(false);
-            if (sceneData == null)
+            var details = (JObject)sceneData["data"];
+            var movie = (Movie)result.Item;
+
+            movie.Name = (string)details["title"];
+            movie.Overview = (string)details["description"];
+
+            if (details["site"]?.Type == JTokenType.Object)
             {
-                return result;
-            }
+                string studioName = (string)details["site"]["name"];
+                var collections = new List<string> { studioName };
 
-            sceneData = (JObject)sceneData["data"];
-            var sceneURL = Helper.GetSearchBaseURL(siteNum) + $"/scenes/{sceneID[0]}";
+                int? siteId = (int?)details["site"]["id"];
+                int? networkId = (int?)details["site"]["network_id"];
 
-            result.Item.ExternalId = sceneURL;
-
-            result.Item.Name = (string)sceneData["title"];
-            result.Item.Overview = (string)sceneData["description"];
-            if (sceneData.ContainsKey("site") && sceneData["site"].Type == JTokenType.Object)
-            {
-                result.Item.AddStudio((string)sceneData["site"]["name"]);
-
-                int? site_id = (int)sceneData["site"]["id"],
-                    network_id = (int?)sceneData["site"]["network_id"];
-
-                if (network_id.HasValue && !site_id.Equals(network_id))
+                if (networkId.HasValue && siteId != networkId)
                 {
-                    url = Helper.GetSearchSearchURL(siteNum) + $"/sites/{network_id}";
-
-                    var siteData = await GetDataFromAPI(url, cancellationToken).ConfigureAwait(false);
-                    if (siteData != null)
+                    string networkUrl = $"{Helper.GetSearchSearchURL(siteNum)}/sites/{networkId}";
+                    var networkData = await GetDataFromAPI(networkUrl, cancellationToken);
+                    if (networkData?["data"] != null)
                     {
-                        result.Item.AddStudio((string)siteData["data"]["name"]);
+                        studioName = (string)networkData["data"]["name"];
+                        collections.Add(studioName);
                     }
                 }
+
+                movie.AddStudio(studioName);
+                foreach (var collection in collections)
+                    movie.AddTag(collection);
             }
 
-            var sceneDate = (string)sceneData["date"];
-            if (DateTime.TryParseExact(sceneDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+            if (DateTime.TryParseExact((string)details["date"], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
             {
-                result.Item.PremiereDate = sceneDateObj;
+                movie.PremiereDate = sceneDateObj;
+                movie.ProductionYear = sceneDateObj.Year;
             }
 
-            if (sceneData.ContainsKey("tags"))
+            if (details["tags"] != null)
             {
-                foreach (var genreLink in sceneData["tags"])
+                foreach (var genreLink in details["tags"])
+                    movie.AddGenre((string)genreLink["name"]);
+            }
+
+            if (details["performers"] != null)
+            {
+                foreach (var actorLink in details["performers"])
                 {
-                    var genreName = (string)genreLink["name"];
+                    string actorName = (string)actorLink["name"];
+                    if (actorLink["parent"]?["name"] != null)
+                        actorName = (string)actorLink["parent"]["name"];
 
-                    result.Item.AddGenre(genreName);
-                }
-            }
-
-            if (sceneData.ContainsKey("performers"))
-            {
-                foreach (var actorLink in sceneData["performers"])
-                {
-                    var actor = new PersonInfo
+                    result.People.Add(new PersonInfo
                     {
-                        Name = (string)actorLink["name"],
+                        Name = actorName,
                         ImageUrl = (string)actorLink["image"],
-                    };
-
-                    result.People.Add(actor);
+                        Type = PersonType.Actor
+                    });
                 }
             }
 
@@ -164,36 +141,20 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var result = new List<RemoteImageInfo>();
-
-            if (sceneID == null)
-            {
+            string url = $"{Helper.GetSearchSearchURL(siteNum)}/scenes/{sceneID[0]}";
+            var sceneData = await GetDataFromAPI(url, cancellationToken);
+            if (sceneData?["data"] == null)
                 return result;
-            }
 
-            var url = Helper.GetSearchSearchURL(siteNum) + $"/scenes/{sceneID[0]}";
-            var sceneData = await GetDataFromAPI(url, cancellationToken).ConfigureAwait(false);
-            if (sceneData == null)
-            {
-                return result;
-            }
+            var details = (JObject)sceneData["data"];
 
-            sceneData = (JObject)sceneData["data"];
+            string posterUrl = (string)details["posters"]?["large"];
+            if (!string.IsNullOrEmpty(posterUrl))
+                result.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
 
-            result.Add(new RemoteImageInfo
-            {
-                Url = (string)sceneData["poster"],
-                Type = ImageType.Primary,
-            });
-            result.Add(new RemoteImageInfo
-            {
-                Url = (string)sceneData["background"]["full"],
-                Type = ImageType.Primary,
-            });
-            result.Add(new RemoteImageInfo
-            {
-                Url = (string)sceneData["background"]["full"],
-                Type = ImageType.Backdrop,
-            });
+            string backgroundUrl = (string)details["background"]?["large"];
+            if (!string.IsNullOrEmpty(backgroundUrl))
+                result.Add(new RemoteImageInfo { Url = backgroundUrl, Type = ImageType.Backdrop });
 
             return result;
         }

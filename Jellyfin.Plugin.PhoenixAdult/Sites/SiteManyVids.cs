@@ -2,17 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using HtmlAgilityPack;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -20,46 +18,50 @@ namespace PhoenixAdult.Sites
 {
     public class SiteManyVids : IProviderBase
     {
-        private const string TitleWatermark = " - Manyvids";
+        private async Task<JObject> GetJSONfromPage(string url, CancellationToken cancellationToken)
+        {
+            var http = await HTTP.Request(url, cancellationToken);
+            if (http.IsOK)
+            {
+                var ldJsonNode = HTML.ElementFromString(http.Content).SelectSingleNode("//script[@type='application/ld+json']");
+                if (ldJsonNode != null)
+                    return JObject.Parse(ldJsonNode.InnerText);
+            }
+            return null;
+        }
+
+        private async Task<JObject> GetDataFromAPI(string url, CancellationToken cancellationToken)
+        {
+            var http = await HTTP.Request(url, cancellationToken);
+            return http.IsOK ? (JObject)JObject.Parse(http.Content)["data"] : null;
+        }
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            if (siteNum == null || string.IsNullOrEmpty(searchTitle))
-            {
-                return result;
-            }
+            if (siteNum == null || string.IsNullOrEmpty(searchTitle)) return result;
 
-            var splitedTitle = searchTitle.Split();
-            if (!int.TryParse(splitedTitle[0], out var sceneIDx))
-            {
-                return result;
-            }
+            string sceneID = searchTitle.Split(' ')[0];
+            if (!int.TryParse(sceneID, out _)) return result;
 
-            var url = Helper.GetSearchBaseURL(siteNum) + $"/video/{sceneIDx}";
-            var sceneURL = new Uri(url);
-            var sceneID = new List<string> { Helper.Encode(sceneURL.AbsolutePath) };
+            string sceneUrl = $"{Helper.GetSearchBaseURL(siteNum)}/video/{sceneID}";
+            var searchResult = await GetJSONfromPage(sceneUrl, cancellationToken);
+            if (searchResult == null) return result;
 
-            if (searchDate.HasValue)
-            {
-                sceneID.Add(searchDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
-            }
-            else
-            {
-                var sceneData = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
-                var applicationLD = sceneData.SelectSingleText("//script[@type='application/ld+json']");
-                var metadata = JsonConvert.DeserializeObject<ManyVidsMetadata>(applicationLD);
-                Logger.Info($"sceneData: {sceneData})");
-                Logger.Info($"applicationLD: {applicationLD}");
-                Logger.Info($"metadata: {metadata.UploadDate}");
-                sceneID.Add(DateTime.Parse(metadata.UploadDate).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
-            }
+            string titleNoFormatting = (string)searchResult["name"];
+            string curID = Helper.Encode(sceneUrl);
+            string searchID = sceneUrl.Split('/').Last().Split('-')[0];
+            string subSite = (string)searchResult["creator"]?["name"];
+            string releaseDate = string.Empty;
+            if (DateTime.TryParse((string)searchResult["uploadDate"], out var parsedDate))
+                releaseDate = parsedDate.ToString("yyyy-MM-dd");
 
-            var searchResult = await Helper.GetSearchResultsFromUpdate(this, siteNum, sceneID.ToArray(), searchDate, cancellationToken).ConfigureAwait(false);
-            if (searchResult.Any())
+            result.Add(new RemoteSearchResult
             {
-                result.AddRange(searchResult);
-            }
+                ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
+                Name = $"{titleNoFormatting} [ManyVids/{subSite}] {releaseDate}",
+                SearchProviderName = Plugin.Instance.Name
+            });
 
             return result;
         }
@@ -72,41 +74,41 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            if (sceneID == null)
+            string[] providerIds = sceneID[0].Split('|');
+            string sceneURL = Helper.Decode(providerIds[0]);
+            string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
+
+            string videoID = sceneURL.Split('/').Last().Split('-')[0];
+            var videoPageElements = await GetDataFromAPI($"https://www.manyvids.com/bff/store/video/{videoID}", cancellationToken);
+            if (videoPageElements == null) return result;
+
+            var movie = (Movie)result.Item;
+            movie.Name = (string)videoPageElements["title"]?.ToString().Trim();
+            movie.Overview = (string)videoPageElements["description"]?.ToString().Trim();
+            movie.AddStudio("ManyVids");
+
+            var tagline = (string)videoPageElements["model"]?["displayName"];
+            movie.AddTag(tagline);
+
+            if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var releaseDate))
             {
-                return result;
+                movie.PremiereDate = releaseDate;
+                movie.ProductionYear = releaseDate.Year;
             }
 
-            Logger.Info($"site: {siteNum})");
-            Logger.Info($"searched ID: {sceneID}");
-            Logger.Info($"cancellationToken: {cancellationToken}");
-
-            string sceneURL = Helper.Decode(sceneID[0]),
-                sceneDate = string.Empty;
-
-            var searchResults = await GetDataFromAPI("https://www.manyvids.com/bff/store" + sceneURL, cancellationToken).ConfigureAwait(false);
-            if (searchResults == null)
+            if (videoPageElements["tagList"] != null)
             {
-                return result;
+                foreach (var genreLink in videoPageElements["tagList"])
+                    movie.AddGenre((string)genreLink["label"]);
             }
 
-            var videoPageElements = searchResults["data"];
-
-            result.Item.ExternalId = Helper.GetSearchBaseURL(siteNum) + sceneURL;
-            result.Item.Name = (string)videoPageElements["title"];
-            result.Item.Overview = (string)videoPageElements["description"];
-
-            result.Item.AddStudio("ManyVids");
-            var actor = new PersonInfo { Name = (string)videoPageElements["model"]["displayName"] };
-            result.People.Add(actor);
-
-            var launchDate = (string)videoPageElements["launchDate"];
-            result.Item.PremiereDate = DateTime.Parse(launchDate, null, DateTimeStyles.AssumeUniversal);
-
-            foreach (var genre in videoPageElements["tagList"])
+            var actor = videoPageElements["model"];
+            result.People.Add(new PersonInfo
             {
-                result.Item.AddGenre((string)genre["label"]);
-            }
+                Name = (string)actor["displayName"],
+                ImageUrl = (string)actor["avatar"],
+                Type = PersonType.Actor
+            });
 
             return result;
         }
@@ -114,59 +116,18 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var result = new List<RemoteImageInfo>();
+            string videoID = Helper.Decode(sceneID[0].Split('|')[0]).Split('/').Last().Split('-')[0];
+            var videoPageElements = await GetDataFromAPI($"https://www.manyvids.com/bff/store/video/{videoID}", cancellationToken);
+            if (videoPageElements == null) return result;
 
-            if (sceneID == null)
-            {
-                return result;
-            }
-
-            var sceneURL = Helper.Decode(sceneID[0]);
-            var searchResults = await GetDataFromAPI("https://www.manyvids.com/bff/store" + sceneURL, cancellationToken).ConfigureAwait(false);
-            if (searchResults == null)
-            {
-                return result;
-            }
-
-            var videoPageElements = searchResults["data"];
-            var imgUrl = (string)videoPageElements["screenshot"];
+            string imgUrl = (string)videoPageElements["screenshot"];
             if (!string.IsNullOrEmpty(imgUrl))
             {
-                result.Add(new RemoteImageInfo
-                {
-                    Url = imgUrl,
-                    Type = ImageType.Primary,
-                });
-                result.Add(new RemoteImageInfo
-                {
-                    Url = imgUrl,
-                    Type = ImageType.Backdrop,
-                });
+                result.Add(new RemoteImageInfo { Url = imgUrl, Type = ImageType.Primary });
+                result.Add(new RemoteImageInfo { Url = imgUrl, Type = ImageType.Backdrop });
             }
 
             return result;
-        }
-
-        public static async Task<JObject> GetDataFromAPI(string url, CancellationToken cancellationToken)
-        {
-            JObject json = null;
-
-            Logger.Info($"Requesting data: {url}");
-            var http = await HTTP.Request(url, cancellationToken).ConfigureAwait(false);
-            if (http.IsOK)
-            {
-                json = JObject.Parse(http.Content);
-            }
-            else
-            {
-                Logger.Error($"Failed to get data ({http.StatusCode}): {http.Content}");
-            }
-
-            return json;
-        }
-
-        private class ManyVidsMetadata
-        {
-            public string UploadDate { get; set; }
         }
     }
 }
