@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using HtmlAgilityPack;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
@@ -18,68 +19,76 @@ namespace PhoenixAdult.Sites
 {
     public class NetworkBang : IProviderBase
     {
-        public static async Task<JObject> GetDataFromAPI(string url, string searchTitle, string searchType, CancellationToken cancellationToken)
-        {
-            JObject json = null;
-
-            var text = $"{{'query':{{'bool':{{'must':[{{'match':{{'{searchType}':'{searchTitle}'}}}},{{'match':{{'type':'movie'}}}}],'must_not':[{{'match':{{'type':'trailer'}}}}]}}}}}}".Replace('\'', '"');
-            var param = new StringContent(text, Encoding.UTF8, "application/json");
-            var headers = new Dictionary<string, string>
-            {
-                { "Authorization", "Basic YmFuZy1yZWFkOktqVDN0RzJacmQ1TFNRazI=" },
-            };
-
-            var http = await HTTP.Request(url, HttpMethod.Post, param, cancellationToken, headers).ConfigureAwait(false);
-            if (http.IsOK)
-            {
-                json = JObject.Parse(http.Content);
-            }
-
-            return json;
-        }
-
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            if (siteNum == null || string.IsNullOrEmpty(searchTitle))
-            {
-                return result;
-            }
+            var searchResults = new HashSet<string>();
 
-            JObject searchResults;
-            var searchSceneID = searchTitle.Split()[0];
-            if (int.TryParse(searchSceneID, out _))
+            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            foreach (var sceneURL in googleResults)
             {
-                searchResults = await GetDataFromAPI(Helper.GetSearchSearchURL(siteNum), searchSceneID, "identifier", cancellationToken).ConfigureAwait(false);
-            }
-            else
-            {
-                searchResults = await GetDataFromAPI(Helper.GetSearchSearchURL(siteNum), searchTitle, "name", cancellationToken).ConfigureAwait(false);
-            }
-
-            if (searchResults == null)
-            {
-                return result;
-            }
-
-            foreach (var searchResult in searchResults["hits"]["hits"])
-            {
-                var sceneData = searchResult["_source"];
-                string sceneID = (string)sceneData["identifier"],
-                        curID = sceneID,
-                        sceneName = (string)sceneData["name"],
-                        scenePoster = $"https://i.bang.com/covers/{sceneData["dvd"]["id"]}/front.jpg";
-                var sceneDateObj = (DateTime)sceneData["releaseDate"];
-
-                var item = new RemoteSearchResult
+                var url = sceneURL.Split('?')[0];
+                if (url.Contains("com/video/") && !url.Contains("index.php/"))
                 {
-                    ProviderIds = { { Plugin.Instance.Name, curID } },
-                    Name = sceneName,
-                    ImageUrl = scenePoster,
-                    PremiereDate = sceneDateObj,
-                };
+                    searchResults.Add(url);
+                }
+            }
 
-                result.Add(item);
+            var searchPageUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
+            var searchPageHtml = await HTML.ElementFromURL(searchPageUrl, cancellationToken);
+            if (searchPageHtml != null)
+            {
+                var searchResultNodes = searchPageHtml.SelectNodes("//div[contains(@class, 'movie-preview') or contains(@class, 'video_container')]");
+                if (searchResultNodes != null)
+                {
+                    foreach (var searchResultNode in searchResultNodes)
+                    {
+                        var sceneUrlNode = searchResultNode.SelectSingleNode("./a[contains(@class, 'group')]");
+                        if (sceneUrlNode == null) continue;
+
+                        string sceneUrl = sceneUrlNode.GetAttributeValue("href", "");
+                        if (!sceneUrl.StartsWith("http"))
+                            sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
+
+                        searchResults.Add(sceneUrl);
+                    }
+                }
+            }
+
+            foreach (var searchURL in searchResults)
+            {
+                var detailsPageHtml = await HTML.ElementFromURL(searchURL, cancellationToken);
+                if (detailsPageHtml == null) continue;
+
+                var ldJsonNode = detailsPageHtml.SelectSingleNode("//script[@type='application/ld+json'][contains(., 'thumbnail')]");
+                if (ldJsonNode == null) continue;
+
+                var videoPageElements = JObject.Parse(ldJsonNode.InnerText.Replace("\n", "").Trim());
+
+                string titleNoFormatting = videoPageElements["name"].ToString();
+                string curID = Helper.Encode(searchURL);
+                string releaseDateStr = string.Empty;
+
+                if (DateTime.TryParse(videoPageElements["datePublished"].ToString(), out var releaseDate))
+                {
+                    releaseDateStr = releaseDate.ToString("yyyy-MM-dd");
+                }
+                else if (searchDate.HasValue)
+                {
+                    releaseDateStr = searchDate.Value.ToString("yyyy-MM-dd");
+                }
+
+                int score = searchDate.HasValue ?
+                    (100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDateStr)) :
+                    (100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower()));
+
+                result.Add(new RemoteSearchResult
+                {
+                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDateStr}" } },
+                    Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDateStr}",
+                    Score = score,
+                    SearchProviderName = Plugin.Instance.Name
+                });
             }
 
             return result;
@@ -93,46 +102,88 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            if (sceneID == null)
+            string[] providerIds = sceneID[0].Split('|');
+            string sceneURL = Helper.Decode(providerIds[0]);
+            int siteNumVal = int.Parse(providerIds[1]);
+            string sceneDate = providerIds[2];
+
+            var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
+            if (detailsPageElements == null) return result;
+
+            var ldJsonNode = detailsPageElements.SelectSingleNode("//script[@type='application/ld+json'][contains(., 'thumbnail')]");
+            if (ldJsonNode == null) return result;
+            var videoPageElements = JObject.Parse(ldJsonNode.InnerText.Replace("\n", "").Trim());
+
+            var movie = (Movie)result.Item;
+            movie.Name = HTML.Clean(videoPageElements["name"].ToString());
+            movie.Overview = HTML.Clean(videoPageElements["description"].ToString());
+            movie.AddStudio(Regex.Replace(videoPageElements["productionCompany"]["name"].ToString().Trim(), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
+
+            string tagline = detailsPageElements.SelectSingleNode("//p[contains(., 'Series:')]/a[contains(@href, 'originals') or contains(@href, 'videos')]")?.InnerText.Trim();
+            if (!string.IsNullOrEmpty(tagline))
             {
-                return result;
+                movie.Tags.Add(Regex.Replace(tagline, @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
+            }
+            else
+            {
+                movie.Tags.Add(movie.Studios.First());
             }
 
-            var sceneData = await GetDataFromAPI(Helper.GetSearchSearchURL(siteNum), sceneID[0], "identifier", cancellationToken).ConfigureAwait(false);
-            if (sceneData == null)
+            string dvdTitle = detailsPageElements.SelectSingleNode("//p[contains(., 'Movie')]/a[contains(@href, 'dvd')]")?.InnerText.Trim();
+            if (!string.IsNullOrEmpty(dvdTitle) && siteNumVal == 1365)
+                movie.Tags.Add(dvdTitle);
+
+            if (DateTime.TryParse(videoPageElements["datePublished"].ToString(), out var releaseDate))
             {
-                return result;
+                movie.PremiereDate = releaseDate;
+                movie.ProductionYear = releaseDate.Year;
+            }
+            else if (DateTime.TryParse(sceneDate, out var parsedSceneDate))
+            {
+                movie.PremiereDate = parsedSceneDate;
+                movie.ProductionYear = parsedSceneDate.Year;
             }
 
-            sceneData = (JObject)sceneData["hits"]["hits"].First;
-
-            result.Item.ExternalId = Helper.GetSearchBaseURL(siteNum) + $"/{ConvertIdentifier((string)sceneData["_id"])}/{(string)sceneData["_id"]}/";
-            sceneData = (JObject)sceneData["_source"];
-
-            result.Item.Name = (string)sceneData["name"];
-            result.Item.Overview = (string)sceneData["description"];
-            result.Item.AddStudio((string)sceneData["studio"]["name"]);
-
-            var sceneDateObj = (DateTime)sceneData["releaseDate"];
-            result.Item.PremiereDate = sceneDateObj;
-
-            foreach (var genreLink in sceneData["genres"])
+            string actorXPath = (siteNumVal == 1365) ? "//div[contains(@class, 'clear-both')]//a[contains(@href, 'pornstar')]" : "//div[contains(@class, 'name')]/a[contains(@href, 'pornstar') and not(@aria-label)]";
+            var actorNodes = detailsPageElements.SelectNodes(actorXPath);
+            if (actorNodes != null)
             {
-                var genreName = (string)genreLink["name"];
-
-                result.Item.AddGenre(genreName);
-            }
-
-            foreach (var actorLink in sceneData["actors"])
-            {
-                string actorName = (string)actorLink["name"],
-                       actorPhoto = $"https://i.bang.com/pornstars/{actorLink["id"]}.jpg";
-
-                result.People.Add(new PersonInfo
+                foreach (var actorLink in actorNodes)
                 {
-                    Name = actorName,
-                    ImageUrl = actorPhoto,
-                });
+                    string actorName;
+                    string actorPhotoURL = string.Empty;
+                    if (siteNumVal == 1365)
+                    {
+                        actorName = actorLink.InnerText;
+                        string modelURL = Helper.GetSearchBaseURL(siteNum) + actorLink.GetAttributeValue("href", "");
+                        var modelPage = await HTML.ElementFromURL(modelURL, cancellationToken);
+                        if (modelPage != null)
+                        {
+                            var modelLdJson = modelPage.SelectSingleNode("//script[@type='application/ld+json'][contains(., 'Person')]");
+                            if (modelLdJson != null)
+                            {
+                                var modelElements = JObject.Parse(modelLdJson.InnerText.Trim());
+                                actorPhotoURL = modelElements["image"].ToString().Split('?')[0].Trim();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        actorName = actorLink.SelectSingleNode(".//span").InnerText;
+                        string img = actorLink.SelectSingleNode("../..//img").GetAttributeValue("src", "").Split('?')[0];
+                        if (!img.Contains("placeholder"))
+                            actorPhotoURL = img;
+                    }
+                    if (!string.IsNullOrEmpty(actorName))
+                        result.People.Add(new PersonInfo { Name = actorName, Type = PersonType.Actor, ImageUrl = actorPhotoURL });
+                }
+            }
+
+            var genreNodes = detailsPageElements.SelectNodes("//div[@class='actions']/a | //a[@class='genres']");
+            if (genreNodes != null)
+            {
+                foreach (var genreLink in genreNodes)
+                    movie.AddGenre(genreLink.InnerText);
             }
 
             return result;
@@ -140,50 +191,58 @@ namespace PhoenixAdult.Sites
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            var result = new List<RemoteImageInfo>();
+            var images = new List<RemoteImageInfo>();
 
-            if (sceneID == null)
+            string[] providerIds = sceneID[0].Split('|');
+            string sceneURL = Helper.Decode(providerIds[0]);
+
+            var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
+            if (detailsPageElements == null) return images;
+
+            var ldJsonNode = detailsPageElements.SelectSingleNode("//script[@type='application/ld+json'][contains(., 'thumbnail')]");
+            if (ldJsonNode == null) return images;
+            var videoPageElements = JObject.Parse(ldJsonNode.InnerText.Replace("\n", "").Trim());
+
+            var imageUrls = new List<string>();
+            string thumbnailUrl = videoPageElements["thumbnailUrl"].ToString();
+            if (thumbnailUrl.Contains("covers"))
             {
-                return result;
+                imageUrls.Add(thumbnailUrl);
             }
-
-            var sceneData = await GetDataFromAPI(Helper.GetSearchSearchURL(siteNum), sceneID[0], "identifier", cancellationToken).ConfigureAwait(false);
-            if (sceneData == null)
+            else
             {
-                return result;
-            }
-
-            sceneData = (JObject)sceneData["hits"]["hits"].First["_source"];
-            result.Add(new RemoteImageInfo
-            {
-                Url = $"https://i.bang.com/covers/{sceneData["dvd"]["id"]}/front.jpg",
-                Type = ImageType.Primary,
-            });
-
-            foreach (var image in sceneData["screenshots"])
-            {
-                result.Add(new RemoteImageInfo
+                var match = Regex.Match(thumbnailUrl, @"(?<=shots/)\d+");
+                if (match.Success)
                 {
-                    Url = $"https://i.bang.com/screenshots/{sceneData["dvd"]["id"]}/movie/1/{image["screenId"]}.jpg",
-                    Type = ImageType.Backdrop,
-                });
+                    string movieID = match.Groups[0].Value;
+                    imageUrls.Add($"https://i.bang.com/covers/{movieID}/front.jpg");
+                }
+                imageUrls.Add(thumbnailUrl);
             }
 
-            return result;
-        }
+            if (videoPageElements["trailer"] != null)
+            {
+                foreach(var img in videoPageElements["trailer"])
+                    imageUrls.Add(img["thumbnailUrl"].ToString());
+            }
 
-        private static string ConvertIdentifier(string identifier)
-        {
-            var bin = StringToByteArray(identifier);
-            return Convert.ToBase64String(bin).Replace('+', '-').Replace('/', '_').Replace('=', ',');
-        }
+            bool first = true;
+            foreach (var imageUrl in imageUrls.Distinct())
+            {
+                var imageInfo = new RemoteImageInfo { Url = imageUrl };
+                if (first)
+                {
+                    imageInfo.Type = ImageType.Primary;
+                    first = false;
+                }
+                else
+                {
+                    imageInfo.Type = ImageType.Backdrop;
+                }
+                images.Add(imageInfo);
+            }
 
-        private static byte[] StringToByteArray(string hex)
-        {
-            return Enumerable.Range(0, hex.Length)
-                             .Where(x => x % 2 == 0)
-                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
-                             .ToArray();
+            return images;
         }
     }
 }
