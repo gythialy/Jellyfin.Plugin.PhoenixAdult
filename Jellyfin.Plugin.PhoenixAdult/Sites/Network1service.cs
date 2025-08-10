@@ -138,7 +138,7 @@ namespace PhoenixAdult.Sites
                 {
                     string sceneID = (string)searchResult["id"],
                             curID = $"{sceneID}#{sceneType}",
-                            sceneName = ((string)searchResult["title"]).Replace("ï¿½", "\'"),
+                            sceneName = ((string)searchResult["title"]).Replace("ï¿½", "'"),
                             scenePoster = string.Empty;
                     var sceneDateObj = (DateTime)searchResult["dateReleased"];
 
@@ -238,8 +238,8 @@ namespace PhoenixAdult.Sites
                 description = (string)sceneData["parent"]["description"];
             }
 
-            result.Item.Name = ((string)sceneData["title"]).Replace("ï¿½", "\'");
-            result.Item.SortName = ((string)sceneData["title"]).Replace("ï¿½", "\'");
+            result.Item.Name = ((string)sceneData["title"]).Replace("ï¿½", "'");
+            result.Item.SortName = ((string)sceneData["title"]).Replace("ï¿½", "'");
             result.Item.Overview = description;
             result.Item.AddStudio((string)sceneData["brand"]);
             if (sceneData.ContainsKey("collections") && sceneData["collections"].Type == JTokenType.Array)
