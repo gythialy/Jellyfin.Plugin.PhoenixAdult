@@ -205,6 +205,11 @@ namespace PhoenixAdult.Helpers
         {
             var newTitle = title + " ";
 
+            if (Database.SiteList.Abbrieviations == null)
+            {
+                return newTitle.Trim();
+            }
+
             foreach (var abbrieviation in Database.SiteList.Abbrieviations)
             {
                 var regex = new Regex(abbrieviation.Key + " ", RegexOptions.IgnoreCase);
