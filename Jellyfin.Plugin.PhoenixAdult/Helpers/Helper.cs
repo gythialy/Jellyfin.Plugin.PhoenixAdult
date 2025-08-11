@@ -103,8 +103,10 @@ namespace PhoenixAdult.Helpers
 
             foreach (var siteGroup in Database.SiteList.Sites)
             {
+                Logger.Info($"siteGroup: {siteGroup}");
                 foreach (var siteData in siteGroup.Value)
                 {
+                    Logger.Info($"siteData: {siteData}");
                     var siteName = siteData.Value[0];
 
                     if (!string.IsNullOrEmpty(siteName))
