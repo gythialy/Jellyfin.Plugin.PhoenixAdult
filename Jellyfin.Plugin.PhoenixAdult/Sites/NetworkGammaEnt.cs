@@ -29,11 +29,13 @@ namespace PhoenixAdult.Sites
             var searchData = new SearchData(searchTitle, searchDate);
 
             bool networkscene = true;
+            bool networkscenepages = true;
             bool networkdvd = true;
             string network = string.Empty;
             string network_sep_scene_prev = string.Empty;
             string network_sep_scene = string.Empty;
             string network_sep_scene_pages_prev = string.Empty;
+            string network_sep_scene_pages = "/";
             string network_sep_scene_pages_next = string.Empty;
             string network_sep_dvd_prev = string.Empty;
             string network_sep_dvd = "/1/dvd";
