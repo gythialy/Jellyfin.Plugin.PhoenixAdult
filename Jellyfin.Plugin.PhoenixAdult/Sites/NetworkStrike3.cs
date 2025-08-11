@@ -145,7 +145,7 @@ namespace PhoenixAdult.Sites
             return result;
         }
 
-        Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var result = new List<RemoteImageInfo>();
             string sceneURL = Helper.Decode(sceneID[0]);
