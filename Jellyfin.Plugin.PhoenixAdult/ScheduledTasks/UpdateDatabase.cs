@@ -36,6 +36,7 @@ namespace PhoenixAdult.ScheduledTasks
             }
 
             var data = await HTTP.Request(Consts.DatabaseUpdateURL, cancellationToken).ConfigureAwait(false);
+            Logger.Info($"data: {data}");
             if (data.IsOK)
             {
                 var json = JArray.Parse(data.Content);
@@ -48,6 +49,8 @@ namespace PhoenixAdult.ScheduledTasks
                     var fileName = (string)file["name"];
                     var sha = (string)file["sha"];
                     var type = (string)file["type"];
+                    Logger.Info($"filename: {fileName}");
+                    Logger.Info($"url: {url}");
 
                     progress?.Report((double)i / json.Count * 100);
 
