@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using PhoenixAdult.Extensions;
@@ -10,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using Newtonsoft.Json.Linq;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -157,7 +159,7 @@ namespace PhoenixAdult.Sites
                 if (actorData?["modelsContent"]?[actorID] != null)
                     actorPhotoURL = (string)actorData["modelsContent"][actorID]["img"];
 
-                result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonType.Actor });
+                result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
             }
 
             return result;

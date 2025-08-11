@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -122,12 +123,12 @@ namespace PhoenixAdult.Sites
             if (actorNodes != null)
             {
                 foreach(var actor in actorNodes)
-                    result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonType.Actor });
+                    result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
             }
 
             var directorNode = detailsPageElements.SelectSingleNode("//div[@class='director']/a/text()");
             if(directorNode != null && directorNode.InnerText.Split(':').Last().Trim() != "Unknown")
-                result.People.Add(new PersonInfo { Name = directorNode.InnerText.Split(':').Last().Trim(), Type = PersonType.Director });
+                result.People.Add(new PersonInfo { Name = directorNode.InnerText.Split(':').Last().Trim(), Type = PersonKind.Director });
 
             return result;
         }

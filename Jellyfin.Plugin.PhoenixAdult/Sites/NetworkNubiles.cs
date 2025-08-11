@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -124,7 +125,7 @@ namespace PhoenixAdult.Sites
                     string actorPageURL = Helper.GetSearchBaseURL(siteNum) + actorLink.GetAttributeValue("href", "");
                     var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken, null, _cookies);
                     string actorPhotoURL = "http:" + actorPage?.SelectSingleNode("//div[contains(@class, 'model-profile')]//img")?.GetAttributeValue("src", "");
-                    result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonType.Actor });
+                    result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
                 }
             }
 
@@ -135,7 +136,7 @@ namespace PhoenixAdult.Sites
                 foreach(var actor in maleActors)
                 {
                     if (movie.Overview.Contains(actor, StringComparison.OrdinalIgnoreCase))
-                        result.People.Add(new PersonInfo { Name = actor, Type = PersonType.Actor });
+                        result.People.Add(new PersonInfo { Name = actor, Type = PersonKind.Actor });
                 }
             }
 

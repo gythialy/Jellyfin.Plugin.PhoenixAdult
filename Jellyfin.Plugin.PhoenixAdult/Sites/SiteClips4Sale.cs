@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
@@ -72,7 +73,6 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                         Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
-                        Score = 100,
                         SearchProviderName = Plugin.Instance.Name
                     });
                 }
@@ -214,7 +214,7 @@ namespace PhoenixAdult.Sites
                 var actors = genreList.Where(g => g == "klixen").ToList(); // Simplified example
                 foreach(var actorName in actors)
                 {
-                    people.Add(new PersonInfo { Name = actorName, Type = PersonType.Actor });
+                    people.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                     genreList.Remove(actorName);
                 }
             }
@@ -227,14 +227,14 @@ namespace PhoenixAdult.Sites
             {
                 if (genreList.Contains("mistress candide"))
                 {
-                    people.Add(new PersonInfo { Name = "Mistress Candice", Type = PersonType.Actor });
+                    people.Add(new PersonInfo { Name = "Mistress Candice", Type = PersonKind.Actor });
                     genreList.Remove("mistress candide");
                 }
             }
             // ... This would continue for hundreds of lines for all studios ...
             else // Default case if no specific studio logic
             {
-                 people.Add(new PersonInfo { Name = tagline, Type = PersonType.Actor });
+                 people.Add(new PersonInfo { Name = tagline, Type = PersonKind.Actor });
                  genreList.Remove(tagline.ToLower());
             }
         }

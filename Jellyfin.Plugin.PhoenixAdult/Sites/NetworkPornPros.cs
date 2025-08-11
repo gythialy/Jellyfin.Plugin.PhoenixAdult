@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -130,7 +131,7 @@ namespace PhoenixAdult.Sites
                 foreach (var actorLink in actorNodes)
                 {
                     foreach (var name in actorLink.InnerText.Trim().Split('&'))
-                        result.People.Add(new PersonInfo { Name = name.Trim(), Type = PersonType.Actor });
+                        result.People.Add(new PersonInfo { Name = name.Trim(), Type = PersonKind.Actor });
 
                     if (string.IsNullOrEmpty(actorDate))
                     {
@@ -193,7 +194,7 @@ namespace PhoenixAdult.Sites
             if (ActorsDB.ContainsKey(movie.Name))
             {
                 foreach(var actor in ActorsDB[movie.Name])
-                    result.People.Add(new PersonInfo { Name = actor, Type = PersonType.Actor });
+                    result.People.Add(new PersonInfo { Name = actor, Type = PersonKind.Actor });
             }
 
             if (!movie.PremiereDate.HasValue && !string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedSceneDate))

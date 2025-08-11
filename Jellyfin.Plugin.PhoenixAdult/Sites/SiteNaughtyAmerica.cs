@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -145,7 +146,7 @@ namespace PhoenixAdult.Sites
                 string actorPhotoURL = actorPage?.SelectSingleNode("//img[contains(@class, 'performer-pic')]")?.GetAttributeValue("data-src", "");
                 if(!string.IsNullOrEmpty(actorPhotoURL))
                     actorPhotoURL = "https:" + actorPhotoURL;
-                result.People.Add(new PersonInfo { Name = actor, ImageUrl = actorPhotoURL, Type = PersonType.Actor });
+                result.People.Add(new PersonInfo { Name = actor, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
             }
 
             return result;

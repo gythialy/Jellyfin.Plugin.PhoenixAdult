@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
@@ -132,14 +133,14 @@ namespace PhoenixAdult.Sites
                     {
                         Name = (string)actorLink["name"],
                         ImageUrl = (string)actorLink["images"]?["listing"]?.FirstOrDefault()?["highdpi"]?["double"],
-                        Type = PersonType.Actor
+                        Type = PersonKind.Actor
                     });
                 }
             }
 
             if (video["directors"]?.Any() == true)
             {
-                result.People.Add(new PersonInfo { Name = (string)video["directors"][0]["name"], Type = PersonType.Director });
+                result.People.Add(new PersonInfo { Name = (string)video["directors"][0]["name"], Type = PersonKind.Director });
             }
 
             return result;

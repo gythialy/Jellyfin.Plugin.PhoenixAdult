@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -51,7 +52,7 @@ namespace PhoenixAdult.Sites
             }
 
             string prevModelURL = string.Empty;
-            HtmlDocument actorPageElements = null;
+            HtmlNode actorPageElements = null;
             foreach (var sceneURL in searchResults)
             {
                 var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
@@ -71,7 +72,7 @@ namespace PhoenixAdult.Sites
                 string date = string.Empty;
                 if (actorPageElements != null)
                 {
-                    foreach (var scene in actorPageElements.DocumentNode.SelectNodes("//article[@class='card card-shoot']"))
+                    foreach (var scene in actorPageElements.SelectNodes("//article[@class='card card-shoot']"))
                     {
                         if (titleNoFormatting.Equals(scene.SelectSingleNode(".//h2")?.InnerText.Trim(), StringComparison.OrdinalIgnoreCase) && subSite.Equals(scene.SelectSingleNode(".//h3/text()")?.InnerText.Trim(), StringComparison.OrdinalIgnoreCase))
                         {
@@ -139,7 +140,7 @@ namespace PhoenixAdult.Sites
                     string modelURL = actor.GetAttributeValue("href", "");
                     var actorPageElements = await HTML.ElementFromURL(modelURL, cancellationToken);
                     string actorPhotoURL = actorPageElements?.SelectSingleNode("//img[@class='img-responsive']")?.GetAttributeValue("src", "");
-                    result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonType.Actor });
+                    result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
                 }
             }
 

@@ -12,6 +12,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
@@ -150,7 +151,7 @@ namespace PhoenixAdult.Sites
                 var actorPhotoData = await GetDataFromAPI(assetQuery, "paths", actorPhotoPaths, siteNumVal, cancellationToken);
                 string actorPhotoURL = actorPhotoData?["data"]?["asset"]?["batch"]?["result"]?[0]?["serve"]?["uri"]?.ToString() ?? string.Empty;
 
-                result.People.Add(new PersonInfo { Name = actorName, Type = PersonType.Actor, ImageUrl = actorPhotoURL });
+                result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
             }
 
             return result;

@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -75,7 +76,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actorName in actorSection.InnerText.Split(','))
                 {
-                    result.People.Add(new PersonInfo { Name = actorName.Trim(), Type = PersonType.Actor });
+                    result.People.Add(new PersonInfo { Name = actorName.Trim(), Type = PersonKind.Actor });
                 }
             }
 

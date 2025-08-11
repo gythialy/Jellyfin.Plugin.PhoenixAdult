@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -25,7 +26,6 @@ namespace PhoenixAdult.Sites
             var searchResults = new HashSet<string>();
             var siteResults = new HashSet<string>();
             var temp = new List<RemoteSearchResult>();
-            int count = 0;
 
             string sceneID = null;
             var parts = searchTitle.Split(' ');
@@ -46,7 +46,7 @@ namespace PhoenixAdult.Sites
 
             for (int i = 0; i < numSearchPages; i++)
             {
-                foreach (var searchResult in searchPageElements.DocumentNode.SelectNodes("//a"))
+                foreach (var searchResult in searchPageElements.SelectNodes("//a"))
                 {
                     string sceneURL = searchResult.GetAttributeValue("href", "");
                     if (sceneURL.Contains("/scenes/") && !searchResults.Contains(sceneURL))
@@ -152,7 +152,7 @@ namespace PhoenixAdult.Sites
             if(actorNodes != null)
             {
                 foreach(var actor in actorNodes)
-                    result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonType.Actor });
+                    result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
             }
 
             return result;
