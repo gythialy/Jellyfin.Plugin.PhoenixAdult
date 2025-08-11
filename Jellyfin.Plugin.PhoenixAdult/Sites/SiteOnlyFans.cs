@@ -10,13 +10,9 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
-
-#if __EMBY__
-#else
-using Jellyfin.Data.Enums;
-#endif
 
 namespace PhoenixAdult.Sites
 {
@@ -47,9 +43,6 @@ namespace PhoenixAdult.Sites
                 if (DateTime.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
                 {
                     res.PremiereDate = sceneDateObj;
-                    res.sceneDate = sceneDateObj;
-                    res.releaseDate = sceneDateObj;
-                    res.ProductionYear = sceneDateObj.Year;
                 }
 
                 result.Add(res);
