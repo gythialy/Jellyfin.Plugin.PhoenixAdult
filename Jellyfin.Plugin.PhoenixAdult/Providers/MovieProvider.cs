@@ -53,6 +53,7 @@ namespace PhoenixAdult.Providers
                 foreach (var name in path.Split(Path.DirectorySeparatorChar).Reverse())
                 {
                     title = $"{name} {title}";
+                    Logger.Info($"MP name: {name}");
                     site = Helper.GetSiteFromTitle(name);
                     if (site.siteNum != null)
                     {
@@ -64,7 +65,9 @@ namespace PhoenixAdult.Providers
 
             if (site.siteNum == null)
             {
+                Logger.Info($"MP name: {searchInfo.Name}");
                 title = Helper.ReplaceAbbrieviation(searchInfo.Name);
+                Logger.Info($"MP title: {title}");
                 site = Helper.GetSiteFromTitle(title);
             }
 
@@ -82,9 +85,9 @@ namespace PhoenixAdult.Providers
 
                 if (!string.IsNullOrEmpty(newTitle) && !newTitle.Equals(searchInfo.Name, StringComparison.OrdinalIgnoreCase))
                 {
-                    Logger.Info($"newTitle: {newTitle}");
-
+                    Logger.Info($"MP newTitle: {newTitle}");
                     title = Helper.ReplaceAbbrieviation(newTitle);
+                    Logger.Info($"MP title: {title}");
                     site = Helper.GetSiteFromTitle(title);
                 }
 

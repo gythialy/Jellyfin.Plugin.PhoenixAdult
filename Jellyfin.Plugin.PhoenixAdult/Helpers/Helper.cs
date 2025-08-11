@@ -96,7 +96,9 @@ namespace PhoenixAdult.Helpers
 
         public static (int[] siteNum, string siteName) GetSiteFromTitle(string title)
         {
+            Logger.Info($"title: {title})");
             var clearName = Regex.Replace(title, @"\W", string.Empty);
+            Logger.Info($"clearName: {clearName}");
             var possibleSites = new Dictionary<int[], string>();
 
             foreach (var siteGroup in Database.SiteList.Sites)
