@@ -5,7 +5,7 @@ namespace PhoenixAdult
 {
     public static class Consts
     {
-        public const string DatabaseUpdateURL = "https://api.github.com/repos/gythialy/Jellyfin.Plugin.PhoenixAdult/contents/data";
+        public const string DatabaseUpdateURL = "https://api.github.com/repos/Andrer757/Jellyfin.Plugin.PhoenixAdult/contents/data";
 
 #if __EMBY__
         public const string PluginInstance = "Emby.Plugins.PhoenixAdult";
