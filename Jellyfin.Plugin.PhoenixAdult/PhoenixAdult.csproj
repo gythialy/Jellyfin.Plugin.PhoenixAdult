@@ -107,7 +107,7 @@
 
   <ItemGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">
     <PackageReference Include="Jellyfin.Controller" Version="10.10.7" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
     <PackageReference Include="SkiaSharp" Version="3.116.1" />
   </ItemGroup>
 
@@ -117,7 +117,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Debug.Emby'">
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
