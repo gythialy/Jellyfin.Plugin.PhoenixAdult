@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using MediaBrowser.Model.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
 namespace PhoenixAdult.ScheduledTasks
@@ -52,6 +53,8 @@ namespace PhoenixAdult.ScheduledTasks
 
                     if (type == "file" && (!db.ContainsKey(fileName) || (string)db[fileName] != sha || !Database.IsExist(fileName)))
                     {
+                        Logger.Info($"filename: {fileName}");
+                        Logger.Info($"url: {url}");
                         if (await Database.Download(url, fileName, cancellationToken).ConfigureAwait(false))
                         {
                             if (db.ContainsKey(fileName))
