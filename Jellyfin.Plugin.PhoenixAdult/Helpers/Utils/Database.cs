@@ -58,6 +58,7 @@ namespace PhoenixAdult.Helpers.Utils
 
         private static void Load(string fileName)
         {
+            Logger.Info($"DB Load {fileName}");
             var encoding = new UTF8Encoding(false);
             var serializer = new JsonSerializerSettings()
             {
