@@ -26,6 +26,7 @@ namespace PhoenixAdult.ScheduledTasks
         public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
 #endif
         {
+            Logger.Info("Start Database Sync Update");
             await Task.Yield();
             progress?.Report(0);
 
