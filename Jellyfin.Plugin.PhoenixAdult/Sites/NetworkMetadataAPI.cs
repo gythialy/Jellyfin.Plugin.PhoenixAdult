@@ -9,6 +9,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
@@ -130,7 +131,7 @@ namespace PhoenixAdult.Sites
                     {
                         Name = actorName,
                         ImageUrl = (string)actorLink["image"],
-                        Type = PersonType.Actor
+                        Type = PersonKind.Actor
                     });
                 }
             }

@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
@@ -28,13 +29,11 @@ namespace PhoenixAdult.Sites
             var searchData = new SearchData(searchTitle, searchDate);
 
             bool networkscene = true;
-            bool networkscenepages = true;
             bool networkdvd = true;
             string network = string.Empty;
             string network_sep_scene_prev = string.Empty;
             string network_sep_scene = string.Empty;
             string network_sep_scene_pages_prev = string.Empty;
-            string network_sep_scene_pages = "/";
             string network_sep_scene_pages_next = string.Empty;
             string network_sep_dvd_prev = string.Empty;
             string network_sep_dvd = "/1/dvd";
@@ -181,7 +180,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
-            return string.Empty;
+            return result;
         }
 
         private async Task<string> ParseReleaseDate(HtmlNode node, CancellationToken cancellationToken)
@@ -271,7 +270,7 @@ namespace PhoenixAdult.Sites
                     string actorPageURL = actorLink.GetAttributeValue("href", "");
                     var actorPage = await HTML.ElementFromURL(Helper.GetSearchBaseURL(new [] {sNum}) + actorPageURL, cancellationToken);
                     string actorPhotoURL = actorPage?.SelectSingleNode("//img[@class='actorPicture'] | //span[@class='removeAvatarParent']/img")?.GetAttributeValue("src", "");
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonType.Actor, ImageUrl = actorPhotoURL });
+                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
                 }
             }
 
@@ -280,7 +279,7 @@ namespace PhoenixAdult.Sites
             if(directorNodes != null)
             {
                 foreach(var director in directorNodes)
-                    result.People.Add(new PersonInfo { Name = director.InnerText.Trim(), Type = PersonType.Director });
+                    result.People.Add(new PersonInfo { Name = director.InnerText.Trim(), Type = PersonKind.Director });
             }
 
             return result;

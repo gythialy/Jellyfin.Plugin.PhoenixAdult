@@ -12,6 +12,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -149,13 +150,13 @@ namespace PhoenixAdult.Sites
                     if (actorPhotoURL?.EndsWith("nowprinting.gif") == true)
                         actorPhotoURL = string.Empty;
 
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonType.Actor, ImageUrl = actorPhotoURL });
+                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
                 }
             }
 
             var directorLink = detailsPageElements.SelectSingleNode("//p/a[contains(@href, '/director/')]");
             if (directorLink != null)
-                result.People.Add(new PersonInfo { Name = directorLink.InnerText.Trim(), Type = PersonType.Director });
+                result.People.Add(new PersonInfo { Name = directorLink.InnerText.Trim(), Type = PersonKind.Director });
 
             return result;
         }

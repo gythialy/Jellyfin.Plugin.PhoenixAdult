@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -101,7 +102,7 @@ namespace PhoenixAdult.Sites
                     actorName = new Regex(@"(?<=[Ss]tarring\s)\w*\s\w*").Match(summary).Value;
                 }
                 if(!string.IsNullOrEmpty(actorName))
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonType.Actor });
+                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
 
                 result.Item.AddStudio("Family Therapy");
                 return result;
@@ -142,7 +143,7 @@ namespace PhoenixAdult.Sites
             {
                 string actorText = new Regex(@"(?<=[Ss]tarring\s)\w*\s\w*(\s&\s\w*\s\w*)*").Match(actorNode.InnerText).Value;
                 foreach(var actorName in actorText.Split('&'))
-                    result.People.Add(new PersonInfo { Name = actorName.Trim(), Type = PersonType.Actor });
+                    result.People.Add(new PersonInfo { Name = actorName.Trim(), Type = PersonKind.Actor });
             }
 
             return result;

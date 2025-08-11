@@ -107,7 +107,7 @@ namespace PhoenixAdult.Helpers.Utils
                 IsOK = false,
             };
 
-            url = Uri.EscapeUriString(Uri.UnescapeDataString(url));
+            url = Uri.EscapeDataString(Uri.UnescapeDataString(url));
 
             if (method == null)
             {

@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -171,7 +172,7 @@ namespace PhoenixAdult.Sites
                     result.People.Add(new PersonInfo
                     {
                         Name = actor.GetAttributeValue("title", "").Trim(),
-                        Type = PersonType.Actor,
+                        Type = PersonKind.Actor,
                         ImageUrl = actor.GetAttributeValue("data-bgsrc", "").Trim()
                     });
                 }
@@ -184,7 +185,7 @@ namespace PhoenixAdult.Sites
                 {
                      string actorName = actor.InnerText.Trim();
                      if(!result.People.Any(p => p.Name.Equals(actorName, StringComparison.OrdinalIgnoreCase)))
-                        result.People.Add(new PersonInfo { Name = actorName, Type = PersonType.Actor });
+                        result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                 }
             }
 
@@ -193,7 +194,7 @@ namespace PhoenixAdult.Sites
             {
                 string directorName = directorNode.InnerText.Trim();
                 if(!result.People.Any(p => p.Name.Equals(directorName, StringComparison.OrdinalIgnoreCase)))
-                    result.People.Add(new PersonInfo { Name = directorName, Type = PersonType.Director });
+                    result.People.Add(new PersonInfo { Name = directorName, Type = PersonKind.Director });
             }
 
             return result;

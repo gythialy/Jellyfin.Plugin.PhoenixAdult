@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -86,7 +87,7 @@ namespace PhoenixAdult.Sites
                 string actorPageURL = actorLink.GetAttributeValue("href", "").Split('?')[0];
                 var actorPageElements = await HTML.ElementFromURL(actorPageURL, cancellationToken);
                 string actorPhotoURL = "https:" + actorPageElements?.SelectSingleNode("//div[contains(@class, 'performer-details')]//img")?.GetAttributeValue("src", "");
-                result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonType.Actor });
+                result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
             }
 
             movie.Name = string.Join(", ", actorList);
@@ -102,7 +103,7 @@ namespace PhoenixAdult.Sites
 
             var maleActors = sceneInfo.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
             foreach(var maleActor in maleActors)
-                result.People.Add(new PersonInfo { Name = maleActor.Trim(), Type = PersonType.Actor });
+                result.People.Add(new PersonInfo { Name = maleActor.Trim(), Type = PersonKind.Actor });
 
             var genres = new List<string> { "Girlfriend Experience", "Pornstar", "Hotel", "Pornstar Experience" };
             if (result.People.Count == 3)

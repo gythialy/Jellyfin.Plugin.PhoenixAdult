@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -25,7 +26,6 @@ namespace PhoenixAdult.Sites
             var searchResults = new HashSet<string>();
             var siteResults = new HashSet<string>();
             var temp = new List<RemoteSearchResult>();
-            int count = 0;
 
             string sceneID = null;
             var parts = searchTitle.Split(' ');
@@ -46,7 +46,7 @@ namespace PhoenixAdult.Sites
 
             for (int i = 0; i < numSearchPages; i++)
             {
-                foreach (var searchResult in searchPageElements.DocumentNode.SelectNodes("//a"))
+                foreach (var searchResult in searchPageElements.SelectNodes("//a"))
                 {
                     string movieURL = searchResult.GetAttributeValue("href", "").Split('-')[0];
                     if (movieURL.Contains("/movies/") && !searchResults.Contains(movieURL))
@@ -147,12 +147,12 @@ namespace PhoenixAdult.Sites
             if(actorNodes != null)
             {
                 foreach(var actor in actorNodes)
-                    result.People.Add(new PersonInfo { Name = actor.GetAttributeValue("alt", "").Trim(), ImageUrl = actor.GetAttributeValue("data-src", ""), Type = PersonType.Actor });
+                    result.People.Add(new PersonInfo { Name = actor.GetAttributeValue("alt", "").Trim(), ImageUrl = actor.GetAttributeValue("data-src", ""), Type = PersonKind.Actor });
             }
 
             var directorNode = detailsPageElements.SelectSingleNode("//p[./b[contains(., 'Director')]]")?.InnerText.Split(':').Last().Split('-')[0].Trim();
             if(directorNode != "Unknown")
-                result.People.Add(new PersonInfo { Name = directorNode, Type = PersonType.Director });
+                result.People.Add(new PersonInfo { Name = directorNode, Type = PersonKind.Director });
 
             return result;
         }

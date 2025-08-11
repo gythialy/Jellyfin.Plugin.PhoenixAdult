@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -36,7 +37,6 @@ namespace PhoenixAdult.Sites
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                     Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                    Score = 100,
                     SearchProviderName = Plugin.Instance.Name
                 });
             }
@@ -135,12 +135,12 @@ namespace PhoenixAdult.Sites
                     {
                         Name = actorLink.GetAttributeValue("title", "").Trim(),
                         ImageUrl = actorLink.SelectSingleNode(".//img")?.GetAttributeValue("src", "").Replace("240x", "480x"),
-                        Type = PersonType.Actor
+                        Type = PersonKind.Actor
                     });
                 }
             }
 
-            result.People.Add(new PersonInfo { Name = "Petter Hegre", ImageUrl = "https://img.discogs.com/TafxhnwJE2nhLodoB6UktY6m0xM=/fit-in/180x264/filters:strip_icc():format(jpeg):mode_rgb():quality(90)/discogs-images/A-2236724-1305622884.jpeg.jpg", Type = PersonType.Director });
+            result.People.Add(new PersonInfo { Name = "Petter Hegre", ImageUrl = "https://img.discogs.com/TafxhnwJE2nhLodoB6UktY6m0xM=/fit-in/180x264/filters:strip_icc():format(jpeg):mode_rgb():quality(90)/discogs-images/A-2236724-1305622884.jpeg.jpg", Type = PersonKind.Director });
 
             return result;
         }

@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Configuration;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
@@ -134,7 +135,7 @@ namespace PhoenixAdult.Sites
 
             var director = detailsPageElements.SelectSingleNode("//td[contains(text(), 'Director:')]/following-sibling::td/span/a")?.InnerText.Trim();
             if(!string.IsNullOrEmpty(director))
-                result.People.Add(new PersonInfo { Name = director, Type = PersonType.Director });
+                result.People.Add(new PersonInfo { Name = director, Type = PersonKind.Director });
 
             var dateNode = detailsPageElements.SelectSingleNode("//td[contains(text(), 'Release Date:')]/following-sibling::td");
             if (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
@@ -146,7 +147,7 @@ namespace PhoenixAdult.Sites
             foreach(var actor in ActorsDB)
             {
                 if (actor.Value.Contains(javID, StringComparer.OrdinalIgnoreCase))
-                    result.People.Add(new PersonInfo { Name = actor.Key, Type = PersonType.Actor });
+                    result.People.Add(new PersonInfo { Name = actor.Key, Type = PersonKind.Actor });
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//span[@class='star']/a");
@@ -157,7 +158,7 @@ namespace PhoenixAdult.Sites
                     string actorName = actor.InnerText.Trim();
                     if (Plugin.Instance.Configuration.JAVActorNamingStyle == JAVActorNamingStyle.WesternStyle)
                         actorName = string.Join(" ", actorName.Split().Reverse());
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonType.Actor });
+                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                 }
             }
 

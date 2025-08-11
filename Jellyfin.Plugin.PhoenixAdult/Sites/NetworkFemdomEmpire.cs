@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -117,12 +118,12 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actorLink in actorsNode)
                 {
-                    result.People.Add(new PersonInfo { Name = actorLink.InnerText.Trim(), Type = PersonType.Actor });
+                    result.People.Add(new PersonInfo { Name = actorLink.InnerText.Trim(), Type = PersonKind.Actor });
                 }
             }
 
             if (movie.Name.Equals("Owned by Alexis", StringComparison.OrdinalIgnoreCase))
-                result.People.Add(new PersonInfo { Name = "Alexis Monroe", Type = PersonType.Actor });
+                result.People.Add(new PersonInfo { Name = "Alexis Monroe", Type = PersonKind.Actor });
 
             return result;
         }
