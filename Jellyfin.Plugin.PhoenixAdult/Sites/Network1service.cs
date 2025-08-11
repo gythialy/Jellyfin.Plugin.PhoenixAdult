@@ -210,6 +210,8 @@ namespace PhoenixAdult.Sites
 
             DateTime dateObject = (DateTime)details["dateReleased"];
             movie.PremiereDate = dateObject;
+            movie.sceneDate = sceneDateObj;
+            movie.releaseDate = sceneDateObj;
             movie.ProductionYear = dateObject.Year;
 
             if (details["tags"] != null)

@@ -47,6 +47,9 @@ namespace PhoenixAdult.Sites
                 if (DateTime.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
                 {
                     res.PremiereDate = sceneDateObj;
+                    res.sceneDate = sceneDateObj;
+                    res.releaseDate = sceneDateObj;
+                    res.ProductionYear = sceneDateObj.Year;
                 }
 
                 result.Add(res);
