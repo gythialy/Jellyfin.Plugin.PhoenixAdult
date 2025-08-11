@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -38,7 +39,7 @@ namespace PhoenixAdult.Sites
             string encodedTitle = searchTitle.Replace("'", "").Replace(",", "").Replace("& ", "").Replace("#", "");
             string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{encodedTitle}&key2={encodedTitle}";
             var req = await HTTP.Request(searchUrl, cancellationToken, new Dictionary<string, string> { { "Referer", "https://www.data18.com" } }, new Dictionary<string, string> { { "data_user_captcha", "1" } });
-            var searchPageElements = HTML.Document(req.Content);
+            var searchPageElements = HTML.ElementFromString(req.Content);
 
             var searchPagesMatch = Regex.Match(req.Content, @"(?<=pages:\s).*(?=])");
             int numSearchPages = searchPagesMatch.Success ? Math.Min(int.Parse(searchPagesMatch.Value), 10) : 1;
@@ -64,40 +65,20 @@ namespace PhoenixAdult.Sites
                             siteResults.Add(movieURL);
                             string date = searchResult.SelectSingleNode(".//span[@class='gen11']/text()")?.InnerText.Trim();
                             string releaseDate = !string.IsNullOrEmpty(date) && date != "unknown" ? DateTime.ParseExact(date, "MMMM, yyyy", CultureInfo.InvariantCulture).ToString("yyyy-MM-dd") : (searchDate.HasValue ? searchDate.Value.ToString("yyyy-MM-dd") : "");
-                            int score = sceneID == urlID ? 100 : (searchDate.HasValue && !string.IsNullOrEmpty(releaseDate) ? 80 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate) : 80 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower()));
 
-                            if (score > 70)
+                            var detailsPageElements = await HTML.ElementFromURL(curID, cancellationToken, new Dictionary<string, string> { { "Referer", "https://www.data18.com" } }, new Dictionary<string, string> { { "data_user_captcha", "1" } });
+                            studio = detailsPageElements?.SelectSingleNode("//b[contains(., 'Studio') or contains(., 'Network')]//following-sibling::b | //b[contains(., 'Studio') or contains(., 'Network')]//following-sibling::a | //p[contains(., 'Site:')]//following-sibling::a[@class='bold']")?.InnerText.Trim() ?? studio;
+
+                            result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{studio}] {releaseDate}" });
+
+                            var sceneCountMatch = detailsPageElements?.SelectSingleNode("//div[@id='relatedscenes']//span")?.InnerText.Split(' ')[0].Trim();
+                            int sceneCount = !string.IsNullOrEmpty(sceneCountMatch) && int.TryParse(sceneCountMatch, out var countVal) ? countVal : 0;
+
+                            for (int j = 1; j <= sceneCount; j++)
                             {
-                                var detailsPageElements = await HTML.ElementFromURL(curID, cancellationToken, new Dictionary<string, string> { { "Referer", "https://www.data18.com" } }, new Dictionary<string, string> { { "data_user_captcha", "1" } });
-                                studio = detailsPageElements?.SelectSingleNode("//b[contains(., 'Studio') or contains(., 'Network')]//following-sibling::b | //b[contains(., 'Studio') or contains(., 'Network')]//following-sibling::a | //p[contains(., 'Site:')]//following-sibling::a[@class='bold']")?.InnerText.Trim() ?? studio;
-
-                                if (score == 80)
-                                {
-                                    count++;
-                                    temp.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{studio}] {releaseDate}", Score = score });
-                                }
-                                else
-                                {
-                                    result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{studio}] {releaseDate}", Score = score });
-                                }
-
-                                var sceneCountMatch = detailsPageElements?.SelectSingleNode("//div[@id='relatedscenes']//span")?.InnerText.Split(' ')[0].Trim();
-                                int sceneCount = !string.IsNullOrEmpty(sceneCountMatch) && int.TryParse(sceneCountMatch, out var countVal) ? countVal : 0;
-
-                                for (int j = 1; j <= sceneCount; j++)
-                                {
-                                    string section = "Scene " + j;
-                                    string scene = Helper.Encode(detailsPageElements.SelectSingleNode($"//a[contains(., '{section}')]/@href").GetAttributeValue("href", ""));
-                                    if (score == 80)
-                                    {
-                                        count++;
-                                        temp.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{scene}|{siteNum[0]}|{releaseDate}|{titleNoFormatting}|{j}" } }, Name = $"{titleNoFormatting} [{section}][{studio}] {releaseDate}", Score = score });
-                                    }
-                                    else
-                                    {
-                                        result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{scene}|{siteNum[0]}|{releaseDate}|{titleNoFormatting}|{j}" } }, Name = $"{titleNoFormatting} [{section}][{studio}] {releaseDate}", Score = score });
-                                    }
-                                }
+                                string section = "Scene " + j;
+                                string scene = Helper.Encode(detailsPageElements.SelectSingleNode($"//a[contains(., '{section}')]/@href").GetAttributeValue("href", ""));
+                                result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{scene}|{siteNum[0]}|{releaseDate}|{titleNoFormatting}|{j}" } }, Name = $"{titleNoFormatting} [{section}][{studio}] {releaseDate}" });
                             }
                         }
                     }
@@ -106,18 +87,11 @@ namespace PhoenixAdult.Sites
                 {
                     searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{encodedTitle}&key2={encodedTitle}&next=1&page={i + 1}";
                     req = await HTTP.Request(searchUrl, cancellationToken, new Dictionary<string, string> { { "Referer", "https://www.data18.com" } }, new Dictionary<string, string> { { "data_user_captcha", "1" } });
-                    searchPageElements = HTML.Document(req.Content);
+                    searchPageElements = HTML.ElementFromString(req.Content);
                 }
             }
 
             // ... (rest of search logic including Google fallback would go here)
-
-            foreach (var res in temp)
-            {
-                if (count > 1 && res.Score == 80)
-                    res.Score = 79;
-                result.Add(res);
-            }
             return result;
         }
 
@@ -148,7 +122,7 @@ namespace PhoenixAdult.Sites
 
             var taglineNode = detailsPageElements.SelectSingleNode("//p[contains(., 'Movie Series')]//a[@title]");
             if (taglineNode != null)
-                movie.Tags.Add(taglineNode.InnerText.Trim());
+                movie.AddTag(taglineNode.InnerText.Trim());
 
             var dateNode = detailsPageElements.SelectSingleNode("//@datetime");
             if (dateNode != null && DateTime.TryParse(dateNode.GetAttributeValue("datetime", "").Trim(), out var parsedDate))

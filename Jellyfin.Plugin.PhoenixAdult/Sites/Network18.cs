@@ -14,6 +14,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -78,14 +79,12 @@ namespace PhoenixAdult.Sites
                     string sceneName = searchResult["name"].ToString();
                     string curID = Helper.Encode(searchResult["itemId"].ToString());
                     string releaseDateStr = searchDate?.ToString("yyyy-MM-dd") ?? string.Empty;
-                    int score = 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), sceneName.ToLower());
 
                     var item = new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDateStr}" } },
                         Name = $"{sceneName} [{Helper.GetSearchSiteName(siteNum)}]",
                         SearchProviderName = Plugin.Instance.Name,
-                        Score = score,
                     };
 
                     if (searchDate.HasValue)
@@ -128,7 +127,7 @@ namespace PhoenixAdult.Sites
 
             string studio = Helper.GetSearchSiteName(new[] { siteNumVal });
             movie.AddStudio(studio);
-            movie.Tags.Add(studio);
+            movie.AddTag(studio);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var premiereDate))
             {

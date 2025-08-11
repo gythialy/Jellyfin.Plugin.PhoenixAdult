@@ -12,6 +12,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Newtonsoft.Json.Linq;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -142,15 +143,10 @@ namespace PhoenixAdult.Sites
                             string curID = Helper.Encode(titleNode.GetAttributeValue("href", ""));
                             string releaseDateStr = ParseReleaseDate(searchResult, cancellationToken).Result;
 
-                            int score = searchData.SearchDate.HasValue && !string.IsNullOrEmpty(releaseDateStr)
-                                ? 100 - LevenshteinDistance.Compute(searchData.SearchDate.Value.ToString("yyyy-MM-dd"), releaseDateStr)
-                                : 100 - LevenshteinDistance.Compute(searchData.SearchTitle.ToLower(), titleNoFormatting.ToLower());
-
                             result.Add(new RemoteSearchResult
                             {
                                 ProviderIds = { { Plugin.Instance.Name, $"{curID}|{sNum}" } },
                                 Name = $"{titleNoFormatting} [{network}/{Helper.GetSearchSiteName(siteNum)}] {releaseDateStr}",
-                                Score = score,
                                 SearchProviderName = Plugin.Instance.Name
                             });
                         }
@@ -175,21 +171,17 @@ namespace PhoenixAdult.Sites
                             string curID = Helper.Encode(titleNode.GetAttributeValue("href", ""));
                             string releaseDateStr = ParseReleaseDate(dvdResult, cancellationToken).Result;
 
-                            int score = 100 - LevenshteinDistance.Compute(searchData.SearchTitle.ToLower(), titleNoFormatting.ToLower());
-
                             result.Add(new RemoteSearchResult
                             {
                                 ProviderIds = { { Plugin.Instance.Name, $"{curID}|{sNum}" } },
                                 Name = $"{titleNoFormatting} ({(string.IsNullOrEmpty(releaseDateStr) ? "" : DateTime.Parse(releaseDateStr).Year.ToString())}) - Full Movie [{Helper.GetSearchSiteName(siteNum)}]",
-                                Score = score,
                                 SearchProviderName = Plugin.Instance.Name
                             });
                         }
                     }
                 }
             }
-
-            return result.OrderByDescending(r => r.Score).ToList();
+            return string.Empty;
         }
 
         private async Task<string> ParseReleaseDate(HtmlNode node, CancellationToken cancellationToken)
@@ -246,11 +238,11 @@ namespace PhoenixAdult.Sites
             string studio = GetStudio(sNum);
             movie.AddStudio(studio);
             string tagline = detailsPageElements.SelectSingleNode("//div[@class='studioLink']")?.InnerText.Trim() ?? Helper.GetSearchSiteName(new [] {sNum});
-            movie.Tags.Add(tagline);
+            movie.AddTag(tagline);
 
             var dvdTitleNode = detailsPageElements.SelectSingleNode("//a[contains(@class, 'dvdLink')][1]");
             if (dvdTitleNode != null)
-                movie.Tags.Add(dvdTitleNode.GetAttributeValue("title", "").Replace("#0", "").Replace("#", ""));
+                movie.AddTag(dvdTitleNode.GetAttributeValue("title", "").Replace("#0", "").Replace("#", ""));
 
             // Genres
             var genreNodes = detailsPageElements.SelectNodes("//div[@class='sceneCol sceneColCategories']//a | //div[@class='sceneCategories']//a | //p[@class='dvdCol']/a");

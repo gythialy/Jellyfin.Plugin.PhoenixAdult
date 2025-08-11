@@ -12,6 +12,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -51,15 +52,10 @@ namespace PhoenixAdult.Sites
                     string curID = Helper.Encode((string)video["slug"]);
                     int videoID = (int)video["videoId"];
 
-                    int score = sceneID == videoID ? 100 :
-                                searchDate.HasValue ? 100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate) :
-                                100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
-
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, curID } },
                         Name = $"{titleNoFormatting} {releaseDate}",
-                        Score = score,
                         SearchProviderName = Plugin.Instance.Name
                     });
                 }
@@ -77,14 +73,10 @@ namespace PhoenixAdult.Sites
                         string releaseDate = DateTime.Parse((string)node["releaseDate"]).ToString("yyyy-MM-dd");
                         string curID = Helper.Encode((string)node["slug"]);
 
-                        int score = searchDate.HasValue ? 100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate) :
-                                    100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
-
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, curID } },
                             Name = $"{titleNoFormatting} {releaseDate}",
-                            Score = score,
                             SearchProviderName = Plugin.Instance.Name,
                             ImageUrl = (string)node["images"]?["listing"]?.FirstOrDefault()?["src"]
                         });
@@ -114,7 +106,7 @@ namespace PhoenixAdult.Sites
             movie.Name = (string)video["title"];
             movie.Overview = (string)video["description"];
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
-            movie.Tags.Add(Helper.GetSearchSiteName(siteNum));
+            movie.AddTag(Helper.GetSearchSiteName(siteNum));
 
             if (DateTime.TryParse((string)video["releaseDate"], out var releaseDate))
             {

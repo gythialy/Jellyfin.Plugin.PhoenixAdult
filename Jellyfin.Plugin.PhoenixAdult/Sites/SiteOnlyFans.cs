@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 
 namespace PhoenixAdult.Sites
@@ -35,7 +36,6 @@ namespace PhoenixAdult.Sites
                 {
                     ProviderIds = { { Plugin.Instance.Name, searchTitle } }, // Use the full filename as the ID
                     Name = sceneName,
-                    Score = 100,
                     SearchProviderName = Plugin.Instance.Name,
                 };
 
@@ -73,7 +73,7 @@ namespace PhoenixAdult.Sites
                 var movie = (Movie)result.Item;
                 movie.Name = sceneName;
                 movie.AddStudio("OnlyFans");
-                movie.Tags.Add(actorName); // Use actor name as collection
+                movie.AddTag(actorName); // Use actor name as collection
 
                 if (DateTime.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
                 {

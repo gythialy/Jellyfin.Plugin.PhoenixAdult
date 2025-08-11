@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -38,13 +39,10 @@ namespace PhoenixAdult.Sites
                 string curID = Helper.Encode(sceneURL);
                 string releaseDate = searchDate?.ToString("yyyy-MM-dd") ?? string.Empty;
 
-                int score = 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
-
                 result.Add(new RemoteSearchResult
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
                     Name = $"{titleNoFormatting} [PornCZ/{Helper.GetSearchSiteName(siteNum)}]",
-                    Score = score,
                     SearchProviderName = Plugin.Instance.Name
                 });
             }
@@ -70,7 +68,7 @@ namespace PhoenixAdult.Sites
             movie.Name = sceneData.SelectSingleNode("//h1")?.InnerText.Trim();
             movie.Overview = sceneData.SelectSingleNode("//div[@class='heading-detail']/p[2]")?.InnerText.Trim();
             movie.AddStudio("PornCZ");
-            movie.Tags.Add(Helper.GetSearchSiteName(siteNum));
+            movie.AddTag(Helper.GetSearchSiteName(siteNum));
 
             var dateNode = sceneData.SelectSingleNode("//meta[@property='video:release_date']");
             if (dateNode != null && DateTime.TryParseExact(dateNode.GetAttributeValue("content", "").Trim(), "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))

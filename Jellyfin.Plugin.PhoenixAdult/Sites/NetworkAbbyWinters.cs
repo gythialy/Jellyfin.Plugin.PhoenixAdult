@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -81,13 +82,11 @@ namespace PhoenixAdult.Sites
                 }
 
                 string releaseDate = !string.IsNullOrEmpty(date) ? DateTime.Parse(date).ToString("yyyy-MM-dd") : (searchDate.HasValue ? searchDate.Value.ToString("yyyy-MM-dd") : string.Empty);
-                int score = searchDate.HasValue && !string.IsNullOrEmpty(releaseDate) ? 100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate) : 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
 
                 result.Add(new RemoteSearchResult
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
                     Name = $"{titleNoFormatting} [Abby Winters/{subSite}] {releaseDate}",
-                    Score = score,
                     SearchProviderName = Plugin.Instance.Name
                 });
             }
@@ -116,7 +115,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("Abby Winters");
 
             string tagline = detailsPageElements.SelectSingleNode("//div[@id='shoot-featured-image']//h4")?.InnerText.Trim();
-            movie.Tags.Add(tagline);
+            movie.AddTag(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

@@ -12,6 +12,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -137,36 +138,15 @@ namespace PhoenixAdult.Sites
                     string subSite = searchResult["collections"]?.FirstOrDefault()?["name"]?.ToString().Trim() ?? string.Empty;
                     string siteDisplay = !string.IsNullOrEmpty(subSite) ? $"{siteName}/{subSite}" : siteName;
 
-                    int score = 100;
-                    if (!string.IsNullOrEmpty(sceneID))
-                    {
-                        score -= LevenshteinDistance.Compute(sceneID, curID);
-                    }
-                    else
-                    {
-                        if (searchDate.HasValue)
-                        {
-                            score -= 2 * Math.Abs((searchDate.Value - releaseDate).Days);
-                        }
-                        score -= LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
-                    }
-
                     if (sceneType == "trailer")
                     {
                         titleNoFormatting = $"[{sceneType.First().ToString().ToUpper() + sceneType.Substring(1)}] {titleNoFormatting}";
-                        score -= 10;
-                    }
-
-                    if (!string.IsNullOrEmpty(subSite) && !Helper.GetSearchSiteName(siteNum).Replace(" ", "").Equals(subSite.Replace(" ", ""), StringComparison.OrdinalIgnoreCase))
-                    {
-                        score -= 10;
                     }
 
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{sceneType}" } },
                         Name = $"{titleNoFormatting} [{siteDisplay}] {releaseDate:yyyy-MM-dd}",
-                        Score = score,
                         SearchProviderName = Plugin.Instance.Name
                     });
                 }
@@ -218,10 +198,10 @@ namespace PhoenixAdult.Sites
 
             string mainSiteName = Helper.GetSearchSiteName(new [] { siteNumVal });
             if (!seriesNames.Contains(mainSiteName))
-                movie.Tags.Add(mainSiteName);
+                movie.AddTag(mainSiteName);
 
             foreach (var seriesName in seriesNames)
-                movie.Tags.Add(seriesName);
+                movie.AddTag(seriesName);
 
             DateTime dateObject = (DateTime)details["dateReleased"];
             movie.PremiereDate = dateObject;

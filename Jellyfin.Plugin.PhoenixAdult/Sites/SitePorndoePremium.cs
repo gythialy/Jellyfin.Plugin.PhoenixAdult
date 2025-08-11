@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -39,15 +40,10 @@ namespace PhoenixAdult.Sites
                 string date = searchResult.SelectSingleNode("./div[@class='-g-vc-item-date']")?.InnerText.Trim();
                 DateTime.TryParse(date, out var releaseDate);
 
-                int score = searchDate.HasValue
-                    ? 100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate.ToString("yyyy-MM-dd"))
-                    : 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
-
                 result.Add(new RemoteSearchResult
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                     Name = $"{titleNoFormatting} [LetsDoeIt/{subSite}] {releaseDate:yyyy-MM-dd}",
-                    Score = score,
                     SearchProviderName = Plugin.Instance.Name
                 });
             }
@@ -76,7 +72,7 @@ namespace PhoenixAdult.Sites
 
             var tagline = detailsPageElements.SelectSingleNode("//div[@class='-mvd-grid-actors']/span/a")?.InnerText.Trim();
             if(!string.IsNullOrEmpty(tagline))
-                movie.Tags.Add(tagline);
+                movie.AddTag(tagline);
 
             var genreNodes = detailsPageElements.SelectNodes("//span[@class='-mvd-list-item']/a");
             if (genreNodes != null)
@@ -117,7 +113,7 @@ namespace PhoenixAdult.Sites
             return result;
         }
 
-        public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var result = new List<RemoteImageInfo>();
             string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);

@@ -12,6 +12,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Configuration;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -58,12 +59,10 @@ namespace PhoenixAdult.Sites
                     string sceneURL = $"{Helper.GetSearchBaseURL(siteNum)}/en/{searchResultNode.SelectSingleNode("./a")?.GetAttributeValue("href", "").Split('.').Last().Trim()}";
                     string curID = Helper.Encode(sceneURL);
 
-                    int score = 100 - LevenshteinDistance.Compute(searchJAVID.ToLower(), javid.ToLower());
                     searchResults.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                         Name = $"[{javid}] {titleNoFormatting}",
-                        Score = score,
                         SearchProviderName = Plugin.Instance.Name
                     });
                 }
@@ -86,12 +85,10 @@ namespace PhoenixAdult.Sites
                             string titleNoFormatting = searchResultPage.SelectSingleNode("//h3[@class='post-title text']/a")?.InnerText.Trim().Split(new[] { ' ' }, 2)[1];
                             string javid = searchResultPage.SelectSingleNode("//td[contains(text(), 'ID:')]/following-sibling::td")?.InnerText.Trim();
                             string curID = Helper.Encode(searchResultPage.SelectSingleNode("//meta[@property='og:url']")?.GetAttributeValue("content", "").Replace("//www", "https://www"));
-                            int score = 100 - LevenshteinDistance.Compute(searchJAVID.ToLower(), javid.ToLower());
                             searchResults.Add(new RemoteSearchResult
                             {
                                 ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                                 Name = $"[{javid}] {titleNoFormatting}",
-                                Score = score,
                                 SearchProviderName = Plugin.Instance.Name
                             });
                         }
@@ -129,11 +126,11 @@ namespace PhoenixAdult.Sites
 
             var tagline = detailsPageElements.SelectSingleNode("//td[contains(text(), 'Label:')]/following-sibling::td/span/a")?.InnerText.Trim();
             if (!string.IsNullOrEmpty(tagline))
-                movie.Tags.Add(tagline);
+                movie.AddTag(tagline);
             else if (!string.IsNullOrEmpty(studio))
-                movie.Tags.Add(studio);
+                movie.AddTag(studio);
             else
-                movie.Tags.Add("Japan Adult Video");
+                movie.AddTag("Japan Adult Video");
 
             var director = detailsPageElements.SelectSingleNode("//td[contains(text(), 'Director:')]/following-sibling::td/span/a")?.InnerText.Trim();
             if(!string.IsNullOrEmpty(director))

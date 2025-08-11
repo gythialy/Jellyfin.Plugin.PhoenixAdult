@@ -12,6 +12,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Newtonsoft.Json.Linq;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -78,15 +79,10 @@ namespace PhoenixAdult.Sites
                     releaseDateStr = searchDate.Value.ToString("yyyy-MM-dd");
                 }
 
-                int score = searchDate.HasValue ?
-                    (100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDateStr)) :
-                    (100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower()));
-
                 result.Add(new RemoteSearchResult
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDateStr}" } },
                     Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDateStr}",
-                    Score = score,
                     SearchProviderName = Plugin.Instance.Name
                 });
             }
@@ -122,16 +118,16 @@ namespace PhoenixAdult.Sites
             string tagline = detailsPageElements.SelectSingleNode("//p[contains(., 'Series:')]/a[contains(@href, 'originals') or contains(@href, 'videos')]")?.InnerText.Trim();
             if (!string.IsNullOrEmpty(tagline))
             {
-                movie.Tags.Add(Regex.Replace(tagline, @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
+                movie.AddTag(Regex.Replace(tagline, @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
             }
             else
             {
-                movie.Tags.Add(movie.Studios.First());
+                movie.AddTag(movie.Studios.First());
             }
 
             string dvdTitle = detailsPageElements.SelectSingleNode("//p[contains(., 'Movie')]/a[contains(@href, 'dvd')]")?.InnerText.Trim();
             if (!string.IsNullOrEmpty(dvdTitle) && siteNumVal == 1365)
-                movie.Tags.Add(dvdTitle);
+                movie.AddTag(dvdTitle);
 
             if (DateTime.TryParse(videoPageElements["datePublished"].ToString(), out var releaseDate))
             {

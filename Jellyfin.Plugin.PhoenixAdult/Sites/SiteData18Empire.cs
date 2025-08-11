@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -35,7 +36,7 @@ namespace PhoenixAdult.Sites
             string encodedTitle = searchTitle.Trim().Replace(" ", "+");
             string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{encodedTitle}";
             var req = await HTTP.Request(searchUrl, cancellationToken, new Dictionary<string, string> { { "Referer", "http://www.data18.empirestores.co" } });
-            var searchPageElements = HTML.Document(req.Content);
+            var searchPageElements = HTML.ElementFromString(req.Content);
 
             if (string.IsNullOrEmpty(sceneID))
             {
@@ -51,14 +52,13 @@ namespace PhoenixAdult.Sites
                             string titleNoFormatting = searchResult.SelectSingleNode("./span/span/text()")?.InnerText.Trim();
                             string curID = Helper.Encode(movieURL);
 
-                            var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
+                            var detailsPageElements = await HTML.ElementFromURL(movieURL, cancellationToken);
                             if (detailsPageElements == null) continue;
 
                             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='release-date' and ./span[contains(., 'Released:')]]/text()");
                             string releaseDate = dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "MMM dd, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate) ? parsedDate.ToString("yyyy-MM-dd") : "";
                             string studio = detailsPageElements.SelectSingleNode("//div[@class='studio']/a/text()")?.InnerText.Trim();
-                            int score = sceneID == urlID ? 100 : (searchDate.HasValue && !string.IsNullOrEmpty(releaseDate) ? 80 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate) : 80 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower()));
-                            result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{studio}] {releaseDate}", Score = score });
+                            result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{studio}] {releaseDate}" });
 
                             var scenes = detailsPageElements.SelectNodes("//div[@class='item-grid item-grid-scene']/div/a/@href");
                             if (scenes != null)
@@ -66,7 +66,7 @@ namespace PhoenixAdult.Sites
                                 for (int i = 0; i < scenes.Count; i++)
                                 {
                                     string section = "Scene " + (i + 1);
-                                    result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}|{i}" } }, Name = $"{titleNoFormatting} [{section}][{studio}] {releaseDate}", Score = score });
+                                    result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}|{i}" } }, Name = $"{titleNoFormatting} [{section}][{studio}] {releaseDate}" });
                                 }
                             }
                         }
@@ -101,7 +101,7 @@ namespace PhoenixAdult.Sites
 
             var tagline = detailsPageElements.SelectSingleNode("//p[contains(text(), 'A scene from')]/a/text()")?.InnerText.Trim()
                 ?? detailsPageElements.SelectSingleNode("//a[@data-label='Series List']/h2/text()")?.InnerText.Trim().Replace("Series:", "").Replace($"({studio})", "").Trim();
-            movie.Tags.Add(tagline ?? studio);
+            movie.AddTag(tagline ?? studio);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {
@@ -132,7 +132,7 @@ namespace PhoenixAdult.Sites
             return result;
         }
 
-        public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var result = new List<RemoteImageInfo>();
             // ... (Image logic would be ported here) ...

@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -38,7 +39,7 @@ namespace PhoenixAdult.Sites
             string encodedTitle = searchTitle.Replace("'", "").Replace(",", "").Replace("& ", "");
             string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{encodedTitle}&key2={encodedTitle}&next=1&page=0";
             var req = await HTTP.Request(searchUrl, cancellationToken, new Dictionary<string, string> { { "Referer", "https://www.data18.com" } }, new Dictionary<string, string> { { "data_user_captcha", "1" } });
-            var searchPageElements = HTML.Document(req.Content);
+            var searchPageElements = HTML.ElementFromString(req.Content);
 
             var searchPagesMatch = Regex.Match(req.Content, @"(?<=pages:\s).*(?=])");
             int numSearchPages = searchPagesMatch.Success ? Math.Min(int.Parse(searchPagesMatch.Value), 10) : 1;
@@ -65,17 +66,7 @@ namespace PhoenixAdult.Sites
                             string date = searchResult.SelectSingleNode(".//span[@class='gen11']/text()")?.InnerText.Trim();
                             string releaseDate = !string.IsNullOrEmpty(date) && date != "unknown" ? DateTime.ParseExact(date, "MMMM dd, yyyy", CultureInfo.InvariantCulture).ToString("yyyy-MM-dd") : (searchDate.HasValue ? searchDate.Value.ToString("yyyy-MM-dd") : "");
 
-                            int score = sceneID == urlID ? 100 : (searchDate.HasValue && !string.IsNullOrEmpty(releaseDate) ? 80 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate) : 80 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower()));
-
-                            if (score == 80)
-                            {
-                                count++;
-                                temp.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{siteDisplay}] {releaseDate}", Score = score });
-                            }
-                            else
-                            {
-                                result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{siteDisplay}] {releaseDate}", Score = score });
-                            }
+                            result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{siteDisplay}] {releaseDate}" });
                         }
                     }
                 }
@@ -83,7 +74,7 @@ namespace PhoenixAdult.Sites
                 {
                     searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{encodedTitle}&key2={encodedTitle}&next=1&page={i + 1}";
                     req = await HTTP.Request(searchUrl, cancellationToken, new Dictionary<string, string> { { "Referer", "https://www.data18.com" } }, new Dictionary<string, string> { { "data_user_captcha", "1" } });
-                    searchPageElements = HTML.Document(req.Content);
+                    searchPageElements = HTML.ElementFromString(req.Content);
                 }
             }
 
@@ -109,24 +100,7 @@ namespace PhoenixAdult.Sites
                 string date = detailsPageElements.SelectSingleNode("//@datetime")?.GetAttributeValue("datetime", "").Trim();
                 string releaseDate = !string.IsNullOrEmpty(date) && date != "unknown" ? DateTime.Parse(date).ToString("yyyy-MM-dd") : (searchDate.HasValue ? searchDate.Value.ToString("yyyy-MM-dd") : "");
 
-                int score = sceneID == urlID ? 100 : (searchDate.HasValue && !string.IsNullOrEmpty(releaseDate) ? 80 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate) : 80 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower()));
-
-                if (score == 80)
-                {
-                    count++;
-                    temp.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{siteDisplay}] {releaseDate}", Score = score });
-                }
-                else
-                {
-                    result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{siteDisplay}] {releaseDate}", Score = score });
-                }
-            }
-
-            foreach (var res in temp)
-            {
-                if (count > 1 && res.Score == 80)
-                    res.Score = 79;
-                result.Add(res);
+                result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{siteDisplay}] {releaseDate}" });
             }
 
             return result;
@@ -152,9 +126,9 @@ namespace PhoenixAdult.Sites
 
             var taglineNode = detailsPageElements.SelectSingleNode("//p[contains(., 'Site:')]//following-sibling::a[@class='bold'] | //b[contains(., 'Network')]//following-sibling::a | //p[contains(., 'Webserie:')]/a | //p[contains(., 'Movie:')]/a");
             if(taglineNode != null)
-                movie.Tags.Add(taglineNode.InnerText.Trim());
+                movie.AddTag(taglineNode.InnerText.Trim());
             else
-                movie.Tags.Add(movie.Studios.FirstOrDefault());
+                movie.AddTag(movie.Studios.FirstOrDefault());
 
             var dateNode = detailsPageElements.SelectSingleNode("//span[contains(., 'Release date:')]");
             string date = dateNode?.InnerText.Replace("Release date:", "").Replace(", more updates...\n[Nav X]", "").Replace("* Movie Release", "").Trim() ?? sceneDate;

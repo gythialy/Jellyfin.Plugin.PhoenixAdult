@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -24,7 +25,7 @@ namespace PhoenixAdult.Sites
             if (siteNum == null || string.IsNullOrEmpty(searchTitle)) return result;
 
             string url = $"{Helper.GetSearchBaseURL(siteNum)}/trial/scenes/{searchTitle.ToLower().Replace(' ', '-')}_vids.html";
-            var req = await HTTP.Request(url, cancellationToken, null, null, true);
+            var req = await HTTP.Request(url, cancellationToken);
             if (req.IsOK)
             {
                 string curID = Helper.Encode(url);
@@ -33,7 +34,6 @@ namespace PhoenixAdult.Sites
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
                     Name = $"{url} [{Helper.GetSearchSiteName(siteNum)}]",
-                    Score = 100,
                     SearchProviderName = Plugin.Instance.Name
                 });
             }
@@ -50,12 +50,10 @@ namespace PhoenixAdult.Sites
                         string sceneURL = searchResult.SelectSingleNode(".//a")?.GetAttributeValue("href", "");
                         string curID = Helper.Encode(sceneURL);
 
-                        int score = 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
-                            Score = score,
                             SearchProviderName = Plugin.Instance.Name
                         });
                     }
@@ -89,7 +87,7 @@ namespace PhoenixAdult.Sites
 
             var dvdName = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Movie:')]")?.ParentNode.InnerText.Replace("Movie:", "").Replace("Feature: ", "").Trim();
             if(!string.IsNullOrEmpty(dvdName))
-                movie.Tags.Add(dvdName);
+                movie.AddTag(dvdName);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

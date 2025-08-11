@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -42,18 +43,16 @@ namespace PhoenixAdult.Sites
                 var req = await HTTP.Request(sceneURL, cancellationToken);
                 if (req.IsOK)
                 {
-                    var searchResult = HTML.Document(req.Content);
+                    var searchResult = HTML.ElementFromString(req.Content);
                     var titleNode = searchResult.SelectSingleNode("(//div[@class='indScene']/h1 | //div[@class='indSceneDVD']/h1) | (//div[@class='indScene']/h2 | //div[@class='indSceneDVD']/h2)");
                     if (titleNode != null)
                     {
                         string titleNoFormatting = titleNode.InnerText.Trim();
                         string curID = Helper.Encode(sceneURL);
-                        int score = 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                             Name = $"{titleNoFormatting} [New Sensations]",
-                            Score = score,
                             SearchProviderName = Plugin.Instance.Name
                         });
                     }
@@ -80,7 +79,7 @@ namespace PhoenixAdult.Sites
             {
                 movie.Name = detailsPageElements.SelectSingleNode("//div[@class='indSceneDVD']/h1")?.InnerText.Trim();
                 movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='description']/h2")?.InnerText.Replace("Description:", "").Trim();
-                movie.Tags.Add(movie.Name); // DVD Name as collection
+                movie.AddTag(movie.Name); // DVD Name as collection
 
                 var dateNode = detailsPageElements.SelectSingleNode("//div[@class='datePhotos']")?.InnerText.Replace("RELEASED:", "").Trim();
                 if(!string.IsNullOrEmpty(dateNode))
@@ -103,7 +102,7 @@ namespace PhoenixAdult.Sites
             {
                 movie.Name = detailsPageElements.SelectSingleNode("//div[@class='indScene']/h1 | //div[@class='indScene']/h2")?.InnerText.Trim();
                 movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='description']/h2/text() | //div[@class='description']//span/following-sibling::text()")?.InnerText.Replace("Description:", "").Trim();
-                movie.Tags.Add(Helper.GetSearchSiteName(siteNum));
+                movie.AddTag(Helper.GetSearchSiteName(siteNum));
 
                 var dateNode = detailsPageElements.SelectSingleNode("//div[@class='sceneDateP']/span")?.InnerText.Split(',')[0].Trim();
                 if (DateTime.TryParse(dateNode, out var parsedDate))

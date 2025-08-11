@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -41,12 +42,10 @@ namespace PhoenixAdult.Sites
                         string curID = searchResult.SelectSingleNode(".//span[@class='title']/a")?.GetAttributeValue("href", "").Split('/')[3];
                         string releaseDate = DateTime.Parse(searchResult.SelectSingleNode(".//span[@class='date']")?.InnerText.Trim()).ToString("yyyy-MM-dd");
 
-                        int score = 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleParts[0].Trim().ToLower());
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                            Score = score,
                             SearchProviderName = Plugin.Instance.Name
                         });
                     }
@@ -65,7 +64,6 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{sceneNum}|{siteNum[0]}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                        Score = 100,
                         SearchProviderName = Plugin.Instance.Name
                     });
                 }
@@ -101,7 +99,7 @@ namespace PhoenixAdult.Sites
             movie.Overview = description?.Trim();
 
             movie.AddStudio("Nubiles");
-            movie.Tags.Add(Helper.GetSearchSiteName(siteNum));
+            movie.AddTag(Helper.GetSearchSiteName(siteNum));
 
             var sceneDate = sceneData.SelectSingleNode("//div[contains(@class, 'content-pane')]//span[@class='date']")?.InnerText.Trim();
             if (DateTime.TryParse(sceneDate, out var sceneDateObj))

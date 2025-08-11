@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -44,13 +45,10 @@ namespace PhoenixAdult.Sites
                     string curID = Helper.Encode(sceneURL);
                     string releaseDate = DateTime.Parse(searchResult.SelectSingleNode(".//span[@class='scene-date']")?.InnerText.Trim()).ToString("yyyy-MM-dd");
 
-                    int score = searchDate.HasValue ? 100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate) : 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), firstActor.ToLower());
-
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [Tonight's Girlfriend] {releaseDate}",
-                        Score = score,
                         SearchProviderName = Plugin.Instance.Name
                     });
                 }
@@ -94,7 +92,7 @@ namespace PhoenixAdult.Sites
             movie.Name = string.Join(", ", actorList);
             movie.Overview = detailsPageElements.SelectSingleNode("//p[@class='scene-description']")?.InnerText.Trim();
             movie.AddStudio("Naughty America");
-            movie.Tags.Add("Tonight's Girlfriend");
+            movie.AddTag("Tonight's Girlfriend");
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

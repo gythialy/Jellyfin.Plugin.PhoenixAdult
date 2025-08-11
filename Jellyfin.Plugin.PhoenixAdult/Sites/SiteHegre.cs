@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -26,7 +27,7 @@ namespace PhoenixAdult.Sites
             var req = await HTTP.Request(sceneUrl, cancellationToken);
             if (req.IsOK)
             {
-                var searchResult = HTML.Document(req.Content);
+                var searchResult = HTML.ElementFromString(req.Content);
                 string curID = Helper.Encode(sceneUrl);
                 string titleNoFormatting = searchResult.SelectSingleNode("//h1")?.InnerText.Trim();
                 string date = searchResult.SelectSingleNode("//span[@class='date']")?.InnerText.Trim();
@@ -69,13 +70,11 @@ namespace PhoenixAdult.Sites
                                     releaseDate = sceneDateObj.ToString("yyyy-MM-dd");
                             }
 
-                            int score = searchDate.HasValue && !string.IsNullOrEmpty(releaseDate) ? 100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate) : 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), sceneName.ToLower());
                             result.Add(new RemoteSearchResult
                             {
                                 ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                                 Name = $"{sceneName} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                                 ImageUrl = scenePoster,
-                                Score = score,
                                 SearchProviderName = Plugin.Instance.Name
                             });
                         }
@@ -107,7 +106,7 @@ namespace PhoenixAdult.Sites
                 movie.Overview = summary.Substring(0, summary.IndexOf("Runtime", StringComparison.OrdinalIgnoreCase)).Trim();
 
             movie.AddStudio("Hegre");
-            movie.Tags.Add(Helper.GetSearchSiteName(siteNum));
+            movie.AddTag(Helper.GetSearchSiteName(siteNum));
 
             var date = sceneData.SelectSingleNode("//span[@class='date']")?.InnerText.Trim();
             if (DateTime.TryParse(date, out var sceneDateObj))

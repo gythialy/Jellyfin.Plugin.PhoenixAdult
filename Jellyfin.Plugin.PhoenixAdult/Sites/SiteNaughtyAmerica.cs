@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -66,19 +67,17 @@ namespace PhoenixAdult.Sites
                 if (scenePageElements != null)
                 {
                     string releaseDate = scenePageElements.PublishedAt.ToString("yyyy-MM-dd");
-                    int score = searchDate.HasValue ? 100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate) : (string.IsNullOrEmpty(sceneID) ? 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), scenePageElements.Title.ToLower()) : 100);
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{scenePageElements.Id}|{siteNum[0]}" } },
                         Name = $"{scenePageElements.Title} [{scenePageElements.Site}] {releaseDate}",
-                        Score = score,
                         SearchProviderName = Plugin.Instance.Name
                     });
                 }
             }
             else
             {
-                string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Slugify("+")}&_gl=1";
+                string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Slugify()}&_gl=1";
                 var searchResultsNode = await HTML.ElementFromURL(searchUrl, cancellationToken);
                 if (searchResultsNode == null) return result;
 
@@ -98,12 +97,10 @@ namespace PhoenixAdult.Sites
                             int curID = int.Parse(searchResult.SelectSingleNode("./a")?.GetAttributeValue("data-scene-id", ""));
                             string releaseDate = DateTime.Parse(searchResult.SelectSingleNode("./p[@class='entry-date']")?.InnerText).ToString("yyyy-MM-dd");
                             string siteName = searchResult.SelectSingleNode(".//a[@class='site-title']")?.InnerText;
-                            int score = searchDate.HasValue ? 100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate) : 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
                             result.Add(new RemoteSearchResult
                             {
                                 ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                                 Name = $"{titleNoFormatting} [{siteName}] {releaseDate}",
-                                Score = score,
                                 SearchProviderName = Plugin.Instance.Name
                             });
                         }
@@ -111,7 +108,7 @@ namespace PhoenixAdult.Sites
 
                     if (pagination > 1 && pagination != i + 1)
                     {
-                        string nextUrl = searchUrl.Contains("pornstar") ? $"{Helper.GetSearchBaseURL(siteNum)}/pornstar/{searchTitle.Slugify()}?related_page={i}" : $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Slugify("+")}&page={i}";
+                        string nextUrl = searchUrl.Contains("pornstar") ? $"{Helper.GetSearchBaseURL(siteNum)}/pornstar/{searchTitle.Slugify()}?related_page={i}" : $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Slugify()}&page={i}";
                         searchResultsNode = await HTML.ElementFromURL(nextUrl, cancellationToken);
                     }
                 }
@@ -130,7 +127,7 @@ namespace PhoenixAdult.Sites
             movie.Name = details.Title;
             movie.Overview = details.Synopsis;
             movie.AddStudio("Naughty America");
-            movie.Tags.Add(details.Site);
+            movie.AddTag(details.Site);
 
             if (details.PublishedAt != default)
             {

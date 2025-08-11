@@ -12,6 +12,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Newtonsoft.Json.Linq;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -24,7 +25,7 @@ namespace PhoenixAdult.Sites
             var req = await HTTP.Request(url, cancellationToken);
             if (!req.IsOK) return null;
 
-            var detailsPageElements = HTML.Document(req.Content);
+            var detailsPageElements = HTML.ElementFromString(req.Content);
             var scriptDataNode = detailsPageElements.SelectSingleNode("//script[contains(., 'window.__remixContext')]");
             if (scriptDataNode == null) return null;
 
@@ -97,13 +98,10 @@ namespace PhoenixAdult.Sites
                 if (!string.IsNullOrEmpty(date) && DateTime.TryParseExact(date.Split(' ')[0].Trim(), "MM/dd/yy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                     releaseDate = parsedDate.ToString("yyyy-MM-dd");
 
-                int score = searchDate.HasValue && !string.IsNullOrEmpty(releaseDate) ? 100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate) : 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
-
                 result.Add(new RemoteSearchResult
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                     Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
-                    Score = score,
                     SearchProviderName = Plugin.Instance.Name
                 });
             }
@@ -136,7 +134,7 @@ namespace PhoenixAdult.Sites
 
             movie.AddStudio("Clips4Sale");
             string tagline = detailsPageElements["studioTitle"]?.ToString();
-            movie.Tags.Add(tagline);
+            movie.AddTag(tagline);
 
             string date = detailsPageElements["dateDisplay"]?.ToString();
             if (!string.IsNullOrEmpty(date) && DateTime.TryParseExact(date.Split(' ')[0].Trim(), "MM/dd/yy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))

@@ -44,5 +44,23 @@ namespace PhoenixAdult.Helpers.Utils
 
             return html.DocumentNode;
         }
+
+        public static string StripHtml(string html)
+        {
+            if (string.IsNullOrEmpty(html))
+                return string.Empty;
+
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html);
+            return System.Net.WebUtility.HtmlDecode(doc.DocumentNode.InnerText);
+        }
+
+        public static string Clean(string strIn)
+        {
+            if (string.IsNullOrEmpty(strIn))
+                return string.Empty;
+
+            return System.Net.WebUtility.HtmlDecode(strIn.Trim());
+        }
     }
 }

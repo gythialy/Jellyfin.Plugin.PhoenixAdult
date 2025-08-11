@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -37,12 +38,10 @@ namespace PhoenixAdult.Sites
                     string curID = Helper.Encode(sceneURL);
                     string date = searchResult.SelectSingleNode("./p/span[1]")?.InnerText.Trim();
                     string releaseDate = DateTime.Parse(date).ToString("yyyy-MM-dd");
-                    int score = 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|0" } },
                         Name = $"{titleNoFormatting} [FamilyTherapy] {releaseDate}",
-                        Score = score,
                         SearchProviderName = Plugin.Instance.Name
                     });
                 }
@@ -65,7 +64,6 @@ namespace PhoenixAdult.Sites
                     foreach(var match in c4sResults)
                     {
                         match.Name = GetCleanTitle(match.Name);
-                        match.Score = 100 - LevenshteinDistance.Compute(title.ToLower(), new Regex(@".*(?=\[)").Match(match.Name.ToLower()).Value.Trim());
                         string originalId = match.ProviderIds[Plugin.Instance.Name];
                         match.ProviderIds[Plugin.Instance.Name] = $"{originalId.Split('|')[0]}|{siteNum[0]}|1";
                         result.Add(match);
@@ -123,7 +121,7 @@ namespace PhoenixAdult.Sites
             catch { movie.Overview = detailsPageElementsDirect.SelectSingleNode("//div[@class='entry-content']")?.InnerText.Trim(); }
 
             movie.AddStudio("Family Therapy");
-            movie.Tags.Add("Family Therapy");
+            movie.AddTag("Family Therapy");
 
             var genreNodes = detailsPageElementsDirect.SelectNodes("//a[@rel='category tag']");
             if(genreNodes != null)
@@ -157,7 +155,7 @@ namespace PhoenixAdult.Sites
             if (mode == 1)
             {
                  var c4sProvider = new SiteClips4Sale();
-                 return await c4sProvider.GetImages(new[] { 105 }, new[] { sceneID[0] }, null, cancellationToken);
+                 return await c4sProvider.GetImages(new[] { 105 }, new[] { sceneID[0] }, item, cancellationToken);
             }
 
             // Direct scrape mode

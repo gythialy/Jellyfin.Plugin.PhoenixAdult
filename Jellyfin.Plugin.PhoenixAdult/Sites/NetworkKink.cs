@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -44,7 +45,6 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
                         Name = $"[{shootID}] {titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                        Score = 100,
                         SearchProviderName = Plugin.Instance.Name
                     });
                 }
@@ -69,15 +69,10 @@ namespace PhoenixAdult.Sites
                         if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var releaseDate))
                             releaseDateStr = releaseDate.ToString("yyyy-MM-dd");
 
-                        int score = searchDate.HasValue && !string.IsNullOrEmpty(releaseDateStr)
-                            ? 100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDateStr)
-                            : 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
-
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDateStr}" } },
                             Name = $"[{shootID}] {titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDateStr}",
-                            Score = score,
                             SearchProviderName = Plugin.Instance.Name
                         });
                     }
@@ -113,7 +108,7 @@ namespace PhoenixAdult.Sites
 
             string channel = detailsPageElements.SelectSingleNode("//div[contains(@class, 'shoot-detail-legend')]//a[contains(@href, '/channel/')]")?.InnerText.Trim().ToLower();
             string tagline = GetTagline(channel) ?? Helper.GetSearchSiteName(siteNum);
-            movie.Tags.Add(tagline);
+            movie.AddTag(tagline);
             movie.AddStudio(GetStudio(tagline));
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'shoot-detail-legend')]//span[@class='text-muted ms-2']");

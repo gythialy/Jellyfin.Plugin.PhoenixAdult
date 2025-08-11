@@ -12,6 +12,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -19,12 +20,9 @@ namespace PhoenixAdult.Sites
 {
     public class NetworkJavBus : IProviderBase
     {
-        private CookieContainer GetCookies()
+        private IDictionary<string, string> GetCookies()
         {
-            var cookieContainer = new CookieContainer();
-            cookieContainer.Add(new Cookie("existmag", "all"));
-            cookieContainer.Add(new Cookie("dv", "1"));
-            return cookieContainer;
+            return new Dictionary<string, string> { { "existmag", "all" }, { "dv", "1" } };
         }
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
@@ -49,7 +47,7 @@ namespace PhoenixAdult.Sites
                     ? $"{Helper.GetSearchSearchURL(siteNum)}uncensored/search/{encodedSearchTitle}"
                     : $"{Helper.GetSearchSearchURL(siteNum)}search/{encodedSearchTitle}";
 
-                var searchResultsNode = await HTML.ElementFromURL(url, cancellationToken, GetCookies());
+                var searchResultsNode = await HTML.ElementFromURL(url, cancellationToken, null, GetCookies());
                 if (searchResultsNode == null) continue;
 
                 var searchResults = searchResultsNode.SelectNodes("//a[@class='movie-box']");
@@ -62,15 +60,10 @@ namespace PhoenixAdult.Sites
                     string sceneURL = searchResult.GetAttributeValue("href", "");
                     string curID = Helper.Encode(sceneURL);
 
-                    int score = !string.IsNullOrEmpty(searchJAVID)
-                        ? 100 - LevenshteinDistance.Compute(searchJAVID.ToLower(), javid.ToLower())
-                        : 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
-
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                         Name = $"[{searchType}][{javid}] {titleNoFormatting}",
-                        Score = score,
                         SearchProviderName = Plugin.Instance.Name
                     });
                 }
@@ -79,7 +72,7 @@ namespace PhoenixAdult.Sites
             if (!string.IsNullOrEmpty(directJAVID))
             {
                 string sceneURL = Helper.GetSearchSearchURL(siteNum) + directJAVID;
-                var searchResultNode = await HTML.ElementFromURL(sceneURL, cancellationToken, GetCookies());
+                var searchResultNode = await HTML.ElementFromURL(sceneURL, cancellationToken, null, GetCookies());
                 if (searchResultNode != null)
                 {
                     string javTitle = searchResultNode.SelectSingleNode("//head/title")?.InnerText.Trim().Replace(" - JavBus", "");
@@ -88,7 +81,6 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                         Name = $"[Direct][{directJAVID}] {javTitle}",
-                        Score = 100,
                         SearchProviderName = Plugin.Instance.Name
                     });
                 }
@@ -109,7 +101,7 @@ namespace PhoenixAdult.Sites
             if (!sceneURL.StartsWith("http"))
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
 
-            var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken, GetCookies());
+            var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken, null, GetCookies());
             if (detailsPageElements == null) return result;
 
             var movie = (Movie)result.Item;
@@ -121,11 +113,11 @@ namespace PhoenixAdult.Sites
             string label = detailsPageElements.SelectSingleNode("//p/a[contains(@href, '/label/')]")?.InnerText.Trim();
             string series = detailsPageElements.SelectSingleNode("//p/a[contains(@href, '/series/')]")?.InnerText.Trim();
             if (!string.IsNullOrEmpty(label))
-                movie.Tags.Add(label);
+                movie.AddTag(label);
             else
-                movie.Tags.Add(javStudio);
+                movie.AddTag(javStudio);
             if (!string.IsNullOrEmpty(series))
-                movie.Tags.Add(series);
+                movie.AddTag(series);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='col-md-3 info']/p[2]");
             if (dateNode != null)
@@ -175,7 +167,7 @@ namespace PhoenixAdult.Sites
             if (!sceneURL.StartsWith("http"))
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
 
-            var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken, GetCookies());
+            var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken, null, GetCookies());
             if (detailsPageElements == null) return images;
 
             var posterNodes = detailsPageElements.SelectNodes("//a[contains(@href, '/cover/') or @class='sample-box']");

@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -68,22 +69,20 @@ namespace PhoenixAdult.Sites
             foreach (var sceneURL in pluralResults.Select(url => url.Replace("www.", "")))
             {
                 var req = await HTTP.Request(sceneURL, cancellationToken);
-                if (req.ResponseUrl.Contains("signup.")) continue;
+                if (!req.IsOK) continue;
 
-                var detailsPageElements = HTML.Document(req.Content);
+                var detailsPageElements = HTML.ElementFromString(req.Content);
                 var titleNode = detailsPageElements.SelectSingleNode("//h1");
                 if (titleNode == null) continue;
 
                 string titleNoFormatting = titleNode.InnerText.Trim();
                 string curID = Helper.Encode(sceneURL);
                 string releaseDate = searchDate?.ToString("yyyy-MM-dd") ?? string.Empty;
-                int score = 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
 
                 result.Add(new RemoteSearchResult
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
                     Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
-                    Score = score,
                     SearchProviderName = Plugin.Instance.Name
                 });
             }
@@ -189,7 +188,7 @@ namespace PhoenixAdult.Sites
             }
 
             string siteName = (actorSubSite != null && sceneURL.Contains("pornplus")) ? actorSubSite : Helper.GetSearchSiteName(siteNum);
-            movie.Tags.Add(siteName);
+            movie.AddTag(siteName);
 
             if (ActorsDB.ContainsKey(movie.Name))
             {

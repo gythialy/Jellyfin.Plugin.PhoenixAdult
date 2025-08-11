@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using PhoenixAdult.Extensions;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
@@ -89,15 +90,10 @@ namespace PhoenixAdult.Sites
                     else if (searchDate.HasValue)
                         releaseDateStr = searchDate.Value.ToString("yyyy-MM-dd");
 
-                    int score = searchDate.HasValue && !string.IsNullOrEmpty(releaseDateStr)
-                        ? 100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDateStr)
-                        : 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
-
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDateStr}|{sceneType}" } },
                         Name = $"{titleNoFormatting} [{subSite}] {releaseDateStr}",
-                        Score = score,
                         SearchProviderName = Plugin.Instance.Name,
                         ImageUrl = (string)details["img"]
                     });
@@ -129,7 +125,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("MYLF");
 
             string subSite = (string)details["site"]?["name"] ?? Helper.GetSearchSiteName(siteNum);
-            movie.Tags.Add(subSite);
+            movie.AddTag(subSite);
 
             if (DateTime.TryParse(sceneDate, out var releaseDate))
             {

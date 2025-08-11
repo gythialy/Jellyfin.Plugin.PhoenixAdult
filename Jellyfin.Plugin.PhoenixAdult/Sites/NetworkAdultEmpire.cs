@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -18,11 +19,9 @@ namespace PhoenixAdult.Sites
 {
     public class NetworkAdultEmpire : IProviderBase
     {
-        private CookieContainer GetCookies()
+        private IDictionary<string, string> GetCookies()
         {
-            var cookieContainer = new CookieContainer();
-            cookieContainer.Add(new Cookie("ageConfirmed", "true"));
-            return cookieContainer;
+            return new Dictionary<string, string> { { "ageConfirmed", "true" } };
         }
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
@@ -41,7 +40,7 @@ namespace PhoenixAdult.Sites
             if (!string.IsNullOrEmpty(sceneID))
             {
                 string directURL = $"{Helper.GetSearchBaseURL(siteNum)}/{sceneID}/{searchTitle.Slugify()}.html";
-                var directHtml = await HTML.ElementFromURL(directURL, cancellationToken, GetCookies());
+                var directHtml = await HTML.ElementFromURL(directURL, cancellationToken, null, GetCookies());
                 if (directHtml != null)
                 {
                     var titleNode = directHtml.SelectSingleNode("//h1[@class='description']");
@@ -64,7 +63,6 @@ namespace PhoenixAdult.Sites
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                            Score = 100,
                             SearchProviderName = Plugin.Instance.Name
                         });
                     }
@@ -72,7 +70,7 @@ namespace PhoenixAdult.Sites
             }
 
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
-            var searchHtml = await HTML.ElementFromURL(searchUrl, cancellationToken, GetCookies());
+            var searchHtml = await HTML.ElementFromURL(searchUrl, cancellationToken, null, GetCookies());
             if (searchHtml == null) return result;
 
             var searchResults = searchHtml.SelectNodes("//div[contains(@class, 'item-grid')]/div[@class='grid-item']");
@@ -102,13 +100,10 @@ namespace PhoenixAdult.Sites
                         curID = Helper.Encode(searchResult.SelectSingleNode(".//a[@class='scene-title']").GetAttributeValue("href", ""));
                     }
 
-                    int score = 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
-
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
-                        Score = score,
                         SearchProviderName = Plugin.Instance.Name
                     });
                 }
@@ -135,7 +130,7 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
-            var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken, GetCookies());
+            var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken, null, GetCookies());
             if (detailsPageElements == null) return result;
 
             var movie = (Movie)result.Item;
@@ -151,7 +146,7 @@ namespace PhoenixAdult.Sites
             if (taglineNode != null)
             {
                 string tagline = taglineNode.InnerText.Trim();
-                movie.Tags.Add(tagline);
+                movie.AddTag(tagline);
             }
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='release-date']");
@@ -214,7 +209,7 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
-            var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken, GetCookies());
+            var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken, null, GetCookies());
             if (detailsPageElements == null) return images;
 
             var posters = detailsPageElements.SelectNodes("//div[@id='dv_frames']//img");

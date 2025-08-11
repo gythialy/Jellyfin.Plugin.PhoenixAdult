@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Newtonsoft.Json.Linq;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -49,16 +50,11 @@ namespace PhoenixAdult.Sites
                 string sceneDate = (string)searchResult["date"];
                 DateTime.TryParseExact(sceneDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var releaseDate);
 
-                int score = searchDate.HasValue
-                    ? 100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate.ToString("yyyy-MM-dd"))
-                    : 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
-
                 result.Add(new RemoteSearchResult
                 {
                     ProviderIds = { { Plugin.Instance.Name, curID } },
                     Name = $"{titleNoFormatting} [MetadataAPI/{siteName}] {releaseDate:yyyy-MM-dd}",
                     PremiereDate = releaseDate,
-                    Score = score,
                     SearchProviderName = Plugin.Instance.Name,
                     ImageUrl = (string)searchResult["poster"]
                 });
@@ -107,7 +103,7 @@ namespace PhoenixAdult.Sites
 
                 movie.AddStudio(studioName);
                 foreach (var collection in collections)
-                    movie.Tags.Add(collection);
+                    movie.AddTag(collection);
             }
 
             if (DateTime.TryParseExact((string)details["date"], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))

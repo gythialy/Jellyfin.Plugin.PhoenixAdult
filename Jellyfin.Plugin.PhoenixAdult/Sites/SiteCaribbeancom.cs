@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -38,7 +39,6 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
-                        Score = 100,
                         SearchProviderName = Plugin.Instance.Name
                     });
                 }
@@ -61,7 +61,7 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//title").InnerText;
             movie.AddStudio("caribbeancom");
-            movie.Tags.Add("caribbeancom");
+            movie.AddTag("caribbeancom");
 
             var dateNode = detailsPageElements.SelectSingleNode("//span[@itemprop='uploadDate']");
             if (dateNode != null && DateTime.TryParseExact(dateNode.InnerText, "yyyy/MM/dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))

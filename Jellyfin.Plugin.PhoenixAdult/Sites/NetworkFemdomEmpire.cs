@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -35,7 +36,6 @@ namespace PhoenixAdult.Sites
                 {
                     ProviderIds = { { Plugin.Instance.Name, Helper.Encode(match.curID) } },
                     Name = match.name,
-                    Score = 101,
                     SearchProviderName = Plugin.Instance.Name
                 });
                 return result;
@@ -59,15 +59,10 @@ namespace PhoenixAdult.Sites
 
                 if (DateTime.TryParseExact(sceneDateNode.InnerText.Trim(), "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var releaseDate))
                 {
-                    int score = searchDate.HasValue ?
-                        (100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate.ToString("yyyy-MM-dd"))) :
-                        (100 - LevenshteinDistance.Compute(searchTitle.ToLower(), sceneName.ToLower()));
-
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, curID } },
                         Name = $"{sceneName} [Femdom Empire] {releaseDate:yyyy-MM-dd}",
-                        Score = score,
                         SearchProviderName = Plugin.Instance.Name,
                         PremiereDate = releaseDate
                     });
@@ -98,7 +93,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("Femdom Empire");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.Tags.Add(tagline);
+            movie.AddTag(tagline);
 
             var dateNode = sceneData.SelectSingleNode("//div[@class='videoInfo clear']//p")?.InnerText.Replace("Date Added:", "").Trim();
             if (DateTime.TryParseExact(dateNode, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))

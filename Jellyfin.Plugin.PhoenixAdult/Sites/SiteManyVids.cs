@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Newtonsoft.Json.Linq;
+using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -22,7 +23,7 @@ namespace PhoenixAdult.Sites
             var http = await HTTP.Request(url, cancellationToken);
             if (http.IsOK)
             {
-                var ldJsonNode = HTML.Document(http.Content).SelectSingleNode("//script[@type='application/ld+json']");
+                var ldJsonNode = HTML.ElementFromString(http.Content).SelectSingleNode("//script[@type='application/ld+json']");
                 if (ldJsonNode != null)
                     return JObject.Parse(ldJsonNode.InnerText);
             }
@@ -55,15 +56,10 @@ namespace PhoenixAdult.Sites
             if (DateTime.TryParse((string)searchResult["uploadDate"], out var parsedDate))
                 releaseDate = parsedDate.ToString("yyyy-MM-dd");
 
-            int score = sceneID == searchID ? 100 :
-                        searchDate.HasValue ? 100 - LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate) :
-                        100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
-
             result.Add(new RemoteSearchResult
             {
                 ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
                 Name = $"{titleNoFormatting} [ManyVids/{subSite}] {releaseDate}",
-                Score = score,
                 SearchProviderName = Plugin.Instance.Name
             });
 
@@ -92,7 +88,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("ManyVids");
 
             var tagline = (string)videoPageElements["model"]?["displayName"];
-            movie.Tags.Add(tagline);
+            movie.AddTag(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var releaseDate))
             {
