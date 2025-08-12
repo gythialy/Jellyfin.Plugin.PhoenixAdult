@@ -180,6 +180,66 @@ namespace PhoenixAdult.Providers
                         result = result.OrderByDescending(o => 100 - LevenshteinDistance.Calculate(searchTitle, Helper.GetClearTitle(o.Name), StringComparison.OrdinalIgnoreCase)).ToList();
                     }
                 }
+                else
+                {
+                    if (Plugin.Instance.Configuration.UseMetadataAPI && !string.IsNullOrEmpty(Plugin.Instance.Configuration.MetadataAPIToken))
+                    {
+                        searchTitle = $"MetadataAPI {searchTitle}";
+                        site = Helper.GetSiteFromTitle(searchTitle);
+                        Logger.Info($"META site: {site.siteNum[0]}:{site.siteNum[1]} ({site.siteName})");
+                        provider = Helper.GetProviderBySiteID(site.siteNum[0]);
+                        if (provider != null)
+                        {
+                            Logger.Info($"provider: {provider}");
+
+                            try
+                            {
+                                result = await provider.Search(site.siteNum, searchTitle, searchDateObj, cancellationToken).ConfigureAwait(false);
+                            }
+                            catch (Exception e)
+                            {
+                                Logger.Error($"Search error: \"{e}\"");
+
+                                await Analytics.Send(
+                                    new AnalyticsExeption
+                                    {
+                                        Request = searchInfo.Name,
+                                        SiteNum = site.siteNum,
+                                        SearchTitle = searchTitle,
+                                        SearchDate = searchDateObj,
+                                        ProviderName = provider.ToString(),
+                                        Exception = e,
+                                    }, cancellationToken).ConfigureAwait(false);
+                            }
+
+                            if (result.Any())
+                            {
+                                foreach (var scene in result)
+                                {
+                                    scene.ProviderIds[this.Name] = $"{site.siteNum[0]}#{site.siteNum[1]}#" + scene.ProviderIds[this.Name];
+                                    scene.Name = scene.Name.Trim();
+                                    if (scene.PremiereDate.HasValue)
+                                    {
+                                        scene.ProductionYear = scene.PremiereDate.Value.Year;
+                                    }
+                                }
+
+                                if (result.Any(scene => scene.IndexNumber.HasValue))
+                                {
+                                    result = result.OrderByDescending(o => o.IndexNumber.HasValue).ThenByDescending(o => o.IndexNumber).ToList();
+                                }
+                                else if (!string.IsNullOrEmpty(searchDate) && result.All(o => o.PremiereDate.HasValue) && result.Any(o => o.PremiereDate.Value != searchDateObj))
+                                {
+                                    result = result.OrderBy(o => Math.Abs((searchDateObj - o.PremiereDate).Value.TotalDays)).ToList();
+                                }
+                                else
+                                {
+                                    result = result.OrderByDescending(o => 100 - LevenshteinDistance.Calculate(searchTitle, Helper.GetClearTitle(o.Name), StringComparison.OrdinalIgnoreCase)).ToList();
+                                }
+                            }
+                        }
+                    }
+                }
             }
             else
             {
