@@ -2296,6 +2296,9 @@
     "262": {
       "0": ["Lethal Hardcore", "https://www.lethalhardcore.com", "https://tsmkfa364q-dsn.algolia.net/1/indexes/*/queries"],
       "1": ["Lethal Hardcore VR", "https://www.lethalhardcorevr.com"]
+    },
+    "263": {
+      "0": ["Freeones", "https://www.freeones.com", "/babes?q="]
     }
   },
   "SiteIDList": {
@@ -2561,7 +2564,8 @@
     "259": "NetworkGASM",
     "260": "SiteHeavyOnHotties",
     "261": "SiteXConfessions",
-    "262": "NetworkGammaEntOther"
+    "262": "NetworkGammaEntOther",
+    "263": "ActorFreeones"
   },
     "Abbreviations": {
     "^18og": "18OnlyGirls",
@@ -2574,7 +2578,6 @@
     "^a1o1": "Asian1on1",
     "^aa": "AmateurAllure",
     "^ad": "AmericanDaydreams",
-    "^add": "ManualAddActors",
     "^afg": "18OnlyGirls",
     "^agm": "AllGirlMassage",
     "^AllFineGirls": "18OnlyGirls",

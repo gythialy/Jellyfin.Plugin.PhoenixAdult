@@ -39,9 +39,8 @@ namespace PhoenixAdult.Providers
             {
                 var title = $"{siteName} {searchInfo.Name}";
                 var site = Helper.GetSiteFromTitle(title);
+                Logger.Info($"actor site: {site.siteNum[0]}:{site.siteNum[1]} ({site.siteName})");
                 string actorName = Helper.GetClearTitle(title, site.siteName);
-
-                Logger.Info($"site: {site.siteNum[0]}:{site.siteNum[1]} ({site.siteName})");
                 Logger.Info($"actorName: {actorName}");
 
                 DateTime? searchDateObj = null;
