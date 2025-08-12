@@ -22,16 +22,22 @@ namespace PhoenixAdult.Sites
 
         public Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
+            Logger.Info($"OF searchTitle: {searchTitle}");
             var result = new List<RemoteSearchResult>();
             if (string.IsNullOrEmpty(searchTitle))
                 return Task.FromResult(result);
 
             var match = Regex.Match(searchTitle, FilenameRegex);
+            Logger.Info($"OF match.Success: {match.Success}");
             if (match.Success)
             {
                 string actorName = match.Groups[1].Value.Trim();
                 string date = match.Groups[2].Value.Trim();
                 string sceneName = match.Groups[3].Value.Trim();
+
+                Logger.Info($"OF actorName: {actorName}");
+                Logger.Info($"OF date: {date}");
+                Logger.Info($"OF sceneName: {sceneName}");
 
                 var res = new RemoteSearchResult
                 {
