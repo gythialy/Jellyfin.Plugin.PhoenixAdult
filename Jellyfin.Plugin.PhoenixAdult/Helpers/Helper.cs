@@ -132,7 +132,7 @@ namespace PhoenixAdult.Helpers
 
         public static string GetClearTitle(string title, string siteName = "")
         {
-            if (string.IsNullOrEmpty(title))
+            if (string.IsNullOrEmpty(title) || siteName == "OnlyFans")
             {
                 return title;
             }
