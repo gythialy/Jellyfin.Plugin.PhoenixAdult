@@ -147,9 +147,72 @@ namespace PhoenixAdult.Sites
             return result;
         }
 
-        public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            return Task.FromResult<IEnumerable<RemoteImageInfo>>(new List<RemoteImageInfo>());
+            var images = new List<RemoteImageInfo>();
+            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+
+            var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
+            if (!httpResult.IsOK) return images;
+            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+
+            var xpaths = new[]
+            {
+                "//img[contains(@alt, 'content')]/@src",
+                "//div[@class='box']//img/@src",
+            };
+
+            foreach (var xpath in xpaths)
+            {
+                var imageNodes = detailsPageElements.SelectNodes(xpath);
+                if(imageNodes != null)
+                {
+                    foreach (var img in imageNodes)
+                    {
+                        string imageUrl = img.GetAttributeValue("src", "");
+                        if (!imageUrl.StartsWith("http"))
+                        {
+                            if (imageUrl.Contains("join"))
+                                continue;
+                            else if (sceneUrl.Contains("webmasters"))
+                                imageUrl = $"{sceneUrl}/{imageUrl}";
+                            else
+                                imageUrl = $"{Helper.GetSearchBaseURL(siteNum)}/{imageUrl}";
+                        }
+                        images.Add(new RemoteImageInfo { Url = imageUrl });
+                    }
+                }
+            }
+
+            if (!sceneUrl.Contains("webmasters"))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(item.Name, @"\d+");
+                if (match.Success)
+                {
+                    string altUrl = $"{Helper.GetSearchBaseURL(siteNum)}/webmasters/{match.Value.TrimStart('0')}";
+                    var altHttp = await HTTP.Request(altUrl, HttpMethod.Get, cancellationToken);
+                    if (altHttp.IsOK)
+                    {
+                        var altPage = await HTML.ElementFromString(altHttp.Content, cancellationToken);
+                        var imageNodes = altPage.SelectNodes(xpaths[0]);
+                        if(imageNodes != null)
+                        {
+                            foreach (var img in imageNodes)
+                            {
+                                string imageUrl = img.GetAttributeValue("src", "");
+                                if (!imageUrl.StartsWith("http"))
+                                    imageUrl = $"{altUrl}/{imageUrl}";
+                                images.Add(new RemoteImageInfo { Url = imageUrl });
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (images.Any())
+                images.First().Type = ImageType.Primary;
+
+            return images;
         }
     }
 }

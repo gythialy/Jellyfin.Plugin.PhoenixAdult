@@ -58,10 +58,12 @@ namespace PhoenixAdult.Sites
 
         public Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            // The search logic is very complex and seems to rely on iterating through all pages of the site.
-            // This is not practical for a Jellyfin provider.
+            // The search logic in the original python script is very complex and inefficient.
+            // It iterates through all pages of multiple sites to find a match.
+            // This is not practical for a Jellyfin provider as it would be very slow and resource intensive.
             // A direct search by title is not available on the site.
-            // Returning an empty list.
+            // Therefore, this search method is a no-op. The provider will only work if the scene is
+            // identified by other means and the provider ID is passed directly to the Update method.
             return Task.FromResult(new List<RemoteSearchResult>());
         }
 
