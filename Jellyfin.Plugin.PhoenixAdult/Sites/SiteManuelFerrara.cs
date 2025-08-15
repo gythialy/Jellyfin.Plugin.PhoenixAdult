@@ -1,28 +1,28 @@
+using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using Jellyfin.Plugin.PhoenixAdult.Models;
+using System.Threading;
+using System.Threading.Tasks;
+using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.Providers;
 
-namespace Jellyfin.Plugin.PhoenixAdult.Sites
+namespace PhoenixAdult.Sites
 {
     public class SiteManuelFerrara : IProviderBase
     {
-        public string Name => "Manuel Ferrara";
-        public string DefaultUrl => "https://www.manuels-lair.com/";
-        public List<string> AlternativeUrls => new List<string>();
-
-        public Regex SceneUrlRegex => new Regex(@"(?<baseUrl>https?://www\.manuels-lair\.com/scene/)(?<id>.*?)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        public Regex SceneIdRegex => new Regex(@"(?<baseUrl>https?://www\.manuels-lair\.com/scene/)(?<id>.*?)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-        private readonly Regex _sceneDateRegex = new Regex(@".*?(\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{4})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-        public List<SearchResult> Search(string query)
+        public Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            return new List<SearchResult>();
+            throw new NotImplementedException();
         }
 
-        public Scene Scrape(string url)
+        public Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
-            return new Scene();
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
         }
     }
 }
