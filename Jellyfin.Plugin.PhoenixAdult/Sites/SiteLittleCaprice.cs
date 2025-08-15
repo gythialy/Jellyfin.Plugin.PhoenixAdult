@@ -4,25 +4,25 @@ using Jellyfin.Plugin.PhoenixAdult.Models;
 
 namespace Jellyfin.Plugin.PhoenixAdult.Sites
 {
-    public class SiteLittleCaprice : SiteBase
+    public class SiteLittleCaprice : IProviderBase
     {
-        public override string Name => "Little Caprice";
-        public override string DefaultUrl => "https://www.littlecaprice.com/";
-        public override List<string> AlternativeUrls => new List<string>();
+        public string Name => "Little Caprice";
+        public string DefaultUrl => "https://www.littlecaprice.com/";
+        public List<string> AlternativeUrls => new List<string>();
 
-        public override Regex SceneUrlRegex => new Regex(@"(?<baseUrl>https?://www\.littlecaprice\.com/video/)(?<id>.*?)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        public override Regex SceneIdRegex => new Regex(@"(?<baseUrl>https?://www\.littlecaprice\.com/video/)(?<id>.*?)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public Regex SceneUrlRegex => new Regex(@"(?<baseUrl>https?://www\.littlecaprice\.com/video/)(?<id>.*?)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public Regex SceneIdRegex => new Regex(@"(?<baseUrl>https?://www\.littlecaprice\.com/video/)(?<id>.*?)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private readonly Regex _sceneDateRegex = new Regex(@".*?(\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{4})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        public override List<SearchResult> Search(string query)
+        public List<SearchResult> Search(string query)
         {
-            return Search(query, _sceneDateRegex);
+            return new List<SearchResult>();
         }
 
-        public override Scene Scrape(string url)
+        public Scene Scrape(string url)
         {
-            return Scrape(url, _sceneDateRegex);
+            return new Scene();
         }
     }
 }
