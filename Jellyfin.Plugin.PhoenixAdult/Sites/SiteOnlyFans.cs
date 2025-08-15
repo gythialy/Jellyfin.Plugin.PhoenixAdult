@@ -73,14 +73,13 @@ namespace PhoenixAdult.Sites
 
             if (match.Success)
             {
-                string actorName = match.Groups[1].Value.Trim();
+                string[] actorNames = match.Groups[1].Value.Split(',').Select(a => a.Trim()).ToArray();
                 string date = match.Groups[2].Value.Trim();
                 string sceneName = match.Groups[3].Value.Trim();
 
                 var movie = (Movie)result.Item;
                 movie.Name = sceneName;
                 movie.AddStudio("OnlyFans");
-                movie.AddTag(actorName); // Use actor name as collection
 
                 if (DateTime.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
                 {
@@ -88,7 +87,11 @@ namespace PhoenixAdult.Sites
                     movie.ProductionYear = sceneDateObj.Year;
                 }
 
-                result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                foreach (var actorName in actorNames)
+                {
+                    movie.AddTag(actorName); // Use actor name as collection
+                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                }
             }
 
             result.HasMetadata = true;
