@@ -196,10 +196,52 @@ namespace PhoenixAdult.Sites
                 }
             }
 
+            var setIdNode = detailsPageElements.SelectSingleNode("//img[contains(@class, 'thumbs')] | //div[contains(@class, 'item-thumb')]//img");
+            if (setIdNode != null)
+            {
+                string setId = setIdNode.GetAttributeValue("id", "");
+                if (!string.IsNullOrEmpty(setId))
+                {
+                    string searchPageUrl = Helper.GetSearchSearchURL(siteNum) + item.Name.Replace(" ", "+");
+                    var searchHttp = await HTTP.Request(searchPageUrl, HttpMethod.Get, cancellationToken);
+                    if (searchHttp.IsOK)
+                    {
+                        var searchPageElements = await HTML.ElementFromString(searchHttp.Content, cancellationToken);
+                        var cntNode = searchPageElements.SelectSingleNode($"//img[@id='{setId}']");
+                        if (cntNode != null && int.TryParse(cntNode.GetAttributeValue("cnt", "0"), out var cnt))
+                        {
+                            for (int i = 0; i < cnt; i++)
+                            {
+                                string imageUrl = cntNode.GetAttributeValue($"src{i}_3x", "");
+                                if (!string.IsNullOrEmpty(imageUrl))
+                                    images.Add(new RemoteImageInfo { Url = Helper.GetSearchBaseURL(siteNum) + imageUrl });
+                            }
+                        }
+                    }
+
+                    string photoPageUrl = sceneUrl.Replace("/trailers/", "/preview/");
+                    var photoHttp = await HTTP.Request(photoPageUrl, HttpMethod.Get, cancellationToken);
+                    if (photoHttp.IsOK)
+                    {
+                        var photoPageElements = await HTML.ElementFromString(photoHttp.Content, cancellationToken);
+                        var photoNodes = photoPageElements.SelectNodes($"//img[@id='{setId}']");
+                        if (photoNodes != null)
+                        {
+                            foreach (var img in photoNodes)
+                            {
+                                string imageUrl = img.GetAttributeValue("src0_3x", "");
+                                if (!string.IsNullOrEmpty(imageUrl))
+                                    images.Add(new RemoteImageInfo { Url = Helper.GetSearchBaseURL(siteNum) + imageUrl });
+                            }
+                        }
+                    }
+                }
+            }
+
             if (images.Any())
                 images.First().Type = ImageType.Primary;
 
-            return images;
+            return images.DistinctBy(i => i.Url).ToList();
         }
     }
 }
