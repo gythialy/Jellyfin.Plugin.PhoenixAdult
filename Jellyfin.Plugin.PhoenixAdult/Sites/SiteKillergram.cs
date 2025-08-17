@@ -9,6 +9,7 @@ using Jellyfin.Plugin.PhoenixAdult.Models;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Helpers.Utils;
 
 namespace PhoenixAdult.Sites
 {
@@ -17,10 +18,10 @@ namespace PhoenixAdult.Sites
         private const string SiteName = "Killergram";
         private const string BaseUrl = "https://www.killergram.com";
 
-        public Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
+        public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var sceneId = searchTitle.Split(' ')[0];
-            var doc = FetchPageContent(sceneId);
+            var doc = await FetchPageContent(sceneId, cancellationToken);
             var titleNoFormatting = ExtractTitle(doc);
             var releaseDate = DateTime.Parse(ExtractDate(doc)).ToString("dd MMMM yyyy");
 
@@ -34,13 +35,13 @@ namespace PhoenixAdult.Sites
                 }
             };
 
-            return Task.FromResult(searchResults);
+            return searchResults;
         }
 
-        public Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
+        public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
             var sceneId = sceneID[0].Split('|')[0];
-            var doc = FetchPageContent(sceneId);
+            var doc = await FetchPageContent(sceneId, cancellationToken);
 
             var metadataResult = new MetadataResult<BaseItem>
             {
@@ -61,13 +62,13 @@ namespace PhoenixAdult.Sites
                 metadataResult.AddPerson(new PersonInfo { Name = actor, Type = PersonType.Actor });
             }
 
-            return Task.FromResult(metadataResult);
+            return metadataResult;
         }
 
-        public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var sceneId = sceneID[0].Split('|')[0];
-            var doc = FetchPageContent(sceneId);
+            var doc = await FetchPageContent(sceneId, cancellationToken);
             var art = new List<string>();
             ExtractImages(doc, art);
 
@@ -77,40 +78,38 @@ namespace PhoenixAdult.Sites
                 list.Add(new RemoteImageInfo { Url = imageUrl, Type = ImageType.Primary });
             }
 
-            return Task.FromResult<IEnumerable<RemoteImageInfo>>(list);
+            return list;
         }
 
-        private static HtmlDocument FetchPageContent(string sceneId)
+        private static async Task<HtmlNode> FetchPageContent(string sceneId, CancellationToken cancellationToken)
         {
             var sceneUrl = $"{BaseUrl}/gals/movie.php?s={sceneId}";
-            var doc = new HtmlDocument();
-            doc.LoadHtml(new PhoenixAdultHttpClient().Get(sceneUrl));
-            return doc;
+            return await HTML.ElementFromURL(sceneUrl, cancellationToken);
         }
 
-        private static string ExtractTitle(HtmlDocument doc)
+        private static string ExtractTitle(HtmlNode doc)
         {
-            var searchResult = doc.DocumentNode.SelectSingleNode("//img[@id='episode_001']").GetAttributeValue("src", string.Empty);
+            var searchResult = doc.SelectSingleNode("//img[@id='episode_001']").GetAttributeValue("src", string.Empty);
             var titleMatches = Regex.Match(searchResult.Trim(), @"https://media.killergram.com/models/(?<actress>[\w ]+)/(?P=actress)_(?<title>[\w ]+)/.*");
             return titleMatches.Groups["title"].Value;
         }
 
-        private static string ExtractDate(HtmlDocument doc)
+        private static string ExtractDate(HtmlNode doc)
         {
-            var searchResult = doc.DocumentNode.SelectSingleNode("//span[@class='episodeheader' and text()[contains(., 'published')]]/parent::node()/text()");
+            var searchResult = doc.SelectSingleNode("//span[@class='episodeheader' and text()[contains(., 'published')]]/parent::node()/text()");
             return searchResult.InnerText.Trim();
         }
 
-        private static string ExtractSummary(HtmlDocument doc)
+        private static string ExtractSummary(HtmlNode doc)
         {
-            var searchResult = doc.DocumentNode.SelectSingleNode("//table[@class='episodetext']//tr[5]/td[2]/text()");
+            var searchResult = doc.SelectSingleNode("//table[@class='episodetext']//tr[5]/td[2]/text()");
             return searchResult.InnerText.Trim();
         }
 
-        private static IEnumerable<string> ExtractActors(HtmlDocument doc)
+        private static IEnumerable<string> ExtractActors(HtmlNode doc)
         {
             var actors = new List<string>();
-            var actorResults = doc.DocumentNode.SelectNodes("//span[@class='episodeheader' and text()[contains(., 'starring')]]/parent::node()/span[@class='modelstarring']/a/text()");
+            var actorResults = doc.SelectNodes("//span[@class='episodeheader' and text()[contains(., 'starring')]]/parent::node()/span[@class='modelstarring']/a/text()");
             if (actorResults != null)
             {
                 foreach (var actor in actorResults)
@@ -121,14 +120,14 @@ namespace PhoenixAdult.Sites
             return actors;
         }
 
-        private static void ExtractImages(HtmlDocument doc, ICollection<string> art)
+        private static void ExtractImages(HtmlNode doc, ICollection<string> art)
         {
             var prevImage = 0;
             var isImage = true;
             while (isImage)
             {
                 var currImage = prevImage + 1;
-                var imageResult = doc.DocumentNode.SelectSingleNode($"//img[@id='episode_{currImage:D3}']");
+                var imageResult = doc.SelectSingleNode($"//img[@id='episode_{currImage:D3}']");
                 if (imageResult != null && !string.IsNullOrEmpty(imageResult.GetAttributeValue("src", string.Empty)))
                 {
                     art.Add(imageResult.GetAttributeValue("src", string.Empty).Trim());

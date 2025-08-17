@@ -10,6 +10,7 @@ using Jellyfin.Plugin.PhoenixAdult.Models;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Helpers.Utils;
 
 namespace PhoenixAdult.Sites
 {
@@ -18,19 +19,21 @@ namespace PhoenixAdult.Sites
         private const string SiteName = "Karups";
         private const string BaseUrl = "https://www.karups.com";
 
-        public Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
+        private IDictionary<string, string> GetCookies()
+        {
+            return new Dictionary<string, string> { { "warningHidden", "hide" } };
+        }
+
+        public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var searchUrl = $"{BaseUrl}/search/{searchTitle.Replace(" ", "-")}/";
-            var doc = new HtmlDocument();
-            var cookies = new CookieContainer();
-            cookies.Add(new Cookie("warningHidden", "hide", "/", ".karups.com"));
-            doc.LoadHtml(new PhoenixAdultHttpClient(cookies).Get(searchUrl));
+            var doc = await HTML.ElementFromURL(searchUrl, cancellationToken, null, GetCookies());
 
-            var actressPageUrl = doc.DocumentNode.SelectSingleNode("//div[@class='item-inside']//a").GetAttributeValue("href", string.Empty);
-            doc.LoadHtml(new PhoenixAdultHttpClient(cookies).Get(actressPageUrl));
+            var actressPageUrl = doc.SelectSingleNode("//div[@class='item-inside']//a").GetAttributeValue("href", string.Empty);
+            doc = await HTML.ElementFromURL(actressPageUrl, cancellationToken, null, GetCookies());
 
             var searchResults = new List<RemoteSearchResult>();
-            var nodes = doc.DocumentNode.SelectNodes("//div[contains(@class, 'listing-videos')]//div[@class='item']");
+            var nodes = doc.SelectNodes("//div[contains(@class, 'listing-videos')]//div[@class='item']");
             if (nodes != null)
             {
                 foreach (var node in nodes)
@@ -65,10 +68,10 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            return Task.FromResult(searchResults);
+            return searchResults;
         }
 
-        public Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
+        public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
             var metadataId = sceneID[0].Split('|');
             var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
@@ -77,10 +80,7 @@ namespace PhoenixAdult.Sites
                 sceneUrl = $"{BaseUrl}{sceneUrl}";
             }
 
-            var doc = new HtmlDocument();
-            var cookies = new CookieContainer();
-            cookies.Add(new Cookie("warningHidden", "hide", "/", ".karups.com"));
-            doc.LoadHtml(new PhoenixAdultHttpClient(cookies).Get(sceneUrl));
+            var doc = await HTML.ElementFromURL(sceneUrl, cancellationToken, null, GetCookies());
 
             var metadataResult = new MetadataResult<BaseItem>
             {
@@ -88,8 +88,8 @@ namespace PhoenixAdult.Sites
                 HasMetadata = true
             };
 
-            metadataResult.Item.Name = doc.DocumentNode.SelectSingleNode("//h1//span[@class='title']").InnerText.Trim();
-            var summaryNode = doc.DocumentNode.SelectSingleNode("//div[@class='content-information-description']//p");
+            metadataResult.Item.Name = doc.SelectSingleNode("//h1//span[@class='title']").InnerText.Trim();
+            var summaryNode = doc.SelectSingleNode("//div[@class='content-information-description']//p");
             if (summaryNode != null)
             {
                 metadataResult.Item.Overview = summaryNode.InnerText.Trim();
@@ -97,11 +97,11 @@ namespace PhoenixAdult.Sites
 
             metadataResult.Item.AddStudio(SiteName);
 
-            var tagline = doc.DocumentNode.SelectSingleNode("//h1//span[@class='sup-title']//span").InnerText.Trim();
+            var tagline = doc.SelectSingleNode("//h1//span[@class='sup-title']//span").InnerText.Trim();
             metadataResult.Item.Tagline = tagline;
             metadataResult.Item.AddCollection(tagline);
 
-            var date = doc.DocumentNode.SelectSingleNode("//span[@class='date']/span[@class='content']").InnerText.Replace(tagline, "").Replace("Video added on", "").Trim();
+            var date = doc.SelectSingleNode("//span[@class='date']/span[@class='content']").InnerText.Replace(tagline, "").Replace("Video added on", "").Trim();
             metadataResult.Item.PremiereDate = DateTime.Parse(date);
 
             if (tagline == "KarupsHA")
@@ -113,24 +113,23 @@ namespace PhoenixAdult.Sites
                 metadataResult.Item.AddGenre("MILF");
             }
 
-            var actors = doc.DocumentNode.SelectNodes("//span[@class='models']//a");
+            var actors = doc.SelectNodes("//span[@class='models']//a");
             if (actors != null)
             {
                 foreach (var actor in actors)
                 {
                     var actorName = actor.InnerText.Trim();
                     var actorPageUrl = actor.GetAttributeValue("href", string.Empty);
-                    var actorDoc = new HtmlDocument();
-                    actorDoc.LoadHtml(new PhoenixAdultHttpClient(cookies).Get(actorPageUrl));
-                    var actorPhotoUrl = actorDoc.DocumentNode.SelectSingleNode("//div[@class='model-thumb']//img").GetAttributeValue("src", string.Empty);
+                    var actorDoc = await HTML.ElementFromURL(actorPageUrl, cancellationToken, null, GetCookies());
+                    var actorPhotoUrl = actorDoc.SelectSingleNode("//div[@class='model-thumb']//img").GetAttributeValue("src", string.Empty);
                     metadataResult.AddPerson(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonType.Actor });
                 }
             }
 
-            return Task.FromResult(metadataResult);
+            return metadataResult;
         }
 
-        public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var metadataId = sceneID[0].Split('|');
             var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
@@ -139,10 +138,7 @@ namespace PhoenixAdult.Sites
                 sceneUrl = $"{BaseUrl}{sceneUrl}";
             }
 
-            var doc = new HtmlDocument();
-            var cookies = new CookieContainer();
-            cookies.Add(new Cookie("warningHidden", "hide", "/", ".karups.com"));
-            doc.LoadHtml(new PhoenixAdultHttpClient(cookies).Get(sceneUrl));
+            var doc = await HTML.ElementFromURL(sceneUrl, cancellationToken, null, GetCookies());
 
             var xpaths = new[]
             {
@@ -154,7 +150,7 @@ namespace PhoenixAdult.Sites
             var art = new List<string>();
             foreach (var xpath in xpaths)
             {
-                var nodes = doc.DocumentNode.SelectNodes(xpath);
+                var nodes = doc.SelectNodes(xpath);
                 if (nodes != null)
                 {
                     foreach (var node in nodes)
@@ -170,7 +166,7 @@ namespace PhoenixAdult.Sites
                 list.Add(new RemoteImageInfo { Url = imageUrl, Type = ImageType.Primary });
             }
 
-            return Task.FromResult<IEnumerable<RemoteImageInfo>>(list);
+            return list;
         }
 
         private static int LevenshteinDistance(string source, string target)

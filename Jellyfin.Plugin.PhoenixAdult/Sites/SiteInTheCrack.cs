@@ -9,6 +9,7 @@ using Jellyfin.Plugin.PhoenixAdult.Models;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Helpers.Utils;
 
 namespace PhoenixAdult.Sites
 {
@@ -17,7 +18,7 @@ namespace PhoenixAdult.Sites
         private const string SiteName = "InTheCrack";
         private const string BaseUrl = "https://www.inthecrack.com";
 
-        public Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
+        public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var sceneID = string.Empty;
             var searchResults = new List<RemoteSearchResult>();
@@ -40,10 +41,9 @@ namespace PhoenixAdult.Sites
                 // ignored
             }
 
-            var doc = new HtmlDocument();
-            doc.LoadHtml(new PhoenixAdultHttpClient().Get($"{BaseUrl}/collections/{searchTitle[0]}"));
+            var doc = await HTML.ElementFromURL($"{BaseUrl}/collections/{searchTitle[0]}", cancellationToken);
 
-            var nodes = doc.DocumentNode.SelectNodes("//ul[@class='collectionGridLayout']/li");
+            var nodes = doc.SelectNodes("//ul[@class='collectionGridLayout']/li");
             if (nodes != null)
             {
                 foreach (var node in nodes)
@@ -52,10 +52,9 @@ namespace PhoenixAdult.Sites
                     if (discoveredName.Contains(searchTitle))
                     {
                         var modelLink = node.SelectSingleNode(".//a").GetAttributeValue("href", string.Empty);
-                        var modelDoc = new HtmlDocument();
-                        modelDoc.LoadHtml(new PhoenixAdultHttpClient().Get($"{BaseUrl}{modelLink}"));
+                        var modelDoc = await HTML.ElementFromURL($"{BaseUrl}{modelLink}", cancellationToken);
 
-                        var modelNodes = modelDoc.DocumentNode.SelectNodes("//ul[@class='Models']/li");
+                        var modelNodes = modelDoc.SelectNodes("//ul[@class='Models']/li");
                         if (modelNodes != null)
                         {
                             foreach (var modelNode in modelNodes)
@@ -82,10 +81,10 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            return Task.FromResult(searchResults);
+            return searchResults;
         }
 
-        public Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
+        public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
             var metadataId = sceneID[0].Split('|');
             var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
@@ -94,8 +93,7 @@ namespace PhoenixAdult.Sites
                 sceneUrl = $"{BaseUrl}{sceneUrl}";
             }
 
-            var doc = new HtmlDocument();
-            doc.LoadHtml(new PhoenixAdultHttpClient().Get(sceneUrl));
+            var doc = await HTML.ElementFromURL(sceneUrl, cancellationToken);
 
             var metadataResult = new MetadataResult<BaseItem>
             {
@@ -103,9 +101,9 @@ namespace PhoenixAdult.Sites
                 HasMetadata = true
             };
 
-            metadataResult.Item.Name = doc.DocumentNode.SelectSingleNode("//h2//span").InnerText.Trim();
+            metadataResult.Item.Name = doc.SelectSingleNode("//h2//span").InnerText.Trim();
 
-            var summaryNode = doc.DocumentNode.SelectSingleNode("//p[@id='CollectionDescription']");
+            var summaryNode = doc.SelectSingleNode("//p[@id='CollectionDescription']");
             if (summaryNode != null)
             {
                 metadataResult.Item.Overview = summaryNode.InnerText.Trim();
@@ -120,7 +118,7 @@ namespace PhoenixAdult.Sites
                 metadataResult.Item.PremiereDate = DateTime.Parse(date);
             }
 
-            var actorStr = doc.DocumentNode.SelectSingleNode("//title").InnerText.Split('#')[1];
+            var actorStr = doc.SelectSingleNode("//title").InnerText.Split('#')[1];
             actorStr = new string(actorStr.Where(c => !char.IsDigit(c)).ToArray()).Trim();
             actorStr = actorStr.Replace(",", "&");
             var actorList = actorStr.Split('&');
@@ -131,10 +129,10 @@ namespace PhoenixAdult.Sites
                 metadataResult.AddPerson(new PersonInfo { Name = actorName, Type = PersonType.Actor });
             }
 
-            return Task.FromResult(metadataResult);
+            return metadataResult;
         }
 
-        public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var metadataId = sceneID[0].Split('|');
             var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
@@ -143,10 +141,9 @@ namespace PhoenixAdult.Sites
                 sceneUrl = $"{BaseUrl}{sceneUrl}";
             }
 
-            var doc = new HtmlDocument();
-            doc.LoadHtml(new PhoenixAdultHttpClient().Get(sceneUrl));
+            var doc = await HTML.ElementFromURL(sceneUrl, cancellationToken);
 
-            var scenePic = $"{BaseUrl}{doc.DocumentNode.SelectSingleNode("//style").InnerText.Split('\'')[1].Trim()}";
+            var scenePic = $"{BaseUrl}{doc.SelectSingleNode("//style").InnerText.Split('\'')[1].Trim()}";
 
             var list = new List<RemoteImageInfo>
             {
@@ -157,7 +154,7 @@ namespace PhoenixAdult.Sites
                 }
             };
 
-            return Task.FromResult<IEnumerable<RemoteImageInfo>>(list);
+            return list;
         }
 
         private static int LevenshteinDistance(string source, string target)
