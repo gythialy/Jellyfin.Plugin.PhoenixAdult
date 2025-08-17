@@ -34,7 +34,7 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(searchPageUrl, HttpMethod.Get, cancellationToken);
             if(httpResult.IsOK)
             {
-                var searchPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                var searchPageElements = HTML.ElementFromString(httpResult.Content);
                 var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'item-video')]");
                 if(searchNodes != null)
                 {
@@ -62,7 +62,7 @@ namespace PhoenixAdult.Sites
                     var sceneHttp = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
                     if (sceneHttp.IsOK)
                     {
-                        var detailsPageElements = await HTML.ElementFromString(sceneHttp.Content, cancellationToken);
+                        var detailsPageElements = HTML.ElementFromString(sceneHttp.Content);
                         string titleNoFormatting = detailsPageElements.SelectSingleNode("//h1 | //h3")?.InnerText.Trim();
                         string curId = Helper.Encode(sceneUrl);
                         string releaseDate = string.Empty;
@@ -102,7 +102,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//h3")?.InnerText.Trim();
@@ -122,7 +122,6 @@ namespace PhoenixAdult.Sites
                 movie.AddStudio("BellaPass");
                 movie.AddTag(siteName);
             }
-            movie.AddCollection(new[] { siteName });
 
             var genreNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'featuring')]//a[contains(@href, '/categories/')]");
             if(genreNodes != null)
@@ -151,7 +150,7 @@ namespace PhoenixAdult.Sites
                     var actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken);
                     if(actorHttp.IsOK)
                     {
-                        var actorPage = await HTML.ElementFromString(actorHttp.Content, cancellationToken);
+                        var actorPage = HTML.ElementFromString(actorHttp.Content);
                         actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actorPage.SelectSingleNode("//div[@class='profile-pic']/img")?.GetAttributeValue("src0_3x", "");
                     }
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
@@ -182,7 +181,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return images;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//img[contains(@class, 'thumbs')] | //div[contains(@class, 'item-thumb')]//img");
             if (imageNodes != null)
@@ -206,7 +205,7 @@ namespace PhoenixAdult.Sites
                     var searchHttp = await HTTP.Request(searchPageUrl, HttpMethod.Get, cancellationToken);
                     if (searchHttp.IsOK)
                     {
-                        var searchPageElements = await HTML.ElementFromString(searchHttp.Content, cancellationToken);
+                        var searchPageElements = HTML.ElementFromString(searchHttp.Content);
                         var cntNode = searchPageElements.SelectSingleNode($"//img[@id='{setId}']");
                         if (cntNode != null && int.TryParse(cntNode.GetAttributeValue("cnt", "0"), out var cnt))
                         {
@@ -223,7 +222,7 @@ namespace PhoenixAdult.Sites
                     var photoHttp = await HTTP.Request(photoPageUrl, HttpMethod.Get, cancellationToken);
                     if (photoHttp.IsOK)
                     {
-                        var photoPageElements = await HTML.ElementFromString(photoHttp.Content, cancellationToken);
+                        var photoPageElements = HTML.ElementFromString(photoHttp.Content);
                         var photoNodes = photoPageElements.SelectNodes($"//img[@id='{setId}']");
                         if (photoNodes != null)
                         {

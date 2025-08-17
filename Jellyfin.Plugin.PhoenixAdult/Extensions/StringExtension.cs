@@ -44,4 +44,11 @@ internal static class StringExtension
         str = Regex.Replace(str, @"\s", "-"); // hyphens
         return str;
     }
+
+    public static string Capitalize(this string source)
+    {
+        if (string.IsNullOrEmpty(source))
+            return source;
+        return char.ToUpper(source[0]) + source.Substring(1).ToLower();
+    }
 }

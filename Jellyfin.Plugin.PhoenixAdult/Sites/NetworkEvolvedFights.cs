@@ -28,7 +28,7 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteSearchResult>();
             string directUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Replace(' ', '-').ToLower()}.html";
             var searchResults = new List<string> { directUrl };
-            var googleResults = await GoogleSearch.Search(searchTitle, siteNum, cancellationToken);
+            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             searchResults.AddRange(googleResults.Where(u => u.Contains("/updates/")));
 
             foreach (var sceneUrl in searchResults.Distinct())
@@ -36,7 +36,7 @@ namespace PhoenixAdult.Sites
                 var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
                 if (httpResult.IsOK)
                 {
-                    var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                    var detailsPageElements = HTML.ElementFromString(httpResult.Content);
                     if (detailsPageElements != null)
                     {
                         string curId = Helper.Encode(sceneUrl);
@@ -72,13 +72,12 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//title")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//span[(contains(@class, 'latest_update_description'))]")?.InnerText.Trim();
             movie.AddStudio("Evolved Fights Network");
-            movie.AddCollection(new[] { "Evolved Fights Network" });
 
             var dateNode = detailsPageElements.SelectSingleNode("//span[@class='update_date']");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
@@ -104,7 +103,7 @@ namespace PhoenixAdult.Sites
                     var actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken);
                     if(actorHttp.IsOK)
                     {
-                        var actorPage = await HTML.ElementFromString(actorHttp.Content, cancellationToken);
+                        var actorPage = HTML.ElementFromString(actorHttp.Content);
                         string actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actorPage.SelectSingleNode("//img[(contains(@class, 'model_bio_thumb stdimage thumbs target'))]")?.GetAttributeValue("src0_3x", "");
                         result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                     }
@@ -123,7 +122,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return images;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//span[(contains(@class, 'model_update_thumb'))]/img");
             if (posterNode != null)

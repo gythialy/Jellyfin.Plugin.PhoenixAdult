@@ -57,7 +57,7 @@ namespace PhoenixAdult.Sites
                 var directHttp = await HTTP.Request(directUrl, HttpMethod.Get, cancellationToken, null, _cookies);
                 if (directHttp.IsOK)
                 {
-                    var detailsPageElements = await HTML.ElementFromString(directHttp.Content, cancellationToken);
+                    var detailsPageElements = HTML.ElementFromString(directHttp.Content);
                     var titleNode = detailsPageElements.SelectSingleNode("//h1[@class='description']");
                     string titleNoFormatting = titleNode?.InnerText.Trim();
                     string curId = Helper.Encode(directUrl);
@@ -87,8 +87,7 @@ namespace PhoenixAdult.Sites
             if (!httpResult.IsOK)
                 return result;
 
-            var searchResults = await HTML.ElementsFromString(httpResult.Content, cancellationToken);
-            var searchResultNodes = searchResults.FirstOrDefault()?.SelectNodes("//div[contains(@class, 'item-grid')]/div[@class='grid-item']");
+            var searchResultNodes = HTML.ElementFromString(httpResult.Content).SelectNodes("//div[contains(@class, 'item-grid')]/div[@class='grid-item']");
             if (searchResultNodes == null)
                 return result;
 
@@ -160,7 +159,6 @@ namespace PhoenixAdult.Sites
             {
                 string tagline = taglineNode.InnerText.Trim();
                 movie.AddTag(tagline);
-                movie.AddCollection(new[] { tagline });
             }
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='release-date']");
