@@ -31,7 +31,7 @@ namespace PhoenixAdult.Sites
                 { "Content-Type", "application/json" },
                 { "Referer", Helper.GetSearchBaseURL(siteNum) }
             };
-            var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken, null, null, headers);
+            var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken, headers);
             if (!httpResult.IsOK)
                 return null;
             return JArray.Parse(httpResult.Content);
@@ -119,7 +119,6 @@ namespace PhoenixAdult.Sites
 
             string tagline = scene["content_provider"][0]["name"].ToString();
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

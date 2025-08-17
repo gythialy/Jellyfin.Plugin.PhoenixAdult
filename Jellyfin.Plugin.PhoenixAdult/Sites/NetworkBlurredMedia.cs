@@ -30,7 +30,7 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
 
-            var searchPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var searchPageElements = HTML.ElementFromString(httpResult.Content);
             var searchNodes = searchPageElements.SelectNodes("//article[contains(@class, 'video grid-element')]");
             if (searchNodes != null)
             {
@@ -68,13 +68,12 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//h1[@class='title']")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//section[@name='descriptionIntro']/p")?.InnerText.Trim();
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
-            movie.AddCollection(new[] { Helper.GetSearchSiteName(siteNum) });
 
             var dateNode = detailsPageElements.SelectSingleNode("//time[@class='video__date']");
             if (dateNode != null && DateTime.TryParse(dateNode.GetAttributeValue("datetime", ""), out var parsedDate))
@@ -115,7 +114,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return images;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'loading-video')]/img | //ul[contains(@class, 'thumbnails__gallery')]/li/a");
             if (imageNodes != null)

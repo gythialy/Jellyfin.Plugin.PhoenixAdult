@@ -32,7 +32,7 @@ namespace PhoenixAdult.Sites
             if (!httpResult.IsOK)
                 return result;
 
-            var searchPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var searchPageElements = HTML.ElementFromString(httpResult.Content);
             var searchNodes = searchPageElements.SelectNodes("//div[@class='update_details']");
             if (searchNodes != null)
             {
@@ -80,7 +80,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//span[@class='title_bar_hilite']")?.InnerText.Trim();
@@ -89,7 +89,6 @@ namespace PhoenixAdult.Sites
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddStudio(tagline);
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='gallery_info']//div[@class='cell update_date']");
             if (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
@@ -123,7 +122,7 @@ namespace PhoenixAdult.Sites
                         var actorHttp = await HTTP.Request(actorUrl, HttpMethod.Get, cancellationToken);
                         if(actorHttp.IsOK)
                         {
-                            var actorPage = await HTML.ElementFromString(actorHttp.Content, cancellationToken);
+                            var actorPage = HTML.ElementFromString(actorHttp.Content);
                             actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='cell_top cell_thumb']//@src0_1x")?.GetAttributeValue("src0_1x", "");
                             if(!string.IsNullOrEmpty(actorPhotoUrl) && !actorPhotoUrl.StartsWith("http"))
                                 actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actorPhotoUrl;

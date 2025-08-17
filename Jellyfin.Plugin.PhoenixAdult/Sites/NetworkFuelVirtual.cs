@@ -50,7 +50,7 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
 
-            var searchPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var searchPageElements = HTML.ElementFromString(httpResult.Content);
             var searchNodes = searchPageElements.SelectNodes("//div[@align='left']");
             if (searchNodes != null)
             {
@@ -92,7 +92,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             if (siteName == "NewGirlPOV")
@@ -102,7 +102,6 @@ namespace PhoenixAdult.Sites
 
             movie.AddStudio("FuelVirtual");
             movie.AddTag(siteName);
-            movie.AddCollection(new[] { siteName });
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {
@@ -153,7 +152,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return images;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//a[@class='jqModal']/img | //div[@id='overallthumb']/a/img");
             if (imageNodes != null)
@@ -173,7 +172,7 @@ namespace PhoenixAdult.Sites
             var photoHttp = await HTTP.Request(photoPageUrl, HttpMethod.Get, cancellationToken);
             if(photoHttp.IsOK)
             {
-                var photoPage = await HTML.ElementFromString(photoHttp.Content, cancellationToken);
+                var photoPage = HTML.ElementFromString(photoHttp.Content);
                 var photoNodes = photoPage.SelectNodes("//a[@class='jqModal']/img");
                 if(photoNodes != null)
                 {

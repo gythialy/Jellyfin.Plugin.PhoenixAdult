@@ -50,7 +50,7 @@ namespace PhoenixAdult.Sites
             if (sceneId != null)
                 searchResults.Add($"{Helper.GetSearchSearchURL(siteNum)}{sceneId}.html");
 
-            var googleResults = await GoogleSearch.Search(searchTitle, siteNum, cancellationToken);
+            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             searchResults.AddRange(googleResults.Where(u => u.Contains("/update/")));
 
             foreach (var sceneUrl in searchResults.Distinct())
@@ -58,7 +58,7 @@ namespace PhoenixAdult.Sites
                 var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
                 if (httpResult.IsOK)
                 {
-                    var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                    var detailsPageElements = HTML.ElementFromString(httpResult.Content);
                     var titleDate = detailsPageElements.SelectSingleNode("//title")?.InnerText.Split(new[] { "Released" }, StringSplitOptions.None);
                     if (titleDate != null && titleDate.Length > 1)
                     {
@@ -91,7 +91,7 @@ namespace PhoenixAdult.Sites
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             var titleDate = detailsPageElements.SelectSingleNode("//title")?.InnerText.Split(new[] { "Released" }, StringSplitOptions.None);
@@ -101,7 +101,6 @@ namespace PhoenixAdult.Sites
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             if (DateTime.TryParse(titleDate.Last().Replace("!", "").Trim(), out var parsedDate))
             {
@@ -139,15 +138,14 @@ namespace PhoenixAdult.Sites
             if (match.Success && int.TryParse(match.Groups[1].Value, out var id))
             {
                 var scenes = photoScenes.ContainsKey(id) ? photoScenes[id] : new List<string> { "none" };
-                var googleResults = await GoogleSearch.Search(string.Join(" ", item.People.Select(p => p.Name)), siteNum, cancellationToken);
-                foreach (var photoUrl in googleResults)
+                foreach (var photoUrl in scenes)
                 {
-                    if (scenes.Any(s => photoUrl.Contains(s) || s == "none") && (photoUrl.Contains("galleries") || photoUrl.Contains("preview")))
+                    if (photoUrl.Contains("galleries") || photoUrl.Contains("preview"))
                     {
                         var httpResult = await HTTP.Request(photoUrl, HttpMethod.Get, cancellationToken);
                         if (httpResult.IsOK)
                         {
-                            var photoPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                            var photoPageElements = HTML.ElementFromString(httpResult.Content);
                             var imageNodes = photoPageElements.SelectNodes("//img[@id='Magazine'] | //div[@class='gallery']//div[@class='row']//a | //div[@class='thumbs_horizontal']//a | //a[img[@class='t']]");
                             if (imageNodes != null)
                             {

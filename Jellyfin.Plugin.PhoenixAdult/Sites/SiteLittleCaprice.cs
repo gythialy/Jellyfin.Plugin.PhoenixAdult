@@ -5,9 +5,14 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
+using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Extensions;
+using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
 namespace PhoenixAdult.Sites
@@ -32,13 +37,11 @@ namespace PhoenixAdult.Sites
                     var curId = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(node.SelectSingleNode(".//h2[@class='entry-title']/a").GetAttributeValue("href", string.Empty)));
                     var releaseDate = DateTime.Parse(node.SelectSingleNode(".//span[@class='published']").InnerText.Trim()).ToString("yyyy-MM-dd");
 
-                    var score = 100 - LevenshteinDistance(searchDate?.ToString("yyyy-MM-dd") ?? string.Empty, releaseDate);
-
                     searchResults.Add(new RemoteSearchResult
                     {
-                        Id = $"{curId}|{siteNum[0]}",
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
                         Name = $"{titleNoFormatting} [{SiteName}] {releaseDate}",
-                        Score = score
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -69,18 +72,19 @@ namespace PhoenixAdult.Sites
                 detailsDoc = await HTML.ElementFromURL(videoPageUrl, cancellationToken);
             }
 
-            var metadataResult = new MetadataResult<BaseItem>
+            var result = new MetadataResult<BaseItem>()
             {
-                Item = new BaseItem(),
-                HasMetadata = true
+                Item = new Movie(),
+                People = new List<PersonInfo>(),
             };
+            var movie = (Movie)result.Item;
 
-            metadataResult.Item.AddStudio(SiteName);
+            movie.AddStudio(SiteName);
 
             var summaryNode = detailsDoc.SelectSingleNode("//div[@class='desc-text']");
             if (summaryNode != null)
             {
-                metadataResult.Item.Overview = summaryNode.InnerText.Trim();
+                movie.Overview = summaryNode.InnerText.Trim();
             }
 
             var genres = detailsDoc.SelectNodes("//div[@class='project-tags']/div[@class='list']/a") ?? galleryDoc.SelectNodes("//div[@class='project-tags']/div[@class='list']/a");
@@ -88,7 +92,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var genre in genres)
                 {
-                    metadataResult.Item.AddGenre(genre.InnerText.ToLower());
+                    movie.AddGenre(genre.InnerText.ToLower());
                 }
             }
 
@@ -126,20 +130,20 @@ namespace PhoenixAdult.Sites
             {
                 tagline = "Xpervo";
             }
-            metadataResult.Item.Tagline = tagline;
-            metadataResult.Item.AddCollection(tagline);
+            movie.Tagline = tagline;
+            movie.AddTag(tagline);
 
             var title = detailsDoc.SelectSingleNode("//div[@class='project-details']//h1").InnerText.Trim();
             if (title.ToLower().StartsWith(tagline.ToLower()))
             {
                 title = title.Substring(tagline.Length);
             }
-            metadataResult.Item.Name = title;
+            movie.Name = title;
 
             var date = detailsDoc.SelectSingleNode("//div[@class='relese-date']").InnerText.Trim().Split(':')[1];
             if (!string.IsNullOrEmpty(date))
             {
-                metadataResult.Item.PremiereDate = DateTime.Parse(date);
+                movie.PremiereDate = DateTime.Parse(date);
             }
 
             var actors = detailsDoc.SelectNodes("//div[@class='project-models']//a");
@@ -147,15 +151,15 @@ namespace PhoenixAdult.Sites
             {
                 if (actors.Count == 3)
                 {
-                    metadataResult.Item.AddGenre("Threesome");
+                    movie.AddGenre("Threesome");
                 }
                 if (actors.Count == 4)
                 {
-                    metadataResult.Item.AddGenre("Foursome");
+                    movie.AddGenre("Foursome");
                 }
                 if (actors.Count > 4)
                 {
-                    metadataResult.Item.AddGenre("Orgy");
+                    movie.AddGenre("Orgy");
                 }
 
                 foreach (var actor in actors)
@@ -185,11 +189,11 @@ namespace PhoenixAdult.Sites
                     {
                         // ignored
                     }
-                    metadataResult.AddPerson(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonType.Actor });
+                    result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonKind.Actor });
                 }
             }
 
-            return metadataResult;
+            return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
@@ -266,38 +270,5 @@ namespace PhoenixAdult.Sites
             return list;
         }
 
-        private static int LevenshteinDistance(string source, string target)
-        {
-            if (string.IsNullOrEmpty(source))
-            {
-                return string.IsNullOrEmpty(target) ? 0 : target.Length;
-            }
-
-            if (string.IsNullOrEmpty(target))
-            {
-                return source.Length;
-            }
-
-            var distance = new int[source.Length + 1, target.Length + 1];
-
-            for (var i = 0; i <= source.Length; distance[i, 0] = i++)
-            {
-            }
-
-            for (var j = 0; j <= target.Length; distance[0, j] = j++)
-            {
-            }
-
-            for (var i = 1; i <= source.Length; i++)
-            {
-                for (var j = 1; j <= target.Length; j++)
-                {
-                    var cost = (target[j - 1] == source[i - 1]) ? 0 : 1;
-                    distance[i, j] = Math.Min(Math.Min(distance[i - 1, j] + 1, distance[i, j - 1] + 1), distance[i - 1, j - 1] + cost);
-                }
-            }
-
-            return distance[source.Length, target.Length];
-        }
     }
 }

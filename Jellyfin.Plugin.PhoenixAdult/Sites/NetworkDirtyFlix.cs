@@ -82,7 +82,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(searchPageUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
-            var detailsPageElements = (await HTML.ElementFromString(httpResult.Content, cancellationToken))
+            var detailsPageElements = (HTML.ElementFromString(httpResult.Content))
                 .SelectSingleNode($"//div[@class='movie-block'][.//*[contains(@src, \"{sceneId}\")]]");
             if (detailsPageElements == null) return result;
 
@@ -95,7 +95,6 @@ namespace PhoenixAdult.Sites
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {
@@ -127,7 +126,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(searchPageUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return images;
-            var detailsPageElements = (await HTML.ElementFromString(httpResult.Content, cancellationToken))
+            var detailsPageElements = (HTML.ElementFromString(httpResult.Content))
                 .SelectSingleNode($"//div[@class='movie-block'][.//*[contains(@src, \"{sceneId}\")]]");
             if (detailsPageElements == null) return images;
 

@@ -36,7 +36,7 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
 
-            var searchPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var searchPageElements = HTML.ElementFromString(httpResult.Content);
             var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'postTag')]");
             if (searchNodes != null)
             {
@@ -79,7 +79,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//head/title")?.InnerText
@@ -92,7 +92,6 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("CzechVR");
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'nazev')]//div[@class='datum']");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
@@ -127,7 +126,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return images;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//div[@class='foto']//dl8-video | //div[@class='galerka']//a");
             if (imageNodes != null)

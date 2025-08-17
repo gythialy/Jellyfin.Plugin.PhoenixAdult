@@ -101,7 +101,7 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
 
-            var videoPageElements = JObject.Parse((await HTML.ElementFromString(httpResult.Content, cancellationToken)).SelectSingleNode("//script[@type='application/json']")?.InnerText);
+            var videoPageElements = JObject.Parse((HTML.ElementFromString(httpResult.Content)).SelectSingleNode("//script[@type='application/json']")?.InnerText);
             var video = siteNum[0] == 1677 ? videoPageElements["props"]["pageProps"]["playlist"] : videoPageElements["props"]["pageProps"]["content"];
             var content = siteNum[0] == 1677 ? videoPageElements["props"]["pageProps"]["content"] : video;
 
@@ -116,9 +116,8 @@ namespace PhoenixAdult.Sites
             else movie.AddStudio("Radical Cash");
 
             string tagline = (siteNum[0] == 1677 ? content["site"] : video["site"]).ToString();
-            if(movie.Studio != tagline)
+            if(!movie.Studios.Contains(tagline))
                 movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             if (DateTime.TryParse(video["publish_date"].ToString(), out var parsedDate))
             {
@@ -146,7 +145,7 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return images;
 
-            var videoPageElements = JObject.Parse((await HTML.ElementFromString(httpResult.Content, cancellationToken)).SelectSingleNode("//script[@type='application/json']")?.InnerText);
+            var videoPageElements = JObject.Parse((HTML.ElementFromString(httpResult.Content)).SelectSingleNode("//script[@type='application/json']")?.InnerText);
             var content = siteNum[0] == 1677 ? videoPageElements["props"]["pageProps"]["content"] : videoPageElements["props"]["pageProps"]["content"];
 
             if(content["trailer_screencap"] != null)

@@ -24,15 +24,13 @@ namespace PhoenixAdult.Sites
 
         // Simplified search logic, may need adjustments
         var result = new List<RemoteSearchResult>();
-        var googleResults = await GoogleSearch.PerformSearch(searchTitle, Helper.GetSearchSiteName(siteNum));
+        var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
         foreach (var sceneURL in googleResults)
         {
-            var http = await new HTTP().Get(sceneURL, cancellationToken);
-            if (http.IsOK)
+            var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
+            if (doc != null)
             {
-                var doc = new HtmlDocument();
-                doc.LoadHtml(http.Content);
-                var titleNode = doc.DocumentNode.SelectSingleNode(@"//h1");
+                var titleNode = doc.SelectSingleNode(@"//h1");
                 var titleNoFormatting = titleNode?.InnerText.Trim();
                 var curID = Helper.Encode(sceneURL);
                 var item = new RemoteSearchResult
@@ -59,13 +57,10 @@ namespace PhoenixAdult.Sites
         var movie = (Movie)result.Item;
         var providerIds = sceneID[0].Split('|');
         var sceneURL = Helper.Decode(providerIds[0]);
-        var http = await new HTTP().Get(sceneURL, cancellationToken);
-        if (!http.IsOK) return result;
+        var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
+        if (doc == null) return result;
 
-        var doc = new HtmlDocument();
-        doc.LoadHtml(http.Content);
-
-        movie.Name = doc.DocumentNode.SelectSingleNode(@"//h1")?.InnerText.Trim();
+        movie.Name = doc.SelectSingleNode(@"//h1")?.InnerText.Trim();
         movie.Overview = doc.DocumentNode.SelectSingleNode(@"//p")?.InnerText.Trim();
         movie.AddStudio("Pornbox");
 
@@ -89,12 +84,10 @@ namespace PhoenixAdult.Sites
         var images = new List<RemoteImageInfo>();
         var providerIds = sceneID[0].Split('|');
         var sceneURL = Helper.Decode(providerIds[0]);
-        var http = await new HTTP().Get(sceneURL, cancellationToken);
-        if (http.IsOK)
+        var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
+        if (doc != null)
         {
-            var doc = new HtmlDocument();
-            doc.LoadHtml(http.Content);
-            var imageNodes = doc.DocumentNode.SelectNodes("//img/@src");
+            var imageNodes = doc.SelectNodes("//img/@src");
             if (imageNodes != null)
             {
                 foreach (var img in imageNodes)

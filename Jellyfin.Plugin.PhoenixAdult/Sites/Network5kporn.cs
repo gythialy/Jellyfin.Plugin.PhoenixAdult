@@ -38,11 +38,14 @@ namespace PhoenixAdult.Sites
             if (!httpResult.IsOK)
                 return result;
 
-            var searchResults = await HTML.ElementsFromJSON(httpResult.Content, "html", cancellationToken);
+            var searchResults = JObject.Parse(httpResult.Content)["html"].ToString();
             if (searchResults == null)
                 return result;
 
-            foreach (var searchResult in searchResults)
+            var doc = new HtmlDocument();
+            doc.LoadHtml(searchResults);
+
+            foreach (var searchResult in doc.DocumentNode.SelectNodes("//div[contains(@class, 'ep-item')]"))
             {
                 var titleNode = searchResult.SelectSingleNode(".//h3[@class='ep-title']");
                 var sceneUrlNode = searchResult.SelectSingleNode(".//a");
@@ -103,7 +106,6 @@ namespace PhoenixAdult.Sites
                 tagline = Helper.GetSearchSiteName(siteNum);
             }
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             var dateNode = detailsPageElements.SelectSingleNode("//h5[contains(., 'Published')]");
             if (dateNode != null)

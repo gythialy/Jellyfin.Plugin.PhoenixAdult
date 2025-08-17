@@ -35,7 +35,7 @@ namespace PhoenixAdult.Sites
                 var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
                 if (httpResult.IsOK)
                 {
-                    var searchPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                var searchPageElements = HTML.ElementFromString(httpResult.Content);
                     var searchNodes = searchPageElements.SelectNodes("//div[@class='zona-listado2']");
                     if (searchNodes != null)
                     {
@@ -77,7 +77,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
@@ -86,7 +86,6 @@ namespace PhoenixAdult.Sites
 
             string tagline = detailsPageElements.SelectSingleNode("//strong[contains(., 'Serie')]//following-sibling::a")?.InnerText.Trim();
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {
@@ -112,7 +111,7 @@ namespace PhoenixAdult.Sites
                     var actorHttp = await HTTP.Request(modelUrl, HttpMethod.Get, cancellationToken);
                     if(actorHttp.IsOK)
                     {
-                        var actorPage = await HTML.ElementFromString(actorHttp.Content, cancellationToken);
+                        var actorPage = HTML.ElementFromString(actorHttp.Content);
                         actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='zona-imagen']//img")?.GetAttributeValue("src", "").Trim();
                     }
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
@@ -136,7 +135,7 @@ namespace PhoenixAdult.Sites
                     var actorHttp = await HTTP.Request(modelUrl, HttpMethod.Get, cancellationToken);
                     if(actorHttp.IsOK)
                     {
-                        var actorPage = await HTML.ElementFromString(actorHttp.Content, cancellationToken);
+                        var actorPage = HTML.ElementFromString(actorHttp.Content);
                         var sceneNode = actorPage.SelectNodes("//div[@class='zona-listado2']")?.FirstOrDefault(s => s.SelectSingleNode(".//@href")?.GetAttributeValue("href", "") == sceneUrl);
                         if (sceneNode != null)
                             images.Add(new RemoteImageInfo { Url = sceneNode.SelectSingleNode(".//img")?.GetAttributeValue("src", "").Trim() });

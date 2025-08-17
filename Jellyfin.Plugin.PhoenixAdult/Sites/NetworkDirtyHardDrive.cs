@@ -28,7 +28,7 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            var googleResults = await GoogleSearch.Search(searchTitle, siteNum, cancellationToken);
+            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             var searchResults = googleResults.Where(u => u.Contains("/tour1/") && u.EndsWith(".html"));
 
             foreach (var sceneUrl in searchResults)
@@ -36,7 +36,7 @@ namespace PhoenixAdult.Sites
                 var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
                 if (httpResult.IsOK)
                 {
-                    var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                    var detailsPageElements = HTML.ElementFromString(httpResult.Content);
                     string titleNoFormatting = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
                     string curId = Helper.Encode(sceneUrl);
                     string releaseDate = searchDate?.ToString("yyyy-MM-dd") ?? "";
@@ -66,7 +66,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
@@ -75,7 +75,6 @@ namespace PhoenixAdult.Sites
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

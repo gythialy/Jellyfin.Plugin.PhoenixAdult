@@ -32,7 +32,7 @@ namespace PhoenixAdult.Sites
                 var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
                 if (!httpResult.IsOK) continue;
 
-                var searchPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var searchPageElements = HTML.ElementFromString(httpResult.Content);
                 var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'video-thumb') or contains(@class, 'item-video')]");
                 if (searchNodes != null)
                 {
@@ -76,7 +76,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//*[@class='trailer-block_title'] | //h1")?.InnerText.Trim();
@@ -85,7 +85,6 @@ namespace PhoenixAdult.Sites
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='info-block_data']//p[@class='text'] | //div[@class='update-info-row']");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Split('|')[0].Replace("Added", "").Replace(":", "").Trim(), out var parsedDate))
@@ -123,7 +122,7 @@ namespace PhoenixAdult.Sites
                         var actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken);
                         if(actorHttp.IsOK)
                         {
-                            var actorPage = await HTML.ElementFromString(actorHttp.Content, cancellationToken);
+                            var actorPage = HTML.ElementFromString(actorHttp.Content);
                             var imgNode = actorPage.SelectSingleNode("//img[contains(@class, 'model_bio_thumb')]");
                             actorPhotoUrl = imgNode?.GetAttributeValue("src", "") ?? imgNode?.GetAttributeValue("src0_1x", "");
                             if (!string.IsNullOrEmpty(actorPhotoUrl) && !actorPhotoUrl.StartsWith("http"))
@@ -146,7 +145,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return images;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//img[contains(@class, 'update_thumb')]");
             if (imageNodes != null)

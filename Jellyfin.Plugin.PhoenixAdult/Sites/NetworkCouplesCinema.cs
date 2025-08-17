@@ -39,7 +39,7 @@ namespace PhoenixAdult.Sites
                 var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
                 if (httpResult.IsOK)
                 {
-                    var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                    var detailsPageElements = HTML.ElementFromString(httpResult.Content);
                     string curId = Helper.Encode(sceneUrl);
                     string titleNoFormatting = detailsPageElements.SelectSingleNode("//div[contains(@class, 'mediaHeader')]//span[contains(@class, 'title')]")?.InnerText.Trim();
                     string studio = detailsPageElements.SelectSingleNode("//span[contains(@class, 'type')]")?.InnerText.Split('|')[0].Trim();
@@ -57,7 +57,7 @@ namespace PhoenixAdult.Sites
                 var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
                 if (httpResult.IsOK)
                 {
-                    var searchPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                    var searchPageElements = HTML.ElementFromString(httpResult.Content);
                     var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'post')]");
                     if (searchNodes != null)
                     {
@@ -100,7 +100,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//div[contains(@class, 'mediaHeader')]//span[contains(@class, 'title')]")?.InnerText.Trim();
@@ -109,7 +109,6 @@ namespace PhoenixAdult.Sites
 
             string tagline = detailsPageElements.SelectSingleNode("//span[contains(@class, 'type')]")?.InnerText.Split('|')[0].Trim();
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             if (!string.IsNullOrEmpty(searchDate) && DateTime.TryParse(searchDate, out var parsedDate))
             {
@@ -147,7 +146,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return images;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//video");
             if (posterNode != null)

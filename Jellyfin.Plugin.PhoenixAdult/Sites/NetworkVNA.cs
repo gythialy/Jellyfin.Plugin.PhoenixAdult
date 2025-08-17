@@ -39,7 +39,7 @@ namespace PhoenixAdult.Sites
                 searchTitle = searchTitle.Replace(sceneId, "").Trim();
             }
 
-            var googleResults = await GoogleSearch.PerformSearch(searchTitle, Helper.GetSearchSiteName(siteNum));
+            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var sceneURL in googleResults)
             {
                 if (sceneURL.Contains("/videos/") && !sceneURL.Contains("/page/") && !searchResults.Contains(sceneURL))
@@ -48,18 +48,15 @@ namespace PhoenixAdult.Sites
 
             foreach (var sceneURL in searchResults)
             {
-                var http = await new HTTP().Get(sceneURL, cancellationToken);
-                if (http.IsOK)
+                var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
+                if (doc != null)
                 {
-                    var doc = new HtmlDocument();
-                    doc.LoadHtml(http.Content);
-
-                    var titleNode = doc.DocumentNode.SelectSingleNode("//h1[@class='customhcolor']");
+                    var titleNode = doc.SelectSingleNode("//h1[@class='customhcolor']");
                     var titleNoFormatting = titleNode?.InnerText.Trim();
 
                     var curID = Helper.Encode(sceneURL);
 
-                    var dateNode = doc.DocumentNode.SelectSingleNode("//*[@class='date']");
+                    var dateNode = doc.SelectSingleNode("//*[@class='date']");
                     var releaseDate = string.Empty;
                     if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
                     {
@@ -68,9 +65,9 @@ namespace PhoenixAdult.Sites
 
                     var score = 100;
                     if (searchDate.HasValue && !string.IsNullOrEmpty(releaseDate))
-                        score -= LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate);
+                        score -= LevenshteinDistance.Calculate(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate);
                     else
-                        score -= LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
+                        score -= LevenshteinDistance.Calculate(searchTitle.ToLower(), titleNoFormatting.ToLower());
 
                     var item = new RemoteSearchResult
                     {
@@ -97,15 +94,12 @@ namespace PhoenixAdult.Sites
             var sceneURL = Helper.Decode(providerIds[0]);
             var siteNumVal = int.Parse(providerIds[1]);
 
-            var http = await new HTTP().Get(sceneURL, cancellationToken);
-            if (!http.IsOK)
+            var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
+            if (doc == null)
                 return result;
 
-            var doc = new HtmlDocument();
-            doc.LoadHtml(http.Content);
-
-            movie.Name = doc.DocumentNode.SelectSingleNode("//h1[@class='customhcolor']")?.InnerText.Trim();
-            movie.Overview = doc.DocumentNode.SelectSingleNode("//*[@class='customhcolor2']")?.InnerText.Trim();
+            movie.Name = doc.SelectSingleNode("//h1[@class='customhcolor']")?.InnerText.Trim();
+            movie.Overview = doc.SelectSingleNode("//*[@class='customhcolor2']")?.InnerText.Trim();
 
             if (siteNumVal == 1287 && !string.IsNullOrEmpty(movie.Overview))
             {
@@ -117,21 +111,21 @@ namespace PhoenixAdult.Sites
             movie.Tagline = tagline;
             movie.AddTag(tagline);
 
-            var dateNode = doc.DocumentNode.SelectSingleNode("//*[@class='date']");
+            var dateNode = doc.SelectSingleNode("//*[@class='date']");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            var genresNode = doc.DocumentNode.SelectSingleNode("//h4[@class='customhcolor']");
+            var genresNode = doc.SelectSingleNode("//h4[@class='customhcolor']");
             if (genresNode != null)
             {
                 foreach (var genreLink in genresNode.InnerText.Trim().Split(','))
                     movie.AddGenre(genreLink.Trim());
             }
 
-            var actorsNode = doc.DocumentNode.SelectSingleNode("//h3[@class='customhcolor']");
+            var actorsNode = doc.SelectSingleNode("//h3[@class='customhcolor']");
             if (actorsNode != null)
             {
                 var actors = actorsNode.InnerText.Trim();
@@ -164,13 +158,10 @@ namespace PhoenixAdult.Sites
             var providerIds = sceneID[0].Split('|');
             var sceneURL = Helper.Decode(providerIds[0]);
 
-            var http = await new HTTP().Get(sceneURL, cancellationToken);
-            if (http.IsOK)
+            var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
+            if (doc != null)
             {
-                var doc = new HtmlDocument();
-                doc.LoadHtml(http.Content);
-
-                var imageNodes = doc.DocumentNode.SelectNodes("//center//img/@src");
+                var imageNodes = doc.SelectNodes("//center//img/@src");
                 if (imageNodes != null)
                 {
                     var baseUri = new Uri(Helper.GetSearchBaseURL(siteNum));

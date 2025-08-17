@@ -36,7 +36,7 @@ namespace PhoenixAdult.Sites
             if (!httpResult.IsOK)
                 return result;
 
-            var searchPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var searchPageElements = HTML.ElementFromString(httpResult.Content);
             var searchNodes = searchPageElements.SelectNodes("//div[@class='videos-list']/article");
             if (searchNodes != null)
             {
@@ -76,7 +76,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             string sceneId = detailsPageElements.SelectSingleNode("//article")?.GetAttributeValue("id", "").Split('-').Last();
 
@@ -93,7 +93,6 @@ namespace PhoenixAdult.Sites
             if (tagline != null)
             {
                 movie.AddTag(tagline);
-                movie.AddCollection(new[] { tagline });
             }
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='video-description']//strong[contains(., 'Date')]");
@@ -138,7 +137,7 @@ namespace PhoenixAdult.Sites
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK) return images;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//meta[@itemprop='thumbnailUrl']");
             if (posterNode != null)
