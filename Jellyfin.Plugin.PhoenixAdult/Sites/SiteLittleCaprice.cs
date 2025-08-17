@@ -5,10 +5,10 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
-using Jellyfin.Plugin.PhoenixAdult.Models;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Helpers.Utils;
 
 namespace PhoenixAdult.Sites
 {
@@ -17,14 +17,13 @@ namespace PhoenixAdult.Sites
         private const string SiteName = "LittleCaprice";
         private const string BaseUrl = "https://www.littlecaprice.com";
 
-        public Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
+        public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var searchUrl = $"{BaseUrl}/?s={searchTitle.Replace(" ", "+")}";
-            var doc = new HtmlDocument();
-            doc.LoadHtml(new PhoenixAdultHttpClient().Get(searchUrl));
+            var doc = await HTML.ElementFromURL(searchUrl, cancellationToken);
 
             var searchResults = new List<RemoteSearchResult>();
-            var nodes = doc.DocumentNode.SelectNodes("//div[@id='left-area']/article");
+            var nodes = doc.SelectNodes("//div[@id='left-area']/article");
             if (nodes != null)
             {
                 foreach (var node in nodes)
@@ -44,10 +43,10 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            return Task.FromResult(searchResults);
+            return searchResults;
         }
 
-        public Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
+        public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
             var metadataId = sceneID[0].Split('|');
             var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
@@ -56,11 +55,10 @@ namespace PhoenixAdult.Sites
                 sceneUrl = $"{BaseUrl}{sceneUrl}";
             }
 
-            var galleryDoc = new HtmlDocument();
-            galleryDoc.LoadHtml(new PhoenixAdultHttpClient().Get(sceneUrl));
+            var galleryDoc = await HTML.ElementFromURL(sceneUrl, cancellationToken);
             var detailsDoc = galleryDoc;
 
-            var videoPageLink = galleryDoc.DocumentNode.SelectSingleNode("//a[@class='et_pb_button button' and contains(@href, 'video')]");
+            var videoPageLink = galleryDoc.SelectSingleNode("//a[@class='et_pb_button button' and contains(@href, 'video')]");
             if (videoPageLink != null)
             {
                 var videoPageUrl = videoPageLink.GetAttributeValue("href", string.Empty);
@@ -68,8 +66,7 @@ namespace PhoenixAdult.Sites
                 {
                     videoPageUrl = $"{BaseUrl}{videoPageUrl}";
                 }
-                detailsDoc = new HtmlDocument();
-                detailsDoc.LoadHtml(new PhoenixAdultHttpClient().Get(videoPageUrl));
+                detailsDoc = await HTML.ElementFromURL(videoPageUrl, cancellationToken);
             }
 
             var metadataResult = new MetadataResult<BaseItem>
@@ -80,13 +77,13 @@ namespace PhoenixAdult.Sites
 
             metadataResult.Item.AddStudio(SiteName);
 
-            var summaryNode = detailsDoc.DocumentNode.SelectSingleNode("//div[@class='desc-text']");
+            var summaryNode = detailsDoc.SelectSingleNode("//div[@class='desc-text']");
             if (summaryNode != null)
             {
                 metadataResult.Item.Overview = summaryNode.InnerText.Trim();
             }
 
-            var genres = detailsDoc.DocumentNode.SelectNodes("//div[@class='project-tags']/div[@class='list']/a") ?? galleryDoc.DocumentNode.SelectNodes("//div[@class='project-tags']/div[@class='list']/a");
+            var genres = detailsDoc.SelectNodes("//div[@class='project-tags']/div[@class='list']/a") ?? galleryDoc.SelectNodes("//div[@class='project-tags']/div[@class='list']/a");
             if (genres != null)
             {
                 foreach (var genre in genres)
@@ -95,7 +92,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var attributes = detailsDoc.DocumentNode.SelectSingleNode("//div[@id='main-project-content']").GetAttributeValue("class", string.Empty).Split(' ');
+            var attributes = detailsDoc.SelectSingleNode("//div[@id='main-project-content']").GetAttributeValue("class", string.Empty).Split(' ');
             var tagline = SiteName;
             if (attributes.Contains("category_buttmuse"))
             {
@@ -132,20 +129,20 @@ namespace PhoenixAdult.Sites
             metadataResult.Item.Tagline = tagline;
             metadataResult.Item.AddCollection(tagline);
 
-            var title = detailsDoc.DocumentNode.SelectSingleNode("//div[@class='project-details']//h1").InnerText.Trim();
+            var title = detailsDoc.SelectSingleNode("//div[@class='project-details']//h1").InnerText.Trim();
             if (title.ToLower().StartsWith(tagline.ToLower()))
             {
                 title = title.Substring(tagline.Length);
             }
             metadataResult.Item.Name = title;
 
-            var date = detailsDoc.DocumentNode.SelectSingleNode("//div[@class='relese-date']").InnerText.Trim().Split(':')[1];
+            var date = detailsDoc.SelectSingleNode("//div[@class='relese-date']").InnerText.Trim().Split(':')[1];
             if (!string.IsNullOrEmpty(date))
             {
                 metadataResult.Item.PremiereDate = DateTime.Parse(date);
             }
 
-            var actors = detailsDoc.DocumentNode.SelectNodes("//div[@class='project-models']//a");
+            var actors = detailsDoc.SelectNodes("//div[@class='project-models']//a");
             if (actors != null)
             {
                 if (actors.Count == 3)
@@ -177,9 +174,8 @@ namespace PhoenixAdult.Sites
                         {
                             actorPageUrl = $"{BaseUrl}{actorPageUrl}";
                         }
-                        var actorDoc = new HtmlDocument();
-                        actorDoc.LoadHtml(new PhoenixAdultHttpClient().Get(actorPageUrl));
-                        actorPhotoUrl = actorDoc.DocumentNode.SelectSingleNode("//img[@class='img-poster']").GetAttributeValue("src", string.Empty);
+                        var actorDoc = await HTML.ElementFromURL(actorPageUrl, cancellationToken);
+                        actorPhotoUrl = actorDoc.SelectSingleNode("//img[@class='img-poster']").GetAttributeValue("src", string.Empty);
                         if (!actorPhotoUrl.StartsWith("http"))
                         {
                             actorPhotoUrl = $"{BaseUrl}{actorPhotoUrl}";
@@ -193,10 +189,10 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            return Task.FromResult(metadataResult);
+            return metadataResult;
         }
 
-        public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var metadataId = sceneID[0].Split('|');
             var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
@@ -205,11 +201,10 @@ namespace PhoenixAdult.Sites
                 sceneUrl = $"{BaseUrl}{sceneUrl}";
             }
 
-            var galleryDoc = new HtmlDocument();
-            galleryDoc.LoadHtml(new PhoenixAdultHttpClient().Get(sceneUrl));
+            var galleryDoc = await HTML.ElementFromURL(sceneUrl, cancellationToken);
             var detailsDoc = galleryDoc;
 
-            var videoPageLink = galleryDoc.DocumentNode.SelectSingleNode("//a[@class='et_pb_button button' and contains(@href, 'video')]");
+            var videoPageLink = galleryDoc.SelectSingleNode("//a[@class='et_pb_button button' and contains(@href, 'video')]");
             if (videoPageLink != null)
             {
                 var videoPageUrl = videoPageLink.GetAttributeValue("href", string.Empty);
@@ -217,14 +212,13 @@ namespace PhoenixAdult.Sites
                 {
                     videoPageUrl = $"{BaseUrl}{videoPageUrl}";
                 }
-                detailsDoc = new HtmlDocument();
-                detailsDoc.LoadHtml(new PhoenixAdultHttpClient().Get(videoPageUrl));
+                detailsDoc = await HTML.ElementFromURL(videoPageUrl, cancellationToken);
             }
 
             var art = new List<string>();
             try
             {
-                var detailsPageOgImage = detailsDoc.DocumentNode.SelectSingleNode("//meta[@property='og:image']").GetAttributeValue("content", string.Empty);
+                var detailsPageOgImage = detailsDoc.SelectSingleNode("//meta[@property='og:image']").GetAttributeValue("content", string.Empty);
                 art.Add(detailsPageOgImage);
             }
             catch
@@ -234,7 +228,7 @@ namespace PhoenixAdult.Sites
 
             try
             {
-                var galleryPageOgImage = galleryDoc.DocumentNode.SelectSingleNode("//meta[@property='og:image']").GetAttributeValue("content", string.Empty);
+                var galleryPageOgImage = galleryDoc.SelectSingleNode("//meta[@property='og:image']").GetAttributeValue("content", string.Empty);
                 art.Add(galleryPageOgImage);
             }
             catch
@@ -242,7 +236,7 @@ namespace PhoenixAdult.Sites
                 // ignored
             }
 
-            var galleryPhotos = galleryDoc.DocumentNode.SelectNodes("//div[@class='gallery spotlight-group']/img/@src");
+            var galleryPhotos = galleryDoc.SelectNodes("//div[@class='gallery spotlight-group']/img/@src");
             if (galleryPhotos != null)
             {
                 foreach (var galleryPhoto in galleryPhotos)
@@ -269,7 +263,7 @@ namespace PhoenixAdult.Sites
                 list.Add(new RemoteImageInfo { Url = imageUrl, Type = ImageType.Primary });
             }
 
-            return Task.FromResult<IEnumerable<RemoteImageInfo>>(list);
+            return list;
         }
 
         private static int LevenshteinDistance(string source, string target)

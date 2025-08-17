@@ -61,6 +61,7 @@
       <InputAssemblies Include="$(OutputPath)HtmlAgilityPack.dll" />
       <InputAssemblies Include="$(OutputPath)HttpClient.Caching.dll" />
       <InputAssemblies Include="$(OutputPath)MihaZupan.HttpToSocks5Proxy.dll" />
+      <InputAssemblies Include="$(OutputPath)SkiaSharp.dll" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">

@@ -5,10 +5,10 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
-using Jellyfin.Plugin.PhoenixAdult.Models;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Helpers.Utils;
 
 namespace PhoenixAdult.Sites
 {
@@ -17,7 +17,7 @@ namespace PhoenixAdult.Sites
         private const string SiteName = "Jacquie Et Michel";
         private const string BaseUrl = "https://www.jacquieetmichel.net";
 
-        public Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
+        public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var sceneID = string.Empty;
             var parts = searchTitle.Split(' ');
@@ -27,11 +27,10 @@ namespace PhoenixAdult.Sites
             }
 
             var searchUrl = $"{BaseUrl}/en/videos/search/{searchTitle.Replace(" ", "+")}";
-            var doc = new HtmlDocument();
-            doc.LoadHtml(new PhoenixAdultHttpClient().Get(searchUrl));
+            var doc = await HTML.ElementFromURL(searchUrl, cancellationToken);
 
             var searchResults = new List<RemoteSearchResult>();
-            var nodes = doc.DocumentNode.SelectNodes("//a[@class='content-card content-card--video']");
+            var nodes = doc.SelectNodes("//a[@class='content-card content-card--video']");
             if (nodes != null)
             {
                 foreach (var node in nodes)
@@ -55,10 +54,9 @@ namespace PhoenixAdult.Sites
             if (!string.IsNullOrEmpty(sceneID))
             {
                 var sceneUrl = $"{BaseUrl}/en/content/{sceneID}";
-                var sceneDoc = new HtmlDocument();
-                sceneDoc.LoadHtml(new PhoenixAdultHttpClient().Get(sceneUrl));
+                var sceneDoc = await HTML.ElementFromURL(sceneUrl, cancellationToken);
 
-                var titleNoFormatting = sceneDoc.DocumentNode.SelectSingleNode("//h1[@class='content-detail__title']").InnerText.Trim();
+                var titleNoFormatting = sceneDoc.SelectSingleNode("//h1[@class='content-detail__title']").InnerText.Trim();
                 var curID = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(sceneUrl));
 
                 searchResults.Add(new RemoteSearchResult
@@ -69,10 +67,10 @@ namespace PhoenixAdult.Sites
                 });
             }
 
-            return Task.FromResult(searchResults);
+            return searchResults;
         }
 
-        public Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
+        public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
             var metadataId = sceneID[0].Split('|');
             var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
@@ -81,8 +79,7 @@ namespace PhoenixAdult.Sites
                 sceneUrl = $"{BaseUrl}{sceneUrl}";
             }
 
-            var doc = new HtmlDocument();
-            doc.LoadHtml(new PhoenixAdultHttpClient().Get(sceneUrl));
+            var doc = await HTML.ElementFromURL(sceneUrl, cancellationToken);
 
             var metadataResult = new MetadataResult<BaseItem>
             {
@@ -90,15 +87,15 @@ namespace PhoenixAdult.Sites
                 HasMetadata = true
             };
 
-            metadataResult.Item.Name = doc.DocumentNode.SelectSingleNode("//h1[@class='content-detail__title']").InnerText.Trim();
-            metadataResult.Item.Overview = doc.DocumentNode.SelectSingleNode("//div[@class='content-detail__description']").InnerText.Trim();
+            metadataResult.Item.Name = doc.SelectSingleNode("//h1[@class='content-detail__title']").InnerText.Trim();
+            metadataResult.Item.Overview = doc.SelectSingleNode("//div[@class='content-detail__description']").InnerText.Trim();
             metadataResult.Item.OfficialRating = "XXX";
             metadataResult.Item.SetProviderId(Plugin.Instance.Name, sceneUrl);
 
-            var date = doc.DocumentNode.SelectNodes("//div[@class='content-detail__infos__row']//p[@class='content-detail__description content-detail__description--link']")[1].InnerText.Trim();
+            var date = doc.SelectNodes("//div[@class='content-detail__infos__row']//p[@class='content-detail__description content-detail__description--link']")[1].InnerText.Trim();
             metadataResult.Item.PremiereDate = DateTime.Parse(date);
 
-            var genres = doc.DocumentNode.SelectNodes("//div[@class='content-detail__row']//li[@class='content-detail__tag']");
+            var genres = doc.SelectNodes("//div[@class='content-detail__row']//li[@class='content-detail__tag']");
             if (genres != null)
             {
                 foreach (var genre in genres)
@@ -118,10 +115,10 @@ namespace PhoenixAdult.Sites
                 metadataResult.AddPerson(new PersonInfo { Name = actorName, Type = PersonType.Actor });
             }
 
-            return Task.FromResult(metadataResult);
+            return metadataResult;
         }
 
-        public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var metadataId = sceneID[0].Split('|');
             var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
@@ -130,10 +127,9 @@ namespace PhoenixAdult.Sites
                 sceneUrl = $"{BaseUrl}{sceneUrl}";
             }
 
-            var doc = new HtmlDocument();
-            doc.LoadHtml(new PhoenixAdultHttpClient().Get(sceneUrl));
+            var doc = await HTML.ElementFromURL(sceneUrl, cancellationToken);
 
-            var img = doc.DocumentNode.SelectSingleNode("//video").GetAttributeValue("poster", string.Empty);
+            var img = doc.SelectSingleNode("//video").GetAttributeValue("poster", string.Empty);
 
             var list = new List<RemoteImageInfo>
             {
@@ -144,7 +140,7 @@ namespace PhoenixAdult.Sites
                 }
             };
 
-            return Task.FromResult<IEnumerable<RemoteImageInfo>>(list);
+            return list;
         }
 
         private static int LevenshteinDistance(string source, string target)

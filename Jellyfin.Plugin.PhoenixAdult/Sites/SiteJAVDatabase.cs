@@ -5,10 +5,10 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
-using Jellyfin.Plugin.PhoenixAdult.Models;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Helpers.Utils;
 
 namespace PhoenixAdult.Sites
 {
@@ -17,7 +17,7 @@ namespace PhoenixAdult.Sites
         private const string SiteName = "JAVDatabase";
         private const string BaseUrl = "https://www.javdatabase.com";
 
-        public Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
+        public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var searchJavId = string.Empty;
             var splitSearchTitle = searchTitle.Split(' ');
@@ -45,11 +45,10 @@ namespace PhoenixAdult.Sites
             }
 
             var searchUrl = $"{BaseUrl}/movies/{searchTitle.Replace(" ", "-").ToLower()}/";
-            var doc = new HtmlDocument();
-            doc.LoadHtml(new PhoenixAdultHttpClient().Get(searchUrl));
+            var doc = await HTML.ElementFromURL(searchUrl, cancellationToken);
 
             var searchResults = new List<RemoteSearchResult>();
-            var nodes = doc.DocumentNode.SelectNodes("//div[contains(@class, 'card h-100')]");
+            var nodes = doc.SelectNodes("//div[contains(@class, 'card h-100')]");
             if (nodes != null)
             {
                 foreach (var node in nodes)
@@ -83,16 +82,15 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            return Task.FromResult(searchResults);
+            return searchResults;
         }
 
-        public Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
+        public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
             var metadataId = sceneID[0].Split('|');
             var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
 
-            var doc = new HtmlDocument();
-            doc.LoadHtml(new PhoenixAdultHttpClient().Get(sceneUrl));
+            var doc = await HTML.ElementFromURL(sceneUrl, cancellationToken);
 
             var metadataResult = new MetadataResult<BaseItem>
             {
@@ -100,8 +98,8 @@ namespace PhoenixAdult.Sites
                 HasMetadata = true
             };
 
-            var javId = doc.DocumentNode.SelectSingleNode("//meta[@property='og:title']").GetAttributeValue("content", string.Empty).Trim();
-            var title = doc.DocumentNode.SelectSingleNode("//*[text()='Title: ']/following-sibling::text()").InnerText.Trim();
+            var javId = doc.SelectSingleNode("//meta[@property='og:title']").GetAttributeValue("content", string.Empty).Trim();
+            var title = doc.SelectSingleNode("//*[text()='Title: ']/following-sibling::text()").InnerText.Trim();
 
             foreach (var censoredWord in CensoredWordsDb)
             {
@@ -121,7 +119,7 @@ namespace PhoenixAdult.Sites
                 metadataResult.Item.Name = $"[{javId.ToUpper()}] {title}";
             }
 
-            var studioNode = doc.DocumentNode.SelectSingleNode("//*[text()='Studio: ']/following-sibling::span/a");
+            var studioNode = doc.SelectSingleNode("//*[text()='Studio: ']/following-sibling::span/a");
             if (studioNode != null)
             {
                 var studioClean = studioNode.InnerText.Trim();
@@ -148,13 +146,13 @@ namespace PhoenixAdult.Sites
                 metadataResult.Item.AddCollection("Japan Adult Video");
             }
 
-            var date = doc.DocumentNode.SelectSingleNode("//*[text()='Release Date: ']/following-sibling::text()[1]").InnerText;
+            var date = doc.SelectSingleNode("//*[text()='Release Date: ']/following-sibling::text()[1]").InnerText;
             if (!string.IsNullOrEmpty(date))
             {
                 metadataResult.Item.PremiereDate = DateTime.Parse(date);
             }
 
-            var genres = doc.DocumentNode.SelectNodes("//*[text()='Genre(s): ']/following-sibling::*/a");
+            var genres = doc.SelectNodes("//*[text()='Genre(s): ']/following-sibling::*/a");
             if (genres != null)
             {
                 foreach (var genre in genres)
@@ -163,14 +161,15 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var actors = doc.DocumentNode.SelectNodes("//*[text()='Idol(s)/Actress(es): ']/following-sibling::span/a");
+            var actors = doc.SelectNodes("//*[text()='Idol(s)/Actress(es): ']/following-sibling::span/a");
             if (actors != null)
             {
                 foreach (var actor in actors)
                 {
                     var actorName = actor.InnerText.Trim();
                     var actorPhotoUrl = actor.GetAttributeValue("href", string.Empty).Replace("melody-marks", "melody-hina-marks");
-                    if (new PhoenixAdultHttpClient().Get(actorPhotoUrl).Contains("unknown."))
+                    var actorDoc = await HTML.ElementFromURL(actorPhotoUrl, cancellationToken);
+                    if (actorDoc.InnerText.Contains("unknown."))
                     {
                         actorPhotoUrl = string.Empty;
                     }
@@ -182,7 +181,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var directorNode = doc.DocumentNode.SelectSingleNode("//*[text()='Director: ']/following-sibling::span/a");
+            var directorNode = doc.SelectSingleNode("//*[text()='Director: ']/following-sibling::span/a");
             if (directorNode != null)
             {
                 var directorName = directorNode.InnerText.Trim();
@@ -194,16 +193,15 @@ namespace PhoenixAdult.Sites
                 metadataResult.AddPerson(new PersonInfo { Name = actor, Type = PersonType.Actor });
             }
 
-            return Task.FromResult(metadataResult);
+            return metadataResult;
         }
 
-        public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var metadataId = sceneID[0].Split('|');
             var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
 
-            var doc = new HtmlDocument();
-            doc.LoadHtml(new PhoenixAdultHttpClient().Get(sceneUrl));
+            var doc = await HTML.ElementFromURL(sceneUrl, cancellationToken);
 
             var xpaths = new[]
             {
@@ -214,7 +212,7 @@ namespace PhoenixAdult.Sites
             var art = new List<string>();
             foreach (var xpath in xpaths)
             {
-                var nodes = doc.DocumentNode.SelectNodes(xpath);
+                var nodes = doc.SelectNodes(xpath);
                 if (nodes != null)
                 {
                     foreach (var node in nodes)
@@ -224,7 +222,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var javId = doc.DocumentNode.SelectSingleNode("//meta[@property='og:title']").GetAttributeValue("content", string.Empty).Trim();
+            var javId = doc.SelectSingleNode("//meta[@property='og:title']").GetAttributeValue("content", string.Empty).Trim();
             foreach (var crossSite in CrossSiteDb)
             {
                 if (crossSite.Value.Contains(javId, StringComparer.OrdinalIgnoreCase))
@@ -244,20 +242,19 @@ namespace PhoenixAdult.Sites
             }
 
             var javBusUrl = $"https://www.javbus.com/{javId}";
-            var javBusDoc = new HtmlDocument();
-            javBusDoc.LoadHtml(new PhoenixAdultHttpClient().Get(javBusUrl));
+            var javBusDoc = await HTML.ElementFromURL(javBusUrl, cancellationToken);
 
-            if (javBusDoc.DocumentNode.InnerText.Contains("404 Page"))
+            if (javBusDoc.InnerText.Contains("404 Page"))
             {
-                var date = doc.DocumentNode.SelectSingleNode("//*[text()='Release Date: ']/following-sibling::text()[1]").InnerText;
+                var date = doc.SelectSingleNode("//*[text()='Release Date: ']/following-sibling::text()[1]").InnerText;
                 if (!string.IsNullOrEmpty(date))
                 {
                     javBusUrl = $"{javBusUrl}_{DateTime.Parse(date):yyyy-MM-dd}";
-                    javBusDoc.LoadHtml(new PhoenixAdultHttpClient().Get(javBusUrl));
+                    javBusDoc = await HTML.ElementFromURL(javBusUrl, cancellationToken);
                 }
             }
 
-            if (!javBusDoc.DocumentNode.InnerText.Contains("404 Page"))
+            if (!javBusDoc.InnerText.Contains("404 Page"))
             {
                 var javBusXpaths = new[]
                 {
@@ -267,7 +264,7 @@ namespace PhoenixAdult.Sites
 
                 foreach (var xpath in javBusXpaths)
                 {
-                    var nodes = javBusDoc.DocumentNode.SelectNodes(xpath);
+                    var nodes = javBusDoc.SelectNodes(xpath);
                     if (nodes != null)
                     {
                         foreach (var node in nodes)
@@ -286,7 +283,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
 
-                var coverImageNode = javBusDoc.DocumentNode.SelectSingleNode("//a[contains(@href, '/cover/')]/@href|//img[contains(@src, '/sample/')]/@src");
+                var coverImageNode = javBusDoc.SelectSingleNode("//a[contains(@href, '/cover/')]/@href|//img[contains(@src, '/sample/')]/@src");
                 if (coverImageNode != null)
                 {
                     var coverImageCode = coverImageNode.GetAttributeValue("href", string.Empty).Split('/').Last().Split('.')[0].Split('_')[0];
@@ -312,7 +309,7 @@ namespace PhoenixAdult.Sites
                 list.Add(new RemoteImageInfo { Url = imageUrl, Type = ImageType.Primary });
             }
 
-            return Task.FromResult<IEnumerable<RemoteImageInfo>>(list);
+            return list;
         }
 
         private static int LevenshteinDistance(string source, string target)
