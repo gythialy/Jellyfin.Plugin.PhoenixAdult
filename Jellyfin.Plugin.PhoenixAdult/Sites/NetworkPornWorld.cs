@@ -44,12 +44,12 @@ namespace PhoenixAdult.Sites
                         foreach (var node in searchNodes)
                         {
                             string titleNoFormatting = node.SelectSingleNode(".//div[@class='card-scene__text']/a")?.InnerText.Trim();
-                            string sceneDateStr = node.SelectSingleNode('.//div[@class="label label--time"][2]')?.InnerText.Trim();
+                            string sceneDateStr = node.SelectSingleNode(".//div[@class=\"label label--time\"][2]")?.InnerText.Trim();
                             if (DateTime.TryParse(sceneDateStr, out var sceneDate))
                             {
                                 if (Math.Abs((searchDate.Value - sceneDate).Days) < 3)
                                 {
-                                    string url = node.SelectSingleNode('.//a')?.GetAttributeValue("href", "");
+                                    string url = node.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty);
                                     string curId = Helper.Encode(url);
                                     result.Add(new RemoteSearchResult
                                     {
@@ -66,10 +66,10 @@ namespace PhoenixAdult.Sites
             else
             {
                 string sceneId = null;
-                if (int.TryParse(searchTitle.Split(' ').FirstOrDefault() ?? "", out var id) && id > 1000)
+                if (int.TryParse(searchTitle.Split(' ').FirstOrDefault() ?? string.Empty, out var id) && id > 1000)
                 {
                     sceneId = id.ToString();
-                    searchTitle = searchTitle.Replace(sceneId, "").Trim();
+                    searchTitle = searchTitle.Replace(sceneId, string.Empty).Trim();
                 }
 
                 if (sceneId != null)
@@ -102,7 +102,7 @@ namespace PhoenixAdult.Sites
                             foreach (var node in searchNodes)
                             {
                                 string titleNoFormatting = node.SelectSingleNode("./a")?.InnerText.Trim();
-                                string url = node.SelectSingleNode("./a")?.GetAttributeValue("href", "");
+                                string url = node.SelectSingleNode("./a")?.GetAttributeValue("href", string.Empty);
                                 string curId = Helper.Encode(url);
                                 result.Add(new RemoteSearchResult
                                 {
@@ -191,7 +191,7 @@ namespace PhoenixAdult.Sites
         private string GetTitle(HtmlNode detailsPageElements, int[] siteNum)
         {
             string titleNoFormatting = detailsPageElements.SelectSingleNode("//title")?.InnerText.Trim();
-            return Regex.Replace(titleNoFormatting, @" - PornWorld$", "");
+            return Regex.Replace(titleNoFormatting, @" - PornWorld$", string.Empty);
         }
     }
 }
