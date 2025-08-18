@@ -85,7 +85,7 @@ namespace PhoenixAdult.Sites
             string sceneUrl = Helper.Decode(providerIds[0]);
             string sceneDate = providerIds[2];
             string title = providerIds.Length > 3 ? Helper.Decode(providerIds[3]) : null;
-            var searchResult = providerIds.Length > 4 ? await HTML.ElementFromString(Helper.Decode(providerIds[4]), cancellationToken) : null;
+            var searchResult = providerIds.Length > 4 ? HTML.ElementFromString(Helper.Decode(providerIds[4])) : null;
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken, null, _cookies);
             if (!httpResult.IsOK)

@@ -66,10 +66,10 @@ namespace PhoenixAdult.Sites
                     {
                         indexName,
                         @params = parameters
-                    }
+                    },
                 },
             };
-            var httpResult = await HTTP.Request(url, HttpMethod.Post, cancellationToken, new StringContent(JsonConvert.SerializeObject(payload)), null, headers);
+            var httpResult = await HTTP.Request(url, HttpMethod.Post, new StringContent(JsonConvert.SerializeObject(payload)), null, headers, cancellationToken);
             if (!httpResult.IsOK)
             {
                 return null;

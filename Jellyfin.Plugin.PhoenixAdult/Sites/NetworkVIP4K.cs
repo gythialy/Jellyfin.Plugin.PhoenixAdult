@@ -7,7 +7,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
-using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
@@ -80,11 +79,11 @@ namespace PhoenixAdult.Sites
                     var score = 100;
                     if (searchDate.HasValue)
                     {
-                        score -= LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate);
+                        score -= LevenshteinDistance.Calculate(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate);
                     }
                     else
                     {
-                        score -= LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
+                        score -= LevenshteinDistance.Calculate(searchTitle.ToLower(), titleNoFormatting.ToLower());
                     }
 
                     if (!subSite.Equals(Helper.GetSearchSiteName(siteNum), StringComparison.OrdinalIgnoreCase))
@@ -125,11 +124,11 @@ namespace PhoenixAdult.Sites
                         var score = 100;
                         if (searchDate.HasValue)
                         {
-                            score -= LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate);
+                            score -= LevenshteinDistance.Calculate(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate);
                         }
                         else
                         {
-                            score -= LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
+                            score -= LevenshteinDistance.Calculate(searchTitle.ToLower(), titleNoFormatting.ToLower());
                         }
 
                         if (!subSite.Equals(Helper.GetSearchSiteName(siteNum), StringComparison.OrdinalIgnoreCase))

@@ -11,6 +11,8 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
+using MediaBrowser.Model.Entities;
+
 
 #if __EMBY__
 #else
@@ -44,16 +46,16 @@ namespace PhoenixAdult.Sites
 
                     searchResults.Add(new RemoteSearchResult
                     {
-                        Id = $"{curId}|{siteNum[0]}",
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
                         Name = $"{titleNoFormatting} [{SiteName}] {releaseDate}",
                     });
                 }
             }
 
-            return Task.FromResult(searchResults);
+            return searchResults;
         }
 
-        public Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
+        public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
             var metadataId = sceneID[0].Split('|');
             var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
@@ -62,8 +64,9 @@ namespace PhoenixAdult.Sites
                 sceneUrl = $"{BaseUrl}{sceneUrl}";
             }
 
+            var http = await HTTP.Request(sceneUrl, cancellationToken);
             var galleryDoc = new HtmlDocument();
-            galleryDoc.LoadHtml(new PhoenixAdultHttpClient().Get(sceneUrl));
+            galleryDoc.LoadHtml();
             var detailsDoc = galleryDoc;
 
             var videoPageLink = galleryDoc.DocumentNode.SelectSingleNode("//a[@class='et_pb_button button' and contains(@href, 'video')]");
@@ -75,7 +78,7 @@ namespace PhoenixAdult.Sites
                     videoPageUrl = $"{BaseUrl}{videoPageUrl}";
                 }
                 detailsDoc = new HtmlDocument();
-                detailsDoc.LoadHtml(new PhoenixAdultHttpClient().Get(videoPageUrl));
+                detailsDoc.LoadHtml(await HTTP.Request(videoPageUrl, cancellationToken));
             }
 
             var metadataResult = new MetadataResult<BaseItem>
@@ -183,7 +186,7 @@ namespace PhoenixAdult.Sites
                             actorPageUrl = $"{BaseUrl}{actorPageUrl}";
                         }
                         var actorDoc = new HtmlDocument();
-                        actorDoc.LoadHtml(new PhoenixAdultHttpClient().Get(actorPageUrl));
+                        actorDoc.LoadHtml(await HTTP.Request(actorPageUrl, cancellationToken));
                         actorPhotoUrl = actorDoc.DocumentNode.SelectSingleNode("//img[@class='img-poster']").GetAttributeValue("src", string.Empty);
                         if (!actorPhotoUrl.StartsWith("http"))
                         {
@@ -194,14 +197,14 @@ namespace PhoenixAdult.Sites
                     {
                         // ignored
                     }
-                    metadataResult.AddPerson(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonType.Actor });
+                    metadataResult.AddPerson(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonKind.Actor });
                 }
             }
 
-            return Task.FromResult(metadataResult);
+            return metadataResult;
         }
 
-        public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var metadataId = sceneID[0].Split('|');
             var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
@@ -211,7 +214,7 @@ namespace PhoenixAdult.Sites
             }
 
             var galleryDoc = new HtmlDocument();
-            galleryDoc.LoadHtml(new PhoenixAdultHttpClient().Get(sceneUrl));
+            galleryDoc.LoadHtml(await HTTP.Request(sceneUrl));
             var detailsDoc = galleryDoc;
 
             var videoPageLink = galleryDoc.DocumentNode.SelectSingleNode("//a[@class='et_pb_button button' and contains(@href, 'video')]");
@@ -223,7 +226,7 @@ namespace PhoenixAdult.Sites
                     videoPageUrl = $"{BaseUrl}{videoPageUrl}";
                 }
                 detailsDoc = new HtmlDocument();
-                detailsDoc.LoadHtml(new PhoenixAdultHttpClient().Get(videoPageUrl));
+                detailsDoc.LoadHtml(await HTTP.Request(videoPageUrl));
             }
 
             var art = new List<string>();
@@ -274,7 +277,7 @@ namespace PhoenixAdult.Sites
                 list.Add(new RemoteImageInfo { Url = imageUrl, Type = ImageType.Primary });
             }
 
-            return Task.FromResult<IEnumerable<RemoteImageInfo>>(list);
+            return list;
         }
 
         private static int LevenshteinDistance(string source, string target)

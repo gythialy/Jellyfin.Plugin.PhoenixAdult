@@ -47,7 +47,7 @@ namespace PhoenixAdult.Sites
 
                     searchResults.Add(new RemoteSearchResult
                     {
-                        Id = $"{curID}|{siteNum[0]}",
+                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                         Name = $"{titleNoFormatting} [{SiteName}] {releaseDate}",
                     });
                 }
@@ -63,7 +63,7 @@ namespace PhoenixAdult.Sites
 
                 searchResults.Add(new RemoteSearchResult
                 {
-                    Id = $"{curID}|{siteNum[0]}",
+                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                     Name = $"{titleNoFormatting} [{SiteName}]",
                 });
             }
@@ -113,7 +113,7 @@ namespace PhoenixAdult.Sites
 
             foreach (var actorName in GetJmtvActors(sceneUrl))
             {
-                metadataResult.AddPerson(new PersonInfo { Name = actorName, Type = PersonType.Actor });
+                metadataResult.AddPerson(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
             }
 
             return metadataResult;
@@ -137,7 +137,7 @@ namespace PhoenixAdult.Sites
                 new RemoteImageInfo
                 {
                     Url = img,
-                    Type = ImageType.Primary
+                    Type = ImageType.Primary,
                 },
             };
 

@@ -9,7 +9,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
-using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
@@ -56,7 +55,7 @@ namespace PhoenixAdult.Sites
             var cookies = new CookieContainer();
             cookies.Add(new Uri(Helper.GetSearchBaseURL(siteNum)), new Cookie("ageConfirmed", "true"));
 
-            var http = await HTTP.Request(sceneURL, cancellationToken, cookies);
+            var http = await HTTP.Request(sceneURL, cookies, cancellationToken);
             if (!http.IsOK)
             {
                 return images;

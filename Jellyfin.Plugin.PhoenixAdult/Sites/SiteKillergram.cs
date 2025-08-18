@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using HtmlAgilityPack;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -33,7 +34,7 @@ namespace PhoenixAdult.Sites
             {
                 new RemoteSearchResult
                 {
-                    Id = $"{sceneId}|{siteNum[0]}",
+                    ProviderIds = { { Plugin.Instance.Name, $"{sceneId}|{siteNum[0]}" } },
                     Name = $"[{SiteName}] {titleNoFormatting} - {releaseDate}",
                 },
             };
@@ -61,7 +62,7 @@ namespace PhoenixAdult.Sites
 
             foreach (var actor in ExtractActors(doc))
             {
-                metadataResult.AddPerson(new PersonInfo { Name = actor, Type = PersonType.Actor });
+                metadataResult.AddPerson(new PersonInfo { Name = actor, Type = PersonKind.Actor });
             }
 
             return metadataResult;

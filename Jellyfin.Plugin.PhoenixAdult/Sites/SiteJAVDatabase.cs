@@ -9,6 +9,8 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
+using MediaBrowser.Model.Entities;
+
 
 #if __EMBY__
 #else
@@ -80,7 +82,7 @@ namespace PhoenixAdult.Sites
 
                     searchResults.Add(new RemoteSearchResult
                     {
-                        Id = $"{curId}|{siteNum[0]}|{releaseDate}",
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
                         Name = $"[{javId}] {displayDate} {titleNoFormatting}",
                     });
                 }
@@ -168,7 +170,7 @@ namespace PhoenixAdult.Sites
 
                     if (!ActorsCorrectionDb.ContainsKey(javId) || ActorsCorrectionDb[javId].Contains(actorName, StringComparer.OrdinalIgnoreCase))
                     {
-                        metadataResult.AddPerson(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonType.Actor });
+                        metadataResult.AddPerson(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonKind.Actor });
                     }
                 }
             }
@@ -177,12 +179,12 @@ namespace PhoenixAdult.Sites
             if (directorNode != null)
             {
                 var directorName = directorNode.InnerText.Trim();
-                metadataResult.AddPerson(new PersonInfo { Name = directorName, Type = PersonType.Director });
+                metadataResult.AddPerson(new PersonInfo { Name = directorName, Type = PersonKind.Director });
             }
 
             foreach (var actor in SceneActorsDb.Where(x => x.Value.Contains(javId)).Select(x => x.Key))
             {
-                metadataResult.AddPerson(new PersonInfo { Name = actor, Type = PersonType.Actor });
+                metadataResult.AddPerson(new PersonInfo { Name = actor, Type = PersonKind.Actor });
             }
 
             return metadataResult;

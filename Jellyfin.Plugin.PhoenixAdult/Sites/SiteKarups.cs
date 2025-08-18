@@ -63,7 +63,7 @@ namespace PhoenixAdult.Sites
 
                     searchResults.Add(new RemoteSearchResult
                     {
-                        Id = $"{curId}|{siteNum[0]}",
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
                         Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
                     });
                 }
@@ -122,7 +122,7 @@ namespace PhoenixAdult.Sites
                     var actorPageUrl = actor.GetAttributeValue("href", string.Empty);
                     var actorDoc = await HTML.ElementFromURL(actorPageUrl, cancellationToken, null, this.GetCookies());
                     var actorPhotoUrl = actorDoc.SelectSingleNode("//div[@class='model-thumb']//img").GetAttributeValue("src", string.Empty);
-                    metadataResult.AddPerson(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonType.Actor });
+                    metadataResult.AddPerson(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonKind.Actor });
                 }
             }
 

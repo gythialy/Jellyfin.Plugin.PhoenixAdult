@@ -9,6 +9,8 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
+using MediaBrowser.Model.Entities;
+
 
 #if __EMBY__
 #else
@@ -75,7 +77,7 @@ namespace PhoenixAdult.Sites
 
                                 searchResults.Add(new RemoteSearchResult
                                 {
-                                    Id = $"{curID}|{siteNum[0]}|{titleNoFormattingID}|{releaseDate}",
+                                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{titleNoFormattingID}|{releaseDate}" } },
                                     Name = $"{titleNoFormatting} {releaseDate} [{SiteName}]",
                                 });
                             }
@@ -129,7 +131,7 @@ namespace PhoenixAdult.Sites
             foreach (var actorLink in actorList)
             {
                 var actorName = actorLink.Trim();
-                metadataResult.AddPerson(new PersonInfo { Name = actorName, Type = PersonType.Actor });
+                metadataResult.AddPerson(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
             }
 
             return metadataResult;
@@ -153,7 +155,7 @@ namespace PhoenixAdult.Sites
                 new RemoteImageInfo
                 {
                     Url = scenePic,
-                    Type = ImageType.Primary
+                    Type = ImageType.Primary,
                 },
             };
 

@@ -50,7 +50,7 @@ namespace PhoenixAdult.Sites
                 {"actor", "//div[@class='scene-view mx-auto']/a"},
                 {"actorPhoto", "//div[@class='col-12 col-lg-4 pe-lg-0']//img"},
                 {"images", "//img[@class='img-thumb']/@src"},
-                {"poster", "//div[@class='splash-screen fullscreen-message is-visible'] | //dl8-video"}
+                {"poster", "//div[@class='splash-screen fullscreen-message is-visible'] | //dl8-video"},
             }                        },
         };
 
