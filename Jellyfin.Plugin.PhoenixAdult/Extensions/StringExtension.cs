@@ -36,7 +36,7 @@ internal static class StringExtension
     {
         string str = phrase.ToLowerInvariant();
         // invalid chars
-        str = Regex.Replace(str, @"[^a-z0-9\s-]", "");
+        str = Regex.Replace(str, @"[^a-z0-9\s-]", string.Empty);
         // convert multiple spaces into one space
         str = Regex.Replace(str, @"\s+", " ").Trim();
         // cut and trim
@@ -48,7 +48,10 @@ internal static class StringExtension
     public static string Capitalize(this string source)
     {
         if (string.IsNullOrEmpty(source))
+        {
             return source;
+        }
+
         return char.ToUpper(source[0]) + source.Substring(1).ToLower();
     }
 }

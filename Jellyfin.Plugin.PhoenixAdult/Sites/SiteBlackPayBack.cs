@@ -27,12 +27,12 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            string searchData = Regex.Replace(searchTitle, @"\bE\d+\b", "").Trim();
+            string searchData = Regex.Replace(searchTitle, @"\bE\d+\b", string.Empty).Trim();
             string encoded = searchData.ToLower().Replace(' ', '-');
             string directUrl = $"{Helper.GetSearchSearchURL(siteNum)}{encoded}.html";
             var searchResults = new List<string> { directUrl };
 
-            var googleResults = await GoogleSearch.Search(searchTitle, siteNum, cancellationToken);
+            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             searchResults.AddRange(googleResults.Where(u => u.Contains("/trailers/")));
 
             foreach (var sceneUrl in searchResults.Distinct())
@@ -40,7 +40,7 @@ namespace PhoenixAdult.Sites
                 var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
                 if (httpResult.IsOK)
                 {
-                    var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                    var detailsPageElements = HTML.ElementFromString(httpResult.Content);
                     string titleNoFormatting = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
                     if (titleNoFormatting != null && !titleNoFormatting.Contains("404 Error"))
                     {
@@ -49,7 +49,7 @@ namespace PhoenixAdult.Sites
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
-                            SearchProviderName = Plugin.Instance.Name
+                            SearchProviderName = Plugin.Instance.Name,
                         });
                     }
                 }
@@ -67,8 +67,12 @@ namespace PhoenixAdult.Sites
 
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             string title = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
@@ -77,13 +81,14 @@ namespace PhoenixAdult.Sites
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddStudio(tagline);
-            movie.AddCollection(new[] { tagline });
 
             var genreNodes = detailsPageElements.SelectNodes("//div[@class='featuring clear']//li/a");
             if(genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.InnerText.Trim());
+                }
             }
 
             var iafdHttp = await HTTP.Request("https://www.iafd.com/studio.rme/studio=9856/blackpayback.com.htm", HttpMethod.Get, cancellationToken);
@@ -95,7 +100,7 @@ namespace PhoenixAdult.Sites
 
                 if (sceneNode != null)
                 {
-                    string iafdUrl = "https://www.iafd.com" + sceneNode.SelectSingleNode(".//a")?.GetAttributeValue("href", "");
+                    string iafdUrl = "https://www.iafd.com" + sceneNode.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty);
                     var iafdSceneHttp = await HTTP.Request(iafdUrl, HttpMethod.Get, cancellationToken);
                     if (iafdSceneHttp.IsOK)
                     {
@@ -113,7 +118,7 @@ namespace PhoenixAdult.Sites
                             foreach(var actor in actorNodes)
                             {
                                 string actorName = actor.InnerText.Trim();
-                                string actorPhotoUrl = actor.SelectSingleNode(".//img")?.GetAttributeValue("src", "");
+                                string actorPhotoUrl = actor.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty);
                                 result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                             }
                         }
@@ -129,9 +134,12 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return images;
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
 
-            var scriptNode = (await HTML.ElementFromString(httpResult.Content, cancellationToken)).SelectSingleNode("//div[@class='player']/script");
+            var scriptNode = (HTML.ElementFromString(httpResult.Content)).SelectSingleNode("//div[@class='player']/script");
             if(scriptNode != null)
             {
                 var match = Regex.Match(scriptNode.InnerText, "(?<=poster=\").*?(?=\")");
@@ -139,7 +147,10 @@ namespace PhoenixAdult.Sites
                 {
                     string imageUrl = match.Value;
                     if (!imageUrl.StartsWith("http"))
+                    {
                         imageUrl = Helper.GetSearchBaseURL(siteNum) + imageUrl;
+                    }
+
                     images.Add(new RemoteImageInfo { Url = imageUrl, Type = ImageType.Primary });
                 }
             }

@@ -39,10 +39,13 @@ namespace PhoenixAdult.Sites
         private async Task<NaughtyAmericaScene> GetNaughtyAmerica(string sceneId, CancellationToken cancellationToken)
         {
             var scenePageElements = await HTML.ElementFromURL($"https://www.naughtyamerica.com/scene/0{sceneId}", cancellationToken);
-            if (scenePageElements == null) return null;
+            if (scenePageElements == null)
+            {
+                return null;
+            }
 
             var photoElements = scenePageElements.SelectNodes("//div[contains(@class, 'contain-scene-images') and contains(@class, 'desktop-only')]/a/@href");
-            var photos = photoElements?.Select(photo => "https:" + new Regex(@"images\d+").Replace(photo.GetAttributeValue("href", ""), "images1", 1)).ToList() ?? new List<string>();
+            var photos = photoElements?.Select(photo => "https:" + new Regex(@"images\d+").Replace(photo.GetAttributeValue("href", string.Empty), "images1", 1)).ToList() ?? new List<string>();
 
             return new NaughtyAmericaScene
             {
@@ -53,18 +56,23 @@ namespace PhoenixAdult.Sites
                 Fantasies = scenePageElements.SelectNodes("//div[contains(@class, 'categories') and contains(@class, 'grey-text')]/a")?.Select(n => n.InnerText).ToList() ?? new List<string>(),
                 Performers = scenePageElements.SelectNodes("//div[contains(@class, 'performer-list')]/a")?.Select(n => n.InnerText).ToList() ?? new List<string>(),
                 Synopsis = scenePageElements.SelectSingleNode("//div[contains(@class, 'synopsis') and contains(@class, 'grey-text')]//h2")?.NextSibling.InnerText.Trim(),
-                Photos = photos
+                Photos = photos,
             };
         }
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            if (siteNum == null || string.IsNullOrEmpty(searchTitle)) return result;
+            if (siteNum == null || string.IsNullOrEmpty(searchTitle))
+            {
+                return result;
+            }
 
             string sceneID = searchTitle.Split(' ')[0];
             if (!int.TryParse(sceneID, out _))
+            {
                 sceneID = null;
+            }
 
             if (!string.IsNullOrEmpty(sceneID))
             {
@@ -76,7 +84,7 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{scenePageElements.Id}|{siteNum[0]}" } },
                         Name = $"{scenePageElements.Title} [{scenePageElements.Site}] {releaseDate}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -84,9 +92,12 @@ namespace PhoenixAdult.Sites
             {
                 string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Slugify()}&_gl=1";
                 var searchResultsNode = await HTML.ElementFromURL(searchUrl, cancellationToken);
-                if (searchResultsNode == null) return result;
+                if (searchResultsNode == null)
+                {
+                    return result;
+                }
 
-                var lastPageMatch = new Regex(@"\d+(?=#)").Match(searchResultsNode.SelectSingleNode("//li/a[./i[contains(@class, 'double')]]")?.GetAttributeValue("href", "") ?? string.Empty);
+                var lastPageMatch = new Regex(@"\d+(?=#)").Match(searchResultsNode.SelectSingleNode("//li/a[./i[contains(@class, 'double')]]")?.GetAttributeValue("href", string.Empty) ?? string.Empty);
                 int pagination = lastPageMatch.Success ? int.Parse(lastPageMatch.Value) + 2 : 3;
 
                 string searchXPath = searchUrl.Contains("pornstar") ? "//div[contains(@class, 'scene-item')]" : "//div[@class='scene-grid-item']";
@@ -98,15 +109,15 @@ namespace PhoenixAdult.Sites
                     {
                         foreach (var searchResult in searchResults)
                         {
-                            string titleNoFormatting = searchResult.SelectSingleNode("./a")?.GetAttributeValue("title", "").Trim();
-                            int curID = int.Parse(searchResult.SelectSingleNode("./a")?.GetAttributeValue("data-scene-id", ""));
+                            string titleNoFormatting = searchResult.SelectSingleNode("./a")?.GetAttributeValue("title", string.Empty).Trim();
+                            int curID = int.Parse(searchResult.SelectSingleNode("./a")?.GetAttributeValue("data-scene-id", string.Empty));
                             string releaseDate = DateTime.Parse(searchResult.SelectSingleNode("./p[@class='entry-date']")?.InnerText).ToString("yyyy-MM-dd");
                             string siteName = searchResult.SelectSingleNode(".//a[@class='site-title']")?.InnerText;
                             result.Add(new RemoteSearchResult
                             {
                                 ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                                 Name = $"{titleNoFormatting} [{siteName}] {releaseDate}",
-                                SearchProviderName = Plugin.Instance.Name
+                                SearchProviderName = Plugin.Instance.Name,
                             });
                         }
                     }
@@ -126,7 +137,10 @@ namespace PhoenixAdult.Sites
             var result = new MetadataResult<BaseItem>() { Item = new Movie(), People = new List<PersonInfo>() };
             string sceneId = sceneID[0].Split('|')[0];
             var details = await GetNaughtyAmerica(sceneId, cancellationToken);
-            if (details == null) return result;
+            if (details == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
             movie.Name = details.Title;
@@ -141,15 +155,20 @@ namespace PhoenixAdult.Sites
             }
 
             foreach(var genre in details.Fantasies)
-                movie.AddGenre(genre);
-
-            foreach(var actor in details.Performers)
             {
-                string actorPageURL = $"https://www.naughtyamerica.com/pornstar/{actor.ToLower().Replace(' ', '-').Replace("'", "")}";
+                movie.AddGenre(genre);
+            }
+
+            foreach (var actor in details.Performers)
+            {
+                string actorPageURL = $"https://www.naughtyamerica.com/pornstar/{actor.ToLower().Replace(' ', '-').Replace("'", string.Empty)}";
                 var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken);
-                string actorPhotoURL = actorPage?.SelectSingleNode("//img[contains(@class, 'performer-pic')]")?.GetAttributeValue("data-src", "");
+                string actorPhotoURL = actorPage?.SelectSingleNode("//img[contains(@class, 'performer-pic')]")?.GetAttributeValue("data-src", string.Empty);
                 if(!string.IsNullOrEmpty(actorPhotoURL))
+                {
                     actorPhotoURL = "https:" + actorPhotoURL;
+                }
+
                 result.People.Add(new PersonInfo { Name = actor, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
             }
 

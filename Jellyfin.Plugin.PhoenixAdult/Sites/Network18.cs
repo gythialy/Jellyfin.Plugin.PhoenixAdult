@@ -47,7 +47,9 @@ namespace PhoenixAdult.Sites
         {
             string siteName = Helper.GetSearchSiteName(new [] { siteNum });
             if (!apiKeyDB.ContainsKey(siteName))
+            {
                 return null;
+            }
 
             string apiKey = apiKeyDB[siteName][0];
             string searchUrl = Helper.GetSearchSearchURL(new [] { siteNum });
@@ -71,11 +73,15 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             if (siteNum == null || string.IsNullOrEmpty(searchTitle))
+            {
                 return result;
+            }
 
             var searchResults = await GetDataFromAPI(searchQuery, "query", searchTitle, siteNum[0], cancellationToken);
             if (searchResults?["data"]?["search"]?["search"]?["result"] == null)
+            {
                 return result;
+            }
 
             foreach (var searchResult in searchResults["data"]["search"]["search"]["result"])
             {
@@ -93,7 +99,9 @@ namespace PhoenixAdult.Sites
                     };
 
                     if (searchDate.HasValue)
+                    {
                         item.PremiereDate = searchDate;
+                    }
 
                     result.Add(item);
                 }
@@ -118,7 +126,9 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = await GetDataFromAPI(findVideoQuery, "videoId", videoId, siteNumVal, cancellationToken);
             if (detailsPageElements?["data"]?["video"]?["find"]?["result"] == null)
+            {
                 return result;
+            }
 
             var sceneData = detailsPageElements["data"]["video"]["find"]["result"];
 
@@ -127,7 +137,10 @@ namespace PhoenixAdult.Sites
 
             string summary = sceneData["description"]["long"].ToString().Trim();
             if (!Regex.IsMatch(summary, @"[.!?]$"))
+            {
                 summary += ".";
+            }
+
             movie.Overview = summary;
 
             string studio = Helper.GetSearchSiteName(new[] { siteNumVal });
@@ -143,7 +156,9 @@ namespace PhoenixAdult.Sites
             if (genresDB.TryGetValue(studio, out var genres))
             {
                 foreach (string genre in genres)
+                {
                     movie.AddGenre(genre.Trim());
+                }
             }
 
             foreach (var actorLink in sceneData["talent"])
@@ -177,14 +192,16 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = await GetDataFromAPI(findVideoQuery, "videoId", videoId, siteNumVal, cancellationToken);
             if (detailsPageElements?["data"]?["video"]?["find"]?["result"] == null)
+            {
                 return images;
+            }
 
             var sceneData = detailsPageElements["data"]["video"]["find"]["result"];
             string studio = Helper.GetSearchSiteName(new[] { siteNumVal });
 
             var imagePaths = new List<string>
             {
-                $"/members/models/{modelId}/scenes/{scene}/videothumb.jpg"
+                $"/members/models/{modelId}/scenes/{scene}/videothumb.jpg",
             };
             int galleryCount = (int)sceneData["galleryCount"];
             for (int i = 1; i <= galleryCount; i++)

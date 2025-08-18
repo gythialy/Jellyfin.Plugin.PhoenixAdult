@@ -39,7 +39,10 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            if (siteNum == null || string.IsNullOrEmpty(searchTitle)) return result;
+            if (siteNum == null || string.IsNullOrEmpty(searchTitle))
+            {
+                return result;
+            }
 
             string url = Helper.GetSearchSearchURL(siteNum);
             string siteName = Helper.GetSearchSiteName(siteNum).ToUpper();
@@ -61,7 +64,7 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, curID } },
                         Name = $"{titleNoFormatting} {releaseDate}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -83,7 +86,7 @@ namespace PhoenixAdult.Sites
                             ProviderIds = { { Plugin.Instance.Name, curID } },
                             Name = $"{titleNoFormatting} {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
-                            ImageUrl = (string)node["images"]?["listing"]?.FirstOrDefault()?["src"]
+                            ImageUrl = (string)node["images"]?["listing"]?.FirstOrDefault()?["src"],
                         });
                     }
                 }
@@ -103,7 +106,10 @@ namespace PhoenixAdult.Sites
             var variables = JsonConvert.SerializeObject(new { slug = sceneURL, site = Helper.GetSearchSiteName(siteNum).ToUpper() });
             var url = Helper.GetSearchSearchURL(siteNum);
             var sceneData = await GetDataFromAPI(url, UpdateQuery, variables, cancellationToken);
-            if (sceneData?["findOneVideo"] == null) return result;
+            if (sceneData?["findOneVideo"] == null)
+            {
+                return result;
+            }
 
             var video = (JObject)sceneData["findOneVideo"];
             var movie = (Movie)result.Item;
@@ -121,12 +127,16 @@ namespace PhoenixAdult.Sites
 
             string studioName = Helper.GetSearchSiteName(siteNum);
             if (studioName.Equals("Tushy", StringComparison.OrdinalIgnoreCase) || studioName.Equals("TushyRaw", StringComparison.OrdinalIgnoreCase))
+            {
                 movie.AddGenre("Anal");
+            }
 
             if (video["categories"] != null)
             {
                 foreach (var genreLink in video["categories"])
+                {
                     movie.AddGenre((string)genreLink["name"]);
+                }
             }
 
             if (video["models"] != null)
@@ -137,7 +147,7 @@ namespace PhoenixAdult.Sites
                     {
                         Name = (string)actorLink["name"],
                         ImageUrl = (string)actorLink["images"]?["listing"]?.FirstOrDefault()?["highdpi"]?["double"],
-                        Type = PersonKind.Actor
+                        Type = PersonKind.Actor,
                     });
                 }
             }
@@ -157,18 +167,27 @@ namespace PhoenixAdult.Sites
             var variables = JsonConvert.SerializeObject(new { slug = sceneURL, site = Helper.GetSearchSiteName(siteNum).ToUpper() });
             var url = Helper.GetSearchSearchURL(siteNum);
             var sceneData = await GetDataFromAPI(url, UpdateQuery, variables, cancellationToken);
-            if (sceneData?["findOneVideo"] == null) return result;
+            if (sceneData?["findOneVideo"] == null)
+            {
+                return result;
+            }
 
             var video = (JObject)sceneData["findOneVideo"];
 
             string posterUrl = null;
             if (video["images"]?["movie"]?.Any() == true)
+            {
                 posterUrl = (string)video["images"]["movie"].Last?["highdpi"]?["3x"] ?? (string)video["images"]["movie"].Last?["src"];
+            }
             else if (video["images"]?["poster"]?.Any() == true)
+            {
                 posterUrl = (string)video["images"]["poster"].Last?["highdpi"]?["3x"] ?? (string)video["images"]["poster"].Last?["src"];
+            }
 
-            if(!string.IsNullOrEmpty(posterUrl))
+            if (!string.IsNullOrEmpty(posterUrl))
+            {
                 result.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
+            }
 
             if (video["carousel"] != null)
             {
@@ -176,7 +195,9 @@ namespace PhoenixAdult.Sites
                 {
                     string img = (string)image["listing"]?.FirstOrDefault()?["highdpi"]?["triple"];
                     if(!string.IsNullOrEmpty(img))
+                    {
                         result.Add(new RemoteImageInfo { Url = img, Type = ImageType.Backdrop });
+                    }
                 }
             }
 

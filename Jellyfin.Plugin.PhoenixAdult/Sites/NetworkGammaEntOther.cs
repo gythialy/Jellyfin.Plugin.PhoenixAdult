@@ -56,7 +56,7 @@ namespace PhoenixAdult.Sites
             var headers = new Dictionary<string, string>
             {
                 {"Content-Type", "application/json"},
-                {"Referer", referer}
+                {"Referer", referer},
             };
             var payload = new
             {
@@ -67,10 +67,14 @@ namespace PhoenixAdult.Sites
                         indexName,
                         @params = parameters
                     }
-                }
+                },
             };
             var httpResult = await HTTP.Request(url, HttpMethod.Post, cancellationToken, new StringContent(JsonConvert.SerializeObject(payload)), null, headers);
-            if (!httpResult.IsOK) return null;
+            if (!httpResult.IsOK)
+            {
+                return null;
+            }
+
             var results = JObject.Parse(httpResult.Content)["results"];
             if (results is JArray resultsArray && resultsArray.Count > 0)
             {
@@ -83,14 +87,17 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             string sceneId = null;
-            if (int.TryParse(searchTitle.Split(' ').FirstOrDefault() ?? "", out _))
+            if (int.TryParse(searchTitle.Split(' ').FirstOrDefault() ?? string.Empty, out _))
             {
                 sceneId = searchTitle.Split(' ').First();
-                searchTitle = searchTitle.Replace(sceneId, "").Trim();
+                searchTitle = searchTitle.Replace(sceneId, string.Empty).Trim();
             }
 
             string apiKey = await GetApiKey(siteNum, cancellationToken);
-            if (apiKey == null) return result;
+            if (apiKey == null)
+            {
+                return result;
+            }
 
             foreach (var sceneType in new[] { "scenes", "movies" })
             {
@@ -108,13 +115,15 @@ namespace PhoenixAdult.Sites
                         string curId = searchResult[sceneType == "scenes" ? "clip_id" : "movie_id"].ToString();
                         string releaseDate = string.Empty;
                         if (DateTime.TryParse(searchResult[sceneType == "scenes" ? "release_date" : "date_created"].ToString(), out var parsedDate))
+                        {
                             releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                        }
 
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{sceneType}|{releaseDate}" } },
                             Name = $"[{sceneType.Capitalize()}] {titleNoFormatting} {releaseDate}",
-                            SearchProviderName = Plugin.Instance.Name
+                            SearchProviderName = Plugin.Instance.Name,
                         });
                     }
                 }
@@ -135,18 +144,24 @@ namespace PhoenixAdult.Sites
             string sceneType = providerIds[2];
             string sceneDate = providerIds[3];
             string apiKey = await GetApiKey(siteNum, cancellationToken);
-            if (apiKey == null) return result;
+            if (apiKey == null)
+            {
+                return result;
+            }
+
             string url = $"{Helper.GetSearchSearchURL(siteNum)}?x-algolia-application-id=TSMKFA364Q&x-algolia-api-key={apiKey}";
             string sceneIdName = sceneType == "scenes" ? "clip_id" : "movie_id";
 
             var detailsPageElements = (await GetAlgolia(url, $"all_{sceneType}", $"filters={sceneIdName}={sceneId}", Helper.GetSearchBaseURL(siteNum), cancellationToken))?.FirstOrDefault();
-            if (detailsPageElements == null) return result;
+            if (detailsPageElements == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements["title"].ToString();
             movie.Overview = detailsPageElements["description"].ToString().Replace("</br>", "\n").Replace("<br>", "\n");
             movie.AddStudio(detailsPageElements["network_name"]?.ToString() ?? detailsPageElements["studio_name"]?.ToString());
-            movie.AddCollection(new[] {detailsPageElements["studio_name"]?.ToString(), detailsPageElements["serie_name"]?.ToString()});
 
             if (DateTime.TryParse(sceneDate, out var parsedDate))
             {
@@ -155,7 +170,9 @@ namespace PhoenixAdult.Sites
             }
 
             foreach (var genre in detailsPageElements["categories"])
+            {
                 movie.AddGenre(genre["name"]?.ToString());
+            }
 
             foreach (var actor in detailsPageElements["actors"])
             {
@@ -166,7 +183,9 @@ namespace PhoenixAdult.Sites
                 {
                     var maxQuality = (actorData["pictures"] as JObject)?.Properties().Select(p => p.Name).OrderByDescending(q => q).FirstOrDefault();
                     if(maxQuality != null)
+                    {
                         actorPhotoUrl = $"https://images-fame.gammacdn.com/actors{actorData["pictures"][maxQuality]}";
+                    }
                 }
                 result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
             }
@@ -181,12 +200,19 @@ namespace PhoenixAdult.Sites
             string sceneId = providerIds[0];
             string sceneType = providerIds[2];
             string apiKey = await GetApiKey(siteNum, cancellationToken);
-            if (apiKey == null) return images;
+            if (apiKey == null)
+            {
+                return images;
+            }
+
             string url = $"{Helper.GetSearchSearchURL(siteNum)}?x-algolia-application-id=TSMKFA364Q&x-algolia-api-key={apiKey}";
             string sceneIdName = sceneType == "scenes" ? "clip_id" : "movie_id";
 
             var detailsPageElements = (await GetAlgolia(url, $"all_{sceneType}", $"filters={sceneIdName}={sceneId}", Helper.GetSearchBaseURL(siteNum), cancellationToken))?.FirstOrDefault();
-            if (detailsPageElements == null) return images;
+            if (detailsPageElements == null)
+            {
+                return images;
+            }
 
             if (detailsPageElements["pictures"]?["nsfw"]?["top"] != null)
             {

@@ -41,9 +41,12 @@ namespace PhoenixAdult.Sites
 
             string url = $"{Helper.GetSearchSearchURL(siteNum)}{modelId}.html";
             var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
 
-            var searchResults = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var searchResults = HTML.ElementFromString(httpResult.Content);
             var searchNodes = searchResults.SelectNodes("//div[@class='update_block']");
             if (searchNodes != null)
             {
@@ -54,12 +57,14 @@ namespace PhoenixAdult.Sites
                     string releaseDate = string.Empty;
                     var dateNode = node.SelectSingleNode(".//span[@class='update_date']");
                     if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+                    {
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    }
 
                     var actorList = node.SelectNodes(".//span[@class='tour_update_models']/a")?.Select(a => a.InnerText.Trim());
                     string actors = string.Join(", ", actorList ?? new string[0]);
 
-                    string poster = node.SelectSingleNode(".//div[@class='update_image']/a/img")?.GetAttributeValue("src", "");
+                    string poster = node.SelectSingleNode(".//div[@class='update_image']/a/img")?.GetAttributeValue("src", string.Empty);
                     string subSite = Helper.GetSearchSiteName(siteNum);
 
                     string curId = Helper.Encode(titleNoFormatting);
@@ -70,7 +75,7 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{descriptionId}|{releaseDate}|{actors}|{posterId}" } },
                         Name = $"{titleNoFormatting} [PureCFNM/{subSite}] {releaseDate}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -98,7 +103,6 @@ namespace PhoenixAdult.Sites
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             string subSite = Helper.GetSearchSiteName(siteNum).ToLower();
             if (subSite == "amateurcfnm") movie.AddGenre("CFNM");
@@ -138,11 +142,25 @@ namespace PhoenixAdult.Sites
             var actors = sceneActors.Split(',');
             if (actors.Length > 0)
             {
-                if (actors.Length == 2) movie.AddGenre("Threesome");
-                if (actors.Length == 3) movie.AddGenre("Foursome");
-                if (actors.Length > 3) movie.AddGenre("Group");
+                if (actors.Length == 2)
+                {
+                    movie.AddGenre("Threesome");
+                }
+
+                if (actors.Length == 3)
+                {
+                    movie.AddGenre("Foursome");
+                }
+
+                if (actors.Length > 3)
+                {
+                    movie.AddGenre("Group");
+                }
+
                 foreach (var actor in actors)
+                {
                     result.People.Add(new PersonInfo { Name = actor.Trim(), Type = PersonKind.Actor });
+                }
             }
 
             return Task.FromResult(result);

@@ -14,6 +14,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class NetworkWowNetwork : IProviderBase
@@ -24,7 +29,7 @@ namespace PhoenixAdult.Sites
             var searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{Uri.EscapeDataString(searchTitle)}";
 
             var pages = new List<string> { searchUrl };
-            var http = await new HTTP().Get(searchUrl, cancellationToken);
+            var http = await HTTP.Request(searchUrl, cancellationToken);
             if (http.IsOK)
             {
                 var doc = new HtmlDocument();
@@ -36,14 +41,16 @@ namespace PhoenixAdult.Sites
                     {
                         var pageUrl = page.GetAttributeValue("href", string.Empty);
                         if (!string.IsNullOrEmpty(pageUrl) && !pages.Contains(pageUrl))
+                        {
                             pages.Add(pageUrl);
+                        }
                     }
                 }
             }
 
             foreach (var page in pages)
             {
-                http = await new HTTP().Get(page, cancellationToken);
+                http = await HTTP.Request(page, cancellationToken);
                 if (http.IsOK)
                 {
                     var doc = new HtmlDocument();
@@ -52,7 +59,7 @@ namespace PhoenixAdult.Sites
                     foreach (var searchResult in doc.DocumentNode.SelectNodes(@"//main//article[contains(@class,""thumb-block"")]"))
                     {
                         var titleNode = searchResult.SelectSingleNode(".//a");
-                        var titleNoFormatting = titleNode?.GetAttributeValue("title", "").Trim();
+                        var titleNoFormatting = titleNode?.GetAttributeValue("title", string.Empty).Trim();
                         var sceneURL = titleNode?.GetAttributeValue("href", string.Empty);
                         var curID = Helper.Encode(sceneURL);
                         var image = Helper.Encode(searchResult.SelectSingleNode(".//img").GetAttributeValue("src", string.Empty));
@@ -81,10 +88,15 @@ namespace PhoenixAdult.Sites
             var providerIds = sceneID[0].Split('|');
             var sceneURL = Helper.Decode(providerIds[0]);
             if (!sceneURL.StartsWith("http"))
+            {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+            }
 
-            var http = await new HTTP().Get(sceneURL, cancellationToken);
-            if (!http.IsOK) return result;
+            var http = await HTTP.Request(sceneURL, cancellationToken);
+            if (!http.IsOK)
+            {
+                return result;
+            }
 
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
@@ -96,7 +108,7 @@ namespace PhoenixAdult.Sites
             movie.AddTag(tagline);
 
             var dateNode = doc.DocumentNode.SelectSingleNode(@"//div[@id=""video-date""]");
-            if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Replace("Date:", "").Trim(), out var parsedDate))
+            if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Replace("Date:", string.Empty).Trim(), out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
@@ -104,16 +116,20 @@ namespace PhoenixAdult.Sites
 
             foreach (var genreLink in doc.DocumentNode.SelectNodes(@"//div[@class=""tags-list""]/a//i[@class=""fa fa-folder-open""]/.."))
             {
-                var genreName = genreLink.InnerText.Replace("Movies", "").Trim();
+                var genreName = genreLink.InnerText.Replace("Movies", string.Empty).Trim();
                 if (!string.IsNullOrEmpty(genreName))
+                {
                     movie.AddGenre(genreName);
+                }
             }
 
             foreach (var actorLink in doc.DocumentNode.SelectNodes(@"//div[@id=""video-actors""]//a"))
             {
                 var actorName = actorLink.InnerText.Trim();
                 if (!string.IsNullOrEmpty(actorName))
+                {
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                }
             }
 
             return result;

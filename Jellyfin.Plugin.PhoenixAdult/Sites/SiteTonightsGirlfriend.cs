@@ -27,7 +27,10 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            if (siteNum == null || string.IsNullOrEmpty(searchTitle)) return result;
+            if (siteNum == null || string.IsNullOrEmpty(searchTitle))
+            {
+                return result;
+            }
 
             string searchString = searchTitle.ToLower().Split("and ")[0].Trim().Replace(' ', '-');
 
@@ -35,18 +38,24 @@ namespace PhoenixAdult.Sites
             {
                 var searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchString}/?p={i}";
                 var searchPageElements = await HTML.ElementFromURL(searchUrl, cancellationToken);
-                if (searchPageElements == null) break;
+                if (searchPageElements == null)
+                {
+                    break;
+                }
 
                 var searchResults = searchPageElements.SelectNodes("//div[@class='panel-body']");
-                if (searchResults == null) break;
+                if (searchResults == null)
+                {
+                    break;
+                }
 
                 foreach (var searchResult in searchResults)
                 {
                     var actorNodes = searchResult.SelectNodes(".//span[@class='scene-actors']//a");
                     var actorList = actorNodes?.Select(a => a.InnerText).ToList() ?? new List<string>();
                     string titleNoFormatting = string.Join(", ", actorList);
-                    string firstActor = actorList.FirstOrDefault() ?? "";
-                    string sceneURL = searchResult.SelectSingleNode(".//a")?.GetAttributeValue("href", "").Split('?')[0];
+                    string firstActor = actorList.FirstOrDefault() ?? string.Empty;
+                    string sceneURL = searchResult.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty).Split('?')[0];
                     string curID = Helper.Encode(sceneURL);
                     string releaseDate = DateTime.Parse(searchResult.SelectSingleNode(".//span[@class='scene-date']")?.InnerText.Trim()).ToString("yyyy-MM-dd");
 
@@ -54,10 +63,13 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [Tonight's Girlfriend] {releaseDate}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
-                if (searchResults.Count < 9) break;
+                if (searchResults.Count < 9)
+                {
+                    break;
+                }
             }
             return result;
         }
@@ -71,10 +83,15 @@ namespace PhoenixAdult.Sites
             string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
 
             if (!sceneURL.StartsWith("http"))
+            {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+            }
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (detailsPageElements == null) return result;
+            if (detailsPageElements == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
 
@@ -86,11 +103,11 @@ namespace PhoenixAdult.Sites
             {
                 string actorName = actorLink.InnerText.Trim();
                 actorList.Add(actorName);
-                sceneInfo = sceneInfo.Replace(actorName + ",", "").Trim();
+                sceneInfo = sceneInfo.Replace(actorName + ",", string.Empty).Trim();
 
-                string actorPageURL = actorLink.GetAttributeValue("href", "").Split('?')[0];
+                string actorPageURL = actorLink.GetAttributeValue("href", string.Empty).Split('?')[0];
                 var actorPageElements = await HTML.ElementFromURL(actorPageURL, cancellationToken);
-                string actorPhotoURL = "https:" + actorPageElements?.SelectSingleNode("//div[contains(@class, 'performer-details')]//img")?.GetAttributeValue("src", "");
+                string actorPhotoURL = "https:" + actorPageElements?.SelectSingleNode("//div[contains(@class, 'performer-details')]//img")?.GetAttributeValue("src", string.Empty);
                 result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
             }
 
@@ -107,7 +124,9 @@ namespace PhoenixAdult.Sites
 
             var maleActors = sceneInfo.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
             foreach(var maleActor in maleActors)
+            {
                 result.People.Add(new PersonInfo { Name = maleActor.Trim(), Type = PersonKind.Actor });
+            }
 
             var genres = new List<string> { "Girlfriend Experience", "Pornstar", "Hotel", "Pornstar Experience" };
             if (result.People.Count == 3)
@@ -116,7 +135,9 @@ namespace PhoenixAdult.Sites
                 genres.Add(actors.Count == 2 ? "BGG" : "BBG");
             }
             foreach(var genre in genres)
+            {
                 movie.AddGenre(genre);
+            }
 
             return result;
         }
@@ -126,12 +147,17 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteImageInfo>();
             string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!sceneURL.StartsWith("http"))
+            {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+            }
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (detailsPageElements == null) return result;
+            if (detailsPageElements == null)
+            {
+                return result;
+            }
 
-            string posterUrl = "https:" + detailsPageElements.SelectSingleNode("//img[@class='playcard']")?.GetAttributeValue("src", "");
+            string posterUrl = "https:" + detailsPageElements.SelectSingleNode("//img[@class='playcard']")?.GetAttributeValue("src", string.Empty);
             result.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
 
             string backdropUrl = posterUrl.Split(new[] { "scene/image", "scene/horizontal" }, StringSplitOptions.None)[0] + "scene/vertical/390x590cdynamic.jpg";

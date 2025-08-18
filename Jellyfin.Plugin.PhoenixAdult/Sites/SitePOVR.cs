@@ -13,37 +13,39 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SitePOVR : IProviderBase
     {
 
-
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-
-        // Simplified search logic, may need adjustments
-        var result = new List<RemoteSearchResult>();
-        var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
-        foreach (var sceneURL in googleResults)
-        {
-            var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (doc != null)
+            // Simplified search logic, may need adjustments
+            var result = new List<RemoteSearchResult>();
+            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            foreach (var sceneURL in googleResults)
             {
-                var titleNode = doc.SelectSingleNode(@"//h1");
-                var titleNoFormatting = titleNode?.InnerText.Trim();
-                var curID = Helper.Encode(sceneURL);
-                var item = new RemoteSearchResult
+                var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
+                if (doc != null)
                 {
-                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
-                    Name = titleNoFormatting,
-                    SearchProviderName = Plugin.Instance.Name,
-                };
-                result.Add(item);
+                    var titleNode = doc.SelectSingleNode(@"//h1");
+                    var titleNoFormatting = titleNode?.InnerText.Trim();
+                    var curID = Helper.Encode(sceneURL);
+                    var item = new RemoteSearchResult
+                    {
+                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                        Name = titleNoFormatting,
+                        SearchProviderName = Plugin.Instance.Name,
+                    };
+                    result.Add(item);
+                }
             }
-        }
-        return result;
-
+            return result;
         }
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
@@ -58,13 +60,16 @@ namespace PhoenixAdult.Sites
         var providerIds = sceneID[0].Split('|');
         var sceneURL = Helper.Decode(providerIds[0]);
         var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
-        if (doc == null) return result;
+        if (doc == null)
+            {
+                return result;
+            }
 
         movie.Name = doc.SelectSingleNode(@"//h1")?.InnerText.Trim();
-        movie.Overview = doc.DocumentNode.SelectSingleNode(@"//p")?.InnerText.Trim();
+        movie.Overview = doc.SelectSingleNode(@"//p")?.InnerText.Trim();
         movie.AddStudio("Unknown");
 
-        var dateNode = doc.DocumentNode.SelectSingleNode(@"//*[@class='date']");
+        var dateNode = doc.SelectSingleNode(@"//*[@class='date']");
         if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
         {
             movie.PremiereDate = parsedDate;
@@ -72,7 +77,6 @@ namespace PhoenixAdult.Sites
         }
 
         // Actor and Genre logic needs to be manually added for each site
-
         return result;
 
         }
@@ -94,7 +98,10 @@ namespace PhoenixAdult.Sites
                 {
                     var imgUrl = img.GetAttributeValue("src", string.Empty);
                     if (!imgUrl.StartsWith("http"))
-                        imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
+                        {
+                            imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
+                        }
+
                     images.Add(new RemoteImageInfo { Url = imgUrl });
                 }
             }

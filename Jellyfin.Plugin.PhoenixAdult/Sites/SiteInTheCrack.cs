@@ -10,6 +10,11 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteInTheCrack : IProviderBase
@@ -58,10 +63,10 @@ namespace PhoenixAdult.Sites
                         {
                             foreach (var modelNode in modelNodes)
                             {
-                                var titleNoFormatting = modelNode.SelectSingleNode(".//figure/p[1]").InnerText.Replace("Collection: ", "").Trim();
+                                var titleNoFormatting = modelNode.SelectSingleNode(".//figure/p[1]").InnerText.Replace("Collection: ", string.Empty).Trim();
                                 var titleNoFormattingID = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(titleNoFormatting));
 
-                                var date = modelNode.SelectSingleNode(".//figure/p[2]").InnerText.Replace("Release Date:", "").Trim();
+                                var date = modelNode.SelectSingleNode(".//figure/p[2]").InnerText.Replace("Release Date:", string.Empty).Trim();
                                 var releaseDate = !string.IsNullOrEmpty(date) ? DateTime.Parse(date).ToString("yyyy-MM-dd") : string.Empty;
 
                                 var curID = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(modelNode.SelectSingleNode(".//a").GetAttributeValue("href", string.Empty)));
@@ -72,7 +77,6 @@ namespace PhoenixAdult.Sites
                                 {
                                     Id = $"{curID}|{siteNum[0]}|{titleNoFormattingID}|{releaseDate}",
                                     Name = $"{titleNoFormatting} {releaseDate} [{SiteName}]",
-                                    Score = score
                                 });
                             }
                         }
@@ -97,7 +101,7 @@ namespace PhoenixAdult.Sites
             var metadataResult = new MetadataResult<BaseItem>
             {
                 Item = new BaseItem(),
-                HasMetadata = true
+                HasMetadata = true,
             };
 
             metadataResult.Item.Name = doc.SelectSingleNode("//h2//span").InnerText.Trim();
@@ -150,7 +154,7 @@ namespace PhoenixAdult.Sites
                 {
                     Url = scenePic,
                     Type = ImageType.Primary
-                }
+                },
             };
 
             return list;

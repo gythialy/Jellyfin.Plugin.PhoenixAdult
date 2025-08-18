@@ -27,7 +27,10 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            if (siteNum == null || string.IsNullOrEmpty(searchTitle)) return result;
+            if (siteNum == null || string.IsNullOrEmpty(searchTitle))
+            {
+                return result;
+            }
 
             string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Replace(" ", "+")}";
             var searchPageElements = await HTML.ElementFromURL(searchUrl, cancellationToken);
@@ -39,7 +42,7 @@ namespace PhoenixAdult.Sites
                 {
                     var titleNode = searchResult.SelectSingleNode("./h2/a");
                     string titleNoFormatting = titleNode.InnerText.Trim();
-                    string sceneURL = titleNode.GetAttributeValue("href", "");
+                    string sceneURL = titleNode.GetAttributeValue("href", string.Empty);
                     string curID = Helper.Encode(sceneURL);
                     string date = searchResult.SelectSingleNode("./p/span[1]")?.InnerText.Trim();
                     string releaseDate = DateTime.Parse(date).ToString("yyyy-MM-dd");
@@ -47,7 +50,7 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|0" } },
                         Name = $"{titleNoFormatting} [FamilyTherapy] {releaseDate}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -106,7 +109,9 @@ namespace PhoenixAdult.Sites
                     actorName = new Regex(@"(?<=[Ss]tarring\s)\w*\s\w*").Match(summary).Value;
                 }
                 if(!string.IsNullOrEmpty(actorName))
+                {
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                }
 
                 result.Item.AddStudio("Family Therapy");
                 return result;
@@ -114,10 +119,15 @@ namespace PhoenixAdult.Sites
 
             // Direct scrape mode
             if (!sceneURL.StartsWith("http"))
+            {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+            }
 
             var detailsPageElementsDirect = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (detailsPageElementsDirect == null) return result;
+            if (detailsPageElementsDirect == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElementsDirect.SelectSingleNode("//h1")?.InnerText.Trim();
@@ -132,7 +142,9 @@ namespace PhoenixAdult.Sites
             if(genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.InnerText.Trim());
+                }
             }
 
             var dateNode = detailsPageElementsDirect.SelectSingleNode("//p[@class='post-meta']/span")?.InnerText.Trim();
@@ -147,7 +159,9 @@ namespace PhoenixAdult.Sites
             {
                 string actorText = new Regex(@"(?<=[Ss]tarring\s)\w*\s\w*(\s&\s\w*\s\w*)*").Match(actorNode.InnerText).Value;
                 foreach(var actorName in actorText.Split('&'))
+                {
                     result.People.Add(new PersonInfo { Name = actorName.Trim(), Type = PersonKind.Actor });
+                }
             }
 
             return result;
@@ -171,7 +185,7 @@ namespace PhoenixAdult.Sites
 
         private static string GetCleanTitle(string title)
         {
-            return title.Replace(" (HD)", "").Replace(" (SD)", "").Trim();
+            return title.Replace(" (HD)", string.Empty).Replace(" (SD)", string.Empty).Trim();
         }
     }
 }

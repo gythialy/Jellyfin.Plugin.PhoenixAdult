@@ -13,6 +13,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SitePutalocura : IProviderBase
@@ -24,10 +29,10 @@ namespace PhoenixAdult.Sites
 
         // Simplified search logic, may need adjustments
         var result = new List<RemoteSearchResult>();
-        var googleResults = await GoogleSearch.PerformSearch(searchTitle, Helper.GetSearchSiteName(siteNum));
+        var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
         foreach (var sceneURL in googleResults)
         {
-            var http = await new HTTP().Get(sceneURL, cancellationToken);
+            var http = await HTTP.Request(sceneURL, cancellationToken);
             if (http.IsOK)
             {
                 var doc = new HtmlDocument();
@@ -59,8 +64,11 @@ namespace PhoenixAdult.Sites
         var movie = (Movie)result.Item;
         var providerIds = sceneID[0].Split('|');
         var sceneURL = Helper.Decode(providerIds[0]);
-        var http = await new HTTP().Get(sceneURL, cancellationToken);
-        if (!http.IsOK) return result;
+        var http = await HTTP.Request(sceneURL, cancellationToken);
+        if (!http.IsOK)
+            {
+                return result;
+            }
 
         var doc = new HtmlDocument();
         doc.LoadHtml(http.Content);
@@ -77,7 +85,6 @@ namespace PhoenixAdult.Sites
         }
 
         // Actor and Genre logic needs to be manually added for each site
-
         return result;
 
         }
@@ -89,7 +96,7 @@ namespace PhoenixAdult.Sites
         var images = new List<RemoteImageInfo>();
         var providerIds = sceneID[0].Split('|');
         var sceneURL = Helper.Decode(providerIds[0]);
-        var http = await new HTTP().Get(sceneURL, cancellationToken);
+        var http = await HTTP.Request(sceneURL, cancellationToken);
         if (http.IsOK)
         {
             var doc = new HtmlDocument();
@@ -101,7 +108,10 @@ namespace PhoenixAdult.Sites
                 {
                     var imgUrl = img.GetAttributeValue("src", string.Empty);
                     if (!imgUrl.StartsWith("http"))
-                        imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
+                        {
+                            imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
+                        }
+
                     images.Add(new RemoteImageInfo { Url = imgUrl });
                 }
             }

@@ -28,22 +28,25 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteSearchResult>();
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
 
-            var searchPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var searchPageElements = HTML.ElementFromString(httpResult.Content);
             var searchNodes = searchPageElements.SelectNodes("//div[@class='view_grid--container']");
             if (searchNodes != null)
             {
                 foreach (var node in searchNodes)
                 {
                     var titleNode = node.SelectSingleNode(".//div[@class='video_item--content with-badge']/a");
-                    string titleNoFormatting = titleNode?.GetAttributeValue("title", "");
-                    string curId = Helper.Encode(titleNode?.GetAttributeValue("href", ""));
+                    string titleNoFormatting = titleNode?.GetAttributeValue("title", string.Empty);
+                    string curId = Helper.Encode(titleNode?.GetAttributeValue("href", string.Empty));
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
                         Name = $"{titleNoFormatting} [Pissing in Action]",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -60,11 +63,17 @@ namespace PhoenixAdult.Sites
 
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!sceneUrl.StartsWith("http"))
+            {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
+            }
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//h1[@class='title--3']")?.InnerText.Trim();
@@ -73,7 +82,6 @@ namespace PhoenixAdult.Sites
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[2]/div[1]/div[3]/div[1]/ul/li[1]");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
@@ -86,22 +94,38 @@ namespace PhoenixAdult.Sites
             if(genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.InnerText.Trim());
+                }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[2]/div[2]/div[1]/div[2]/div[1]/div[2]/div/figure/figcaption/h4");
             if (actorNodes != null)
             {
-                if (actorNodes.Count == 3) movie.AddGenre("Threesome");
-                if (actorNodes.Count == 4) movie.AddGenre("Foursome");
-                if (actorNodes.Count > 4) movie.AddGenre("Orgy");
+                if (actorNodes.Count == 3)
+                {
+                    movie.AddGenre("Threesome");
+                }
+
+                if (actorNodes.Count == 4)
+                {
+                    movie.AddGenre("Foursome");
+                }
+
+                if (actorNodes.Count > 4)
+                {
+                    movie.AddGenre("Orgy");
+                }
 
                 for (int i = 0; i < actorNodes.Count; i++)
                 {
                     string actorName = actorNodes[i].InnerText.Trim();
                     string actorPhotoUrl = string.Empty;
                     if (actorNodes.Count == 1)
-                        actorPhotoUrl = detailsPageElements.SelectSingleNode("//div[2]/div[2]/div[1]/div[2]/div[1]/div[2]/div/figure/div/img")?.GetAttributeValue("src", "");
+                    {
+                        actorPhotoUrl = detailsPageElements.SelectSingleNode("//div[2]/div[2]/div[1]/div[2]/div[1]/div[2]/div/figure/div/img")?.GetAttributeValue("src", string.Empty);
+                    }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
@@ -114,21 +138,31 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!sceneUrl.StartsWith("http"))
+            {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
+            }
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return images;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//div[2]/div[1]/div[1]/a/div[1]/img");
             if(imageNodes != null)
             {
                 foreach(var img in imageNodes)
-                    images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("src", "") });
+                {
+                    images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("src", string.Empty) });
+                }
             }
 
             if (images.Any())
+            {
                 images.First().Type = ImageType.Primary;
+            }
 
             return images;
         }

@@ -29,7 +29,10 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteSearchResult>();
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
 
             var searchResults = JObject.Parse(httpResult.Content);
             if (searchResults["results"] != null)
@@ -41,7 +44,9 @@ namespace PhoenixAdult.Sites
                     string sceneId = searchResult["id"].ToString();
                     string releaseDate = string.Empty;
                     if (DateTime.TryParse(searchResult["release_date"].ToString(), out var parsedDate))
+                    {
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    }
 
                     var actors = searchResult["actors"].Select(a => a["name"].ToString());
                     string actorsString = string.Join(", ", actors);
@@ -50,7 +55,7 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{sceneId}" } },
                         Name = $"{titleNoFormatting} - {actorsString} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -70,19 +75,27 @@ namespace PhoenixAdult.Sites
             string sceneId = providerIds[2];
 
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
 
             var searchResults = JObject.Parse(httpResult.Content);
-            if (searchResults["results"] == null) return result;
+            if (searchResults["results"] == null)
+            {
+                return result;
+            }
 
             var detailsPageElements = searchResults["results"].FirstOrDefault(r => r["id"].ToString() == sceneId);
-            if (detailsPageElements == null) return result;
+            if (detailsPageElements == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements["title"].ToString();
-            movie.Overview = Regex.Replace(detailsPageElements["long_description"].ToString(), @"<.*?>", "").Trim();
+            movie.Overview = Regex.Replace(detailsPageElements["long_description"].ToString(), @"<.*?>", string.Empty).Trim();
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
-            movie.AddCollection(new[] { Helper.GetSearchSiteName(siteNum) });
 
             if (DateTime.TryParse(detailsPageElements["release_date"].ToString(), out var parsedDate))
             {
@@ -93,9 +106,20 @@ namespace PhoenixAdult.Sites
             if (detailsPageElements["actors"] != null)
             {
                 var actors = detailsPageElements["actors"];
-                if (actors.Count() == 3) movie.AddGenre("Threesome");
-                if (actors.Count() == 4) movie.AddGenre("Foursome");
-                if (actors.Count() > 4) movie.AddGenre("Orgy");
+                if (actors.Count() == 3)
+                {
+                    movie.AddGenre("Threesome");
+                }
+
+                if (actors.Count() == 4)
+                {
+                    movie.AddGenre("Foursome");
+                }
+
+                if (actors.Count() > 4)
+                {
+                    movie.AddGenre("Orgy");
+                }
 
                 foreach (var actor in actors)
                 {
@@ -108,7 +132,9 @@ namespace PhoenixAdult.Sites
             if (detailsPageElements["directors"] != null)
             {
                 foreach (var director in detailsPageElements["directors"])
+                {
                     result.People.Add(new PersonInfo { Name = director["name"].ToString(), Type = PersonKind.Director });
+                }
             }
 
             return result;
@@ -122,14 +148,22 @@ namespace PhoenixAdult.Sites
             string sceneId = providerIds[2];
 
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return images;
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
 
             var searchResults = JObject.Parse(httpResult.Content);
-            if (searchResults["results"] == null) return images;
+            if (searchResults["results"] == null)
+            {
+                return images;
+            }
 
             var detailsPageElements = searchResults["results"].FirstOrDefault(r => r["id"].ToString() == sceneId);
             if (detailsPageElements?["thumb"]?["image"] != null)
+            {
                 images.Add(new RemoteImageInfo { Url = detailsPageElements["thumb"]["image"].ToString(), Type = ImageType.Primary });
+            }
 
             return images;
         }

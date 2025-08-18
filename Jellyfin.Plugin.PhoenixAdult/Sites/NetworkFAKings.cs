@@ -28,7 +28,7 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteSearchResult>();
             string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Replace(' ', '-')}";
 
-            var searchUrls = new List<string> { searchUrl, searchUrl.Replace("/en", "") };
+            var searchUrls = new List<string> { searchUrl, searchUrl.Replace("/en", string.Empty) };
 
             foreach (var url in searchUrls)
             {
@@ -36,25 +36,27 @@ namespace PhoenixAdult.Sites
                 if (httpResult.IsOK)
                 {
                 var searchPageElements = HTML.ElementFromString(httpResult.Content);
-                    var searchNodes = searchPageElements.SelectNodes("//div[@class='zona-listado2']");
-                    if (searchNodes != null)
+                var searchNodes = searchPageElements.SelectNodes("//div[@class='zona-listado2']");
+                if (searchNodes != null)
                     {
                         foreach (var node in searchNodes)
                         {
                             var titleNode = node.SelectSingleNode(".//h3");
                             string titleNoFormatting = titleNode?.InnerText.Trim();
-                            string curId = Helper.Encode(node.SelectSingleNode(".//@href")?.GetAttributeValue("href", ""));
+                            string curId = Helper.Encode(node.SelectSingleNode(".//@href")?.GetAttributeValue("href", string.Empty));
                             string subSite = node.SelectSingleNode(".//strong/a")?.InnerText.Trim();
                             string releaseDate = string.Empty;
                             var dateNode = node.SelectSingleNode(".//p[@class='txtmininfo calen sinlimite']");
                             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+                            {
                                 releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                            }
 
                             result.Add(new RemoteSearchResult
                             {
                                 ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
                                 Name = $"{titleNoFormatting.Substring(0, 20)}... [FAKings/{subSite}] {releaseDate}",
-                                SearchProviderName = Plugin.Instance.Name
+                                SearchProviderName = Plugin.Instance.Name,
                             });
                         }
                     }
@@ -76,7 +78,11 @@ namespace PhoenixAdult.Sites
             string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
@@ -97,7 +103,9 @@ namespace PhoenixAdult.Sites
             if(genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.InnerText.Trim());
+                }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//strong[contains(., 'Actr')]//following-sibling::a");
@@ -106,13 +114,13 @@ namespace PhoenixAdult.Sites
                 foreach(var actor in actorNodes)
                 {
                     string actorName = actor.InnerText.Trim();
-                    string modelUrl = actor.GetAttributeValue("href", "");
+                    string modelUrl = actor.GetAttributeValue("href", string.Empty);
                     string actorPhotoUrl = string.Empty;
                     var actorHttp = await HTTP.Request(modelUrl, HttpMethod.Get, cancellationToken);
                     if(actorHttp.IsOK)
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
-                        actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='zona-imagen']//img")?.GetAttributeValue("src", "").Trim();
+                        actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='zona-imagen']//img")?.GetAttributeValue("src", string.Empty).Trim();
                     }
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
@@ -131,20 +139,24 @@ namespace PhoenixAdult.Sites
             {
                 foreach(var actor in actorNodes)
                 {
-                    string modelUrl = actor.GetAttributeValue("href", "");
+                    string modelUrl = actor.GetAttributeValue("href", string.Empty);
                     var actorHttp = await HTTP.Request(modelUrl, HttpMethod.Get, cancellationToken);
                     if(actorHttp.IsOK)
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
-                        var sceneNode = actorPage.SelectNodes("//div[@class='zona-listado2']")?.FirstOrDefault(s => s.SelectSingleNode(".//@href")?.GetAttributeValue("href", "") == sceneUrl);
+                        var sceneNode = actorPage.SelectNodes("//div[@class='zona-listado2']")?.FirstOrDefault(s => s.SelectSingleNode(".//@href")?.GetAttributeValue("href", string.Empty) == sceneUrl);
                         if (sceneNode != null)
-                            images.Add(new RemoteImageInfo { Url = sceneNode.SelectSingleNode(".//img")?.GetAttributeValue("src", "").Trim() });
+                        {
+                            images.Add(new RemoteImageInfo { Url = sceneNode.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty).Trim() });
+                        }
                     }
                 }
             }
 
             if (images.Any())
+            {
                 images.First().Type = ImageType.Primary;
+            }
 
             return images;
         }

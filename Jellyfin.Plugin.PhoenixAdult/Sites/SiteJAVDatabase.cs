@@ -10,6 +10,11 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteJavDatabase : IProviderBase
@@ -77,7 +82,6 @@ namespace PhoenixAdult.Sites
                     {
                         Id = $"{curId}|{siteNum[0]}|{releaseDate}",
                         Name = $"[{javId}] {displayDate} {titleNoFormatting}",
-                        Score = score
                     });
                 }
             }
@@ -95,7 +99,7 @@ namespace PhoenixAdult.Sites
             var metadataResult = new MetadataResult<BaseItem>
             {
                 Item = new BaseItem(),
-                HasMetadata = true
+                HasMetadata = true,
             };
 
             var javId = doc.SelectSingleNode("//meta[@property='og:title']").GetAttributeValue("content", string.Empty).Trim();
@@ -132,18 +136,6 @@ namespace PhoenixAdult.Sites
                 }
 
                 metadataResult.Item.AddStudio(studioClean);
-            }
-
-            if (metadataResult.Item.Studios.Any())
-            {
-                foreach (var studio in metadataResult.Item.Studios)
-                {
-                    metadataResult.Item.AddCollection(studio);
-                }
-            }
-            else
-            {
-                metadataResult.Item.AddCollection("Japan Adult Video");
             }
 
             var date = doc.SelectSingleNode("//*[text()='Release Date: ']/following-sibling::text()[1]").InnerText;
@@ -206,7 +198,7 @@ namespace PhoenixAdult.Sites
             var xpaths = new[]
             {
                 "//tr[@class='moviecovertb']//img/@src",
-                "//div/div[./h2[contains(., 'Images')]]/a/@href"
+                "//div/div[./h2[contains(., 'Images')]]/a/@href",
             };
 
             var art = new List<string>();
@@ -259,7 +251,7 @@ namespace PhoenixAdult.Sites
                 var javBusXpaths = new[]
                 {
                     "//a[contains(@href, '/cover/')]/@href",
-                    "//a[@class='sample-box']/@href"
+                    "//a[@class='sample-box']/@href",
                 };
 
                 foreach (var xpath in javBusXpaths)
@@ -354,7 +346,7 @@ namespace PhoenixAdult.Sites
         private static readonly Dictionary<string, string[]> ActorsCorrectionDb = new Dictionary<string, string[]>
         {
             { "JUTA-132", new[] { "Rie Matsuo" } },
-            { "CRDD-007", new[] { "Alicia Williams", "Jillian Janson", "Pamela Morrison" } }
+            { "CRDD-007", new[] { "Alicia Williams", "Jillian Janson", "Pamela Morrison" } },
         };
 
         private static readonly Dictionary<string, string> CensoredWordsDb = new Dictionary<string, string>
@@ -401,7 +393,7 @@ namespace PhoenixAdult.Sites
             { "V*****e", "Violate" },
             { "V*****t", "Violent" },
             { "V******e", "Violence" },
-            { "Y********l's", "Young Girl's" }
+            { "Y********l's", "Young Girl's" },
         };
 
         private static readonly Dictionary<string, string[]> CrossSiteDb = new Dictionary<string, string[]>
@@ -409,7 +401,7 @@ namespace PhoenixAdult.Sites
             { "DVAJ-", new[] { "DVAJ-0", "DVAJ-0003", "DVAJ-0013", "DVAJ-0021", "DVAJ-0031", "DVAJ-0039" } },
             { "DVAJ-0", new[] { "DVAJ-00", "DVAJ-0027", "DVAJ-0032" } },
             { "STAR-128_2008-11-06", new[] { "STAR-128" } },
-            { "STAR-134_2008-12-18", new[] { "STAR-134" } }
+            { "STAR-134_2008-12-18", new[] { "STAR-134" } },
         };
 
         private static readonly string[] IgnoreList = { "SEXY", "MEEL", "SKOT", "SCD", "GDSC" };

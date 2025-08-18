@@ -35,7 +35,9 @@ namespace PhoenixAdult.Sites
                 foreach (var scene in data["result"]["data"]["allMysqlTourStats"]["edges"])
                 {
                     if ((int)scene["node"]["tour_thumbs"]["updates"]["mysqlId"] == sceneId)
+                    {
                         return scene["node"]["tour_thumbs"];
+                    }
                 }
             }
             return null;
@@ -45,13 +47,13 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             int? sceneId = null;
-            if (int.TryParse(searchTitle.Split(' ').FirstOrDefault() ?? "", out var id))
+            if (int.TryParse(searchTitle.Split(' ').FirstOrDefault() ?? string.Empty, out var id))
             {
                 sceneId = id;
-                searchTitle = searchTitle.Replace(id.ToString(), "").Trim();
+                searchTitle = searchTitle.Replace(id.ToString(), string.Empty).Trim();
             }
 
-            var googleResults = await GoogleSearch.Search(searchTitle, siteNum, cancellationToken);
+            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             var searchResults = googleResults.Where(u => !u.Contains("/tag/") && !u.Contains("/category/"));
 
             if (!searchResults.Any() && sceneId.HasValue)
@@ -63,13 +65,15 @@ namespace PhoenixAdult.Sites
                     string curId = pageData["updates"]["mysqlId"].ToString();
                     string releaseDate = string.Empty;
                     if (DateTime.TryParse(pageData["updates"]["release_date"].ToString(), out var parsedDate))
+                    {
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    }
 
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{Helper.Encode(searchTitle)}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -80,8 +84,8 @@ namespace PhoenixAdult.Sites
                     var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
                     if (httpResult.IsOK)
                     {
-                        var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
-                        var videoIdMatch = Regex.Match(detailsPageElements.SelectSingleNode("//source")?.GetAttributeValue("src", "") ?? "", @"(?=\d).*(?=-)");
+                        var detailsPageElements = HTML.ElementFromString(httpResult.Content);
+                        var videoIdMatch = Regex.Match(detailsPageElements.SelectSingleNode("//source")?.GetAttributeValue("src", string.Empty) ?? string.Empty, @"(?=\d).*(?=-)");
                         if (videoIdMatch.Success)
                         {
                             var pageData = await GetPageData(siteNum, int.Parse(videoIdMatch.Value), cancellationToken);
@@ -89,15 +93,19 @@ namespace PhoenixAdult.Sites
                             string curId = pageData?["updates"]["mysqlId"].ToString() ?? videoIdMatch.Value;
                             string releaseDate = string.Empty;
                             if (pageData != null && DateTime.TryParse(pageData["updates"]["release_date"].ToString(), out var parsedDate))
+                            {
                                 releaseDate = parsedDate.ToString("yyyy-MM-dd");
-                            else if(DateTime.TryParse(detailsPageElements.SelectSingleNode("//meta")?.GetAttributeValue("content", ""), out parsedDate))
+                            }
+                            else if(DateTime.TryParse(detailsPageElements.SelectSingleNode("//meta")?.GetAttributeValue("content", string.Empty), out parsedDate))
+                            {
                                 releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                            }
 
                             result.Add(new RemoteSearchResult
                             {
                                 ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{Helper.Encode(searchTitle)}|{Helper.Encode(sceneUrl)}" } },
                                 Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                                SearchProviderName = Plugin.Instance.Name
+                                SearchProviderName = Plugin.Instance.Name,
                             });
                         }
                     }
@@ -129,13 +137,14 @@ namespace PhoenixAdult.Sites
             {
                 var httpResult = await HTTP.Request(netUrl, HttpMethod.Get, cancellationToken);
                 if(httpResult.IsOK)
-                    movie.Overview = (await HTML.ElementFromString(httpResult.Content, cancellationToken)).SelectSingleNode("//div[@class='the-content']/p")?.InnerText.Trim();
+                {
+                    movie.Overview = (HTML.ElementFromString(httpResult.Content)).SelectSingleNode("//div[@class='the-content']/p")?.InnerText.Trim();
+                }
             }
 
             movie.AddStudio("NVG Network");
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {
@@ -144,7 +153,9 @@ namespace PhoenixAdult.Sites
             }
 
             foreach (var actor in actors.Split(new[] { " and " }, StringSplitOptions.None))
+            {
                 result.People.Add(new PersonInfo { Name = actor.Trim(), Type = PersonKind.Actor });
+            }
 
             return result;
         }

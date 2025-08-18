@@ -13,6 +13,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SitePlumperPass : IProviderBase
@@ -58,13 +63,16 @@ namespace PhoenixAdult.Sites
         var providerIds = sceneID[0].Split('|');
         var sceneURL = Helper.Decode(providerIds[0]);
         var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
-        if (doc == null) return result;
+        if (doc == null)
+            {
+                return result;
+            }
 
         movie.Name = doc.SelectSingleNode(@"//h1")?.InnerText.Trim();
-        movie.Overview = doc.DocumentNode.SelectSingleNode(@"//div[contains(@class, ""vidinfo"")]/p")?.InnerText.Trim();
+        movie.Overview = doc.SelectSingleNode(@"//div[contains(@class, ""vidinfo"")]/p")?.InnerText.Trim();
         movie.AddStudio("PlumperPass");
 
-        var dateNode = doc.DocumentNode.SelectSingleNode(@"//h3[@class=""releases""]//br/preceding-sibling::text()");
+        var dateNode = doc.SelectSingleNode(@"//h3[@class=""releases""]//br/preceding-sibling::text()");
         if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
         {
             movie.PremiereDate = parsedDate;
@@ -72,7 +80,6 @@ namespace PhoenixAdult.Sites
         }
 
         // Actor and Genre logic needs to be manually added for each site
-
         return result;
 
         }
@@ -94,7 +101,10 @@ namespace PhoenixAdult.Sites
                 {
                     var imgUrl = img.GetAttributeValue("src", string.Empty);
                     if (!imgUrl.StartsWith("http"))
-                        imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
+                        {
+                            imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
+                        }
+
                     images.Add(new RemoteImageInfo { Url = imgUrl });
                 }
             }

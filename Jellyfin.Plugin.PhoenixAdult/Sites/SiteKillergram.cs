@@ -10,6 +10,11 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteKillergram : IProviderBase
@@ -30,8 +35,7 @@ namespace PhoenixAdult.Sites
                 {
                     Id = $"{sceneId}|{siteNum[0]}",
                     Name = $"[{SiteName}] {titleNoFormatting} - {releaseDate}",
-                    Score = 100
-                }
+                },
             };
 
             return searchResults;
@@ -45,14 +49,13 @@ namespace PhoenixAdult.Sites
             var metadataResult = new MetadataResult<BaseItem>
             {
                 Item = new BaseItem(),
-                HasMetadata = true
+                HasMetadata = true,
             };
 
             metadataResult.Item.Name = ExtractTitle(doc);
             metadataResult.Item.Overview = ExtractSummary(doc);
             metadataResult.Item.AddStudio(SiteName);
             metadataResult.Item.Tagline = SiteName;
-            metadataResult.Item.AddCollection(SiteName);
             metadataResult.Item.PremiereDate = DateTime.Parse(ExtractDate(doc));
             metadataResult.Item.AddGenre("British");
 

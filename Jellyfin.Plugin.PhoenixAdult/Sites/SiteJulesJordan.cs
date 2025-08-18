@@ -27,7 +27,10 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            if (siteNum == null || string.IsNullOrEmpty(searchTitle)) return result;
+            if (siteNum == null || string.IsNullOrEmpty(searchTitle))
+            {
+                return result;
+            }
 
             string url = $"{Helper.GetSearchBaseURL(siteNum)}/trial/scenes/{searchTitle.ToLower().Replace(' ', '-')}_vids.html";
             var req = await HTTP.Request(url, cancellationToken);
@@ -39,7 +42,7 @@ namespace PhoenixAdult.Sites
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
                     Name = $"{url} [{Helper.GetSearchSiteName(siteNum)}]",
-                    SearchProviderName = Plugin.Instance.Name
+                    SearchProviderName = Plugin.Instance.Name,
                 });
             }
 
@@ -51,15 +54,15 @@ namespace PhoenixAdult.Sites
                 {
                     foreach (var searchResult in searchResults)
                     {
-                        string titleNoFormatting = searchResult.SelectSingleNode("./a/img")?.GetAttributeValue("alt", "").Trim();
-                        string sceneURL = searchResult.SelectSingleNode(".//a")?.GetAttributeValue("href", "");
+                        string titleNoFormatting = searchResult.SelectSingleNode("./a/img")?.GetAttributeValue("alt", string.Empty).Trim();
+                        string sceneURL = searchResult.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty);
                         string curID = Helper.Encode(sceneURL);
 
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
-                            SearchProviderName = Plugin.Instance.Name
+                            SearchProviderName = Plugin.Instance.Name,
                         });
                     }
                 }
@@ -80,19 +83,26 @@ namespace PhoenixAdult.Sites
             string sceneURL = Helper.Decode(providerIds[0]);
             string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
             if (!sceneURL.StartsWith("http"))
+            {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+            }
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (detailsPageElements == null) return result;
+            if (detailsPageElements == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//div[@class='movie_title']")?.InnerText.Trim();
-            movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']/span[contains(text(), 'Description:')]")?.ParentNode.InnerText.Replace("Description:", "").Trim();
+            movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']/span[contains(text(), 'Description:')]")?.ParentNode.InnerText.Replace("Description:", string.Empty).Trim();
             movie.AddStudio("Jules Jordan");
 
-            var dvdName = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Movie:')]")?.ParentNode.InnerText.Replace("Movie:", "").Replace("Feature: ", "").Trim();
+            var dvdName = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Movie:')]")?.ParentNode.InnerText.Replace("Movie:", string.Empty).Replace("Feature: ", string.Empty).Trim();
             if(!string.IsNullOrEmpty(dvdName))
+            {
                 movie.AddTag(dvdName);
+            }
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {
@@ -101,7 +111,7 @@ namespace PhoenixAdult.Sites
             }
             else
             {
-                var dateNode = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Date:')]")?.ParentNode.InnerText.Replace("Date:", "").Trim();
+                var dateNode = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Date:')]")?.ParentNode.InnerText.Replace("Date:", string.Empty).Trim();
                 if(DateTime.TryParse(dateNode, out parsedDate))
                 {
                     movie.PremiereDate = parsedDate;
@@ -113,7 +123,9 @@ namespace PhoenixAdult.Sites
             if (genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.InnerText.Trim().ToLower());
+                }
             }
 
             var actorNodes = Helper.GetSearchSiteName(siteNum) == "GirlGirl"
@@ -125,11 +137,14 @@ namespace PhoenixAdult.Sites
                 foreach(var actorLink in actorNodes)
                 {
                     string actorName = actorLink.InnerText.Trim();
-                    string actorPageURL = actorLink.GetAttributeValue("href", "");
+                    string actorPageURL = actorLink.GetAttributeValue("href", string.Empty);
                     var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken);
-                    string actorPhotoURL = actorPage?.SelectSingleNode("//img[@class='model_bio_thumb stdimage thumbs target']")?.GetAttributeValue("src0_3x", "");
+                    string actorPhotoURL = actorPage?.SelectSingleNode("//img[@class='model_bio_thumb stdimage thumbs target']")?.GetAttributeValue("src0_3x", string.Empty);
                     if(!string.IsNullOrEmpty(actorPhotoURL) && !actorPhotoURL.StartsWith("http"))
+                    {
                         actorPhotoURL = Helper.GetSearchBaseURL(siteNum) + actorPhotoURL;
+                    }
+
                     result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
                 }
             }
@@ -142,14 +157,21 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteImageInfo>();
             string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!sceneURL.StartsWith("http"))
+            {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+            }
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (detailsPageElements == null) return result;
+            if (detailsPageElements == null)
+            {
+                return result;
+            }
 
-            var videoPoster = detailsPageElements.SelectSingleNode("//video[@id='video-player']")?.GetAttributeValue("poster", "");
+            var videoPoster = detailsPageElements.SelectSingleNode("//video[@id='video-player']")?.GetAttributeValue("poster", string.Empty);
             if(!string.IsNullOrEmpty(videoPoster))
+            {
                 result.Add(new RemoteImageInfo { Url = videoPoster, Type = ImageType.Primary });
+            }
 
             var searchPageElements = await HTML.ElementFromURL($"{Helper.GetSearchSearchURL(siteNum)}{Uri.EscapeDataString(item.Name)}", cancellationToken);
             if(searchPageElements != null)
@@ -159,9 +181,12 @@ namespace PhoenixAdult.Sites
                     var posterNode = searchPageElements.SelectSingleNode($"//img[contains(@id,'set-target')]/@src{i}_1x");
                     if (posterNode != null)
                     {
-                        string posterUrl = posterNode.GetAttributeValue($"src{i}_1x", "");
-                         if (!posterUrl.StartsWith("http"))
+                        string posterUrl = posterNode.GetAttributeValue($"src{i}_1x", string.Empty);
+                        if (!posterUrl.StartsWith("http"))
+                        {
                             posterUrl = Helper.GetSearchBaseURL(siteNum) + posterUrl;
+                        }
+
                         result.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Backdrop });
                     }
                 }

@@ -44,13 +44,13 @@ namespace PhoenixAdult.Sites
                     var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
                     if (httpResult.IsOK)
                     {
-                        var scenePageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                        var scenePageElements = HTML.ElementFromString(httpResult.Content);
                         string titleNoFormatting = scenePageElements.SelectSingleNode("//h1[contains(@class,'watch__title')]")?.InnerText.Trim();
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
                             Name = $"{titleNoFormatting} [AnalVids]",
-                            SearchProviderName = Plugin.Instance.Name
+                            SearchProviderName = Plugin.Instance.Name,
                         });
                     }
                 }
@@ -71,12 +71,12 @@ namespace PhoenixAdult.Sites
                             string titleNoFormatting = term["name"].ToString();
                             string sceneUrl = term["url"].ToString();
                             string curId = Helper.Encode(sceneUrl);
-                            string releaseDate = searchDate?.ToString("yyyy-MM-dd") ?? "";
+                            string releaseDate = searchDate?.ToString("yyyy-MM-dd") ?? string.Empty;
                             result.Add(new RemoteSearchResult
                             {
                                 ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
                                 Name = $"{titleNoFormatting} [AnalVids] {releaseDate}",
-                                SearchProviderName = Plugin.Instance.Name
+                                SearchProviderName = Plugin.Instance.Name,
                             });
                         }
                     }
@@ -96,11 +96,17 @@ namespace PhoenixAdult.Sites
 
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!sceneUrl.StartsWith("http"))
+            {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
+            }
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//h1[contains(@class,'watch__title')]")?.InnerText.Trim().Split(new[] { "featuring" }, StringSplitOptions.None)[0];
@@ -111,8 +117,7 @@ namespace PhoenixAdult.Sites
             if (tagline != null)
             {
                 movie.AddTag(tagline);
-                movie.AddCollection(new[] { tagline });
-            }
+                }
 
             var dateNode = detailsPageElements.SelectSingleNode("//i[contains(@class,'bi-calendar3')]");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText, out var parsedDate))
@@ -125,7 +130,9 @@ namespace PhoenixAdult.Sites
             if(genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.InnerText.Trim());
+                }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//a[contains(@href, '/model/') and not(contains(@href, 'forum'))]");
@@ -134,20 +141,22 @@ namespace PhoenixAdult.Sites
                 foreach(var actor in actorNodes)
                 {
                     string actorName = actor.InnerText.Trim();
-                    string actorUrl = actor.GetAttributeValue("href", "");
+                    string actorUrl = actor.GetAttributeValue("href", string.Empty);
                     string actorPhotoUrl = string.Empty;
                     var actorHttp = await HTTP.Request(actorUrl, HttpMethod.Get, cancellationToken);
                     if(actorHttp.IsOK)
                     {
-                        var actorPage = await HTML.ElementFromString(actorHttp.Content, cancellationToken);
-                        actorPhotoUrl = actorPage.SelectSingleNode("//div[contains(@class,'model')]//img")?.GetAttributeValue("src", "");
+                        var actorPage = HTML.ElementFromString(actorHttp.Content);
+                        actorPhotoUrl = actorPage.SelectSingleNode("//div[contains(@class,'model')]//img")?.GetAttributeValue("src", string.Empty);
                     }
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
 
             if (tagline == "Giorgio Grandi" || tagline == "Giorgio's Lab")
+            {
                 result.People.Add(new PersonInfo { Name = "Giorgio Grandi", Type = PersonKind.Director });
+            }
 
             return result;
         }
@@ -157,15 +166,23 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!sceneUrl.StartsWith("http"))
+            {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
+            }
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return images;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//div[contains(@class,'watch__video')]//video");
             if(posterNode != null)
-                images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("data-poster", ""), Type = ImageType.Primary });
+            {
+                images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("data-poster", string.Empty), Type = ImageType.Primary });
+            }
 
             return images;
         }

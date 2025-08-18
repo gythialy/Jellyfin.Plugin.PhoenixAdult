@@ -11,6 +11,11 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteKarups : IProviderBase
@@ -39,7 +44,7 @@ namespace PhoenixAdult.Sites
                 {
                     var titleNoFormatting = node.SelectSingleNode(".//span[@class='title']").InnerText;
                     var curId = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(node.SelectSingleNode(".//a").GetAttributeValue("href", string.Empty)));
-                    var releaseDate = DateTime.Parse(node.SelectSingleNode(".//span[@class='date']").InnerText.Replace("th", "").Replace("st", "").Trim()).ToString("yyyy-MM-dd");
+                    var releaseDate = DateTime.Parse(node.SelectSingleNode(".//span[@class='date']").InnerText.Replace("th", string.Empty).Replace("st", string.Empty).Trim()).ToString("yyyy-MM-dd");
 
                     var subSiteRaw = node.SelectSingleNode(".//div[@class='meta']//span[@class='date-and-site']//span").InnerText;
                     var subSite = string.Empty;
@@ -56,13 +61,10 @@ namespace PhoenixAdult.Sites
                         subSite = "KarupsPC";
                     }
 
-                    var score = 100 - LevenshteinDistance(searchDate?.ToString("yyyy-MM-dd") ?? string.Empty, releaseDate);
-
                     searchResults.Add(new RemoteSearchResult
                     {
                         Id = $"{curId}|{siteNum[0]}",
                         Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
-                        Score = score
                     });
                 }
             }
@@ -84,7 +86,7 @@ namespace PhoenixAdult.Sites
             var metadataResult = new MetadataResult<BaseItem>
             {
                 Item = new BaseItem(),
-                HasMetadata = true
+                HasMetadata = true,
             };
 
             metadataResult.Item.Name = doc.SelectSingleNode("//h1//span[@class='title']").InnerText.Trim();
@@ -98,9 +100,8 @@ namespace PhoenixAdult.Sites
 
             var tagline = doc.SelectSingleNode("//h1//span[@class='sup-title']//span").InnerText.Trim();
             metadataResult.Item.Tagline = tagline;
-            metadataResult.Item.AddCollection(tagline);
 
-            var date = doc.SelectSingleNode("//span[@class='date']/span[@class='content']").InnerText.Replace(tagline, "").Replace("Video added on", "").Trim();
+            var date = doc.SelectSingleNode("//span[@class='date']/span[@class='content']").InnerText.Replace(tagline, string.Empty).Replace("Video added on", string.Empty).Trim();
             metadataResult.Item.PremiereDate = DateTime.Parse(date);
 
             if (tagline == "KarupsHA")
@@ -119,7 +120,7 @@ namespace PhoenixAdult.Sites
                 {
                     var actorName = actor.InnerText.Trim();
                     var actorPageUrl = actor.GetAttributeValue("href", string.Empty);
-                    var actorDoc = await HTML.ElementFromURL(actorPageUrl, cancellationToken, null, GetCookies());
+                    var actorDoc = await HTML.ElementFromURL(actorPageUrl, cancellationToken, null, this.GetCookies());
                     var actorPhotoUrl = actorDoc.SelectSingleNode("//div[@class='model-thumb']//img").GetAttributeValue("src", string.Empty);
                     metadataResult.AddPerson(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonType.Actor });
                 }
@@ -143,7 +144,7 @@ namespace PhoenixAdult.Sites
             {
                 "//div[@class='video-player']//video/@poster",
                 "//img[@class='poster']/@src",
-                "//div[@class='video-thumbs']//img/@src"
+                "//div[@class='video-thumbs']//img/@src",
             };
 
             var art = new List<string>();

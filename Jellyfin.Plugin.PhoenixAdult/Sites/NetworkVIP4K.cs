@@ -17,6 +17,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class NetworkVIP4K : IProviderBase
@@ -35,7 +40,9 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             if (siteNum == null || string.IsNullOrEmpty(searchTitle))
+            {
                 return result;
+            }
 
             string sceneID = null;
             string sceneURL = null;
@@ -49,7 +56,7 @@ namespace PhoenixAdult.Sites
 
             if (!string.IsNullOrEmpty(sceneURL))
             {
-                var http = await new HTTP().Get(sceneURL, cancellationToken);
+                var http = await HTTP.Request(sceneURL, cancellationToken);
                 if (http.IsOK)
                 {
                     var doc = new HtmlDocument();
@@ -72,12 +79,18 @@ namespace PhoenixAdult.Sites
 
                     var score = 100;
                     if (searchDate.HasValue)
+                    {
                         score -= LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate);
+                    }
                     else
+                    {
                         score -= LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
+                    }
 
                     if (!subSite.Equals(Helper.GetSearchSiteName(siteNum), StringComparison.OrdinalIgnoreCase))
+                    {
                         score--;
+                    }
 
                     var item = new RemoteSearchResult
                     {
@@ -91,7 +104,7 @@ namespace PhoenixAdult.Sites
             else
             {
                 var searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{Uri.EscapeDataString(searchTitle)}";
-                var http = await new HTTP().Get(searchUrl, cancellationToken);
+                var http = await HTTP.Request(searchUrl, cancellationToken);
                 if (http.IsOK)
                 {
                     var doc = new HtmlDocument();
@@ -111,12 +124,18 @@ namespace PhoenixAdult.Sites
 
                         var score = 100;
                         if (searchDate.HasValue)
+                        {
                             score -= LevenshteinDistance.Compute(searchDate.Value.ToString("yyyy-MM-dd"), releaseDate);
+                        }
                         else
+                        {
                             score -= LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
+                        }
 
                         if (!subSite.Equals(Helper.GetSearchSiteName(siteNum), StringComparison.OrdinalIgnoreCase))
+                        {
                             score--;
+                        }
 
                         var item = new RemoteSearchResult
                         {
@@ -145,20 +164,26 @@ namespace PhoenixAdult.Sites
             var sceneURL = Helper.Decode(providerIds[0]);
             var sceneDate = providerIds[2];
 
-            var http = await new HTTP().Get(sceneURL, cancellationToken);
+            var http = await HTTP.Request(sceneURL, cancellationToken);
             if (!http.IsOK)
+            {
                 return result;
+            }
 
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
 
             var titleNode = doc.DocumentNode.SelectSingleNode("//title");
             if (titleNode != null)
+            {
                 movie.Name = titleNode.InnerText.Split('|').Last().Trim();
+            }
 
             var summaryNode = doc.DocumentNode.SelectSingleNode("//div[@class='player-description__text']");
             if (summaryNode != null)
+            {
                 movie.Overview = summaryNode.InnerText.Trim();
+            }
 
             movie.AddStudio("VIP4K");
 
@@ -198,20 +223,24 @@ namespace PhoenixAdult.Sites
 
             var genres = new List<string>();
             if (genresDB.TryGetValue(movie.Tagline, out var dbGenres))
+            {
                 genres.AddRange(dbGenres);
+            }
 
             var genreNodes = doc.DocumentNode.SelectNodes("//div[@class='tags']/a");
             if (genreNodes != null)
             {
                 foreach (var genreLink in genreNodes)
                 {
-                    var genreName = genreLink.InnerText.Replace("#", "").Trim();
+                    var genreName = genreLink.InnerText.Replace("#", string.Empty).Trim();
                     genres.Add(genreName);
                 }
             }
 
             foreach (var genre in genres.Distinct())
+            {
                 movie.AddGenre(genre);
+            }
 
             return result;
         }
@@ -222,7 +251,7 @@ namespace PhoenixAdult.Sites
             var providerIds = sceneID[0].Split('|');
             var sceneURL = Helper.Decode(providerIds[0]);
 
-            var http = await new HTTP().Get(sceneURL, cancellationToken);
+            var http = await HTTP.Request(sceneURL, cancellationToken);
             if (http.IsOK)
             {
                 var doc = new HtmlDocument();
@@ -236,7 +265,9 @@ namespace PhoenixAdult.Sites
                     {
                         var imgUrl = img.GetAttributeValue("data-src", string.Empty);
                         if (!imgUrl.StartsWith("http"))
+                        {
                             imgUrl = $"http:{imgUrl}";
+                        }
 
                         images.Add(new RemoteImageInfo
                         {

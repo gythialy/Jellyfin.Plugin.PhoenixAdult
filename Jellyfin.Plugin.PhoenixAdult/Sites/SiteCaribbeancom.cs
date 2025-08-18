@@ -27,7 +27,9 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             if (string.IsNullOrEmpty(searchTitle))
+            {
                 return result;
+            }
 
             string sceneId = searchTitle.Replace(" ", "-");
             string sceneUrl = Helper.GetSearchSearchURL(siteNum) + sceneId + "/index.html";
@@ -44,7 +46,7 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -61,7 +63,10 @@ namespace PhoenixAdult.Sites
 
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             var detailsPageElements = await HTML.ElementFromURL(sceneUrl, cancellationToken);
-            if (detailsPageElements == null) return result;
+            if (detailsPageElements == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//title").InnerText;
@@ -101,25 +106,30 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
 
-            string backgroundUrl = sceneUrl.Replace("/eng", "").Replace("index.html", "images/poster_en.jpg");
+            string backgroundUrl = sceneUrl.Replace("/eng", string.Empty).Replace("index.html", "images/poster_en.jpg");
             images.Add(new RemoteImageInfo { Url = backgroundUrl, Type = ImageType.Primary });
 
             var detailsPageElements = await HTML.ElementFromURL(sceneUrl, cancellationToken);
-            if (detailsPageElements == null) return images;
+            if (detailsPageElements == null)
+            {
+                return images;
+            }
 
             var posterNodes = detailsPageElements.SelectNodes("//img[@class='gallery-image']");
             if (posterNodes != null)
             {
                 foreach (var poster in posterNodes)
                 {
-                    string posterUrl = poster.GetAttributeValue("src", "");
+                    string posterUrl = poster.GetAttributeValue("src", string.Empty);
                     if (posterUrl.StartsWith("background-image"))
                     {
                         posterUrl = posterUrl.Split(new[] { "url(" }, StringSplitOptions.None)[1].Split(')')[0];
                     }
 
                     if(!posterUrl.StartsWith("http"))
+                    {
                         posterUrl = Helper.GetSearchSearchURL(siteNum) + posterUrl;
+                    }
 
                     images.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Backdrop });
                 }

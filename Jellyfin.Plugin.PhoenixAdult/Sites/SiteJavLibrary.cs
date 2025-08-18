@@ -37,17 +37,25 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             if (siteNum == null || string.IsNullOrEmpty(searchTitle))
+            {
                 return result;
+            }
 
             string searchJAVID = null;
             var splitSearchTitle = searchTitle.Split(' ');
             if (splitSearchTitle[0].StartsWith("3dsvr", StringComparison.OrdinalIgnoreCase))
+            {
                 splitSearchTitle[0] = splitSearchTitle[0].Replace("3dsvr", "dsvr", StringComparison.OrdinalIgnoreCase);
+            }
             else if (splitSearchTitle[0].StartsWith("13dsvr", StringComparison.OrdinalIgnoreCase))
+            {
                 splitSearchTitle[0] = splitSearchTitle[0].Replace("13dsvr", "dsvr", StringComparison.OrdinalIgnoreCase);
+            }
 
             if (splitSearchTitle.Length > 1 && int.TryParse(splitSearchTitle[1], out _))
+            {
                 searchJAVID = $"{splitSearchTitle[0]}-{splitSearchTitle[1]}";
+            }
 
             string encodedSearch = searchJAVID ?? Uri.EscapeDataString(searchTitle);
             var searchUrl = Helper.GetSearchSearchURL(siteNum) + encodedSearch;
@@ -59,16 +67,16 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var searchResultNode in searchResultNodes)
                 {
-                    string titleNoFormatting = searchResultNode.SelectSingleNode("./a")?.GetAttributeValue("title", "").Trim();
+                    string titleNoFormatting = searchResultNode.SelectSingleNode("./a")?.GetAttributeValue("title", string.Empty).Trim();
                     string javid = titleNoFormatting?.Split(' ')[0];
-                    string sceneURL = $"{Helper.GetSearchBaseURL(siteNum)}/en/{searchResultNode.SelectSingleNode("./a")?.GetAttributeValue("href", "").Split('.').Last().Trim()}";
+                    string sceneURL = $"{Helper.GetSearchBaseURL(siteNum)}/en/{searchResultNode.SelectSingleNode("./a")?.GetAttributeValue("href", string.Empty).Split('.').Last().Trim()}";
                     string curID = Helper.Encode(sceneURL);
 
                     searchResults.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                         Name = $"[{javid}] {titleNoFormatting}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -82,19 +90,21 @@ namespace PhoenixAdult.Sites
                     {
                         string englishSceneURL = sceneURL.Replace("/ja/", "/en/").Replace("/tw/", "/en/").Replace("/cn/", "/en/");
                         if (!englishSceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                        {
                             englishSceneURL = "http:" + englishSceneURL;
+                        }
 
                         var searchResultPage = await HTML.ElementFromURL(englishSceneURL, cancellationToken);
                         if (searchResultPage != null)
                         {
                             string titleNoFormatting = searchResultPage.SelectSingleNode("//h3[@class='post-title text']/a")?.InnerText.Trim().Split(new[] { ' ' }, 2)[1];
                             string javid = searchResultPage.SelectSingleNode("//td[contains(text(), 'ID:')]/following-sibling::td")?.InnerText.Trim();
-                            string curID = Helper.Encode(searchResultPage.SelectSingleNode("//meta[@property='og:url']")?.GetAttributeValue("content", "").Replace("//www", "https://www"));
+                            string curID = Helper.Encode(searchResultPage.SelectSingleNode("//meta[@property='og:url']")?.GetAttributeValue("content", string.Empty).Replace("//www", "https://www"));
                             searchResults.Add(new RemoteSearchResult
                             {
                                 ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                                 Name = $"[{javid}] {titleNoFormatting}",
-                                SearchProviderName = Plugin.Instance.Name
+                                SearchProviderName = Plugin.Instance.Name,
                             });
                         }
                     }
@@ -114,32 +124,47 @@ namespace PhoenixAdult.Sites
 
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             var detailsPageElements = await HTML.ElementFromURL(sceneUrl, cancellationToken);
-            if (detailsPageElements == null) return result;
+            if (detailsPageElements == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
-            var ogTitle = detailsPageElements.SelectSingleNode("//meta[@property='og:title']")?.GetAttributeValue("content", "").Trim();
+            var ogTitle = detailsPageElements.SelectSingleNode("//meta[@property='og:title']")?.GetAttributeValue("content", string.Empty).Trim();
             string javID = ogTitle?.Split(' ')[0];
-            string title = ogTitle?.Split(new[] { ' ' }, 2).Last().Replace(" - JAVLibrary", "").Replace(javID, "").Trim();
+            string title = ogTitle?.Split(new[] { ' ' }, 2).Last().Replace(" - JAVLibrary", string.Empty).Replace(javID, string.Empty).Trim();
 
             movie.Name = $"[{javID.ToUpper()}] {title}";
             if(title.Length > 80)
+            {
                 movie.Overview = title;
+            }
 
             var studio = detailsPageElements.SelectSingleNode("//td[contains(text(), 'Maker:')]/following-sibling::td/span/a")?.InnerText.Trim();
             if(!string.IsNullOrEmpty(studio))
+            {
                 movie.AddStudio(studio);
+            }
 
             var tagline = detailsPageElements.SelectSingleNode("//td[contains(text(), 'Label:')]/following-sibling::td/span/a")?.InnerText.Trim();
             if (!string.IsNullOrEmpty(tagline))
+            {
                 movie.AddTag(tagline);
+            }
             else if (!string.IsNullOrEmpty(studio))
+            {
                 movie.AddTag(studio);
+            }
             else
+            {
                 movie.AddTag("Japan Adult Video");
+            }
 
             var director = detailsPageElements.SelectSingleNode("//td[contains(text(), 'Director:')]/following-sibling::td/span/a")?.InnerText.Trim();
             if(!string.IsNullOrEmpty(director))
+            {
                 result.People.Add(new PersonInfo { Name = director, Type = PersonKind.Director });
+            }
 
             var dateNode = detailsPageElements.SelectSingleNode("//td[contains(text(), 'Release Date:')]/following-sibling::td");
             if (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
@@ -151,7 +176,9 @@ namespace PhoenixAdult.Sites
             foreach(var actor in ActorsDB)
             {
                 if (actor.Value.Contains(javID, StringComparer.OrdinalIgnoreCase))
+                {
                     result.People.Add(new PersonInfo { Name = actor.Key, Type = PersonKind.Actor });
+                }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//span[@class='star']/a");
@@ -161,7 +188,10 @@ namespace PhoenixAdult.Sites
                 {
                     string actorName = actor.InnerText.Trim();
                     if (Plugin.Instance.Configuration.JAVActorNamingStyle == JAVActorNamingStyle.WesternStyle)
+                    {
                         actorName = string.Join(" ", actorName.Split().Reverse());
+                    }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                 }
             }
@@ -170,7 +200,9 @@ namespace PhoenixAdult.Sites
             if (genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.InnerText.Trim());
+                }
             }
 
             return result;
@@ -181,13 +213,19 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             var detailsPageElements = await HTML.ElementFromURL(sceneUrl, cancellationToken);
-            if (detailsPageElements == null) return images;
+            if (detailsPageElements == null)
+            {
+                return images;
+            }
 
-            var posterURL = detailsPageElements.SelectSingleNode("//img[@id='video_jacket_img']")?.GetAttributeValue("src", "");
+            var posterURL = detailsPageElements.SelectSingleNode("//img[@id='video_jacket_img']")?.GetAttributeValue("src", string.Empty);
             if (!string.IsNullOrEmpty(posterURL))
             {
                 if (!posterURL.StartsWith("https"))
+                {
                     posterURL = "https:" + posterURL;
+                }
+
                 images.Add(new RemoteImageInfo { Url = posterURL, Type = ImageType.Primary });
             }
 
@@ -197,7 +235,7 @@ namespace PhoenixAdult.Sites
                 var urlRegEx = new Regex(@"-([1-9]+)\.jpg");
                 foreach(var image in imageNodes)
                 {
-                    string thumbnailURL = image.GetAttributeValue("src", "");
+                    string thumbnailURL = image.GetAttributeValue("src", string.Empty);
                     var idxSearch = urlRegEx.Match(thumbnailURL);
                     if (idxSearch.Success)
                     {

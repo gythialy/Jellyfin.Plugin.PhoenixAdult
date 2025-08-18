@@ -81,10 +81,17 @@ namespace PhoenixAdult.Sites
             string searchPageUrl = providerIds.Length > 3 ? Helper.Decode(providerIds[3]) : null;
 
             var httpResult = await HTTP.Request(searchPageUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
             var detailsPageElements = (HTML.ElementFromString(httpResult.Content))
                 .SelectSingleNode($"//div[@class='movie-block'][.//*[contains(@src, \"{sceneId}\")]]");
-            if (detailsPageElements == null) return result;
+            if (detailsPageElements == null)
+            {
+                return result;
+            }
 
             var xPath = xPathDB.FirstOrDefault(kvp => kvp.Key.Contains(Helper.GetSearchSiteName(siteNum))).Value;
 
@@ -105,7 +112,9 @@ namespace PhoenixAdult.Sites
             if (genresDB.ContainsKey(tagline))
             {
                 foreach(var genre in genresDB[tagline])
+                {
                     movie.AddGenre(genre);
+                }
             }
 
             if (sceneActorsDB.Values.Any(v => v.Contains(sceneId)))
@@ -125,17 +134,28 @@ namespace PhoenixAdult.Sites
             string searchPageUrl = providerIds.Length > 3 ? Helper.Decode(providerIds[3]) : null;
 
             var httpResult = await HTTP.Request(searchPageUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return images;
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
+
             var detailsPageElements = (HTML.ElementFromString(httpResult.Content))
                 .SelectSingleNode($"//div[@class='movie-block'][.//*[contains(@src, \"{sceneId}\")]]");
-            if (detailsPageElements == null) return images;
+            if (detailsPageElements == null)
+            {
+                return images;
+            }
 
             var imageNode = detailsPageElements.SelectSingleNode(".//img");
             if (imageNode != null)
-                images.Add(new RemoteImageInfo { Url = imageNode.GetAttributeValue("src", "") });
+            {
+                images.Add(new RemoteImageInfo { Url = imageNode.GetAttributeValue("src", string.Empty) });
+            }
 
             if (images.Any())
+            {
                 images.First().Type = ImageType.Primary;
+            }
 
             return images;
         }

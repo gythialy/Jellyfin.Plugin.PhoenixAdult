@@ -27,7 +27,9 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             if (siteNum == null || string.IsNullOrEmpty(searchTitle))
+            {
                 return result;
+            }
 
             string shootID = null;
             var parts = searchTitle.Split(' ');
@@ -50,7 +52,7 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
                         Name = $"[{shootID}] {titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -58,27 +60,32 @@ namespace PhoenixAdult.Sites
             {
                 var searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
                 var searchResultsNode = await HTML.ElementFromURL(searchUrl, cancellationToken);
-                if (searchResultsNode == null) return result;
+                if (searchResultsNode == null)
+                {
+                    return result;
+                }
 
                 var searchResults = searchResultsNode.SelectNodes("//div[@class='shoot-card scene']");
                 if (searchResults != null)
                 {
                     foreach (var searchResult in searchResults)
                     {
-                        string titleNoFormatting = searchResult.SelectSingleNode(".//img")?.GetAttributeValue("alt", "").Trim();
-                        string curID = Helper.Encode(searchResult.SelectSingleNode(".//a[@class='shoot-link']")?.GetAttributeValue("href", ""));
-                        shootID = searchResult.SelectSingleNode(".//div[contains(@class, 'favorite-button')]")?.GetAttributeValue("data-id", "");
+                        string titleNoFormatting = searchResult.SelectSingleNode(".//img")?.GetAttributeValue("alt", string.Empty).Trim();
+                        string curID = Helper.Encode(searchResult.SelectSingleNode(".//a[@class='shoot-link']")?.GetAttributeValue("href", string.Empty));
+                        shootID = searchResult.SelectSingleNode(".//div[contains(@class, 'favorite-button')]")?.GetAttributeValue("data-id", string.Empty);
 
                         string releaseDateStr = string.Empty;
                         var dateNode = searchResult.SelectSingleNode(".//div[@class='date']");
                         if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var releaseDate))
+                        {
                             releaseDateStr = releaseDate.ToString("yyyy-MM-dd");
+                        }
 
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDateStr}" } },
                             Name = $"[{shootID}] {titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDateStr}",
-                            SearchProviderName = Plugin.Instance.Name
+                            SearchProviderName = Plugin.Instance.Name,
                         });
                     }
                 }
@@ -99,13 +106,20 @@ namespace PhoenixAdult.Sites
             string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
 
             if (!sceneURL.StartsWith("http"))
+            {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+            }
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (detailsPageElements == null) return result;
+            if (detailsPageElements == null)
+            {
+                return result;
+            }
 
             foreach (var br in detailsPageElements.SelectNodes("//br"))
+            {
                 br.ParentNode.ReplaceChild(HtmlNode.CreateNode("\n"), br);
+            }
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//h1[contains(@class, 'fs-0')]")?.InnerText.Trim();
@@ -132,22 +146,35 @@ namespace PhoenixAdult.Sites
             if (genreNodes != null)
             {
                 foreach(var genre in genreNodes)
-                    movie.AddGenre(genre.InnerText.Replace(",", "").Trim());
+                {
+                    movie.AddGenre(genre.InnerText.Replace(",", string.Empty).Trim());
+                }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//span[contains(@class, 'text-primary')]//a[contains(@href, '/model/')]");
             if (actorNodes != null)
             {
-                if (actorNodes.Count == 3) movie.AddGenre("Threesome");
-                if (actorNodes.Count == 4) movie.AddGenre("Foursome");
-                if (actorNodes.Count > 4) movie.AddGenre("Orgy");
-
-                foreach(var actor in actorNodes)
+                if (actorNodes.Count == 3)
                 {
-                    string actorName = actor.InnerText.Replace(",", "").Trim();
-                    string actorPageURL = Helper.GetSearchBaseURL(siteNum) + actor.GetAttributeValue("href", "");
+                    movie.AddGenre("Threesome");
+                }
+
+                if (actorNodes.Count == 4)
+                {
+                    movie.AddGenre("Foursome");
+                }
+
+                if (actorNodes.Count > 4)
+                {
+                    movie.AddGenre("Orgy");
+                }
+
+                foreach (var actor in actorNodes)
+                {
+                    string actorName = actor.InnerText.Replace(",", string.Empty).Trim();
+                    string actorPageURL = Helper.GetSearchBaseURL(siteNum) + actor.GetAttributeValue("href", string.Empty);
                     var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken);
-                    string actorPhotoURL = actorPage?.SelectSingleNode("//div[contains(@class, 'biography-container')]//img")?.GetAttributeValue("src", "");
+                    string actorPhotoURL = actorPage?.SelectSingleNode("//div[contains(@class, 'biography-container')]//img")?.GetAttributeValue("src", string.Empty);
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
                 }
             }
@@ -158,9 +185,9 @@ namespace PhoenixAdult.Sites
                 foreach(var director in directorNodes)
                 {
                     string directorName = director.InnerText.Trim();
-                    string directorPageURL = Helper.GetSearchBaseURL(siteNum) + director.GetAttributeValue("href", "");
+                    string directorPageURL = Helper.GetSearchBaseURL(siteNum) + director.GetAttributeValue("href", string.Empty);
                     var directorPage = await HTML.ElementFromURL(directorPageURL, cancellationToken);
-                    string directorPhotoURL = directorPage?.SelectSingleNode("//div[contains(@class, 'biography-container')]//img")?.GetAttributeValue("src", "");
+                    string directorPhotoURL = directorPage?.SelectSingleNode("//div[contains(@class, 'biography-container')]//img")?.GetAttributeValue("src", string.Empty);
                     result.People.Add(new PersonInfo { Name = directorName, Type = PersonKind.Director, ImageUrl = directorPhotoURL });
                 }
             }
@@ -173,10 +200,15 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!sceneURL.StartsWith("http"))
+            {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+            }
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (detailsPageElements == null) return images;
+            if (detailsPageElements == null)
+            {
+                return images;
+            }
 
             var xpaths = new[] { "//video/@poster", "//div[@class='player']/div/@poster", "//div[@id='galleryWrapper']//img/@data-image-file" };
             foreach(var xpath in xpaths)
@@ -185,7 +217,9 @@ namespace PhoenixAdult.Sites
                 if(posterNodes != null)
                 {
                     foreach(var poster in posterNodes)
-                        images.Add(new RemoteImageInfo { Url = poster.GetAttributeValue(xpath.Split('@').Last(), "").Split('?')[0] });
+                    {
+                        images.Add(new RemoteImageInfo { Url = poster.GetAttributeValue(xpath.Split('@').Last(), string.Empty).Split('?')[0] });
+                    }
                 }
             }
             return images;
@@ -193,7 +227,11 @@ namespace PhoenixAdult.Sites
 
         private string GetTagline(string channel)
         {
-            if (string.IsNullOrEmpty(channel)) return null;
+            if (string.IsNullOrEmpty(channel))
+            {
+                return null;
+            }
+
             var taglines = new Dictionary<string, string>
             {
                 { "boundgangbangs", "Bound Gangbangs" }, { "brutalsessions", "Brutal Sessions" }, { "devicebondage", "Device Bondage" },
@@ -209,12 +247,14 @@ namespace PhoenixAdult.Sites
                 { "wiredpussy", "Wired Pussy" }, { "chantasbitches", "Chantas Bitches" }, { "fuckedandbound", "Fucked and Bound" },
                 { "captivemale", "Captive Male" }, { "submissivex", "SubmissiveX" }, { "filthyfemdom", "Filthy Femdom" },
                 { "straponsquad", "Strapon Squad" }, { "sexualdisgrace", "Sexual Disgrace" }, { "fetishnetwork", "Fetish Network" },
-                { "fetishnetworkmale", "Fetish Network Male" }
+                { "fetishnetworkmale", "Fetish Network Male" },
             };
             foreach(var pair in taglines)
             {
                 if (channel.Contains(pair.Key))
+                {
                     return pair.Value;
+                }
             }
             return null;
         }
@@ -222,9 +262,15 @@ namespace PhoenixAdult.Sites
         private string GetStudio(string tagline)
         {
             if (tagline == "Chantas Bitches" || tagline == "Fucked and Bound" || tagline == "Captive Male")
+            {
                 return "Twisted Factory";
+            }
+
             if (tagline == "Sexual Disgrace" || tagline == "Strapon Squad" || tagline == "Fetish Network Male" || tagline == "Fetish Network")
+            {
                 return "Fetish Network";
+            }
+
             return "Kink";
         }
     }

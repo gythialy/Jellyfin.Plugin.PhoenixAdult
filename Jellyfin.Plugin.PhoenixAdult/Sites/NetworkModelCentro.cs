@@ -29,7 +29,7 @@ namespace PhoenixAdult.Sites
             {1024, "Aletta Ocean"}, {1025, "Eva Lovia"}, {1026, "Romi Rain"}, {1030, "Dani Daniels"},
             {1031, "Chloe Toy"}, {1033, "Katya Clover"}, {1035, "Lisey Sweet"}, {1037, "Gina Gerson"},
             {1038, "Valentina Nappi"}, {1039, "Vina Sky"}, {1058, "Vicki Valkyrie"}, {1075, "Dillion Harper"},
-            {1191, "Lilu Moon"}
+            {1191, "Lilu Moon"},
         };
         private const string Query = "content.load?_method=content.load&tz=1&limit=512&transitParameters[v1]=OhUOlmasXD&transitParameters[v2]=OhUOlmasXD&transitParameters[preset]=videos";
         private const string UpdateQuery = "content.load?_method=content.load&tz=1&filter[id][fields][0]=id&filter[id][values][0]={0}&limit=1&transitParameters[v1]=ykYa8ALmUD&transitParameters[preset]=scene";
@@ -57,7 +57,10 @@ namespace PhoenixAdult.Sites
         {
             var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
             if (httpResult.IsOK)
+            {
                 return JObject.Parse(httpResult.Content)["response"]["collection"];
+            }
+
             return null;
         }
 
@@ -65,11 +68,16 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             int? sceneId = null;
-            if (int.TryParse(searchTitle.Split(' ').FirstOrDefault() ?? "", out var id))
+            if (int.TryParse(searchTitle.Split(' ').FirstOrDefault() ?? string.Empty, out var id))
+            {
                 sceneId = id;
+            }
 
             string apiUrl = await GetApiUrl(siteNum, "/videos/", cancellationToken);
-            if (apiUrl == null) return result;
+            if (apiUrl == null)
+            {
+                return result;
+            }
 
             var searchResults = await GetJsonFromApi($"{Helper.GetSearchSearchURL(siteNum)}{Uri.EscapeDataString(apiUrl)}{Query}", cancellationToken);
             if (searchResults != null)
@@ -80,14 +88,16 @@ namespace PhoenixAdult.Sites
                     int curId = (int)searchResult["id"];
                     string releaseDate = string.Empty;
                     if (DateTime.TryParse(searchResult["sites"]["collection"][curId.ToString()]["publishDate"].ToString(), out var parsedDate))
+                    {
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    }
 
                     string artObj = Helper.Encode(searchResult["_resources"]["base"].ToString());
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{Helper.Encode(titleNoFormatting)}|{artObj}" } },
                         Name = $"{titleNoFormatting} {releaseDate} [{Helper.GetSearchSiteName(siteNum)}]",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -107,16 +117,21 @@ namespace PhoenixAdult.Sites
             string title = Helper.Decode(providerIds[2]).Trim();
 
             string apiUrl = await GetApiUrl(siteNum, $"/scene/{sceneId}/{Uri.EscapeDataString(title)}", cancellationToken);
-            if (apiUrl == null) return result;
+            if (apiUrl == null)
+            {
+                return result;
+            }
 
             var detailsPageElements = (await GetJsonFromApi($"{Helper.GetSearchSearchURL(siteNum)}{apiUrl}{string.Format(UpdateQuery, sceneId)}", cancellationToken))?.FirstOrDefault();
-            if (detailsPageElements == null) return result;
+            if (detailsPageElements == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements["title"].ToString().Capitalize();
             movie.Overview = detailsPageElements["description"].ToString();
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
-            movie.AddCollection(new[] { Helper.GetSearchSiteName(siteNum) });
 
             if (DateTime.TryParse(detailsPageElements["sites"]["collection"][sceneId]["publishDate"].ToString(), out var parsedDate))
             {
@@ -127,18 +142,24 @@ namespace PhoenixAdult.Sites
             if (detailsPageElements["tags"]?["collection"] is JObject genres)
             {
                 foreach (var genre in genres)
+                {
                     movie.AddGenre(genre.Value["alias"].ToString());
+                }
             }
 
             var actors = await GetJsonFromApi($"{Helper.GetSearchSearchURL(siteNum)}{apiUrl}{ModelQuery}{sceneId}", cancellationToken);
             if (actors?["modelId"]?["collection"] is JObject actorCollection)
             {
                 foreach(var actor in actorCollection)
+                {
                     result.People.Add(new PersonInfo { Name = actor.Value["stageName"].ToString(), Type = PersonKind.Actor });
+                }
             }
 
             if (actorDb.ContainsKey(siteNum[0]))
+            {
                 result.People.Add(new PersonInfo { Name = actorDb[siteNum[0]], Type = PersonKind.Actor });
+            }
 
             return result;
         }
@@ -148,10 +169,14 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             var artObj = JArray.Parse(Helper.Decode(sceneID[0].Split('|')[3]));
             foreach(var img in artObj)
+            {
                 images.Add(new RemoteImageInfo { Url = img["url"].ToString() });
+            }
 
             if (images.Any())
+            {
                 images.First().Type = ImageType.Primary;
+            }
 
             return Task.FromResult<IEnumerable<RemoteImageInfo>>(images);
         }

@@ -30,7 +30,9 @@ namespace PhoenixAdult.Sites
             {
                 var ldJsonNode = HTML.ElementFromString(http.Content).SelectSingleNode("//script[@type='application/ld+json']");
                 if (ldJsonNode != null)
+                {
                     return JObject.Parse(ldJsonNode.InnerText);
+                }
             }
             return null;
         }
@@ -44,14 +46,23 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            if (siteNum == null || string.IsNullOrEmpty(searchTitle)) return result;
+            if (siteNum == null || string.IsNullOrEmpty(searchTitle))
+            {
+                return result;
+            }
 
             string sceneID = searchTitle.Split(' ')[0];
-            if (!int.TryParse(sceneID, out _)) return result;
+            if (!int.TryParse(sceneID, out _))
+            {
+                return result;
+            }
 
             string sceneUrl = $"{Helper.GetSearchBaseURL(siteNum)}/video/{sceneID}";
             var searchResult = await GetJSONfromPage(sceneUrl, cancellationToken);
-            if (searchResult == null) return result;
+            if (searchResult == null)
+            {
+                return result;
+            }
 
             string titleNoFormatting = (string)searchResult["name"];
             string curID = Helper.Encode(sceneUrl);
@@ -59,13 +70,15 @@ namespace PhoenixAdult.Sites
             string subSite = (string)searchResult["creator"]?["name"];
             string releaseDate = string.Empty;
             if (DateTime.TryParse((string)searchResult["uploadDate"], out var parsedDate))
+            {
                 releaseDate = parsedDate.ToString("yyyy-MM-dd");
+            }
 
             result.Add(new RemoteSearchResult
             {
                 ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
                 Name = $"{titleNoFormatting} [ManyVids/{subSite}] {releaseDate}",
-                SearchProviderName = Plugin.Instance.Name
+                SearchProviderName = Plugin.Instance.Name,
             });
 
             return result;
@@ -85,7 +98,10 @@ namespace PhoenixAdult.Sites
 
             string videoID = sceneURL.Split('/').Last().Split('-')[0];
             var videoPageElements = await GetDataFromAPI($"https://www.manyvids.com/bff/store/video/{videoID}", cancellationToken);
-            if (videoPageElements == null) return result;
+            if (videoPageElements == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
             movie.Name = (string)videoPageElements["title"]?.ToString().Trim();
@@ -104,7 +120,9 @@ namespace PhoenixAdult.Sites
             if (videoPageElements["tagList"] != null)
             {
                 foreach (var genreLink in videoPageElements["tagList"])
+                {
                     movie.AddGenre((string)genreLink["label"]);
+                }
             }
 
             var actor = videoPageElements["model"];
@@ -112,7 +130,7 @@ namespace PhoenixAdult.Sites
             {
                 Name = (string)actor["displayName"],
                 ImageUrl = (string)actor["avatar"],
-                Type = PersonKind.Actor
+                Type = PersonKind.Actor,
             });
 
             return result;
@@ -123,7 +141,10 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteImageInfo>();
             string videoID = Helper.Decode(sceneID[0].Split('|')[0]).Split('/').Last().Split('-')[0];
             var videoPageElements = await GetDataFromAPI($"https://www.manyvids.com/bff/store/video/{videoID}", cancellationToken);
-            if (videoPageElements == null) return result;
+            if (videoPageElements == null)
+            {
+                return result;
+            }
 
             string imgUrl = (string)videoPageElements["screenshot"];
             if (!string.IsNullOrEmpty(imgUrl))

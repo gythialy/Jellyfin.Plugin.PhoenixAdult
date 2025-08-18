@@ -19,6 +19,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteAdultEmpire : IProviderBase
@@ -51,8 +56,11 @@ namespace PhoenixAdult.Sites
             var cookies = new CookieContainer();
             cookies.Add(new Uri(Helper.GetSearchBaseURL(siteNum)), new Cookie("ageConfirmed", "true"));
 
-            var http = await new HTTP().Get(sceneURL, cancellationToken, cookies);
-            if (!http.IsOK) return images;
+            var http = await HTTP.Request(sceneURL, cancellationToken, cookies);
+            if (!http.IsOK)
+            {
+                return images;
+            }
 
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
@@ -61,13 +69,15 @@ namespace PhoenixAdult.Sites
             var xpaths = new[]
             {
                 "//div[@class='boxcover-container']/a/img/@src",
-                "//div[@class='boxcover-container']/a/@href"
+                "//div[@class='boxcover-container']/a/@href",
             };
             foreach (var xpath in xpaths)
             {
                 var node = doc.DocumentNode.SelectSingleNode(xpath);
                 if (node != null)
-                    art.Add(node.GetAttributeValue("src", node.GetAttributeValue("href", "")));
+                {
+                    art.Add(node.GetAttributeValue("src", node.GetAttributeValue("href", string.Empty)));
+                }
             }
 
             if (splitScene)
@@ -78,7 +88,9 @@ namespace PhoenixAdult.Sites
                 if (sceneImageNodes != null)
                 {
                     foreach(var node in sceneImageNodes)
-                        art.Add(node.GetAttributeValue("href", ""));
+                    {
+                        art.Add(node.GetAttributeValue("href", string.Empty));
+                    }
                 }
             }
             else
@@ -88,7 +100,9 @@ namespace PhoenixAdult.Sites
                 if (sceneImageNodes != null)
                 {
                     foreach(var node in sceneImageNodes)
-                        art.Add(node.GetAttributeValue("href", ""));
+                    {
+                        art.Add(node.GetAttributeValue("href", string.Empty));
+                    }
                 }
             }
 
@@ -97,7 +111,7 @@ namespace PhoenixAdult.Sites
             {
                 try
                 {
-                    var imageHttp = await new HTTP().Get(imageUrl, cancellationToken, cookies);
+                    var imageHttp = await HTTP.Request(imageUrl, cancellationToken, cookies);
                     if (imageHttp.IsOK)
                     {
                         using (var ms = new MemoryStream(imageHttp.ContentBytes))
@@ -105,9 +119,14 @@ namespace PhoenixAdult.Sites
                             var image = Image.FromStream(ms);
                             var imageInfo = new RemoteImageInfo { Url = imageUrl };
                             if (image.Height > image.Width)
+                            {
                                 imageInfo.Type = ImageType.Primary;
+                            }
                             else
+                            {
                                 imageInfo.Type = ImageType.Backdrop;
+                            }
+
                             images.Add(imageInfo);
                         }
                     }

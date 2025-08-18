@@ -27,15 +27,18 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             string sceneId = null;
-            if (int.TryParse(searchTitle.Split(' ').FirstOrDefault() ?? "", out var id))
+            if (int.TryParse(searchTitle.Split(' ').FirstOrDefault() ?? string.Empty, out var id))
             {
                 sceneId = id.ToString();
-                searchTitle = searchTitle.Replace(sceneId, "").Trim();
+                searchTitle = searchTitle.Replace(sceneId, string.Empty).Trim();
             }
 
             string url = $"{Helper.GetSearchSearchURL(siteNum)}videos/browse/search/{Uri.EscapeDataString(searchTitle)}?page=1&sg=false&sort=release&video_type=scene&lang=en&site_id=10&genre=0&dach=false";
             var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
 
             var data = JObject.Parse(httpResult.Content);
             if (data["videos"]?["data"] != null)
@@ -45,7 +48,9 @@ namespace PhoenixAdult.Sites
                     string titleNoFormatting = searchResult["title"]["en"].ToString();
                     string releaseDate = string.Empty;
                     if (DateTime.TryParse(searchResult["publication_date"].ToString(), out var parsedDate))
+                    {
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    }
 
                     string searchId = searchResult["id"].ToString();
                     string curId = Helper.Encode($"{Helper.GetSearchSearchURL(siteNum)}/videodetail/{searchId}");
@@ -57,7 +62,7 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} ({actorsList}) [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -74,7 +79,10 @@ namespace PhoenixAdult.Sites
 
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
 
             var data = JObject.Parse(httpResult.Content);
             var video = data["video"];
@@ -84,9 +92,8 @@ namespace PhoenixAdult.Sites
             movie.Overview = video["description"]["en"].ToString();
             movie.AddStudio("Teen Core Club");
 
-            string tagline = video["labels"][0]["name"].ToString().Replace(".com", "").Trim();
+            string tagline = video["labels"][0]["name"].ToString().Replace(".com", string.Empty).Trim();
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             var actors = new List<string>();
             foreach (var actorData in video["actors"])
@@ -98,9 +105,18 @@ namespace PhoenixAdult.Sites
 
             if (movie.Name.ToLower().StartsWith("bic_"))
             {
-                if (actors.Count == 1) movie.Name = actors[0];
-                else if (actors.Count == 2) movie.Name = string.Join(" & ", actors);
-                else movie.Name = string.Join(", ", actors);
+                if (actors.Count == 1)
+                {
+                    movie.Name = actors[0];
+                }
+                else if (actors.Count == 2)
+                {
+                    movie.Name = string.Join(" & ", actors);
+                }
+                else
+                {
+                    movie.Name = string.Join(", ", actors);
+                }
             }
 
             if (DateTime.TryParse(video["publication_date"].ToString(), out var parsedDate))
@@ -112,7 +128,9 @@ namespace PhoenixAdult.Sites
             foreach (var genreData in video["genres"])
             {
                 if(genreData["title"]?["en"] != null)
+                {
                     movie.AddGenre(genreData["title"]["en"].ToString());
+                }
             }
 
             return result;
@@ -123,25 +141,51 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return images;
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
 
             var data = JObject.Parse(httpResult.Content);
             var video = data["video"];
 
-            if (video["artwork"]?["small"] != null) images.Add(new RemoteImageInfo { Url = video["artwork"]["small"].ToString() });
-            if (video["artwork"]?["large"] != null) images.Add(new RemoteImageInfo { Url = video["artwork"]["large"].ToString() });
-            if (video["cover"]?["small"] != null) images.Add(new RemoteImageInfo { Url = video["cover"]["small"].ToString() });
-            if (video["cover"]?["medium"] != null) images.Add(new RemoteImageInfo { Url = video["cover"]["medium"].ToString() });
-            if (video["cover"]?["large"] != null) images.Add(new RemoteImageInfo { Url = video["cover"]["large"].ToString() });
+            if (video["artwork"]?["small"] != null)
+            {
+                images.Add(new RemoteImageInfo { Url = video["artwork"]["small"].ToString() });
+            }
+
+            if (video["artwork"]?["large"] != null)
+            {
+                images.Add(new RemoteImageInfo { Url = video["artwork"]["large"].ToString() });
+            }
+
+            if (video["cover"]?["small"] != null)
+            {
+                images.Add(new RemoteImageInfo { Url = video["cover"]["small"].ToString() });
+            }
+
+            if (video["cover"]?["medium"] != null)
+            {
+                images.Add(new RemoteImageInfo { Url = video["cover"]["medium"].ToString() });
+            }
+
+            if (video["cover"]?["large"] != null)
+            {
+                images.Add(new RemoteImageInfo { Url = video["cover"]["large"].ToString() });
+            }
 
             if (video["screenshots"] != null)
             {
                 foreach(var screenshot in video["screenshots"])
+                {
                     images.Add(new RemoteImageInfo { Url = screenshot.ToString() });
+                }
             }
 
             if (images.Any())
+            {
                 images.First().Type = ImageType.Primary;
+            }
 
             return images;
         }

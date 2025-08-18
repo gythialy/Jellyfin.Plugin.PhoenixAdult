@@ -40,12 +40,16 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             if (siteNum == null || string.IsNullOrEmpty(searchTitle))
+            {
                 return result;
+            }
 
             string url = $"{Helper.GetSearchSearchURL(siteNum)}/scenes?parse={Uri.EscapeDataString(searchTitle)}";
             var searchResults = await GetDataFromAPI(url, cancellationToken);
             if (searchResults?["data"] == null)
+            {
                 return result;
+            }
 
             foreach (var searchResult in searchResults["data"])
             {
@@ -61,7 +65,7 @@ namespace PhoenixAdult.Sites
                     Name = $"{titleNoFormatting} [MetadataAPI/{siteName}] {releaseDate:yyyy-MM-dd}",
                     PremiereDate = releaseDate,
                     SearchProviderName = Plugin.Instance.Name,
-                    ImageUrl = (string)searchResult["poster"]
+                    ImageUrl = (string)searchResult["poster"],
                 });
             }
 
@@ -79,7 +83,9 @@ namespace PhoenixAdult.Sites
             string url = $"{Helper.GetSearchSearchURL(siteNum)}/scenes/{sceneID[0]}";
             var sceneData = await GetDataFromAPI(url, cancellationToken);
             if (sceneData?["data"] == null)
+            {
                 return result;
+            }
 
             var details = (JObject)sceneData["data"];
             var movie = (Movie)result.Item;
@@ -108,7 +114,9 @@ namespace PhoenixAdult.Sites
 
                 movie.AddStudio(studioName);
                 foreach (var collection in collections)
+                {
                     movie.AddTag(collection);
+                }
             }
 
             if (DateTime.TryParseExact((string)details["date"], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
@@ -120,7 +128,9 @@ namespace PhoenixAdult.Sites
             if (details["tags"] != null)
             {
                 foreach (var genreLink in details["tags"])
+                {
                     movie.AddGenre((string)genreLink["name"]);
+                }
             }
 
             if (details["performers"] != null)
@@ -129,13 +139,15 @@ namespace PhoenixAdult.Sites
                 {
                     string actorName = (string)actorLink["name"];
                     if (actorLink["parent"]?["name"] != null)
+                    {
                         actorName = (string)actorLink["parent"]["name"];
+                    }
 
                     result.People.Add(new PersonInfo
                     {
                         Name = actorName,
                         ImageUrl = (string)actorLink["image"],
-                        Type = PersonKind.Actor
+                        Type = PersonKind.Actor,
                     });
                 }
             }
@@ -149,17 +161,23 @@ namespace PhoenixAdult.Sites
             string url = $"{Helper.GetSearchSearchURL(siteNum)}/scenes/{sceneID[0]}";
             var sceneData = await GetDataFromAPI(url, cancellationToken);
             if (sceneData?["data"] == null)
+            {
                 return result;
+            }
 
             var details = (JObject)sceneData["data"];
 
             string posterUrl = (string)details["posters"]?["large"];
             if (!string.IsNullOrEmpty(posterUrl))
+            {
                 result.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
+            }
 
             string backgroundUrl = (string)details["background"]?["large"];
             if (!string.IsNullOrEmpty(backgroundUrl))
+            {
                 result.Add(new RemoteImageInfo { Url = backgroundUrl, Type = ImageType.Backdrop });
+            }
 
             return result;
         }

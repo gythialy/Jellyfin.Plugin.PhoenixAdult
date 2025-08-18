@@ -33,16 +33,16 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (httpResult.IsOK)
             {
-                var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                var detailsPageElements = HTML.ElementFromString(httpResult.Content);
                 string titleNoFormatting = detailsPageElements.SelectSingleNode("//title")?.InnerText.Split('|')[1].Trim();
                 string curId = Helper.Encode(sceneUrl);
-                string releaseDate = searchDate?.ToString("yyyy-MM-dd") ?? "";
+                string releaseDate = searchDate?.ToString("yyyy-MM-dd") ?? string.Empty;
 
                 result.Add(new RemoteSearchResult
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{sceneId}" } },
                     Name = $"{titleNoFormatting} [Fitting-Room]",
-                    SearchProviderName = Plugin.Instance.Name
+                    SearchProviderName = Plugin.Instance.Name,
                 });
             }
             return result;
@@ -59,36 +59,55 @@ namespace PhoenixAdult.Sites
             string[] providerIds = sceneID[0].Split('|');
             string sceneUrl = Helper.Decode(providerIds[0]);
             if (!sceneUrl.StartsWith("http"))
+            {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
+            }
+
             string sceneDate = providerIds[2];
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             string title = detailsPageElements.SelectSingleNode("//title")?.InnerText.Trim();
             if (title?.Contains("|") == true)
+            {
                 title = title.Split('|')[1].Trim();
+            }
+
             movie.Name = title;
             movie.Overview = detailsPageElements.SelectSingleNode("//p[@class='description']")?.InnerText.Trim();
             movie.AddStudio("Fitting-Room");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             var collectionNode = detailsPageElements.SelectSingleNode("//div[@id='list_videos_related_videos_items']/div[1]/div[2]/a");
             string collection = collectionNode?.InnerText.Trim();
             if(string.IsNullOrEmpty(collection))
             {
-                if (movie.Name == "Huge Tits") collection = "Busty";
-                else if (movie.Name == "Pool Table") collection = "Fetishouse";
-                else if (movie.Name == "Spanish Milf") collection = "Milf";
-                else if (movie.Name == "Cotton Panty") collection = "Pantyhose";
+                if (movie.Name == "Huge Tits")
+                {
+                    collection = "Busty";
+                }
+                else if (movie.Name == "Pool Table")
+                {
+                    collection = "Fetishouse";
+                }
+                else if (movie.Name == "Spanish Milf")
+                {
+                    collection = "Milf";
+                }
+                else if (movie.Name == "Cotton Panty")
+                {
+                    collection = "Pantyhose";
+                }
             }
-            if(!string.IsNullOrEmpty(collection))
-                movie.AddCollection(new[] { collection });
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {
@@ -99,8 +118,8 @@ namespace PhoenixAdult.Sites
             var actorLink = detailsPageElements.SelectSingleNode("//a[@class='model']/div[1]/img");
             if(actorLink != null)
             {
-                string actorName = actorLink.GetAttributeValue("alt", "").Trim();
-                string actorPhotoUrl = actorLink.GetAttributeValue("src", "").Trim();
+                string actorName = actorLink.GetAttributeValue("alt", string.Empty).Trim();
+                string actorPhotoUrl = actorLink.GetAttributeValue("src", string.Empty).Trim();
                 result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
             }
 
@@ -108,7 +127,9 @@ namespace PhoenixAdult.Sites
             if(genreNodes != null)
             {
                 foreach(var genre in genreNodes)
-                    movie.AddGenre(genre.GetAttributeValue("content", "").Replace(result.People.FirstOrDefault()?.Name ?? "", "").Trim().ToLower());
+                {
+                    movie.AddGenre(genre.GetAttributeValue("content", string.Empty).Replace(result.People.FirstOrDefault()?.Name ?? string.Empty, string.Empty).Trim().ToLower());
+                }
             }
             movie.AddGenre("Fitting Room");
 
@@ -121,7 +142,10 @@ namespace PhoenixAdult.Sites
             string sceneId = sceneID[0].Split('|')[3];
             images.Add(new RemoteImageInfo { Url = $"https://www.fitting-room.com/contents/videos_screenshots/0/{sceneId}/preview.jpg", Type = ImageType.Primary });
             for (int i = 2; i < 6; i++)
+            {
                 images.Add(new RemoteImageInfo { Url = $"https://www.fitting-room.com/contents/videos_screenshots/0/{sceneId}/3840x1400/{i}.jpg" });
+            }
+
             return Task.FromResult<IEnumerable<RemoteImageInfo>>(images);
         }
     }

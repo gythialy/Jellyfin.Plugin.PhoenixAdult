@@ -14,6 +14,11 @@ using Jellyfin.Data.Enums;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteOnlyFans : IProviderBase
@@ -25,7 +30,9 @@ namespace PhoenixAdult.Sites
             Logger.Info($"OF searchTitle: {searchTitle}");
             var result = new List<RemoteSearchResult>();
             if (string.IsNullOrEmpty(searchTitle))
+            {
                 return Task.FromResult(result);
+            }
 
             var match = Regex.Match(searchTitle, FilenameRegex);
             Logger.Info($"OF match.Success: {match.Success}");
@@ -66,7 +73,9 @@ namespace PhoenixAdult.Sites
             };
 
             if (sceneID == null || sceneID.Length == 0)
+            {
                 return Task.FromResult(result);
+            }
 
             string filename = sceneID[0];
             var match = Regex.Match(filename, FilenameRegex);

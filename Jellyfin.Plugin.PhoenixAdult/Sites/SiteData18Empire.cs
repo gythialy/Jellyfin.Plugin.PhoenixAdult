@@ -34,7 +34,7 @@ namespace PhoenixAdult.Sites
             if (int.TryParse(parts[0], out var parsedId) && parsedId > 100)
             {
                 sceneID = parts[0];
-                searchTitle = searchTitle.Replace(sceneID, "").Trim();
+                searchTitle = searchTitle.Replace(sceneID, string.Empty).Trim();
                 searchResults.Add($"{Helper.GetSearchBaseURL(siteNum)}/{sceneID}");
             }
 
@@ -50,18 +50,21 @@ namespace PhoenixAdult.Sites
                 {
                     foreach (var searchResult in searchResultNodes)
                     {
-                        string movieURL = $"{Helper.GetSearchBaseURL(siteNum)}{searchResult.GetAttributeValue("href", "")}";
-                        string urlID = searchResult.GetAttributeValue("href", "").Split('/')[1];
+                        string movieURL = $"{Helper.GetSearchBaseURL(siteNum)}{searchResult.GetAttributeValue("href", string.Empty)}";
+                        string urlID = searchResult.GetAttributeValue("href", string.Empty).Split('/')[1];
                         if (movieURL.Contains("movies") && !searchResults.Contains(movieURL))
                         {
                             string titleNoFormatting = searchResult.SelectSingleNode("./span/span/text()")?.InnerText.Trim();
                             string curID = Helper.Encode(movieURL);
 
                             var detailsPageElements = await HTML.ElementFromURL(movieURL, cancellationToken);
-                            if (detailsPageElements == null) continue;
+                            if (detailsPageElements == null)
+                            {
+                                continue;
+                            }
 
                             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='release-date' and ./span[contains(., 'Released:')]]/text()");
-                            string releaseDate = dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "MMM dd, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate) ? parsedDate.ToString("yyyy-MM-dd") : "";
+                            string releaseDate = dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "MMM dd, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate) ? parsedDate.ToString("yyyy-MM-dd") : string.Empty;
                             string studio = detailsPageElements.SelectSingleNode("//div[@class='studio']/a/text()")?.InnerText.Trim();
                             result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{studio}] {releaseDate}" });
 
@@ -90,22 +93,29 @@ namespace PhoenixAdult.Sites
             string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (detailsPageElements == null) return result;
+            if (detailsPageElements == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
             string title = detailsPageElements.SelectSingleNode("//h1[@class='description']/text()")?.InnerText.Trim();
             movie.Name = title;
             if (providerIds.Length > 3)
+            {
                 movie.Name = $"{title} [Scene {providerIds[3]}]";
+            }
 
             movie.Overview = string.Join("\n\n", detailsPageElements.SelectNodes("//div[@class='synopsis']//text()").Select(n => n.InnerText));
 
             var studio = detailsPageElements.SelectSingleNode("//div[@class='studio']/a/text()")?.InnerText.Trim();
             if(!string.IsNullOrEmpty(studio))
+            {
                 movie.AddStudio(studio);
+            }
 
             var tagline = detailsPageElements.SelectSingleNode("//p[contains(text(), 'A scene from')]/a/text()")?.InnerText.Trim()
-                ?? detailsPageElements.SelectSingleNode("//a[@data-label='Series List']/h2/text()")?.InnerText.Trim().Replace("Series:", "").Replace($"({studio})", "").Trim();
+                ?? detailsPageElements.SelectSingleNode("//a[@data-label='Series List']/h2/text()")?.InnerText.Trim().Replace("Series:", string.Empty).Replace($"({studio})", string.Empty).Trim();
             movie.AddTag(tagline ?? studio);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
@@ -118,7 +128,9 @@ namespace PhoenixAdult.Sites
             if(genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.InnerText.Trim());
+                }
             }
 
             var actorNodes = providerIds.Length > 3
@@ -127,12 +139,16 @@ namespace PhoenixAdult.Sites
             if (actorNodes != null)
             {
                 foreach(var actor in actorNodes)
+                {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
+                }
             }
 
             var directorNode = detailsPageElements.SelectSingleNode("//div[@class='director']/a/text()");
             if(directorNode != null && directorNode.InnerText.Split(':').Last().Trim() != "Unknown")
+            {
                 result.People.Add(new PersonInfo { Name = directorNode.InnerText.Split(':').Last().Trim(), Type = PersonKind.Director });
+            }
 
             return result;
         }

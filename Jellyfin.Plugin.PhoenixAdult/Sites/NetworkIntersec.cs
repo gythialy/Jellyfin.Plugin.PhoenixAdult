@@ -28,27 +28,32 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteSearchResult>();
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
 
-            var searchPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var searchPageElements = HTML.ElementFromString(httpResult.Content);
             var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'is-multiline')]/div[contains(@class, 'column')]");
             if (searchNodes != null)
             {
                 foreach (var node in searchNodes)
                 {
-                    string curId = Helper.Encode(node.SelectSingleNode(".//a")?.GetAttributeValue("href", ""));
+                    string curId = Helper.Encode(node.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty));
                     string titleNoFormatting = node.SelectSingleNode(".//div[@class='has-text-weight-bold']")?.InnerText;
                     string releaseDate = string.Empty;
                     var dateNode = node.SelectSingleNode(".//span[contains(@class, 'tag')]");
                     if (dateNode != null && DateTime.TryParse(dateNode.InnerText, out var parsedDate))
+                    {
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    }
 
-                    string scenePoster = Helper.Encode(node.SelectSingleNode(".//img")?.GetAttributeValue("src", ""));
+                    string scenePoster = Helper.Encode(node.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty));
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{scenePoster}" } },
                         Name = $"{titleNoFormatting} [Intersec/{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -67,8 +72,12 @@ namespace PhoenixAdult.Sites
             string sceneUrl = $"{Helper.GetSearchBaseURL(siteNum)}/iod/{Helper.Decode(providerIds[0])}";
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//div[contains(@class, 'has-text-weight-bold')]")?.InnerText;
@@ -79,18 +88,44 @@ namespace PhoenixAdult.Sites
             string tagline = "Intersex";
             if (taglineText != null)
             {
-                if (taglineText.Contains("sexuallybroken")) tagline = "Sexually Broken";
-                else if (taglineText.Contains("infernalrestraints")) tagline = "Infernal Restraints";
-                else if (taglineText.Contains("realtimebondage")) tagline = "Real Time Bondage";
-                else if (taglineText.Contains("hardtied")) tagline = "Hardtied";
-                else if (taglineText.Contains("topgrl")) tagline = "Topgrl";
-                else if (taglineText.Contains("sensualpain")) tagline = "Sensual Pain";
-                else if (taglineText.Contains("paintoy")) tagline = "Pain Toy";
-                else if (taglineText.Contains("renderfiend")) tagline = "Renderfiend";
-                else if (taglineText.Contains("hotelhostages")) tagline = "Hotel Hostages";
+                if (taglineText.Contains("sexuallybroken"))
+                {
+                    tagline = "Sexually Broken";
+                }
+                else if (taglineText.Contains("infernalrestraints"))
+                {
+                    tagline = "Infernal Restraints";
+                }
+                else if (taglineText.Contains("realtimebondage"))
+                {
+                    tagline = "Real Time Bondage";
+                }
+                else if (taglineText.Contains("hardtied"))
+                {
+                    tagline = "Hardtied";
+                }
+                else if (taglineText.Contains("topgrl"))
+                {
+                    tagline = "Topgrl";
+                }
+                else if (taglineText.Contains("sensualpain"))
+                {
+                    tagline = "Sensual Pain";
+                }
+                else if (taglineText.Contains("paintoy"))
+                {
+                    tagline = "Pain Toy";
+                }
+                else if (taglineText.Contains("renderfiend"))
+                {
+                    tagline = "Renderfiend";
+                }
+                else if (taglineText.Contains("hotelhostages"))
+                {
+                    tagline = "Hotel Hostages";
+                }
             }
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'has-text-white-ter')][1]//span[contains(@class, 'is-dark')][1]");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText, out var parsedDate))
@@ -103,11 +138,25 @@ namespace PhoenixAdult.Sites
             var actorNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'has-text-white-ter')][1]//a[contains(@class, 'is-dark')][position() < last()]");
             if (actorNodes != null)
             {
-                if (actorNodes.Count == 3) movie.AddGenre("Threesome");
-                if (actorNodes.Count == 4) movie.AddGenre("Foursome");
-                if (actorNodes.Count > 4) movie.AddGenre("Orgy");
+                if (actorNodes.Count == 3)
+                {
+                    movie.AddGenre("Threesome");
+                }
+
+                if (actorNodes.Count == 4)
+                {
+                    movie.AddGenre("Foursome");
+                }
+
+                if (actorNodes.Count > 4)
+                {
+                    movie.AddGenre("Orgy");
+                }
+
                 foreach (var actor in actorNodes)
+                {
                     result.People.Add(new PersonInfo { Name = actor.InnerText, Type = PersonKind.Actor });
+                }
             }
 
             return result;
@@ -122,22 +171,32 @@ namespace PhoenixAdult.Sites
             images.Add(new RemoteImageInfo { Url = scenePoster });
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return images;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//video-js");
             if(posterNode != null)
-                images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("poster", "") });
+            {
+                images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("poster", string.Empty) });
+            }
 
             var imageNodes = detailsPageElements.SelectNodes("//figure/img");
             if(imageNodes != null)
             {
                 foreach(var img in imageNodes)
-                    images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("src", "") });
+                {
+                    images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("src", string.Empty) });
+                }
             }
 
             if (images.Any())
+            {
                 images.First().Type = ImageType.Primary;
+            }
 
             return images;
         }

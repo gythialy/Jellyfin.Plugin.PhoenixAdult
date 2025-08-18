@@ -33,7 +33,10 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            if (siteNum == null) return result;
+            if (siteNum == null)
+            {
+                return result;
+            }
 
             if (ManualMatch.TryGetValue(searchTitle, out var match))
             {
@@ -41,25 +44,34 @@ namespace PhoenixAdult.Sites
                 {
                     ProviderIds = { { Plugin.Instance.Name, Helper.Encode(match.curID) } },
                     Name = match.name,
-                    SearchProviderName = Plugin.Instance.Name
+                    SearchProviderName = Plugin.Instance.Name,
                 });
                 return result;
             }
 
             var url = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
             var data = await HTML.ElementFromURL(url, cancellationToken);
-            if (data == null) return result;
+            if (data == null)
+            {
+                return result;
+            }
 
             var searchResults = data.SelectNodes("//div[contains(@class, 'item-info')]");
-            if (searchResults == null) return result;
+            if (searchResults == null)
+            {
+                return result;
+            }
 
             foreach (var searchResult in searchResults)
             {
                 var sceneURLNode = searchResult.SelectSingleNode(".//a");
                 var sceneDateNode = searchResult.SelectSingleNode(".//span[@class='date']");
-                if (sceneURLNode == null || sceneDateNode == null) continue;
+                if (sceneURLNode == null || sceneDateNode == null)
+                {
+                    continue;
+                }
 
-                string curID = Helper.Encode(sceneURLNode.GetAttributeValue("href", ""));
+                string curID = Helper.Encode(sceneURLNode.GetAttributeValue("href", string.Empty));
                 string sceneName = sceneURLNode.InnerText.Trim();
 
                 if (DateTime.TryParseExact(sceneDateNode.InnerText.Trim(), "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var releaseDate))
@@ -69,7 +81,7 @@ namespace PhoenixAdult.Sites
                         ProviderIds = { { Plugin.Instance.Name, curID } },
                         Name = $"{sceneName} [Femdom Empire] {releaseDate:yyyy-MM-dd}",
                         SearchProviderName = Plugin.Instance.Name,
-                        PremiereDate = releaseDate
+                        PremiereDate = releaseDate,
                     });
                 }
             }
@@ -87,10 +99,15 @@ namespace PhoenixAdult.Sites
 
             string sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http"))
+            {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+            }
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (sceneData == null) return result;
+            if (sceneData == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
             movie.Name = sceneData.SelectSingleNode("//div[contains(@class, 'videoDetails')]//h3")?.InnerText.Trim();
@@ -100,7 +117,7 @@ namespace PhoenixAdult.Sites
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
 
-            var dateNode = sceneData.SelectSingleNode("//div[@class='videoInfo clear']//p")?.InnerText.Replace("Date Added:", "").Trim();
+            var dateNode = sceneData.SelectSingleNode("//div[@class='videoInfo clear']//p")?.InnerText.Replace("Date Added:", string.Empty).Trim();
             if (DateTime.TryParseExact(dateNode, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
             {
                 movie.PremiereDate = sceneDateObj;
@@ -127,7 +144,9 @@ namespace PhoenixAdult.Sites
             }
 
             if (movie.Name.Equals("Owned by Alexis", StringComparison.OrdinalIgnoreCase))
+            {
                 result.People.Add(new PersonInfo { Name = "Alexis Monroe", Type = PersonKind.Actor });
+            }
 
             return result;
         }
@@ -137,19 +156,26 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteImageInfo>();
             string sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http"))
+            {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+            }
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (sceneData == null) return result;
+            if (sceneData == null)
+            {
+                return result;
+            }
 
             var imageNode = sceneData.SelectSingleNode("//a[@class='fake_trailer']//img");
             if (imageNode != null)
             {
-                string image = imageNode.GetAttributeValue("src0_1x", "");
+                string image = imageNode.GetAttributeValue("src0_1x", string.Empty);
                 if (!string.IsNullOrEmpty(image))
                 {
                     if (!image.StartsWith("http"))
+                    {
                         image = Helper.GetSearchBaseURL(siteNum) + image;
+                    }
 
                     result.Add(new RemoteImageInfo { Url = image, Type = ImageType.Primary });
                     result.Add(new RemoteImageInfo { Url = image, Type = ImageType.Backdrop });

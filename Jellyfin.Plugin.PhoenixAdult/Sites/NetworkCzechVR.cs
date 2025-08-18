@@ -27,14 +27,17 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             string sceneId = null;
-            if (int.TryParse(searchTitle.Split(' ').FirstOrDefault() ?? "", out _))
+            if (int.TryParse(searchTitle.Split(' ').FirstOrDefault() ?? string.Empty, out _))
             {
                 sceneId = searchTitle.Split(' ').First();
-                searchTitle = searchTitle.Replace(sceneId, "").Trim();
+                searchTitle = searchTitle.Replace(sceneId, string.Empty).Trim();
             }
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + searchTitle.Replace(' ', '-');
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
 
             var searchPageElements = HTML.ElementFromString(httpResult.Content);
             var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'postTag')]");
@@ -45,11 +48,13 @@ namespace PhoenixAdult.Sites
                     var titleNode = node.SelectSingleNode(".//div[@class='nazev']//h2//a");
                     string titleNoFormatting = titleNode?.InnerText;
                     string curSceneId = titleNoFormatting?.Split('-')[0].Trim();
-                    string curId = Helper.Encode(node.SelectSingleNode(".//a")?.GetAttributeValue("href", ""));
+                    string curId = Helper.Encode(node.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty));
                     string releaseDate = string.Empty;
                     var dateNode = node.SelectSingleNode(".//div[@class='datum']");
                     if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+                    {
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    }
 
                     var actorNodes = node.SelectNodes(".//div[@class='nazev']//div[@class='featuring']//a");
                     string actorList = string.Join(", ", actorNodes?.Select(a => a.InnerText.Trim()) ?? new string[0]);
@@ -58,7 +63,7 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
                         Name = $"{actorList} in {titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -75,19 +80,27 @@ namespace PhoenixAdult.Sites
 
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!sceneUrl.StartsWith("http"))
+            {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
+            }
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//head/title")?.InnerText
-                .Replace("Czech VR Network", "").Replace(" - Czech VR Fetish Porn Videos", "").Replace("Czech VR Fetish", "").Replace("Czech VR Casting", "").Replace("Czech VR", "").Trim();
+                .Replace("Czech VR Network", string.Empty).Replace(" - Czech VR Fetish Porn Videos", string.Empty).Replace("Czech VR Fetish", string.Empty).Replace("Czech VR Casting", string.Empty).Replace("Czech VR", string.Empty).Trim();
 
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='text'] ?? //div[@class='textDetail']");
             if(summaryNode != null)
+            {
                 movie.Overview = summaryNode.InnerText.Trim();
+            }
 
             movie.AddStudio("CzechVR");
             string tagline = Helper.GetSearchSiteName(siteNum);
@@ -104,14 +117,18 @@ namespace PhoenixAdult.Sites
             if(genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.InnerText.ToLower().Trim());
+                }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[@class='modelky']//a | (//div[contains(@class, 'nazev')])[1]//div[@class='featuring']//a");
             if(actorNodes != null)
             {
                 foreach(var actor in actorNodes)
+                {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
+                }
             }
 
             return result;
@@ -122,10 +139,16 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!sceneUrl.StartsWith("http"))
+            {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
+            }
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return images;
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
+
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//div[@class='foto']//dl8-video | //div[@class='galerka']//a");
@@ -133,15 +156,20 @@ namespace PhoenixAdult.Sites
             {
                 foreach(var img in imageNodes)
                 {
-                    string imageUrl = (img.GetAttributeValue("poster", "") ?? img.GetAttributeValue("href", "")).Substring(1);
+                    string imageUrl = (img.GetAttributeValue("poster", string.Empty) ?? img.GetAttributeValue("href", string.Empty)).Substring(1);
                     if (!imageUrl.StartsWith("http"))
+                    {
                         imageUrl = Helper.GetSearchBaseURL(siteNum) + imageUrl;
+                    }
+
                     images.Add(new RemoteImageInfo { Url = imageUrl });
                 }
             }
 
             if (images.Any())
+            {
                 images.First().Type = ImageType.Primary;
+            }
 
             return images;
         }

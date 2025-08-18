@@ -39,13 +39,13 @@ namespace PhoenixAdult.Sites
                     var detailsPageElements = HTML.ElementFromString(httpResult.Content);
                     string titleNoFormatting = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
                     string curId = Helper.Encode(sceneUrl);
-                    string releaseDate = searchDate?.ToString("yyyy-MM-dd") ?? "";
+                    string releaseDate = searchDate?.ToString("yyyy-MM-dd") ?? string.Empty;
 
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -65,7 +65,11 @@ namespace PhoenixAdult.Sites
             string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
@@ -98,7 +102,10 @@ namespace PhoenixAdult.Sites
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return images;
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
 
             var match = Regex.Match(httpResult.Content, "'playlistfile': '(.+playlist\\.xml)'");
             if (match.Success)
@@ -111,14 +118,18 @@ namespace PhoenixAdult.Sites
                     xmlDoc.LoadXml(xmlHttp.Content);
                     var posterNode = xmlDoc.SelectSingleNode("//channel/item/media:group/media:thumbnail", new XmlNamespaceManager(xmlDoc.NameTable));
                     if (posterNode != null)
+                    {
                         images.Add(new RemoteImageInfo { Url = posterNode.Attributes["url"].Value, Type = ImageType.Primary });
+                    }
                 }
             }
             else
             {
                 match = Regex.Match(httpResult.Content, "'image': '(.+bookend\\.jpg)'");
                 if (match.Success)
+                {
                     images.Add(new RemoteImageInfo { Url = match.Groups[1].Value, Type = ImageType.Primary });
+                }
             }
 
             return images;

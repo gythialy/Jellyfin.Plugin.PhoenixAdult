@@ -108,7 +108,6 @@ namespace PhoenixAdult.Helpers.Utils
             };
 
             //url = Uri.EscapeDataString(Uri.UnescapeDataString(url));
-
             if (method == null)
             {
                 method = HttpMethod.Get;

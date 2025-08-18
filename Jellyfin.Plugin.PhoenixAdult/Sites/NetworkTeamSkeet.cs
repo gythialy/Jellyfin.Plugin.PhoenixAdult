@@ -48,7 +48,7 @@ namespace PhoenixAdult.Sites
         {
             string str = phrase.ToLowerInvariant();
             str = System.Text.Encoding.ASCII.GetString(System.Text.Encoding.GetEncoding("Cyrillic").GetBytes(str));
-            str = System.Text.RegularExpressions.Regex.Replace(str, @"[^a-z0-9\s-]", "");
+            str = System.Text.RegularExpressions.Regex.Replace(str, @"[^a-z0-9\s-]", string.Empty);
             str = System.Text.RegularExpressions.Regex.Replace(str, @"\s+", " ").Trim();
             str = str.Substring(0, str.Length <= 45 ? str.Length : 45).Trim();
             str = System.Text.RegularExpressions.Regex.Replace(str, @"\s", "-");
@@ -62,7 +62,9 @@ namespace PhoenixAdult.Sites
             {
                 var match = Regex.Match(httpResult.Content, @"window\.__INITIAL_STATE__ = (.*);");
                 if (match.Success)
+                {
                     return JObject.Parse(match.Groups[1].Value)["content"];
+                }
             }
             return null;
         }
@@ -70,11 +72,11 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            string directUrl = Slugify(searchTitle.Replace("'", ""));
+            string directUrl = Slugify(searchTitle.Replace("'", string.Empty));
             directUrl = Helper.GetSearchSearchURL(siteNum) + directUrl;
             var searchResultsUrls = new List<string> { directUrl };
 
-            var googleResults = await GoogleSearch.Search(searchTitle, siteNum, cancellationToken);
+            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             searchResultsUrls.AddRange(googleResults.Where(u => u.Contains("/movies/")));
 
             foreach (var sceneUrl in searchResultsUrls.Distinct())
@@ -84,9 +86,13 @@ namespace PhoenixAdult.Sites
                 {
                     string sceneType = null;
                     if (detailsPageElements["moviesContent"] != null)
+                    {
                         sceneType = "moviesContent";
+                    }
                     else if (detailsPageElements["videosContent"] != null)
+                    {
                         sceneType = "videosContent";
+                    }
 
                     if (sceneType != null)
                     {
@@ -97,13 +103,15 @@ namespace PhoenixAdult.Sites
                         string subSite = details["site"]?["name"]?.ToString() ?? Helper.GetSearchSiteName(siteNum);
                         string releaseDate = string.Empty;
                         if (details["publishedDate"] != null && DateTime.TryParse(details["publishedDate"].ToString(), out var parsedDate))
+                        {
                             releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                        }
 
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{sceneType.Replace("Content","")}" } },
+                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{sceneType.Replace("Content",string.Empty)}" } },
                             Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
-                            SearchProviderName = Plugin.Instance.Name
+                            SearchProviderName = Plugin.Instance.Name,
                         });
                     }
                 }
@@ -125,7 +133,10 @@ namespace PhoenixAdult.Sites
             string sceneType = providerIds[3] + "Content";
 
             var detailsPageElements = (await GetJsonFromPage($"{Helper.GetSearchSearchURL(siteNum)}{sceneName}", cancellationToken))?[sceneType]?[sceneName];
-            if (detailsPageElements == null) return result;
+            if (detailsPageElements == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements["title"].ToString();
@@ -134,7 +145,6 @@ namespace PhoenixAdult.Sites
 
             string tagline = detailsPageElements["site"]?["name"]?.ToString() ?? Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {
@@ -145,13 +155,17 @@ namespace PhoenixAdult.Sites
             if (detailsPageElements["tags"] != null)
             {
                 foreach(var genre in detailsPageElements["tags"])
+                {
                     movie.AddGenre(genre.ToString().Trim());
+                }
             }
 
             if (genresDB.ContainsKey(tagline))
             {
                 foreach(var genre in genresDB[tagline])
+                {
                     movie.AddGenre(genre);
+                }
             }
 
             foreach (var actor in detailsPageElements["models"])
@@ -161,7 +175,10 @@ namespace PhoenixAdult.Sites
                 string actorPhotoUrl = string.Empty;
                 var actorData = await GetJsonFromPage($"{Helper.GetSearchBaseURL(siteNum)}/models/{actorId}", cancellationToken);
                 if (actorData != null)
+                {
                     actorPhotoUrl = actorData["modelsContent"][actorId]["img"].ToString();
+                }
+
                 result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
             }
 
@@ -176,7 +193,9 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = (await GetJsonFromPage($"{Helper.GetSearchSearchURL(siteNum)}{sceneName}", cancellationToken))?[sceneType]?[sceneName];
             if (detailsPageElements?["img"] != null)
+            {
                 images.Add(new RemoteImageInfo { Url = detailsPageElements["img"].ToString(), Type = ImageType.Primary });
+            }
 
             return images;
         }

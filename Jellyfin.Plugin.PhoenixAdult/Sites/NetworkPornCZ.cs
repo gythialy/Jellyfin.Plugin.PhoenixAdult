@@ -26,21 +26,30 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            if (siteNum == null) return result;
+            if (siteNum == null)
+            {
+                return result;
+            }
 
             string encodedSearchTitle = searchTitle.Replace(" ", "+").Replace("--", "+").ToLower();
             var url = Helper.GetSearchSearchURL(siteNum) + encodedSearchTitle;
             var data = await HTML.ElementFromURL(url, cancellationToken);
-            if (data == null) return result;
+            if (data == null)
+            {
+                return result;
+            }
 
             var searchResults = data.SelectNodes("//div[@data-href]");
-            if (searchResults == null) return result;
+            if (searchResults == null)
+            {
+                return result;
+            }
 
             foreach (var searchResult in searchResults)
             {
                 var titleNode = searchResult.SelectSingleNode(".//h4");
                 string titleNoFormatting = titleNode?.InnerText.Trim();
-                string sceneURL = Helper.GetSearchBaseURL(siteNum) + searchResult.SelectSingleNode(".//a")?.GetAttributeValue("href", "");
+                string sceneURL = Helper.GetSearchBaseURL(siteNum) + searchResult.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty);
                 string curID = Helper.Encode(sceneURL);
                 string releaseDate = searchDate?.ToString("yyyy-MM-dd") ?? string.Empty;
 
@@ -48,7 +57,7 @@ namespace PhoenixAdult.Sites
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
                     Name = $"{titleNoFormatting} [PornCZ/{Helper.GetSearchSiteName(siteNum)}]",
-                    SearchProviderName = Plugin.Instance.Name
+                    SearchProviderName = Plugin.Instance.Name,
                 });
             }
             return result;
@@ -67,7 +76,10 @@ namespace PhoenixAdult.Sites
             string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (sceneData == null) return result;
+            if (sceneData == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
             movie.Name = sceneData.SelectSingleNode("//h1")?.InnerText.Trim();
@@ -76,7 +88,7 @@ namespace PhoenixAdult.Sites
             movie.AddTag(Helper.GetSearchSiteName(siteNum));
 
             var dateNode = sceneData.SelectSingleNode("//meta[@property='video:release_date']");
-            if (dateNode != null && DateTime.TryParseExact(dateNode.GetAttributeValue("content", "").Trim(), "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+            if (dateNode != null && DateTime.TryParseExact(dateNode.GetAttributeValue("content", string.Empty).Trim(), "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
@@ -91,7 +103,9 @@ namespace PhoenixAdult.Sites
             if (genreNodes != null)
             {
                 foreach (var genreLink in genreNodes)
+                {
                     movie.AddGenre(genreLink.InnerText.Trim());
+                }
             }
 
             var actorNodes = sceneData.SelectNodes("//div[contains(., 'Actors')]/a");
@@ -100,18 +114,23 @@ namespace PhoenixAdult.Sites
                 foreach (var actorLink in actorNodes)
                 {
                     string actorName = actorLink.InnerText.Trim();
-                    string actorPageURL = actorLink.GetAttributeValue("href", "");
+                    string actorPageURL = actorLink.GetAttributeValue("href", string.Empty);
                     if (!actorPageURL.StartsWith("http"))
+                    {
                         actorPageURL = Helper.GetSearchBaseURL(siteNum) + actorPageURL;
+                    }
 
                     var actorHTML = await HTML.ElementFromURL(actorPageURL, cancellationToken);
                     var imgNode = actorHTML?.SelectSingleNode("//div[@class='model-heading-photo']//@src");
-                    string actorPhoto = imgNode?.GetAttributeValue("src", "");
+                    string actorPhoto = imgNode?.GetAttributeValue("src", string.Empty);
 
                     if (actorPhoto?.Contains("blank") == false)
                     {
                          if (!actorPhoto.StartsWith("http"))
+                        {
                             actorPhoto = Helper.GetSearchBaseURL(siteNum) + actorPhoto;
+                        }
+
                          result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhoto, Type = PersonKind.Actor });
                     }
                     else
@@ -129,7 +148,10 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteImageInfo>();
             string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (sceneData == null) return result;
+            if (sceneData == null)
+            {
+                return result;
+            }
 
             var imageNodes = sceneData.SelectNodes("//div[@id='photos']//@data-src");
             if (imageNodes != null)
@@ -137,9 +159,11 @@ namespace PhoenixAdult.Sites
                 bool first = true;
                 foreach (var imageNode in imageNodes)
                 {
-                    string img = imageNode.GetAttributeValue("data-src", "");
+                    string img = imageNode.GetAttributeValue("data-src", string.Empty);
                     if (!img.StartsWith("http"))
+                    {
                         img = Helper.GetSearchBaseURL(siteNum) + img;
+                    }
 
                     var imageInfo = new RemoteImageInfo { Url = img };
                     if (first)

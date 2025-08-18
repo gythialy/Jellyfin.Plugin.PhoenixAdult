@@ -38,34 +38,36 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(tourPageUrl, HttpMethod.Get, cancellationToken);
             while (httpResult.IsOK)
             {
-                var tourPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                var tourPageElements = HTML.ElementFromString(httpResult.Content);
                 var sceneResults = tourPageElements.SelectNodes("//table[@width='880']");
                 if (sceneResults != null)
                 {
                     foreach (var sceneResult in sceneResults)
                     {
-                        string summary = Regex.Replace(sceneResult.SelectSingleNode(".//td[@height='105' or @height='90']")?.InnerText ?? "", @"\s+", " ").Trim();
+                        string summary = Regex.Replace(sceneResult.SelectSingleNode(".//td[@height='105' or @height='90']")?.InnerText ?? string.Empty, @"\s+", " ").Trim();
                         string summaryId = Helper.Encode(summary);
                         string actorFirstName = summary.Split(' ')[0].Trim().ToLower();
-                        string actorNameFromImg = sceneResult.SelectSingleNode(".//img[contains(@src, 'fft')]")?.GetAttributeValue("src", "").Split('_').Last().Split('.')[0].Trim().ToLower();
+                        string actorNameFromImg = sceneResult.SelectSingleNode(".//img[contains(@src, 'fft')]")?.GetAttributeValue("src", string.Empty).Split('_').Last().Split('.')[0].Trim().ToLower();
                         string actorName = $"{actorFirstName} {actorNameFromImg.Split(new[] { actorFirstName }, StringSplitOptions.None).Last()}".Capitalize();
 
                         var cleanActorName = actorsDB.FirstOrDefault(a => a.Value.Any(v => v.ToLower().Contains(actorName.ToLower()))).Key ?? actorName;
                         string titleNoFormatting = string.Join(" and ", cleanActorName);
 
-                        string imageUrl = sceneResult.SelectSingleNode(".//img[contains(@src, 'tour')][@width='400']")?.GetAttributeValue("src", "");
+                        string imageUrl = sceneResult.SelectSingleNode(".//img[contains(@src, 'tour')][@width='400']")?.GetAttributeValue("src", string.Empty);
                         string curId = Helper.Encode(imageUrl);
 
                         string releaseDate = string.Empty;
                         var dateNode = sceneResult.SelectSingleNode(".//preceding::b[contains(., 'Update')]");
                         if(dateNode != null && DateTime.TryParse(dateNode.InnerText.Split(':').Last().Trim(), out var parsedDate))
+                        {
                             releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                        }
 
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{Helper.Encode(string.Join("|", cleanActorName))}|{summaryId}" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                            SearchProviderName = Plugin.Instance.Name
+                            SearchProviderName = Plugin.Instance.Name,
                         });
                     }
                 }
@@ -94,7 +96,6 @@ namespace PhoenixAdult.Sites
             movie.Name = $"{string.Join(" and ", actors)} from JesseLoadsMonsterFacials.com";
             movie.Overview = summary;
             movie.AddStudio("Jesse Loads Monster Facials");
-            movie.AddCollection(new[] { "Jesse Loads Monster Facials" });
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {
@@ -107,7 +108,9 @@ namespace PhoenixAdult.Sites
             foreach (var actor in actors)
             {
                 if (actor != "Compilation")
+                {
                     result.People.Add(new PersonInfo { Name = actor, Type = PersonKind.Actor });
+                }
             }
 
             return Task.FromResult(result);
@@ -118,7 +121,10 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string poster = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!poster.StartsWith("http"))
+            {
                 poster = $"{Helper.GetSearchSearchURL(siteNum)}/{poster}";
+            }
+
             images.Add(new RemoteImageInfo { Url = poster, Type = ImageType.Primary });
             return Task.FromResult<IEnumerable<RemoteImageInfo>>(images);
         }

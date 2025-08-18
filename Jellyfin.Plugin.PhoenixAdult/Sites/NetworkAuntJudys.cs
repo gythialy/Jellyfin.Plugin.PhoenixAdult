@@ -30,7 +30,9 @@ namespace PhoenixAdult.Sites
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)
+            {
                 return result;
+            }
 
             var searchPageElements = HTML.ElementFromString(httpResult.Content);
             var searchNodes = searchPageElements.SelectNodes("//div[@class='update_details']");
@@ -42,16 +44,20 @@ namespace PhoenixAdult.Sites
                     if (titleNode != null)
                     {
                         string titleNoFormatting = titleNode.InnerText.Trim();
-                        string sceneUrl = titleNode.GetAttributeValue("href", "");
+                        string sceneUrl = titleNode.GetAttributeValue("href", string.Empty);
                         if (sceneUrl.Contains("_vids.html", StringComparison.OrdinalIgnoreCase))
                         {
                             string curId = Helper.Encode(sceneUrl);
                             string releaseDate = string.Empty;
                             var dateNode = node.SelectSingleNode(".//div[@class='cell update_date']");
                             if (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                            {
                                 releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                            }
                             else if (searchDate.HasValue)
+                            {
                                 releaseDate = searchDate.Value.ToString("yyyy-MM-dd");
+                            }
 
                             result.Add(new RemoteSearchResult
                             {
@@ -79,7 +85,11 @@ namespace PhoenixAdult.Sites
             string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
@@ -106,7 +116,9 @@ namespace PhoenixAdult.Sites
             if(genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.InnerText.Trim());
+                }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//p/span[@class='update_models']/a");
@@ -115,7 +127,7 @@ namespace PhoenixAdult.Sites
                 foreach(var actorNode in actorNodes)
                 {
                     string actorName = actorNode.InnerText.Trim();
-                    string actorUrl = actorNode.GetAttributeValue("href", "");
+                    string actorUrl = actorNode.GetAttributeValue("href", string.Empty);
                     string actorPhotoUrl = string.Empty;
                     if(!string.IsNullOrEmpty(actorUrl))
                     {
@@ -123,9 +135,11 @@ namespace PhoenixAdult.Sites
                         if(actorHttp.IsOK)
                         {
                             var actorPage = HTML.ElementFromString(actorHttp.Content);
-                            actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='cell_top cell_thumb']//@src0_1x")?.GetAttributeValue("src0_1x", "");
+                            actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='cell_top cell_thumb']//@src0_1x")?.GetAttributeValue("src0_1x", string.Empty);
                             if(!string.IsNullOrEmpty(actorPhotoUrl) && !actorPhotoUrl.StartsWith("http"))
+                            {
                                 actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actorPhotoUrl;
+                            }
                         }
                     }
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });

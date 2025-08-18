@@ -35,9 +35,12 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteSearchResult>();
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
 
-            var searchPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var searchPageElements = HTML.ElementFromString(httpResult.Content);
             var searchNodes = searchPageElements.SelectNodes("//ul[@class='bricks-layout-wrapper']");
             if (searchNodes != null)
             {
@@ -45,12 +48,12 @@ namespace PhoenixAdult.Sites
                 {
                     var titleNode = node.SelectSingleNode("//div[@class='bricks-layout-inner']/div/h3/a");
                     string titleNoFormatting = titleNode?.InnerText;
-                    string curId = Helper.Encode(titleNode?.GetAttributeValue("href", ""));
+                    string curId = Helper.Encode(titleNode?.GetAttributeValue("href", string.Empty));
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -67,32 +70,41 @@ namespace PhoenixAdult.Sites
 
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//h1[contains(@class, 'brxe-post-title')]")?.InnerText.Trim();
 
             var summaryNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'brxe-post-content')]//span") ?? detailsPageElements.SelectSingleNode("//div[contains(@class, 'brxe-post-content')]/p");
             if (summaryNode != null)
+            {
                 movie.Overview = summaryNode.InnerText.Trim();
+            }
 
             movie.AddStudio("PKJ Media");
             movie.AddTag(Helper.GetSearchSiteName(siteNum));
-            movie.AddCollection(new[] { Helper.GetSearchSiteName(siteNum) });
 
             string siteName = Helper.GetSearchSiteName(siteNum);
             if (genresDB.ContainsKey(siteName))
             {
                 foreach (var genre in genresDB[siteName])
+                {
                     movie.AddGenre(genre);
+                }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'brxe-post-meta')]/span/a");
             if(actorNodes != null)
             {
                 foreach(var actor in actorNodes)
+                {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
+                }
             }
 
             return result;
@@ -103,12 +115,18 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return images;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//video[@class='bricks-plyr']");
             if(posterNode != null)
-                images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("poster", ""), Type = ImageType.Primary });
+            {
+                images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("poster", string.Empty), Type = ImageType.Primary });
+            }
 
             return images;
         }

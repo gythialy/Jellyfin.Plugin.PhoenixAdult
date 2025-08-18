@@ -29,7 +29,7 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (httpResult.IsOK)
             {
-                var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                var detailsPageElements = HTML.ElementFromString(httpResult.Content);
                 string title = detailsPageElements.SelectSingleNode("//div[contains(@class, 'video_detail')]//span[contains(@id, 'ContentPlaceHolder1_LabelTitle')]")?.InnerText.Trim();
                 string releaseDate = detailsPageElements.SelectSingleNode("//div[contains(@class, 'video_detail')]//span[contains(@id, 'ContentPlaceHolder1_LabelReleased')]")?.InnerText;
                 return (title, releaseDate, detailsPageElements);
@@ -48,7 +48,7 @@ namespace PhoenixAdult.Sites
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"belamionline|{siteNum[0]}|{sceneId}" } },
                     Name = $"{sceneInfo.title} [{Helper.GetSearchSiteName(siteNum)}] {sceneInfo.releaseDate}",
-                    SearchProviderName = Plugin.Instance.Name
+                    SearchProviderName = Plugin.Instance.Name,
                 });
             }
             return result;
@@ -65,7 +65,10 @@ namespace PhoenixAdult.Sites
             string[] providerIds = sceneID[0].Split('|');
             string sceneId = providerIds[2];
             var sceneInfo = await GetSceneInfo(sceneId, cancellationToken);
-            if (sceneInfo.detailsPageElements == null) return result;
+            if (sceneInfo.detailsPageElements == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
             movie.Name = sceneInfo.title;
@@ -74,7 +77,6 @@ namespace PhoenixAdult.Sites
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             if (DateTime.TryParse(sceneInfo.releaseDate, out var parsedDate))
             {
@@ -86,20 +88,33 @@ namespace PhoenixAdult.Sites
             if (genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.InnerText);
+                }
             }
 
             var actorNodes = sceneInfo.detailsPageElements.SelectNodes("//div[contains(@class, 'video_detail')]//div[contains(@class, 'right')]//div[contains(@class, 'actors_list')]//div[contains(@class, 'actor')]//a");
             if (actorNodes != null)
             {
-                if (actorNodes.Count == 3) movie.AddGenre("Threesome");
-                if (actorNodes.Count == 4) movie.AddGenre("Foursome");
-                if (actorNodes.Count > 4) movie.AddGenre("Orgy");
+                if (actorNodes.Count == 3)
+                {
+                    movie.AddGenre("Threesome");
+                }
+
+                if (actorNodes.Count == 4)
+                {
+                    movie.AddGenre("Foursome");
+                }
+
+                if (actorNodes.Count > 4)
+                {
+                    movie.AddGenre("Orgy");
+                }
 
                 foreach (var actor in actorNodes)
                 {
                     string actorName = actor.InnerText;
-                    string actorPhotoUrl = actor.SelectSingleNode("//img")?.GetAttributeValue("src", "");
+                    string actorPhotoUrl = actor.SelectSingleNode("//img")?.GetAttributeValue("src", string.Empty);
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }

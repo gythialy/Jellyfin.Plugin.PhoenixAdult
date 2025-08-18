@@ -82,9 +82,13 @@ namespace PhoenixAdult.Sites
                     string releaseDate = string.Empty;
                     var dateNode = detailsPageElements.SelectSingleNode("//p[@class='update-info-line regular']/b[1][./preceding-sibling::i[contains(@class, 'calendar')]]");
                     if (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                    {
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    }
                     else if (searchDate.HasValue)
+                    {
                         releaseDate = searchDate.Value.ToString("yyyy-MM-dd");
+                    }
 
                     result.Add(new RemoteSearchResult
                     {
@@ -108,16 +112,20 @@ namespace PhoenixAdult.Sites
                         foreach(var node in searchNodes)
                         {
                             string titleNoFormatting = node.SelectSingleNode(".//span[contains(@class, 'title')]")?.InnerText.Trim();
-                            string galleryId = node.SelectSingleNode(".//a")?.GetAttributeValue("href", "").Split('=').Last();
+                            string galleryId = node.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty).Split('=').Last();
                             string sceneUrl = $"{Helper.GetSearchBaseURL(siteNum)}/studios/video/{galleryId}";
                             string curId = Helper.Encode(sceneUrl);
 
                             string releaseDate = string.Empty;
                             var dateNode = node.SelectSingleNode(".//span[contains(@class, 'releasedate')]");
                             if (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "MMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                            {
                                 releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                            }
                             else if(searchDate.HasValue)
+                            {
                                 releaseDate = searchDate.Value.ToString("yyyy-MM-dd");
+                            }
 
                             result.Add(new RemoteSearchResult
                             {
@@ -146,7 +154,11 @@ namespace PhoenixAdult.Sites
             string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
@@ -154,7 +166,9 @@ namespace PhoenixAdult.Sites
 
             string summary = detailsPageElements.SelectSingleNode("//p[contains(@class, 'description')]")?.InnerText.Trim();
             if (summary != null && !skipGeneric.Any(s => summary.StartsWith(s, StringComparison.OrdinalIgnoreCase)))
+            {
                 movie.Overview = summary;
+            }
 
             movie.AddStudio("Adult Prime");
 
@@ -180,7 +194,9 @@ namespace PhoenixAdult.Sites
             if (genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.Trim());
+                }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//p[@class='update-info-line regular'][./b[contains(., 'Performer')]]/a");
@@ -202,15 +218,22 @@ namespace PhoenixAdult.Sites
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return images;
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
+
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//video[@id]/@poster");
             if (posterNode != null)
             {
-                string imageUrl = posterNode.GetAttributeValue("poster", "");
+                string imageUrl = posterNode.GetAttributeValue("poster", string.Empty);
                 if(!imageUrl.StartsWith("http"))
+                {
                     imageUrl = imageUrl.Split('(').Last().Split(')').First();
+                }
+
                 images.Add(new RemoteImageInfo { Url = imageUrl, Type = ImageType.Primary });
             }
 

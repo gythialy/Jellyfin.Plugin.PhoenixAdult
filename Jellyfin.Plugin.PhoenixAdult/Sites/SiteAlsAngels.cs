@@ -29,9 +29,12 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             var httpResult = await HTTP.Request(Helper.GetSearchSearchURL(siteNum), HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
 
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
             HtmlNodeCollection parent = null;
 
             if (searchDate.HasValue)
@@ -51,15 +54,15 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var elem in parent)
                 {
-                    string model = Regex.Replace(elem.SelectSingleNode(".//h2[@class='videomodel']")?.InnerText.Trim() ?? "", @"Models?: (.+)", "$1");
-                    string genre = Regex.Replace(elem.SelectSingleNode(".//span[@class='videotype']")?.InnerText.Trim() ?? "", @"Video Type: (.+)", "$1");
-                    string releaseDate = DateTime.Parse(Regex.Replace(elem.SelectSingleNode(".//span[@class='videodate']")?.InnerText.Trim() ?? "", @"Date: (.+)", "$1")).ToString("yyyy-MM-dd");
-                    string sceneId = Regex.Replace(elem.SelectSingleNode(".//td[@class='videothumbnail']/a/img")?.GetAttributeValue("src", "").Trim() ?? "", @"graphics/videos/(.+)\.jpg", "$1");
+                    string model = Regex.Replace(elem.SelectSingleNode(".//h2[@class='videomodel']")?.InnerText.Trim() ?? string.Empty, @"Models?: (.+)", "$1");
+                    string genre = Regex.Replace(elem.SelectSingleNode(".//span[@class='videotype']")?.InnerText.Trim() ?? string.Empty, @"Video Type: (.+)", "$1");
+                    string releaseDate = DateTime.Parse(Regex.Replace(elem.SelectSingleNode(".//span[@class='videodate']")?.InnerText.Trim() ?? string.Empty, @"Date: (.+)", "$1")).ToString("yyyy-MM-dd");
+                    string sceneId = Regex.Replace(elem.SelectSingleNode(".//td[@class='videothumbnail']/a/img")?.GetAttributeValue("src", string.Empty).Trim() ?? string.Empty, @"graphics/videos/(.+)\.jpg", "$1");
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{sceneId}|{siteNum[0]}|{releaseDate}" } },
                         Name = $"{model} {genre} {releaseDate} [ALSAngels/{sceneId}]",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -87,12 +90,16 @@ namespace PhoenixAdult.Sites
             string searchBaseUrl = Helper.GetSearchBaseURL(siteNum).Trim();
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
             var parentElement = detailsPageElements.SelectSingleNode($"//tr[.//span[@class='videodate' and contains(text(), \"{dateString}\")]]");
 
-            string model = Regex.Replace(detailsPageElements.SelectSingleNode("//title")?.InnerText.Trim() ?? "", @"ALSAngels.com - (.+)", "$1", RegexOptions.IgnoreCase);
-            string subject = Regex.Replace(parentElement.SelectSingleNode(".//span[@class='videotype']")?.InnerText.Trim() ?? "", @"Video Type: (.+)", "$1", RegexOptions.IgnoreCase);
+            string model = Regex.Replace(detailsPageElements.SelectSingleNode("//title")?.InnerText.Trim() ?? string.Empty, @"ALSAngels.com - (.+)", "$1", RegexOptions.IgnoreCase);
+            string subject = Regex.Replace(parentElement.SelectSingleNode(".//span[@class='videotype']")?.InnerText.Trim() ?? string.Empty, @"Video Type: (.+)", "$1", RegexOptions.IgnoreCase);
 
             var movie = (Movie)result.Item;
             movie.Name = $"{model} #{int.Parse(sceneNum)}: {subject}";
@@ -100,12 +107,11 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("ALSAngels");
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
             movie.PremiereDate = dateObject;
             movie.ProductionYear = dateObject.Year;
             movie.AddGenre(subject);
 
-            string actorPhotoUrl = detailsPageElements.SelectSingleNode(".//div[@id='modelbioheadshot']/img")?.GetAttributeValue("src", "").Replace("..", searchBaseUrl);
+            string actorPhotoUrl = detailsPageElements.SelectSingleNode(".//div[@id='modelbioheadshot']/img")?.GetAttributeValue("src", string.Empty).Replace("..", searchBaseUrl);
             result.People.Add(new PersonInfo { Name = model, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
 
             return result;
@@ -125,8 +131,12 @@ namespace PhoenixAdult.Sites
 
             string sceneUrl = $"{Helper.GetSearchBaseURL(siteNum)}/profiles/{modelId}.html#videoupdate";
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-if (!httpResult.IsOK) return images;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
             var parentElement = detailsPageElements.SelectSingleNode($"//tr[.//span[@class='videodate' and contains(text(), \"{dateString}\")]]");
 
             var imageNodes = parentElement.SelectNodes(".//td[@class='videothumbnail']//img | .//td[@class='videothumbnail']//a");
@@ -134,13 +144,15 @@ if (!httpResult.IsOK) return images;
             {
                 foreach(var img in imageNodes)
                 {
-                    string imageUrl = (img.GetAttributeValue("src", "") ?? img.GetAttributeValue("href", "")).Replace("..", searchBaseUrl);
+                    string imageUrl = (img.GetAttributeValue("src", string.Empty) ?? img.GetAttributeValue("href", string.Empty)).Replace("..", searchBaseUrl);
                     images.Add(new RemoteImageInfo { Url = imageUrl });
                 }
             }
 
             if (images.Any())
+            {
                 images.First().Type = ImageType.Primary;
+            }
 
             return images;
         }

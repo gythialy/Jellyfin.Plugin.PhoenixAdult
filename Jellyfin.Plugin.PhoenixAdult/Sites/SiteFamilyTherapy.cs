@@ -30,9 +30,12 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteSearchResult>();
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + searchTitle.Replace("and", "&");
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
 
-            var searchPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var searchPageElements = HTML.ElementFromString(httpResult.Content);
             var searchNodes = searchPageElements.SelectNodes("//article");
             if (searchNodes != null)
             {
@@ -40,17 +43,19 @@ namespace PhoenixAdult.Sites
                 {
                     var titleNode = node.SelectSingleNode("./h2/a");
                     string titleNoFormatting = titleNode?.InnerText.Trim();
-                    string curId = Helper.Encode(titleNode?.GetAttributeValue("href", ""));
+                    string curId = Helper.Encode(titleNode?.GetAttributeValue("href", string.Empty));
                     var dateNode = node.SelectSingleNode("./p/span[1]");
                     string releaseDate = string.Empty;
                     if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+                    {
                         releaseDate = parsedDate.ToString("MMM dd, yyyy");
+                    }
 
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
                         Name = $"{titleNoFormatting} [FamilyTherapy] {releaseDate}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -67,28 +72,37 @@ namespace PhoenixAdult.Sites
 
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!sceneUrl.StartsWith("http"))
+            {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
+            }
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
 
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='entry-content']/p[1]") ?? detailsPageElements.SelectSingleNode("//div[@class='entry-content']");
             if(summaryNode != null)
+            {
                 movie.Overview = summaryNode.InnerText.Trim();
+            }
 
             movie.AddStudio("Family Therapy");
             movie.AddTag("Family Therapy");
-            movie.AddCollection(new[] { "Family Therapy" });
 
             var genreNodes = detailsPageElements.SelectNodes("//a[@rel='category tag']");
             if(genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.InnerText.Trim());
+                }
             }
 
             var dateNode = detailsPageElements.SelectSingleNode("//p[@class='post-meta']/span");
@@ -108,7 +122,9 @@ namespace PhoenixAdult.Sites
                     {
                         var actors = match.Value.Split('&');
                         foreach(var actor in actors)
+                        {
                             result.People.Add(new PersonInfo { Name = actor.Trim(), Type = PersonKind.Actor });
+                        }
                     }
                 }
             }

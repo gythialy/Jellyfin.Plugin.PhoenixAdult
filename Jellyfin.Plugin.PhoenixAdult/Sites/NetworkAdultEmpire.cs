@@ -32,7 +32,10 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            if (siteNum == null) return result;
+            if (siteNum == null)
+            {
+                return result;
+            }
 
             string sceneID = null;
             var parts = searchTitle.Split(' ');
@@ -68,7 +71,7 @@ namespace PhoenixAdult.Sites
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                            SearchProviderName = Plugin.Instance.Name
+                            SearchProviderName = Plugin.Instance.Name,
                         });
                     }
                 }
@@ -76,10 +79,16 @@ namespace PhoenixAdult.Sites
 
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
             var searchHtml = await HTML.ElementFromURL(searchUrl, cancellationToken, null, GetCookies());
-            if (searchHtml == null) return result;
+            if (searchHtml == null)
+            {
+                return result;
+            }
 
             var searchResults = searchHtml.SelectNodes("//div[contains(@class, 'item-grid')]/div[@class='grid-item']");
-            if (searchResults == null) return result;
+            if (searchResults == null)
+            {
+                return result;
+            }
 
             foreach (var searchResult in searchResults)
             {
@@ -91,25 +100,25 @@ namespace PhoenixAdult.Sites
                     int currentSiteNum = siteNum[0];
                     if (currentSiteNum == 815 || currentSiteNum == 1337 || currentSiteNum == 1776 || currentSiteNum == 1800)
                     {
-                        titleNoFormatting = searchResult.SelectSingleNode(".//img[contains(@class, 'img-full-fluid')]").GetAttributeValue("title", "").Trim();
-                        curID = Helper.Encode(searchResult.SelectSingleNode(".//article[contains(@class, 'scene-update')]/a").GetAttributeValue("href", ""));
+                        titleNoFormatting = searchResult.SelectSingleNode(".//img[contains(@class, 'img-full-fluid')]").GetAttributeValue("title", string.Empty).Trim();
+                        curID = Helper.Encode(searchResult.SelectSingleNode(".//article[contains(@class, 'scene-update')]/a").GetAttributeValue("href", string.Empty));
                     }
                     else if (currentSiteNum == 1766 || currentSiteNum == 1779 || currentSiteNum == 1790 || currentSiteNum == 1792)
                     {
                         titleNoFormatting = searchResult.SelectSingleNode(".//a[@class='scene-title']/p").InnerText.Split(new[] { " | " }, StringSplitOptions.None)[0].Trim();
-                        curID = Helper.Encode(searchResult.SelectSingleNode(".//a[@class='scene-title']").GetAttributeValue("href", ""));
+                        curID = Helper.Encode(searchResult.SelectSingleNode(".//a[@class='scene-title']").GetAttributeValue("href", string.Empty));
                     }
                     else
                     {
                         titleNoFormatting = searchResult.SelectSingleNode(".//a[@class='scene-title']/h6").InnerText.Trim();
-                        curID = Helper.Encode(searchResult.SelectSingleNode(".//a[@class='scene-title']").GetAttributeValue("href", ""));
+                        curID = Helper.Encode(searchResult.SelectSingleNode(".//a[@class='scene-title']").GetAttributeValue("href", string.Empty));
                     }
 
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
                 catch
@@ -136,14 +145,19 @@ namespace PhoenixAdult.Sites
             }
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken, null, GetCookies());
-            if (detailsPageElements == null) return result;
+            if (detailsPageElements == null)
+            {
+                return result;
+            }
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//h1[@class='description']").InnerText.Trim();
 
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='synopsis']/p");
             if (summaryNode != null)
+            {
                 movie.Overview = summaryNode.InnerText.Trim();
+            }
 
             movie.AddStudio("Adult Empire Cash");
 
@@ -165,7 +179,9 @@ namespace PhoenixAdult.Sites
             if (genres != null)
             {
                 foreach (var genre in genres)
+                {
                     movie.AddGenre(genre.InnerText);
+                }
             }
 
             var actorsWithHeadshots = detailsPageElements.SelectNodes("//div[@class='video-performer']//img");
@@ -175,9 +191,9 @@ namespace PhoenixAdult.Sites
                 {
                     result.People.Add(new PersonInfo
                     {
-                        Name = actor.GetAttributeValue("title", "").Trim(),
+                        Name = actor.GetAttributeValue("title", string.Empty).Trim(),
                         Type = PersonKind.Actor,
-                        ImageUrl = actor.GetAttributeValue("data-bgsrc", "").Trim()
+                        ImageUrl = actor.GetAttributeValue("data-bgsrc", string.Empty).Trim(),
                     });
                 }
             }
@@ -189,7 +205,9 @@ namespace PhoenixAdult.Sites
                 {
                      string actorName = actor.InnerText.Trim();
                      if(!result.People.Any(p => p.Name.Equals(actorName, StringComparison.OrdinalIgnoreCase)))
+                    {
                         result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                    }
                 }
             }
 
@@ -198,7 +216,9 @@ namespace PhoenixAdult.Sites
             {
                 string directorName = directorNode.InnerText.Trim();
                 if(!result.People.Any(p => p.Name.Equals(directorName, StringComparison.OrdinalIgnoreCase)))
+                {
                     result.People.Add(new PersonInfo { Name = directorName, Type = PersonKind.Director });
+                }
             }
 
             return result;
@@ -215,15 +235,21 @@ namespace PhoenixAdult.Sites
             }
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken, null, GetCookies());
-            if (detailsPageElements == null) return images;
+            if (detailsPageElements == null)
+            {
+                return images;
+            }
 
             var posters = detailsPageElements.SelectNodes("//div[@id='dv_frames']//img");
-            if (posters == null) return images;
+            if (posters == null)
+            {
+                return images;
+            }
 
             bool first = true;
             foreach(var poster in posters)
             {
-                string imageUrl = poster.GetAttributeValue("src", "").Replace("/320/", "/1280/");
+                string imageUrl = poster.GetAttributeValue("src", string.Empty).Replace("/320/", "/1280/");
                 var imageInfo = new RemoteImageInfo { Url = imageUrl };
                 if (first)
                 {

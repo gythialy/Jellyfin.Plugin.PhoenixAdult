@@ -38,7 +38,7 @@ namespace PhoenixAdult.Sites
         {
             string str = phrase.ToLowerInvariant();
             str = System.Text.Encoding.ASCII.GetString(System.Text.Encoding.GetEncoding("Cyrillic").GetBytes(str));
-            str = System.Text.RegularExpressions.Regex.Replace(str, @"[^a-z0-9\s-]", "");
+            str = System.Text.RegularExpressions.Regex.Replace(str, @"[^a-z0-9\s-]", string.Empty);
             str = System.Text.RegularExpressions.Regex.Replace(str, @"\s+", " ").Trim();
             str = str.Substring(0, str.Length <= 45 ? str.Length : 45).Trim();
             str = System.Text.RegularExpressions.Regex.Replace(str, @"\s", "+");
@@ -49,10 +49,10 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             string sceneId = null;
-            if (int.TryParse(searchTitle.Split(' ').FirstOrDefault() ?? "", out _))
+            if (int.TryParse(searchTitle.Split(' ').FirstOrDefault() ?? string.Empty, out _))
             {
                 sceneId = searchTitle.Split(' ').First();
-                searchTitle = searchTitle.Replace(sceneId, "").Trim();
+                searchTitle = searchTitle.Replace(sceneId, string.Empty).Trim();
             }
 
             if (sceneId != null)
@@ -61,7 +61,7 @@ namespace PhoenixAdult.Sites
                 var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken, null, _cookies);
                 if (httpResult.IsOK)
                 {
-                    var searchResult = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                    var searchResult = HTML.ElementFromString(httpResult.Content);
                     string titleNoFormatting = searchResult.SelectSingleNode("//h1[@class='post_title']/span")?.InnerText;
                     string curId = Helper.Encode(sceneUrl);
                     string subSite = searchResult.SelectSingleNode("//a[contains(@href, '/studio/profile/')]")?.InnerText.Split(':').Last().Trim();
@@ -69,7 +69,7 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
                         Name = $"{titleNoFormatting} [{subSite}]",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -78,25 +78,27 @@ namespace PhoenixAdult.Sites
                 string searchUrl = Helper.GetSearchSearchURL(siteNum) + Slugify(searchTitle);
                 var siteName = Helper.GetSearchSiteName(siteNum).ToLower();
                 if (siteNum[0] >= 1867 && siteNum[0] <= 1882)
+                {
                     searchUrl = $"{searchUrl}&channel={channelIdDB.FirstOrDefault(kvp => kvp.Value.Contains(siteName)).Key}";
+                }
 
                 var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, null, _cookies);
                 if (httpResult.IsOK)
                 {
-                    var searchResults = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                    var searchResults = HTML.ElementFromString(httpResult.Content);
                     var searchNodes = searchResults.SelectNodes("//div[contains(@class, 'results_item')]");
                     if (searchNodes != null)
                     {
                         foreach (var node in searchNodes)
                         {
                             string titleNoFormatting = node.SelectSingleNode(".//a[@class='post_title']")?.InnerText;
-                            string curId = Helper.Encode(node.SelectSingleNode(".//a[@class='post_title']")?.GetAttributeValue("href", ""));
+                            string curId = Helper.Encode(node.SelectSingleNode(".//a[@class='post_title']")?.GetAttributeValue("href", string.Empty));
                             string subSite = node.SelectSingleNode(".//a[@class='post_channel']")?.InnerText.Split(':').Last().Trim();
                             result.Add(new RemoteSearchResult
                             {
                                 ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
                                 Name = $"{titleNoFormatting} [{subSite}]",
-                                SearchProviderName = Plugin.Instance.Name
+                                SearchProviderName = Plugin.Instance.Name,
                             });
                         }
                     }
@@ -116,12 +118,19 @@ namespace PhoenixAdult.Sites
             string[] providerIds = sceneID[0].Split('|');
             string sceneUrl = Helper.Decode(providerIds[0]);
             if (!sceneUrl.StartsWith("http"))
+            {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
+            }
+
             string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken, null, _cookies);
-            if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//h1[@class='post_title']/span")?.InnerText.Trim();
@@ -130,11 +139,6 @@ namespace PhoenixAdult.Sites
 
             string tagline = detailsPageElements.SelectSingleNode("//a[contains(@href, '/studio/profile/')]")?.InnerText.Trim();
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
-
-            var dvd = detailsPageElements.SelectSingleNode("//div[@class='post_item dvd']/h1");
-            if(dvd != null)
-                movie.AddCollection(new[] { dvd.InnerText.ToLower() });
 
             var dateNode = detailsPageElements.SelectSingleNode("//h3[@class='post_date']");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
@@ -152,14 +156,18 @@ namespace PhoenixAdult.Sites
             if(genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.InnerText.Trim());
+                }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//a[contains(@href, 'models/')]");
             if(actorNodes != null)
             {
                 foreach(var actor in actorNodes)
+                {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
+                }
             }
 
             return result;
@@ -170,21 +178,31 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!sceneUrl.StartsWith("http"))
+            {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
+            }
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken, null, _cookies);
-            if (!httpResult.IsOK) return images;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//img[@class='item_cover'] | //meta[@name='twitter:image']");
             if(imageNodes != null)
             {
                 foreach(var img in imageNodes)
-                    images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("src", "") ?? img.GetAttributeValue("content", "") });
+                {
+                    images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("src", string.Empty) ?? img.GetAttributeValue("content", string.Empty) });
+                }
             }
 
             if (images.Any())
+            {
                 images.First().Type = ImageType.Primary;
+            }
 
             return images;
         }

@@ -10,6 +10,11 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteJacquieEtMichel : IProviderBase
@@ -37,16 +42,13 @@ namespace PhoenixAdult.Sites
                 {
                     var titleNoFormatting = node.SelectSingleNode(".//h2[@class='content-card__title']").InnerText.Trim();
                     var curID = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(node.GetAttributeValue("href", string.Empty)));
-                    var date = node.SelectSingleNode(".//div[@class='content-card__date']").InnerText.Replace("Added on", "").Trim();
+                    var date = node.SelectSingleNode(".//div[@class='content-card__date']").InnerText.Replace("Added on", string.Empty).Trim();
                     var releaseDate = DateTime.Parse(date).ToString("yyyy-MM-dd");
-
-                    var score = 100 - LevenshteinDistance(searchDate?.ToString("yyyy-MM-dd") ?? string.Empty, releaseDate);
 
                     searchResults.Add(new RemoteSearchResult
                     {
                         Id = $"{curID}|{siteNum[0]}",
                         Name = $"{titleNoFormatting} [{SiteName}] {releaseDate}",
-                        Score = score
                     });
                 }
             }
@@ -63,7 +65,6 @@ namespace PhoenixAdult.Sites
                 {
                     Id = $"{curID}|{siteNum[0]}",
                     Name = $"{titleNoFormatting} [{SiteName}]",
-                    Score = 100
                 });
             }
 
@@ -84,7 +85,7 @@ namespace PhoenixAdult.Sites
             var metadataResult = new MetadataResult<BaseItem>
             {
                 Item = new BaseItem(),
-                HasMetadata = true
+                HasMetadata = true,
             };
 
             metadataResult.Item.Name = doc.SelectSingleNode("//h1[@class='content-detail__title']").InnerText.Trim();
@@ -100,7 +101,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var genre in genres)
                 {
-                    var genreName = genre.InnerText.Replace(",", "").Trim();
+                    var genreName = genre.InnerText.Replace(",", string.Empty).Trim();
                     if (genreName == "Sodomy")
                     {
                         genreName = "Anal";
@@ -137,7 +138,7 @@ namespace PhoenixAdult.Sites
                 {
                     Url = img,
                     Type = ImageType.Primary
-                }
+                },
             };
 
             return list;
@@ -184,7 +185,7 @@ namespace PhoenixAdult.Sites
                 { "4554/ibiza-1-crumb-in-the-mouth", new[] { "Alexis Crystal", "Cassie Del Isla", "Dorian Del Isla" } },
                 { "4558/orgies-in-ibiza-2-lucys-surprise", new[] { "Alexis Crystal", "Cassie Del Isla", "Lucy Heart", "Dorian Del Isla", "James Burnett Klein", "Vlad Castle" } },
                 { "4564/orgies-in-ibiza-3-overheated-orgy-by-the-pool", new[] { "Alexis Crystal", "Cassie Del Isla", "Lucy Heart", "Dorian Del Isla", "James Burnett Klein", "Vlad Castle" } },
-                { "4570/orgies-in-ibiza-4-orgy-with-a-bang-for-the-last-night", new[] { "Alexis Crystal", "Cassie Del Isla", "Lucy Heart", "Dorian Del Isla", "James Burnett Klein", "Vlad Castle" } }
+                { "4570/orgies-in-ibiza-4-orgy-with-a-bang-for-the-last-night", new[] { "Alexis Crystal", "Cassie Del Isla", "Lucy Heart", "Dorian Del Isla", "James Burnett Klein", "Vlad Castle" } },
             };
 
             return scenes.Where(scene => url.Contains(scene.Key)).Select(scene => scene.Value).FirstOrDefault();

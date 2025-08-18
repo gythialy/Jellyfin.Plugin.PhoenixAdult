@@ -28,7 +28,7 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
             if(httpResult.IsOK)
             {
-                var modelPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+                var modelPageElements = HTML.ElementFromString(httpResult.Content);
                 var data = JObject.Parse(modelPageElements.SelectSingleNode("//script[@type='application/json']")?.InnerText);
                 return data["buildId"].ToString();
             }
@@ -41,11 +41,17 @@ namespace PhoenixAdult.Sites
             string encoded = searchTitle.Split(new[] { "and" }, StringSplitOptions.None)[0].Trim().Replace(' ', '-').ToLower();
             string modelPageUrl = $"{Helper.GetSearchBaseURL(siteNum)}/models/{encoded}";
             string buildId = await GetBuildId(modelPageUrl, cancellationToken);
-            if (buildId == null) return result;
+            if (buildId == null)
+            {
+                return result;
+            }
 
             string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}/{buildId}/models/{encoded}.json";
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
 
             var searchResults = JObject.Parse(httpResult.Content);
             if (searchResults["pageProps"]?["model_contents"] != null)
@@ -56,13 +62,15 @@ namespace PhoenixAdult.Sites
                     string curId = Helper.Encode(searchResult["slug"].ToString());
                     string releaseDate = string.Empty;
                     if (DateTime.TryParse(searchResult["publish_date"].ToString(), out var parsedDate))
+                    {
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    }
 
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -83,11 +91,17 @@ namespace PhoenixAdult.Sites
 
             string sceneUrl = $"{Helper.GetSearchBaseURL(siteNum)}/scenes/{slug}";
             string buildId = await GetBuildId(sceneUrl, cancellationToken);
-            if (buildId == null) return result;
+            if (buildId == null)
+            {
+                return result;
+            }
 
             string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}/{buildId}/scenes/{slug}.json";
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
 
             var detailsPageElements = JObject.Parse(httpResult.Content)["pageProps"]["content"];
 
@@ -98,7 +112,6 @@ namespace PhoenixAdult.Sites
 
             string tagline = detailsPageElements["site"].ToString();
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {
@@ -107,7 +120,9 @@ namespace PhoenixAdult.Sites
             }
 
             foreach (var genre in detailsPageElements["tags"])
+            {
                 movie.AddGenre(genre.ToString().Trim());
+            }
 
             foreach (var actor in detailsPageElements["models_thumbs"])
             {
@@ -127,31 +142,45 @@ namespace PhoenixAdult.Sites
 
             string sceneUrl = $"{Helper.GetSearchBaseURL(siteNum)}/scenes/{slug}";
             string buildId = await GetBuildId(sceneUrl, cancellationToken);
-            if (buildId == null) return images;
+            if (buildId == null)
+            {
+                return images;
+            }
 
             string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}/{buildId}/scenes/{slug}.json";
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return images;
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
 
             var detailsPageElements = JObject.Parse(httpResult.Content)["pageProps"]["content"];
 
             if(detailsPageElements["trailer_screencap"] != null)
+            {
                 images.Add(new RemoteImageInfo { Url = detailsPageElements["trailer_screencap"].ToString() });
+            }
 
-            if(detailsPageElements["extra_thumbnails"] != null)
+            if (detailsPageElements["extra_thumbnails"] != null)
             {
                 foreach(var image in detailsPageElements["extra_thumbnails"])
+                {
                     images.Add(new RemoteImageInfo { Url = image.ToString() });
+                }
             }
 
             if(detailsPageElements["thumbs"] != null)
             {
                 foreach(var image in detailsPageElements["thumbs"])
+                {
                     images.Add(new RemoteImageInfo { Url = image.ToString() });
+                }
             }
 
             if (images.Any())
+            {
                 images.First().Type = ImageType.Primary;
+            }
 
             return images;
         }

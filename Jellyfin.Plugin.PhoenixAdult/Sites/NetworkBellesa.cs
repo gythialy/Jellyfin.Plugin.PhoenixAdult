@@ -29,11 +29,14 @@ namespace PhoenixAdult.Sites
             var headers = new Dictionary<string, string>
             {
                 { "Content-Type", "application/json" },
-                { "Referer", Helper.GetSearchBaseURL(siteNum) }
+                { "Referer", Helper.GetSearchBaseURL(siteNum) },
             };
             var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken, headers);
             if (!httpResult.IsOK)
+            {
                 return null;
+            }
+
             return JArray.Parse(httpResult.Content);
         }
 
@@ -109,7 +112,11 @@ namespace PhoenixAdult.Sites
             string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
 
             var detailsPageElements = await GetJSONfromAPI("videos", $"filter[id]={sceneId}", siteNum, cancellationToken);
-            if (detailsPageElements == null || !detailsPageElements.Any()) return result;
+            if (detailsPageElements == null || !detailsPageElements.Any())
+            {
+                return result;
+            }
+
             var scene = detailsPageElements[0];
 
             var movie = (Movie)result.Item;
@@ -128,7 +135,9 @@ namespace PhoenixAdult.Sites
 
             var genres = scene["tags"].ToString().Split(',');
             foreach (var genre in genres)
+            {
                 movie.AddGenre(genre.Trim());
+            }
 
             var actors = scene["performers"];
             foreach (var actor in actors)

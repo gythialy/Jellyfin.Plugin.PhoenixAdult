@@ -44,13 +44,15 @@ namespace PhoenixAdult.Sites
                         var dateNode = detailsPageElements.SelectSingleNode("//span[(contains(@class, 'update_date'))]");
                         string releaseDate = string.Empty;
                         if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+                        {
                             releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                        }
 
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
-                            SearchProviderName = Plugin.Instance.Name
+                            SearchProviderName = Plugin.Instance.Name,
                         });
                     }
                 }
@@ -68,10 +70,16 @@ namespace PhoenixAdult.Sites
 
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!sceneUrl.StartsWith("http"))
+            {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
+            }
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
@@ -90,7 +98,9 @@ namespace PhoenixAdult.Sites
             if(genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.InnerText.Trim());
+                }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[(contains(@class, 'update_block_info model_update_block_info'))]/span[(contains(@class, 'tour_update_models'))]/a");
@@ -99,12 +109,12 @@ namespace PhoenixAdult.Sites
                 foreach(var actor in actorNodes)
                 {
                     string actorName = actor.InnerText.Trim();
-                    string actorPageUrl = actor.GetAttributeValue("href", "");
+                    string actorPageUrl = actor.GetAttributeValue("href", string.Empty);
                     var actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken);
                     if(actorHttp.IsOK)
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
-                        string actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actorPage.SelectSingleNode("//img[(contains(@class, 'model_bio_thumb stdimage thumbs target'))]")?.GetAttributeValue("src0_3x", "");
+                        string actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actorPage.SelectSingleNode("//img[(contains(@class, 'model_bio_thumb stdimage thumbs target'))]")?.GetAttributeValue("src0_3x", string.Empty);
                         result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                     }
                 }
@@ -118,16 +128,22 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!sceneUrl.StartsWith("http"))
+            {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
+            }
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return images;
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
+
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//span[(contains(@class, 'model_update_thumb'))]/img");
             if (posterNode != null)
             {
-                string poster = Helper.GetSearchBaseURL(siteNum) + "/" + posterNode.GetAttributeValue("src0_4x", "");
+                string poster = Helper.GetSearchBaseURL(siteNum) + "/" + posterNode.GetAttributeValue("src0_4x", string.Empty);
                 images.Add(new RemoteImageInfo { Url = poster, Type = ImageType.Primary });
                 images.Add(new RemoteImageInfo { Url = poster.Replace("0-4x", "1-4x") });
             }

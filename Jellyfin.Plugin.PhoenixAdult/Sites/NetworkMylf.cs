@@ -44,7 +44,9 @@ namespace PhoenixAdult.Sites
             {
                 var match = new Regex(@"window\.__INITIAL_STATE__ = (.*);").Match(http.Content);
                 if (match.Success)
+                {
                     return (JObject)JObject.Parse(match.Groups[1].Value)["content"];
+                }
             }
             return null;
         }
@@ -53,24 +55,31 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             if (siteNum == null || string.IsNullOrEmpty(searchTitle))
+            {
                 return result;
+            }
 
             var searchResultsURLs = new HashSet<string>
             {
-                $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Slugify()}"
+                $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Slugify()}",
             };
 
             var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var sceneURL in googleResults)
             {
                 if (sceneURL.Contains("/movies/"))
+                {
                     searchResultsURLs.Add(sceneURL.Split('?')[0]);
+                }
             }
 
             foreach (var url in searchResultsURLs)
             {
                 var detailsPageElements = await GetJSONfromPage(url, cancellationToken);
-                if (detailsPageElements == null) continue;
+                if (detailsPageElements == null)
+                {
+                    continue;
+                }
 
                 string sceneType = null;
                 foreach (var type in new[] { "moviesContent", "videosContent" })
@@ -92,16 +101,20 @@ namespace PhoenixAdult.Sites
 
                     string releaseDateStr = string.Empty;
                     if (details["publishedDate"] != null && DateTime.TryParse((string)details["publishedDate"], out var releaseDate))
+                    {
                         releaseDateStr = releaseDate.ToString("yyyy-MM-dd");
+                    }
                     else if (searchDate.HasValue)
+                    {
                         releaseDateStr = searchDate.Value.ToString("yyyy-MM-dd");
+                    }
 
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDateStr}|{sceneType}" } },
                         Name = $"{titleNoFormatting} [{subSite}] {releaseDateStr}",
                         SearchProviderName = Plugin.Instance.Name,
-                        ImageUrl = (string)details["img"]
+                        ImageUrl = (string)details["img"],
                     });
                 }
             }
@@ -122,7 +135,11 @@ namespace PhoenixAdult.Sites
             string sceneType = providerIds[3];
 
             var detailsPageElements = await GetJSONfromPage($"{Helper.GetSearchSearchURL(siteNum)}{sceneName}", cancellationToken);
-            if (detailsPageElements?[sceneType]?[sceneName] == null) return result;
+            if (detailsPageElements?[sceneType]?[sceneName] == null)
+            {
+                return result;
+            }
+
             var details = (JObject)detailsPageElements[sceneType][sceneName];
 
             var movie = (Movie)result.Item;
@@ -143,15 +160,24 @@ namespace PhoenixAdult.Sites
             if (details["tags"]?.Any() == true)
             {
                 foreach(var tag in details["tags"])
+                {
                     genres.Add((string)tag);
+                }
             }
             if(details["models"].Count() > 1 && subSite != "Mylfed")
+            {
                 genres.Add("Threesome");
-            if(GenresDB.ContainsKey(subSite))
-                genres.AddRange(GenresDB[subSite]);
+            }
 
-            foreach(var genre in genres.Distinct())
+            if (GenresDB.ContainsKey(subSite))
+            {
+                genres.AddRange(GenresDB[subSite]);
+            }
+
+            foreach (var genre in genres.Distinct())
+            {
                 movie.AddGenre(genre);
+            }
 
             foreach (var actorLink in details["models"])
             {
@@ -161,7 +187,9 @@ namespace PhoenixAdult.Sites
 
                 var actorData = await GetJSONfromPage($"{Helper.GetSearchBaseURL(siteNum)}/models/{actorID}", cancellationToken);
                 if (actorData?["modelsContent"]?[actorID] != null)
+                {
                     actorPhotoURL = (string)actorData["modelsContent"][actorID]["img"];
+                }
 
                 result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
             }
@@ -177,7 +205,11 @@ namespace PhoenixAdult.Sites
             string sceneType = providerIds[3];
 
             var detailsPageElements = await GetJSONfromPage($"{Helper.GetSearchSearchURL(siteNum)}{sceneName}", cancellationToken);
-            if (detailsPageElements?[sceneType]?[sceneName] == null) return result;
+            if (detailsPageElements?[sceneType]?[sceneName] == null)
+            {
+                return result;
+            }
+
             var details = (JObject)detailsPageElements[sceneType][sceneName];
 
             string img = (string)details["img"];

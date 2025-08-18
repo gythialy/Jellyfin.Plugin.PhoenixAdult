@@ -37,18 +37,20 @@ namespace PhoenixAdult.Sites
                 {
                     var detailsPageElements = HTML.ElementFromString(httpResult.Content);
                     string titleNoFormatting = detailsPageElements.SelectSingleNode("//h3[@class='mas_title']")?.InnerText.Trim();
-                    string subSite = detailsPageElements.SelectSingleNode("//title")?.InnerText.Split('|')[1].Trim().Replace(".com", "");
+                    string subSite = detailsPageElements.SelectSingleNode("//title")?.InnerText.Split('|')[1].Trim().Replace(".com", string.Empty);
                     string curId = Helper.Encode(sceneUrl);
                     string releaseDate = string.Empty;
                     var dateNode = detailsPageElements.SelectSingleNode("//div[@class='lch']/span");
                     if (dateNode != null && DateTime.TryParse(string.Join(" ", dateNode.InnerText.Split(',').Skip(1)).Trim(), out var parsedDate))
+                    {
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    }
 
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -68,7 +70,11 @@ namespace PhoenixAdult.Sites
             string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
@@ -76,7 +82,7 @@ namespace PhoenixAdult.Sites
             movie.Overview = detailsPageElements.SelectSingleNode("//p[@class='mas_longdescription']")?.InnerText.Trim();
             movie.AddStudio("Deranged Dollars");
 
-            string tagline = detailsPageElements.SelectSingleNode("//title")?.InnerText.Split('|')[1].Trim().Replace(".com", "");
+            string tagline = detailsPageElements.SelectSingleNode("//title")?.InnerText.Split('|')[1].Trim().Replace(".com", string.Empty);
             movie.AddTag(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
@@ -89,7 +95,9 @@ namespace PhoenixAdult.Sites
             if (genreNodes != null)
             {
                 foreach(var genre in genreNodes)
+                {
                     movie.AddGenre(genre.InnerText.Trim());
+                }
             }
 
             var actorStr = detailsPageElements.SelectSingleNode("//div[@class='lch']/span")?.InnerText.Split(',').First();
@@ -98,7 +106,7 @@ namespace PhoenixAdult.Sites
                 var actors = Regex.Split(actorStr.Contains(":") ? actorStr.Split(':')[1] : actorStr, ",|&|/|And");
                 foreach (var actor in actors)
                 {
-                    string actorName = Regex.Replace(actor.Trim(), @"\W", " ").Replace("Nurses", "").Replace("Nurse", "");
+                    string actorName = Regex.Replace(actor.Trim(), @"\W", " ").Replace("Nurses", string.Empty).Replace("Nurse", string.Empty);
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                 }
             }
@@ -112,14 +120,20 @@ namespace PhoenixAdult.Sites
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return images;
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
+
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//div[@class='stills clearfix']//img");
             if (imageNodes != null)
             {
                 foreach(var img in imageNodes)
-                    images.Add(new RemoteImageInfo { Url = Helper.GetSearchSearchURL(siteNum) + img.GetAttributeValue("src", "") });
+                {
+                    images.Add(new RemoteImageInfo { Url = Helper.GetSearchSearchURL(siteNum) + img.GetAttributeValue("src", string.Empty) });
+                }
             }
 
             var scriptNode = detailsPageElements.SelectSingleNode("//div[@class='mainpic']//script");
@@ -127,11 +141,15 @@ namespace PhoenixAdult.Sites
             {
                 var match = Regex.Match(scriptNode.InnerText, "'([^']*)'");
                 if(match.Success)
+                {
                     images.Add(new RemoteImageInfo { Url = Helper.GetSearchSearchURL(siteNum) + match.Groups[1].Value });
+                }
             }
 
             if (images.Any())
+            {
                 images.First().Type = ImageType.Primary;
+            }
 
             return images;
         }

@@ -30,36 +30,44 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             string sceneId = null;
-            if (int.TryParse(Regex.Replace(searchTitle.Split(' ').First(), @"^e(?=\d+$)", "", RegexOptions.IgnoreCase), out _))
+            if (int.TryParse(Regex.Replace(searchTitle.Split(' ').First(), @"^e(?=\d+$)", string.Empty, RegexOptions.IgnoreCase), out _))
             {
-                sceneId = Regex.Replace(searchTitle.Split(' ').First(), @"^e(?=\d+$)", "", RegexOptions.IgnoreCase);
-                searchTitle = searchTitle.Replace(searchTitle.Split(' ').First(), "").Trim();
+                sceneId = Regex.Replace(searchTitle.Split(' ').First(), @"^e(?=\d+$)", string.Empty, RegexOptions.IgnoreCase);
+                searchTitle = searchTitle.Replace(searchTitle.Split(' ').First(), string.Empty).Trim();
             }
 
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, null, _cookies);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
 
             var searchResults = await HTML.ElementsFromJSON(httpResult.Content, "html", cancellationToken);
-            if (searchResults == null) return result;
+            if (searchResults == null)
+            {
+                return result;
+            }
 
             foreach (var node in searchResults)
             {
                 var titleNode = node.SelectSingleNode(".//a[@class='text-km'] | .//a[@class='text-pf'] | .//a[@class='text-tf']");
                 string titleNoFormatting = titleNode?.InnerText.Trim();
-                string sceneUrl = titleNode?.GetAttributeValue("href", "");
+                string sceneUrl = titleNode?.GetAttributeValue("href", string.Empty);
                 string episodeId = node.SelectSingleNode(".//span[@class='card-footer-item'][last()]")?.InnerText.Split('#').Last().Trim();
                 string curId = Helper.Encode(sceneUrl);
                 string releaseDate = string.Empty;
                 var dateNode = node.SelectSingleNode(".//span[.//i[@class='far fa-calendar-alt']]");
                 if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+                {
                     releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                }
 
                 result.Add(new RemoteSearchResult
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{Helper.Encode(titleNoFormatting)}|{Helper.Encode(node.OuterHtml)}" } },
                     Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
-                    SearchProviderName = Plugin.Instance.Name
+                    SearchProviderName = Plugin.Instance.Name,
                 });
             }
             return result;
@@ -80,15 +88,19 @@ namespace PhoenixAdult.Sites
             var searchResult = providerIds.Length > 4 ? await HTML.ElementFromString(Helper.Decode(providerIds[4]), cancellationToken) : null;
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken, null, _cookies);
-            if (!httpResult.IsOK) return result;
-            var detailsPageElements = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
             HtmlNodeCollection actorNodes;
             try
             {
                 movie.Name = detailsPageElements.SelectSingleNode("//div[@class='level-left']")?.InnerText.Trim();
-                movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='column is-three-fifths']")?.InnerText.Replace("Episode Summary", "").Trim();
+                movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='column is-three-fifths']")?.InnerText.Replace("Episode Summary", string.Empty).Trim();
                 movie.AddStudio("Kelly Madison Productions");
                 actorNodes = detailsPageElements.SelectNodes("//a[@class='is-underlined']");
             }
@@ -101,9 +113,11 @@ namespace PhoenixAdult.Sites
 
             string tagline = "Kelly Madison";
             if (movie.Name.ToLower().Contains("teenfidelity"))
+            {
                 tagline = "TeenFidelity";
+            }
+
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             var dateNode = detailsPageElements.SelectSingleNode("//li[.//i[@class='fas fa-calendar']]");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Split(':').Last().Trim(), out var parsedDate))
@@ -122,20 +136,31 @@ namespace PhoenixAdult.Sites
 
             if (actorNodes != null)
             {
-                if (actorNodes.Count == 3) movie.AddGenre("Threesome");
-                if (actorNodes.Count == 4) movie.AddGenre("Foursome");
-                if (actorNodes.Count > 4) movie.AddGenre("Orgy");
+                if (actorNodes.Count == 3)
+                {
+                    movie.AddGenre("Threesome");
+                }
+
+                if (actorNodes.Count == 4)
+                {
+                    movie.AddGenre("Foursome");
+                }
+
+                if (actorNodes.Count > 4)
+                {
+                    movie.AddGenre("Orgy");
+                }
 
                 foreach (var actor in actorNodes)
                 {
                     string actorName = actor.InnerText;
-                    string actorPageUrl = actor.GetAttributeValue("href", "");
+                    string actorPageUrl = actor.GetAttributeValue("href", string.Empty);
                     string actorPhotoUrl = string.Empty;
                     var actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken, null, _cookies);
                     if(actorHttp.IsOK)
                     {
-                        var actorPage = await HTML.ElementFromString(actorHttp.Content, cancellationToken);
-                        actorPhotoUrl = actorPage.SelectSingleNode("//div[contains(@class, 'one')]//@src")?.GetAttributeValue("src", "");
+                        var actorPage = HTML.ElementFromString(actorHttp.Content);
+                        actorPhotoUrl = actorPage.SelectSingleNode("//div[contains(@class, 'one')]//@src")?.GetAttributeValue("src", string.Empty);
                     }
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }

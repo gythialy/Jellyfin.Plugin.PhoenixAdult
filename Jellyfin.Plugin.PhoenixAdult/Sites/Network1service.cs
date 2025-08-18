@@ -103,11 +103,15 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             if (siteNum == null || string.IsNullOrEmpty(searchTitle))
+            {
                 return result;
+            }
 
             var instanceToken = await GetToken(siteNum, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrEmpty(instanceToken))
+            {
                 return result;
+            }
 
             string sceneID = null;
             var parts = searchTitle.Split(' ');
@@ -132,7 +136,10 @@ namespace PhoenixAdult.Sites
                 }
 
                 var searchResults = await GetDataFromAPI(url, instanceToken, cancellationToken).ConfigureAwait(false);
-                if (searchResults?["result"] == null) continue;
+                if (searchResults?["result"] == null)
+                {
+                    continue;
+                }
 
                 foreach (var searchResult in searchResults["result"])
                 {
@@ -152,7 +159,7 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{sceneType}" } },
                         Name = $"{titleNoFormatting} [{siteDisplay}] {releaseDate:yyyy-MM-dd}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -174,11 +181,17 @@ namespace PhoenixAdult.Sites
             string sceneType = providerIds[2];
 
             var instanceToken = await GetToken(new [] { siteNumVal }, cancellationToken).ConfigureAwait(false);
-            if (string.IsNullOrEmpty(instanceToken)) return result;
+            if (string.IsNullOrEmpty(instanceToken))
+            {
+                return result;
+            }
 
             var url = $"{Helper.GetSearchSearchURL(new [] { siteNumVal })}/v2/releases?type={sceneType}&id={curID}";
             var detailsPageElements = await GetDataFromAPI(url, instanceToken, cancellationToken).ConfigureAwait(false);
-            if (detailsPageElements?["result"]?.FirstOrDefault() == null) return result;
+            if (detailsPageElements?["result"]?.FirstOrDefault() == null)
+            {
+                return result;
+            }
 
             var details = detailsPageElements["result"][0];
 
@@ -187,7 +200,10 @@ namespace PhoenixAdult.Sites
 
             string description = details["description"]?.ToString();
             if (string.IsNullOrEmpty(description))
+            {
                 description = details["parent"]?["description"]?.ToString();
+            }
+
             movie.Overview = description;
 
             movie.AddStudio(details["brand"].ToString());
@@ -196,17 +212,25 @@ namespace PhoenixAdult.Sites
             if (details["collections"] != null)
             {
                 foreach (var collection in details["collections"])
+                {
                     seriesNames.Add(collection["name"].ToString());
+                }
             }
             if (details["parent"]?["title"] != null)
+            {
                 seriesNames.Add(details["parent"]["title"].ToString());
+            }
 
             string mainSiteName = Helper.GetSearchSiteName(new [] { siteNumVal });
             if (!seriesNames.Contains(mainSiteName))
+            {
                 movie.AddTag(mainSiteName);
+            }
 
             foreach (var seriesName in seriesNames)
+            {
                 movie.AddTag(seriesName);
+            }
 
             DateTime dateObject = (DateTime)details["dateReleased"];
             movie.PremiereDate = dateObject;
@@ -215,7 +239,9 @@ namespace PhoenixAdult.Sites
             if (details["tags"] != null)
             {
                 foreach (var genreLink in details["tags"])
+                {
                     movie.AddGenre(genreLink["name"].ToString());
+                }
             }
 
             if (details["actors"] != null)
@@ -224,7 +250,10 @@ namespace PhoenixAdult.Sites
                 {
                     var actorPageURL = $"{Helper.GetSearchSearchURL(new [] { siteNumVal })}/v1/actors?id={actorLink["id"]}";
                     var actorData = await GetDataFromAPI(actorPageURL, instanceToken, cancellationToken);
-                    if (actorData?["result"]?.FirstOrDefault() == null) continue;
+                    if (actorData?["result"]?.FirstOrDefault() == null)
+                    {
+                        continue;
+                    }
 
                     var actorDetails = actorData["result"][0];
                     string actorPhotoUrl = actorDetails["images"]?["profile"]?["0"]?["xs"]?["url"]?.ToString() ?? string.Empty;
@@ -245,11 +274,17 @@ namespace PhoenixAdult.Sites
             string sceneType = providerIds[2];
 
             var instanceToken = await GetToken(new [] { siteNumVal }, cancellationToken).ConfigureAwait(false);
-            if (string.IsNullOrEmpty(instanceToken)) return images;
+            if (string.IsNullOrEmpty(instanceToken))
+            {
+                return images;
+            }
 
             var url = $"{Helper.GetSearchSearchURL(new [] { siteNumVal })}/v2/releases?type={sceneType}&id={curID}";
             var detailsPageElements = await GetDataFromAPI(url, instanceToken, cancellationToken).ConfigureAwait(false);
-            if (detailsPageElements?["result"]?.FirstOrDefault() == null) return images;
+            if (detailsPageElements?["result"]?.FirstOrDefault() == null)
+            {
+                return images;
+            }
 
             var details = detailsPageElements["result"][0];
             var imageUrls = new List<string>();

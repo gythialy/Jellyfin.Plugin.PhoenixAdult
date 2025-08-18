@@ -41,9 +41,12 @@ namespace PhoenixAdult.Sites
 
             string url = $"{Helper.GetSearchSearchURL(siteNum)}{modelId}.html";
             var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK) return result;
+            if (!httpResult.IsOK)
+            {
+                return result;
+            }
 
-            var searchResults = await HTML.ElementFromString(httpResult.Content, cancellationToken);
+            var searchResults = HTML.ElementFromString(httpResult.Content);
             var searchNodes = searchResults.SelectNodes("//div[@class='updateBlock clear']");
             if (searchNodes != null)
             {
@@ -54,9 +57,11 @@ namespace PhoenixAdult.Sites
                     string releaseDate = string.Empty;
                     var dateNode = node.SelectSingleNode(".//h4");
                     if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Split(':').Last().Trim(), out var parsedDate))
+                    {
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    }
 
-                    string poster = node.SelectSingleNode(".//@src")?.GetAttributeValue("src", "");
+                    string poster = node.SelectSingleNode(".//@src")?.GetAttributeValue("src", string.Empty);
                     string subSite = Helper.GetSearchSiteName(siteNum);
 
                     string curId = Helper.Encode(titleNoFormatting);
@@ -67,7 +72,7 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{descriptionId}|{releaseDate}|{posterId}" } },
                         Name = $"{titleNoFormatting} [Thick Cash/{subSite}] {releaseDate}",
-                        SearchProviderName = Plugin.Instance.Name
+                        SearchProviderName = Plugin.Instance.Name,
                     });
                 }
             }
@@ -94,7 +99,6 @@ namespace PhoenixAdult.Sites
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
-            movie.AddCollection(new[] { tagline });
 
             string subSite = Helper.GetSearchSiteName(siteNum).ToLower();
             if (subSite == "family lust") movie.AddGenre("Family Roleplay");
