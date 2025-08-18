@@ -42,7 +42,7 @@ namespace PhoenixAdult.Sites
             foreach (var sceneUrl in searchResults.Distinct())
             {
                 var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken, null, _cookies);
-                if (httpResult.IsOK && !httpResult.ResponseUrl.Contains("/join/"))
+                if (httpResult.IsOK && !httpResult.ResponseUrl.AbsoluteUri.Contains("/join/"))
                 {
                     var detailsPageElements = HTML.ElementFromString(httpResult.Content);
                     string titleNoFormatting = detailsPageElements.SelectSingleNode("//div[@class='row info']/div/h1")?.InnerText.Trim();

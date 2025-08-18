@@ -174,7 +174,11 @@ namespace PhoenixAdult.Sites
             var initialReq = await HTTP.Request(Helper.GetSearchBaseURL(siteNum), HttpMethod.Head, cancellationToken);
             if(initialReq.IsOK)
             {
-                cookies.Add("start_session_galleria", initialReq.Cookies["start_session_galleria"].Value);
+                var cookie = initialReq.Cookies.FirstOrDefault(c => c.Name == "start_session_galleria");
+                if (cookie != null)
+                {
+                    cookies.Add(cookie.Name, cookie.Value);
+                }
             }
 
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + sceneInfo.modelId;

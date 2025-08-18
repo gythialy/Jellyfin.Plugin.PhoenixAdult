@@ -17,6 +17,7 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
+using System.Net.Http;
 
 #if __EMBY__
 #else
@@ -52,10 +53,9 @@ namespace PhoenixAdult.Sites
             var sceneURL = Helper.Decode(providerIds[0]);
             var splitScene = providerIds.Length > 3;
 
-            var cookies = new CookieContainer();
-            cookies.Add(new Uri(Helper.GetSearchBaseURL(siteNum)), new Cookie("ageConfirmed", "true"));
+            var cookies = new Dictionary<string, string>() { { "ageConfirmed", "true" } };
 
-            var http = await HTTP.Request(sceneURL, cookies, cancellationToken);
+            var http = await HTTP.Request(sceneURL, HttpMethod.Get, cancellationToken, null, cookies);
             if (!http.IsOK)
             {
                 return images;
@@ -110,12 +110,12 @@ namespace PhoenixAdult.Sites
             {
                 try
                 {
-                    var imageHttp = await HTTP.Request(imageUrl, cookies, cancellationToken);
+                    var imageHttp = await HTTP.Request(imageUrl, HttpMethod.Get, cancellationToken, null, cookies);
                     if (imageHttp.IsOK)
                     {
-                        using (var ms = new MemoryStream(imageHttp.ContentBytes))
+                        using (var ms = new MemoryStream(imageHttp.ContentStream.ToBytes()))
                         {
-                            var image = Image.FromStream(ms);
+                            var image = new Bitmap(ms);
                             var imageInfo = new RemoteImageInfo { Url = imageUrl };
                             if (image.Height > image.Width)
                             {

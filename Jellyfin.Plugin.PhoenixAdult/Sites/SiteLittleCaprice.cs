@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Extensions;
@@ -29,7 +31,7 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var searchUrl = $"{BaseUrl}/?s={searchTitle.Replace(" ", "+")}";
-            var http = await HTTP.Request(searchUrl, cancellationToken);
+            var http = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
 
@@ -64,9 +66,9 @@ namespace PhoenixAdult.Sites
                 sceneUrl = $"{BaseUrl}{sceneUrl}";
             }
 
-            var http = await HTTP.Request(sceneUrl, cancellationToken);
+            var http = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             var galleryDoc = new HtmlDocument();
-            galleryDoc.LoadHtml();
+            galleryDoc.LoadHtml(http.Content);
             var detailsDoc = galleryDoc;
 
             var videoPageLink = galleryDoc.DocumentNode.SelectSingleNode("//a[@class='et_pb_button button' and contains(@href, 'video')]");
@@ -78,12 +80,13 @@ namespace PhoenixAdult.Sites
                     videoPageUrl = $"{BaseUrl}{videoPageUrl}";
                 }
                 detailsDoc = new HtmlDocument();
-                detailsDoc.LoadHtml(await HTTP.Request(videoPageUrl, cancellationToken));
+                var videoHttp = await HTTP.Request(videoPageUrl, HttpMethod.Get, cancellationToken);
+                detailsDoc.LoadHtml(videoHttp.Content);
             }
 
-            var metadataResult = new MetadataResult<BaseItem>
+            var metadataResult = new MetadataResult<Movie>
             {
-                Item = new BaseItem(),
+                Item = new Movie(),
                 HasMetadata = true,
             };
 
@@ -186,7 +189,8 @@ namespace PhoenixAdult.Sites
                             actorPageUrl = $"{BaseUrl}{actorPageUrl}";
                         }
                         var actorDoc = new HtmlDocument();
-                        actorDoc.LoadHtml(await HTTP.Request(actorPageUrl, cancellationToken));
+                        var actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken);
+                        actorDoc.LoadHtml(actorHttp.Content);
                         actorPhotoUrl = actorDoc.DocumentNode.SelectSingleNode("//img[@class='img-poster']").GetAttributeValue("src", string.Empty);
                         if (!actorPhotoUrl.StartsWith("http"))
                         {
@@ -214,7 +218,8 @@ namespace PhoenixAdult.Sites
             }
 
             var galleryDoc = new HtmlDocument();
-            galleryDoc.LoadHtml(await HTTP.Request(sceneUrl, cancellationToken));
+            var galleryHttp = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
+            galleryDoc.LoadHtml(galleryHttp.Content);
             var detailsDoc = galleryDoc;
 
             var videoPageLink = galleryDoc.DocumentNode.SelectSingleNode("//a[@class='et_pb_button button' and contains(@href, 'video')]");
@@ -226,7 +231,8 @@ namespace PhoenixAdult.Sites
                     videoPageUrl = $"{BaseUrl}{videoPageUrl}";
                 }
                 detailsDoc = new HtmlDocument();
-                detailsDoc.LoadHtml(await HTTP.Request(videoPageUrl, cancellationToken));
+                var videoHttp = await HTTP.Request(videoPageUrl, HttpMethod.Get, cancellationToken);
+                detailsDoc.LoadHtml(videoHttp.Content);
             }
 
             var art = new List<string>();
