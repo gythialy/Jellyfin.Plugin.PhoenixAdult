@@ -79,7 +79,7 @@ namespace PhoenixAdult.Sites
             var modelHttp = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
             if (modelHttp.IsOK)
             {
-                var modelPageElements = await HTML.ElementFromString(modelHttp.Content, cancellationToken);
+                var modelPageElements = HTML.ElementFromString(modelHttp.Content);
                 var modelNodes = modelPageElements.SelectNodes("//div[@class='model-grid']//a");
                 if (modelNodes != null)
                 {

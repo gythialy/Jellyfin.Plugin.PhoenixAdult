@@ -94,7 +94,7 @@ namespace PhoenixAdult.Sites
             var iafdHttp = await HTTP.Request("https://www.iafd.com/studio.rme/studio=9856/blackpayback.com.htm", HttpMethod.Get, cancellationToken);
             if (iafdHttp.IsOK)
             {
-                var iafdStudioElements = await HTML.ElementFromString(iafdHttp.Content, cancellationToken);
+                var iafdStudioElements = HTML.ElementFromString(iafdHttp.Content);
                 var sceneNode = iafdStudioElements.SelectNodes("//table[@id='studio']/tbody/tr")
                     ?.FirstOrDefault(tr => tr.SelectSingleNode(".//a")?.InnerText.Split('(')[0].Trim().Equals(title, StringComparison.OrdinalIgnoreCase) ?? false);
 
@@ -104,7 +104,7 @@ namespace PhoenixAdult.Sites
                     var iafdSceneHttp = await HTTP.Request(iafdUrl, HttpMethod.Get, cancellationToken);
                     if (iafdSceneHttp.IsOK)
                     {
-                        var iafdSceneElements = await HTML.ElementFromString(iafdSceneHttp.Content, cancellationToken);
+                        var iafdSceneElements = HTML.ElementFromString(iafdSceneHttp.Content);
                         var dateNode = iafdSceneElements.SelectSingleNode("//p[contains(., 'Release Date')]/following-sibling::p[@class='biodata']");
                         if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
                         {

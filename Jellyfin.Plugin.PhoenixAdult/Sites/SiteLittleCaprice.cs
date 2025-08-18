@@ -214,7 +214,7 @@ namespace PhoenixAdult.Sites
             }
 
             var galleryDoc = new HtmlDocument();
-            galleryDoc.LoadHtml(await HTTP.Request(sceneUrl));
+            galleryDoc.LoadHtml(await HTTP.Request(sceneUrl, cancellationToken));
             var detailsDoc = galleryDoc;
 
             var videoPageLink = galleryDoc.DocumentNode.SelectSingleNode("//a[@class='et_pb_button button' and contains(@href, 'video')]");
@@ -226,7 +226,7 @@ namespace PhoenixAdult.Sites
                     videoPageUrl = $"{BaseUrl}{videoPageUrl}";
                 }
                 detailsDoc = new HtmlDocument();
-                detailsDoc.LoadHtml(await HTTP.Request(videoPageUrl));
+                detailsDoc.LoadHtml(await HTTP.Request(videoPageUrl, cancellationToken));
             }
 
             var art = new List<string>();

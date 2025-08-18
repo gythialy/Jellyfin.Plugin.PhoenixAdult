@@ -163,7 +163,7 @@ namespace PhoenixAdult.Sites
                     var sceneHttp = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
                     if(sceneHttp.IsOK)
                     {
-                        var detailsPageElements = await HTML.ElementFromString(sceneHttp.Content, cancellationToken);
+                        var detailsPageElements = HTML.ElementFromString(sceneHttp.Content);
                         result.Add(SearchResultBuilder(detailsPageElements, siteNum, searchDate, "en", directSearchResults));
                     }
                 }

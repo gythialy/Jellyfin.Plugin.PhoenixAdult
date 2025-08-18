@@ -28,7 +28,7 @@ namespace PhoenixAdult.Sites
         private async Task<JToken> GetPageData(int[] siteNum, int sceneId, CancellationToken cancellationToken)
         {
             var headers = new Dictionary<string, string> { { "Referer", Helper.GetSearchBaseURL(siteNum) } };
-            var httpResult = await HTTP.Request("https://netvideogirls.com/page-data/home/page-data.json", HttpMethod.Get, cancellationToken, null, null, headers);
+            var httpResult = await HTTP.Request("https://netvideogirls.com/page-data/home/page-data.json", HttpMethod.Get, null, null, headers, cancellationToken);
             if (httpResult.IsOK)
             {
                 var data = JObject.Parse(httpResult.Content);

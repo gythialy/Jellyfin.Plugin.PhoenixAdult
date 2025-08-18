@@ -23,9 +23,9 @@ namespace PhoenixAdult.Sites
 {
     public class SiteBelAmi : IProviderBase
     {
-        private async Task<(string title, string releaseDate, HtmlNode detailsPageElements)> GetSceneInfo(string sceneId, CancellationToken cancellationToken)
+        private async Task<(string title, string releaseDate, HtmlNode detailsPageElements)> GetSceneInfo(int[] siteNum, string sceneId, CancellationToken cancellationToken)
         {
-            string sceneUrl = $"{Helper.GetSearchSearchURL(0)}VideoID={sceneId}"; // siteNum is not used, so hardcode 0
+            string sceneUrl = $"{Helper.GetSearchSearchURL(siteNum)}VideoID={sceneId}"; // siteNum is not used, so hardcode 0
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (httpResult.IsOK)
             {
@@ -41,7 +41,7 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             string sceneId = searchTitle.Split(' ').First();
-            var sceneInfo = await GetSceneInfo(sceneId, cancellationToken);
+            var sceneInfo = await GetSceneInfo(siteNum, sceneId, cancellationToken);
             if (sceneInfo.title != null)
             {
                 result.Add(new RemoteSearchResult
@@ -64,7 +64,7 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string sceneId = providerIds[2];
-            var sceneInfo = await GetSceneInfo(sceneId, cancellationToken);
+            var sceneInfo = await GetSceneInfo(siteNum, sceneId, cancellationToken);
             if (sceneInfo.detailsPageElements == null)
             {
                 return result;

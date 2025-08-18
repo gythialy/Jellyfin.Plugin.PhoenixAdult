@@ -110,7 +110,7 @@ namespace PhoenixAdult.Sites
             {
                 try
                 {
-                    var imageHttp = await HTTP.Request(imageUrl, cancellationToken, cookies);
+                    var imageHttp = await HTTP.Request(imageUrl, cookies, cancellationToken);
                     if (imageHttp.IsOK)
                     {
                         using (var ms = new MemoryStream(imageHttp.ContentBytes))

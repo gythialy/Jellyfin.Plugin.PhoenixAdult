@@ -216,7 +216,7 @@ namespace PhoenixAdult.Sites
                     var altHttp = await HTTP.Request(altUrl, HttpMethod.Get, cancellationToken);
                     if (altHttp.IsOK)
                     {
-                        var altPage = await HTML.ElementFromString(altHttp.Content, cancellationToken);
+                        var altPage = HTML.ElementFromString(altHttp.Content);
                         var imageNodes = altPage.SelectNodes(xpaths[0]);
                         if(imageNodes != null)
                         {

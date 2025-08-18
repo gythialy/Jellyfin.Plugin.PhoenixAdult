@@ -9,6 +9,8 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
+using MediaBrowser.Model.Entities;
+
 
 #if __EMBY__
 #else

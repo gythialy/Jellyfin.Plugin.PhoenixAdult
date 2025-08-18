@@ -179,7 +179,7 @@ namespace PhoenixAdult.Sites
                 var photoHttp = await HTTP.Request(photoPageUrl, HttpMethod.Get, cancellationToken);
                 if(photoHttp.IsOK)
                 {
-                    var photoPage = await HTML.ElementFromString(photoHttp.Content, cancellationToken);
+                    var photoPage = HTML.ElementFromString(photoHttp.Content);
                     var unlockedPhotos = photoPage.SelectNodes("//div[@class='my-gallery']/a");
                     if(unlockedPhotos != null)
                     {
