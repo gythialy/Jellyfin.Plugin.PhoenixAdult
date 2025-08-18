@@ -164,6 +164,7 @@ namespace PhoenixAdult.Helpers.Utils
 
             if (response != null)
             {
+                result.ResponseUrl = response.RequestMessage.RequestUri;
                 result.IsOK = response.IsSuccessStatusCode || additionalSuccessStatusCodes.Contains(response.StatusCode);
                 result.StatusCode = response.StatusCode;
 #if __EMBY__
@@ -191,6 +192,8 @@ namespace PhoenixAdult.Helpers.Utils
 
         internal struct HTTPResponse
         {
+            public Uri ResponseUrl { get; set; }
+
             public string Content { get; set; }
 
             public Stream ContentStream { get; set; }

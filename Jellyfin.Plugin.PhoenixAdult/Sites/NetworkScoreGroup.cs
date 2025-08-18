@@ -213,8 +213,21 @@ namespace PhoenixAdult.Sites
             string[] providerIds = sceneID[0].Split('|');
             string sceneUrl = Helper.Decode(providerIds[0]);
 
+            if (!sceneUrl.StartsWith("http"))
+            {
+                sceneUrl = Helper.GetSearchSearchURL(siteNum) + sceneUrl;
+            }
+
+            var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                return images;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
+
             var match = Regex.Match(httpResult.Content, "posterImage: '(.*)'");
-            if(match.Success)
+            if (match.Success)
             {
                 images.Add(new RemoteImageInfo { Url = match.Groups[1].Value });
             }

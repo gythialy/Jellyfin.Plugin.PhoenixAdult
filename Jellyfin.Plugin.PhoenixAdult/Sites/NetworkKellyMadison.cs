@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Text.Json;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
 using MediaBrowser.Controller.Entities;
@@ -43,7 +44,23 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var searchResults = await HTML.ElementsFromJSON(httpResult.Content, "html", cancellationToken);
+            HtmlNodeCollection searchResults;
+            using (JsonDocument doc = JsonDocument.Parse(httpResult.Content))
+            {
+                JsonElement root = doc.RootElement;
+                if (root.TryGetProperty("html", out JsonElement htmlElement))
+                {
+                    string htmlContent = htmlElement.GetString();
+                    var htmlDoc = new HtmlDocument();
+                    htmlDoc.LoadHtml(htmlContent);
+                    searchResults = htmlDoc.DocumentNode.ChildNodes;
+                }
+                else
+                {
+                    return result;
+                }
+            }
+
             if (searchResults == null)
             {
                 return result;

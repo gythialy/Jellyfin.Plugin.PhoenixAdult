@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
@@ -42,14 +43,14 @@ namespace PhoenixAdult.Sites
             return searchResults;
         }
 
-        public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
+        public async Task<MetadataResult<Movie>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
             var sceneId = sceneID[0].Split('|')[0];
             var doc = await FetchPageContent(sceneId, cancellationToken);
 
-            var metadataResult = new MetadataResult<BaseItem>
+            var metadataResult = new MetadataResult<Movie>
             {
-                Item = new BaseItem(),
+                Item = new Movie(),
                 HasMetadata = true,
             };
 
