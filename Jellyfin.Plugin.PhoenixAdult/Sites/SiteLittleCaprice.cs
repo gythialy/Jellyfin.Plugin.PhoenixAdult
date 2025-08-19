@@ -84,7 +84,7 @@ namespace PhoenixAdult.Sites
                 detailsDoc.LoadHtml(videoHttp.Content);
             }
 
-            var metadataResult = new MetadataResult<Movie>
+            var metadataResult = new MetadataResult<BaseItem>
             {
                 Item = new Movie(),
                 HasMetadata = true,

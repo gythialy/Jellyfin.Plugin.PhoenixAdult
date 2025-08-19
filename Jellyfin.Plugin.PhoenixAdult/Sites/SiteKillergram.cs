@@ -43,12 +43,12 @@ namespace PhoenixAdult.Sites
             return searchResults;
         }
 
-        public async Task<MetadataResult<Movie>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
+        public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
             var sceneId = sceneID[0].Split('|')[0];
             var doc = await FetchPageContent(sceneId, cancellationToken);
 
-            var metadataResult = new MetadataResult<Movie>
+            var metadataResult = new MetadataResult<BaseItem>
             {
                 Item = new Movie(),
                 HasMetadata = true,
