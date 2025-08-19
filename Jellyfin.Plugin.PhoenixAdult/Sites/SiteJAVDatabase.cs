@@ -92,14 +92,14 @@ namespace PhoenixAdult.Sites
             return searchResults;
         }
 
-        public async Task<MetadataResult<Movie>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
+        public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
             var metadataId = sceneID[0].Split('|');
             var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
 
             var doc = await HTML.ElementFromURL(sceneUrl, cancellationToken);
 
-            var metadataResult = new MetadataResult<Movie>
+            var metadataResult = new MetadataResult<BaseItem>
             {
                 Item = new Movie(),
                 HasMetadata = true,
