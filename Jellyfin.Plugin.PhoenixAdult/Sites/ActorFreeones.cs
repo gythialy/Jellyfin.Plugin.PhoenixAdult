@@ -46,6 +46,7 @@ namespace PhoenixAdult.Sites
             var result = new MetadataResult<BaseItem>()
             {
                 Item = new Person(),
+                HasMetadata = true,
             };
 
             var actorURL = Helper.Decode(sceneID[0]);
@@ -61,6 +62,7 @@ namespace PhoenixAdult.Sites
             string name = actorData.SelectSingleText("//h1").Replace(" Bio", string.Empty, StringComparison.OrdinalIgnoreCase),
                 aliases = actorData.SelectSingleText("//p[contains(., 'Aliases')]/following-sibling::div/p");
 
+            result.Item.Name = name;
             result.Item.OriginalTitle = name + ", " + aliases;
             result.Item.Overview = "\u200B";
 
