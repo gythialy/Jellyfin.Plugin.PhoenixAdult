@@ -54,22 +54,27 @@ namespace PhoenixAdult.Sites
             {
                 actorURL = Helper.GetSearchBaseURL(siteNum) + actorURL;
             }
+            Logger.Info($"actorURL: {actorURL}");
 
             var actorData = await HTML.ElementFromURL(actorURL, cancellationToken).ConfigureAwait(false);
+            Logger.Info($"actorData: {actorData}");
 
             result.Item.ExternalId = actorURL;
 
             string name = actorData.SelectSingleText("//h1").Replace(" Bio", string.Empty, StringComparison.OrdinalIgnoreCase),
                 aliases = actorData.SelectSingleText("//p[contains(., 'Aliases')]/following-sibling::div/p");
-
+            Logger.Info($"name: {name}");
+            Logger.Info($"aliases: {aliases}");
             result.Item.Name = name;
             result.Item.OriginalTitle = name + ", " + aliases;
-            result.Item.Overview = "\u200B";
+            string overview = actorData.SelectSingleText("//div[@id='biography']");
+            Logger.Info($"overview: {overview}");
+            result.Item.Overview = overview ?? string.Empty;
 
             var actorDate = actorData.SelectSingleText("//div[p[contains(., 'Personal Information')]]//span[contains(., 'Born On')]")
                 .Replace("Born On", string.Empty, StringComparison.OrdinalIgnoreCase)
                 .Trim();
-
+            Logger.Info($"actorDate: {actorDate}");
             if (DateTime.TryParseExact(actorDate, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
             {
                 result.Item.PremiereDate = sceneDateObj;
@@ -80,6 +85,7 @@ namespace PhoenixAdult.Sites
             foreach (var bornPlace in bornPlaceNode)
             {
                 var location = bornPlace.InnerText.Trim();
+                Logger.Info($"location: {location}");
 
                 if (!string.IsNullOrEmpty(location))
                 {
