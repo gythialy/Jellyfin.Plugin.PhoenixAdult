@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Entities;
@@ -61,39 +62,29 @@ namespace PhoenixAdult.Sites
 
             result.Item.ExternalId = actorURL;
 
-            string name = actorData.SelectSingleText("//h1").Replace(" Bio", string.Empty, StringComparison.OrdinalIgnoreCase),
-                aliases = actorData.SelectSingleText("//p[contains(., 'Aliases')]/following-sibling::div/p");
+            string name = actorData.OwnerDocument.DocumentNode.SelectSingleNode("//title").InnerText.Split('|')[0].Replace(" bio", string.Empty).Trim();
             Logger.Info($"name: {name}");
+            string aliases = actorData.SelectSingleText("//li[span[text()='Aliases:']]//span[contains(@class, 'font-size-xs')]")?.Trim();
             Logger.Info($"aliases: {aliases}");
             result.Item.Name = name;
             result.Item.OriginalTitle = name + ", " + aliases;
-            string overview = actorData.SelectSingleText("//div[@id='biography']");
+            string overview = actorData.SelectSingleText("//div[@data-test='biography']");
             Logger.Info($"overview: {overview}");
-            result.Item.Overview = overview ?? string.Empty;
+            result.Item.Overview = overview?.Trim() ?? string.Empty;
 
-            var actorDate = actorData.SelectSingleText("//div[p[contains(., 'Personal Information')]]//span[contains(., 'Born On')]")
-                .Replace("Born On", string.Empty, StringComparison.OrdinalIgnoreCase)
-                .Trim();
+            var actorDate = actorData.SelectSingleText("//li[span[text()='Date of birth:']]//span[@data-test='link_span_dateOfBirth']")?.Trim();
             Logger.Info($"actorDate: {actorDate}");
             if (DateTime.TryParseExact(actorDate, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
             {
                 result.Item.PremiereDate = sceneDateObj;
             }
 
-            var bornPlaceList = new List<string>();
-            var bornPlaceNode = actorData.SelectNodesSafe("//div[p[contains(., 'Personal Information')]]//a[@data-test='link-country']/..//span[text()]");
-            foreach (var bornPlace in bornPlaceNode)
+            var bornPlaceNodes = actorData.SelectNodes("//li[span[text()='Place of birth:']]//span[@data-test='link_span_placeOfBirth']");
+            if (bornPlaceNodes != null)
             {
-                var location = bornPlace.InnerText.Trim();
-                Logger.Info($"location: {location}");
-
-                if (!string.IsNullOrEmpty(location))
-                {
-                    bornPlaceList.Add(location);
-                }
+                var bornPlaceList = bornPlaceNodes.Select(n => n.InnerText.Trim()).ToList();
+                result.Item.ProductionLocations = new string[] { string.Join(", ", bornPlaceList) };
             }
-
-            result.Item.ProductionLocations = new string[] { string.Join(", ", bornPlaceList) };
 
             return result;
         }
