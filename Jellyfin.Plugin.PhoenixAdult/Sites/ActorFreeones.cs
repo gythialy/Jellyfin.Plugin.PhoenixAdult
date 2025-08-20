@@ -57,37 +57,30 @@ namespace PhoenixAdult.Sites
 
             var actorData = await HTML.ElementFromURL(actorURL, cancellationToken).ConfigureAwait(false);
 
-            result.Item.ExternalId = actorURL;
+            result.Item.SetProviderId(Plugin.Instance.Name, actorURL);
 
-            string name = actorData.SelectSingleText("//h1").Replace(" Bio", string.Empty, StringComparison.OrdinalIgnoreCase),
-                aliases = actorData.SelectSingleText("//p[contains(., 'Aliases')]/following-sibling::div/p");
-
+            string name = actorData.OwnerDocument.DocumentNode.SelectSingleNode("//title").InnerText.Split('|')[0].Replace(" bio", string.Empty).Trim();
             result.Item.Name = name;
-            result.Item.OriginalTitle = name + ", " + aliases;
-            result.Item.Overview = "\u200B";
 
-            var actorDate = actorData.SelectSingleText("//div[p[contains(., 'Personal Information')]]//span[contains(., 'Born On')]")
-                .Replace("Born On", string.Empty, StringComparison.OrdinalIgnoreCase)
-                .Trim();
+            string aliases = actorData.SelectSingleText("//li[span[text()='Aliases:']]//span[contains(@class, 'font-size-xs')]")?.Trim();
+            result.Item.OriginalTitle = name + ", " + aliases;
+
+            string overview = actorData.SelectSingleText("//div[@data-test='biography']");
+            result.Item.Overview = overview?.Trim() ?? string.Empty;
+
+            var actorDate = actorData.SelectSingleText("//li[span[text()='Date of birth:']]//span[@data-test='link_span_dateOfBirth']")?.Trim();
 
             if (DateTime.TryParseExact(actorDate, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
             {
                 result.Item.PremiereDate = sceneDateObj;
             }
 
-            var bornPlaceList = new List<string>();
-            var bornPlaceNode = actorData.SelectNodesSafe("//div[p[contains(., 'Personal Information')]]//a[@data-test='link-country']/..//span[text()]");
-            foreach (var bornPlace in bornPlaceNode)
+            var bornPlaceNodes = actorData.SelectNodes("//li[span[text()='Place of birth:']]//span[@data-test='link_span_placeOfBirth']");
+            if (bornPlaceNodes != null)
             {
-                var location = bornPlace.InnerText.Trim();
-
-                if (!string.IsNullOrEmpty(location))
-                {
-                    bornPlaceList.Add(location);
-                }
+                var bornPlaceList = bornPlaceNodes.Select(n => n.InnerText.Trim()).ToList();
+                result.Item.ProductionLocations = new string[] { string.Join(", ", bornPlaceList) };
             }
-
-            result.Item.ProductionLocations = new string[] { string.Join(", ", bornPlaceList) };
 
             return result;
         }
