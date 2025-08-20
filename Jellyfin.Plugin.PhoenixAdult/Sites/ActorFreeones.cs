@@ -60,13 +60,15 @@ namespace PhoenixAdult.Sites
             var actorData = await HTML.ElementFromURL(actorURL, cancellationToken).ConfigureAwait(false);
             Logger.Info($"actorData: {actorData}");
 
-            result.Item.ExternalId = actorURL;
+            result.Item.SetProviderId(Plugin.Instance.Name, actorURL);
 
             string name = actorData.OwnerDocument.DocumentNode.SelectSingleNode("//title").InnerText.Split('|')[0].Replace(" bio", string.Empty).Trim();
             Logger.Info($"name: {name}");
             string aliases = actorData.SelectSingleText("//li[span[text()='Aliases:']]//span[contains(@class, 'font-size-xs')]")?.Trim();
             Logger.Info($"aliases: {aliases}");
             result.Item.Name = name;
+
+            string aliases = actorData.SelectSingleText("//li[span[text()='Aliases:']]//span[contains(@class, 'font-size-xs')]")?.Trim();
             result.Item.OriginalTitle = name + ", " + aliases;
             string overview = actorData.SelectSingleText("//div[@data-test='biography']");
             Logger.Info($"overview: {overview}");
