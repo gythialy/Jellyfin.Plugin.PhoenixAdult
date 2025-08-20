@@ -67,8 +67,6 @@ namespace PhoenixAdult.Sites
             string aliases = actorData.SelectSingleText("//li[span[text()='Aliases:']]//span[contains(@class, 'font-size-xs')]")?.Trim();
             Logger.Info($"aliases: {aliases}");
             result.Item.Name = name;
-
-            string aliases = actorData.SelectSingleText("//li[span[text()='Aliases:']]//span[contains(@class, 'font-size-xs')]")?.Trim();
             result.Item.OriginalTitle = name + ", " + aliases;
             string overview = actorData.SelectSingleText("//div[@data-test='biography']");
             Logger.Info($"overview: {overview}");

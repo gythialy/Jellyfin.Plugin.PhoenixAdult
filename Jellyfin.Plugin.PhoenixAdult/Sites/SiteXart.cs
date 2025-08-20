@@ -106,17 +106,11 @@ namespace PhoenixAdult.Sites
                         if (releaseDateNode != null && DateTime.TryParse(releaseDateNode.InnerText.Trim(), out var releaseDate))
                         {
                             var curID = Helper.Encode(searchResult.GetAttributeValue("href", ""));
-                            var score = 100 - LevenshteinDistance.Compute(searchTitle.ToLower(), titleNoFormatting.ToLower());
-                            if (searchDate.HasValue)
-                            {
-                                score = 100 - Math.Abs((searchDate.Value - releaseDate).Days);
-                            }
 
                             result.Add(new RemoteSearchResult
                             {
                                 ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                                 Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate:yyyy-MM-dd}",
-                                Score = score,
                                 SearchProviderName = Plugin.Instance.Name,
                             });
                         }
@@ -131,7 +125,6 @@ namespace PhoenixAdult.Sites
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
                     Name = manual["name"],
-                    Score = 101,
                 });
             }
 
@@ -169,7 +162,6 @@ namespace PhoenixAdult.Sites
                 movie.Overview = string.Join("\n\n", summaryNodes.Select(p => p.InnerText.Trim()));
             }
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
-            movie.AddCollection(Helper.GetSearchSiteName(siteNum));
 
             var dateNode = doc.DocumentNode.SelectNodes("//h2")?.Skip(1).FirstOrDefault();
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Replace("A", "").Trim(), out var parsedDate))
