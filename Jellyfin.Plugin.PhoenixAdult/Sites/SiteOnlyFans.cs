@@ -47,7 +47,7 @@ namespace PhoenixAdult.Sites
 
                 var res = new RemoteSearchResult
                 {
-                    ProviderIds = { { Plugin.Instance.Name, searchTitle } }, // Use the full filename as the ID
+                    ProviderIds = { { Plugin.Instance.Name, Helper.Encode(searchTitle) } }, // Use the full filename as the ID
                     Name = sceneName,
                     SearchProviderName = Plugin.Instance.Name,
                 };
@@ -76,7 +76,7 @@ namespace PhoenixAdult.Sites
                 return Task.FromResult(result);
             }
 
-            string filename = sceneID[0];
+            string filename = Helper.Decode(sceneID[0]);
             var match = Regex.Match(filename, FilenameRegex);
 
             if (match.Success)
