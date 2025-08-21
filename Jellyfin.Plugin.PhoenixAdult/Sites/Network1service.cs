@@ -169,7 +169,6 @@ namespace PhoenixAdult.Sites
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
-            Logger.Info($"[Network1service] Update called. siteNum: {(siteNum != null ? string.Join(",", siteNum) : "null")}, sceneID: {(sceneID != null ? string.Join(",", sceneID) : "null")}");
             var result = new MetadataResult<BaseItem>()
             {
                 Item = new Movie(),
@@ -177,18 +176,16 @@ namespace PhoenixAdult.Sites
             };
 
             string[] providerIds = sceneID[0].Split('|');
-            Logger.Info($"[Network1service] Update providerIds: {string.Join(" / ", providerIds)}");
             string curID = providerIds[0];
-            int siteNumVal = int.Parse(providerIds[1]);
             string sceneType = providerIds[2];
 
-            var instanceToken = await GetToken(new [] { siteNumVal }, cancellationToken).ConfigureAwait(false);
+            var instanceToken = await GetToken(siteNum, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrEmpty(instanceToken))
             {
                 return result;
             }
 
-            var url = $"{Helper.GetSearchSearchURL(new [] { siteNumVal })}/v2/releases?type={sceneType}&id={curID}";
+            var url = $"{Helper.GetSearchSearchURL(siteNum)}/v2/releases?type={sceneType}&id={curID}";
             var detailsPageElements = await GetDataFromAPI(url, instanceToken, cancellationToken).ConfigureAwait(false);
             if (detailsPageElements?["result"]?.FirstOrDefault() == null)
             {
@@ -223,7 +220,7 @@ namespace PhoenixAdult.Sites
                 seriesNames.Add(details["parent"]["title"].ToString());
             }
 
-            string mainSiteName = Helper.GetSearchSiteName(new [] { siteNumVal });
+            string mainSiteName = Helper.GetSearchSiteName(siteNum);
             if (!seriesNames.Contains(mainSiteName))
             {
                 movie.AddTag(mainSiteName);
@@ -250,7 +247,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actorLink in details["actors"])
                 {
-                    var actorPageURL = $"{Helper.GetSearchSearchURL(new [] { siteNumVal })}/v1/actors?id={actorLink["id"]}";
+                    var actorPageURL = $"{Helper.GetSearchSearchURL(siteNum)}/v1/actors?id={actorLink["id"]}";
                     var actorData = await GetDataFromAPI(actorPageURL, instanceToken, cancellationToken);
                     if (actorData?["result"]?.FirstOrDefault() == null)
                     {
@@ -268,22 +265,19 @@ namespace PhoenixAdult.Sites
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            Logger.Info($"[Network1service] GetImages called. siteNum: {(siteNum != null ? string.Join(",", siteNum) : "null")}, sceneID: {(sceneID != null ? string.Join(",", sceneID) : "null")}");
             var images = new List<RemoteImageInfo>();
 
             string[] providerIds = sceneID[0].Split('|');
-            Logger.Info($"[Network1service] GetImages providerIds: {string.Join(" / ", providerIds)}");
             string curID = providerIds[0];
-            int siteNumVal = int.Parse(providerIds[1]);
             string sceneType = providerIds[2];
 
-            var instanceToken = await GetToken(new [] { siteNumVal }, cancellationToken).ConfigureAwait(false);
+            var instanceToken = await GetToken(siteNum, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrEmpty(instanceToken))
             {
                 return images;
             }
 
-            var url = $"{Helper.GetSearchSearchURL(new [] { siteNumVal })}/v2/releases?type={sceneType}&id={curID}";
+            var url = $"{Helper.GetSearchSearchURL(siteNum)}/v2/releases?type={sceneType}&id={curID}";
             var detailsPageElements = await GetDataFromAPI(url, instanceToken, cancellationToken).ConfigureAwait(false);
             if (detailsPageElements?["result"]?.FirstOrDefault() == null)
             {
