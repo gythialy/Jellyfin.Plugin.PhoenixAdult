@@ -109,7 +109,7 @@ namespace PhoenixAdult.Sites
 
                             result.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, curID } } },
+                                ProviderIds = { { Plugin.Instance.Name, curID } },
                                 Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate:yyyy-MM-dd}",
                                 SearchProviderName = Plugin.Instance.Name,
                             });
