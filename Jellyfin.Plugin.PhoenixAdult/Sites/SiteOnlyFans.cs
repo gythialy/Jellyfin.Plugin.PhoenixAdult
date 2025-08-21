@@ -97,7 +97,6 @@ namespace PhoenixAdult.Sites
 
                 foreach (var actorName in actorNames)
                 {
-                    movie.AddTag(actorName); // Use actor name as collection
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                 }
             }

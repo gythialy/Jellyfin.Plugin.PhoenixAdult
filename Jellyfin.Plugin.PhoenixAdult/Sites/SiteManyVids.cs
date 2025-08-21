@@ -108,9 +108,6 @@ namespace PhoenixAdult.Sites
             movie.Overview = (string)videoPageElements["description"]?.ToString().Trim();
             movie.AddStudio("ManyVids");
 
-            var tagline = (string)videoPageElements["model"]?["displayName"];
-            movie.AddTag(tagline);
-
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var releaseDate))
             {
                 movie.PremiereDate = releaseDate;

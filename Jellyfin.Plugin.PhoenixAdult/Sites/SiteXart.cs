@@ -109,7 +109,7 @@ namespace PhoenixAdult.Sites
 
                             result.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                                ProviderIds = { { Plugin.Instance.Name, curID } } },
                                 Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate:yyyy-MM-dd}",
                                 SearchProviderName = Plugin.Instance.Name,
                             });
@@ -123,7 +123,7 @@ namespace PhoenixAdult.Sites
                 var curID = Helper.Encode(manual["curID"]);
                 result.Add(new RemoteSearchResult
                 {
-                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                    ProviderIds = { { Plugin.Instance.Name, curID } },
                     Name = manual["name"],
                 });
             }
@@ -140,8 +140,7 @@ namespace PhoenixAdult.Sites
                 HasMetadata = true
             };
             var movie = (Movie)result.Item;
-            var providerIds = sceneID[0].Split('|');
-            var sceneURL = Helper.Decode(providerIds[0]);
+            var sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http"))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
