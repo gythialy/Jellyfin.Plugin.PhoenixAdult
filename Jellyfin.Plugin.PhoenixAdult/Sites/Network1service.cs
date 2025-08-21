@@ -224,7 +224,7 @@ namespace PhoenixAdult.Sites
                 seriesNames.Add(details["parent"]["title"].ToString());
             }
 
-            string mainSiteName = Helper.GetSearchSiteName(new [] { siteNumVal });
+            string mainSiteName = Helper.GetSearchSiteName(siteNumArr);
             if (!seriesNames.Contains(mainSiteName))
             {
                 movie.AddTag(mainSiteName);
@@ -251,7 +251,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actorLink in details["actors"])
                 {
-                    var actorPageURL = $"{Helper.GetSearchSearchURL(new [] { siteNumVal })}/v1/actors?id={actorLink["id"]}";
+                    var actorPageURL = $"{Helper.GetSearchSearchURL(siteNumArr)}/v1/actors?id={actorLink["id"]}";
                     var actorData = await GetDataFromAPI(actorPageURL, instanceToken, cancellationToken);
                     if (actorData?["result"]?.FirstOrDefault() == null)
                     {
