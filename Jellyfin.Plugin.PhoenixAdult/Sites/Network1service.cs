@@ -177,16 +177,19 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string curID = providerIds[0];
-            int siteNumVal = int.Parse(providerIds[1]);
+            string[] idParts = curID.Split('#');
+            int siteGroup = int.Parse(idParts[0]);
+            int siteId = int.Parse(idParts[1]);
+            var siteNumArr = new int[] { siteGroup, siteId };
             string sceneType = providerIds[2];
 
-            var instanceToken = await GetToken(new [] { siteNumVal }, cancellationToken).ConfigureAwait(false);
+            var instanceToken = await GetToken(siteNumArr, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrEmpty(instanceToken))
             {
                 return result;
             }
 
-            var url = $"{Helper.GetSearchSearchURL(new [] { siteNumVal })}/v2/releases?type={sceneType}&id={curID}";
+            var url = $"{Helper.GetSearchSearchURL(siteNumArr)}/v2/releases?type={sceneType}&id={curID}";
             var detailsPageElements = await GetDataFromAPI(url, instanceToken, cancellationToken).ConfigureAwait(false);
             if (detailsPageElements?["result"]?.FirstOrDefault() == null)
             {
@@ -270,16 +273,19 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string curID = providerIds[0];
-            int siteNumVal = int.Parse(providerIds[1]);
+            string[] idParts = curID.Split('#');
+            int siteGroup = int.Parse(idParts[0]);
+            int siteId = int.Parse(idParts[1]);
+            var siteNumArr = new int[] { siteGroup, siteId };
             string sceneType = providerIds[2];
 
-            var instanceToken = await GetToken(new [] { siteNumVal }, cancellationToken).ConfigureAwait(false);
+            var instanceToken = await GetToken(siteNumArr, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrEmpty(instanceToken))
             {
                 return images;
             }
 
-            var url = $"{Helper.GetSearchSearchURL(new [] { siteNumVal })}/v2/releases?type={sceneType}&id={curID}";
+            var url = $"{Helper.GetSearchSearchURL(siteNumArr)}/v2/releases?type={sceneType}&id={curID}";
             var detailsPageElements = await GetDataFromAPI(url, instanceToken, cancellationToken).ConfigureAwait(false);
             if (detailsPageElements?["result"]?.FirstOrDefault() == null)
             {
