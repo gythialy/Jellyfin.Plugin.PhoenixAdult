@@ -163,11 +163,20 @@ namespace PhoenixAdult.Sites
             }
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
 
-            var dateNode = doc.DocumentNode.SelectNodes("//h2")?.Skip(1).FirstOrDefault();
-            if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Replace("A", "").Trim(), out var parsedDate))
+            var dateNode = doc.DocumentNode.SelectNodes("//h2")?.Skip(2).FirstOrDefault();
+            if (dateNode != null)
             {
-                movie.PremiereDate = parsedDate;
-                movie.ProductionYear = parsedDate.Year;
+                var dateText = dateNode.InnerText.Trim();
+                if (dateText.EndsWith(","))
+                {
+                    dateText = dateText.TrimEnd(',');
+                }
+
+                if (DateTime.TryParseExact(dateText, "MMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                {
+                    movie.PremiereDate = parsedDate;
+                    movie.ProductionYear = parsedDate.Year;
+                }
             }
 
             movie.AddGenre("Artistic");
