@@ -157,7 +157,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{sceneType}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}#{siteNum[1]}|{sceneType}" } },
                         Name = $"{titleNoFormatting} [{siteDisplay}] {releaseDate:yyyy-MM-dd}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -177,9 +177,9 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string curID = providerIds[0];
-            string[] idParts = curID.Split('#');
-            int siteGroup = int.Parse(idParts[0]);
-            int siteId = int.Parse(idParts[1]);
+            string[] siteNumParts = providerIds[1].Split('#');
+            int siteGroup = int.Parse(siteNumParts[0]);
+            int siteId = int.Parse(siteNumParts[1]);
             var siteNumArr = new int[] { siteGroup, siteId };
             string sceneType = providerIds[2];
 
@@ -273,9 +273,9 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string curID = providerIds[0];
-            string[] idParts = curID.Split('#');
-            int siteGroup = int.Parse(idParts[0]);
-            int siteId = int.Parse(idParts[1]);
+            string[] siteNumParts = providerIds[1].Split('#');
+            int siteGroup = int.Parse(siteNumParts[0]);
+            int siteId = int.Parse(siteNumParts[1]);
             var siteNumArr = new int[] { siteGroup, siteId };
             string sceneType = providerIds[2];
 
