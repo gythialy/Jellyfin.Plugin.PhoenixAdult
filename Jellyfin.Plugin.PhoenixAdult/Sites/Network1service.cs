@@ -135,6 +135,8 @@ namespace PhoenixAdult.Sites
                     url = $"{Helper.GetSearchSearchURL(siteNum)}/v2/releases?type={sceneType}&search={encodedSearchTitle}";
                 }
 
+                Logger.Info($"[Network1service] search url: {url}");
+
                 var searchResults = await GetDataFromAPI(url, instanceToken, cancellationToken).ConfigureAwait(false);
                 if (searchResults?["result"] == null)
                 {

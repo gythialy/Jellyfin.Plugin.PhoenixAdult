@@ -65,16 +65,18 @@ namespace PhoenixAdult.Sites
                     new
                     {
                         indexName,
-                        @params = parameters
+                        @params = parameters,
                     },
                 },
             };
             var httpResult = await HTTP.Request(url, HttpMethod.Post, new StringContent(JsonConvert.SerializeObject(payload)), null, headers, cancellationToken);
+            Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.IsOK: {httpResult.IsOK}");
             if (!httpResult.IsOK)
             {
                 return null;
             }
 
+            Logger.Info($"[NetworkGammaEntOther] results: {httpResult.Content}");
             var results = JObject.Parse(httpResult.Content)["results"];
             if (results is JArray resultsArray && resultsArray.Count > 0)
             {

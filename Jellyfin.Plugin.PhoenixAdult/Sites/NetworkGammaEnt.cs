@@ -46,7 +46,7 @@ namespace PhoenixAdult.Sites
 
             int sNum = siteNum[0];
 
-            if (sNum == 278 || (sNum >= 285 && sNum <= 287) || sNum == 843)
+            if (sNum == 7)
             {
                 network = "XEmpire";
                 network_sep_scene_prev = "scene/";
@@ -54,74 +54,74 @@ namespace PhoenixAdult.Sites
                 network_sep_dvd_prev = "dvd/";
                 network_sep_dvd = "/1";
             }
-            else if (sNum == 329 || (sNum >= 351 && sNum <= 354) || sNum == 861)
+            else if (sNum == 9)
             {
                 network = "Blowpass";
                 networkdvd = false;
             }
-            else if (sNum == 330 || (sNum >= 355 && sNum <= 360) || sNum == 750)
+            else if (sNum == 11)
             {
                 network = "Fantasy Massage";
                 networkdvd = false;
                 network_sep_scene = "/scene";
                 network_sep_scene_pages = "/scene/";
             }
-            else if ((sNum >= 365 && sNum <= 372) || sNum == 466 || sNum == 692)
+            else if (sNum == 12)
             {
                 network = "21Sextury";
                 networkdvd = false;
             }
-            else if (sNum == 183 || (sNum >= 373 && sNum <= 374))
+            else if (sNum == 5)
             {
                 network = "21Naturals";
                 networkdvd = false;
                 network_sep_scene = "/scene";
                 network_sep_scene_pages = "/scene/";
             }
-            else if (sNum >= 383 && sNum <= 386)
+            else if (sNum >= 16 && sNum <= 19)
             {
                 network = "Fame Digital";
-                if (sNum == 383)
+                if (sNum == 16)
                 {
                     networkdvd = false;
                     network_sep_scene = "/scene";
                     network_sep_scene_pages = "/scene/";
                     network_sep_dvd = "/dvd";
                 }
-                if (sNum == 386)
+                if (sNum == 19)
                 {
                     networkscene = false;
                     networkscenepages = false;
                     networkdvd = false;
                 }
             }
-            else if (sNum >= 387 && sNum <= 392)
+            else if (sNum >= 20 && sNum <= 25)
             {
                 network = "Open Life Network";
                 networkdvd = false;
             }
-            else if (sNum == 281)
+            else if (sNum == 8)
             {
                 network = "Pure Taboo";
                 networkdvd = false;
                 network_sep_scene = "/scene";
                 network_sep_scene_pages = "/scene/";
             }
-            else if (sNum == 381)
+            else if (sNum == 14)
             {
                 network = "Burning Angel";
                 networkdvd = false;
                 network_sep_scene = "/scene";
                 network_sep_scene_pages = "/scene/";
             }
-            else if (sNum == 382)
+            else if (sNum == 15)
             {
                 network = "Pretty Dirty";
                 networkdvd = false;
                 network_sep_scene = "/scene";
                 network_sep_scene_pages = "/scene/";
             }
-            else if (sNum >= 460 && sNum <= 465)
+            else if (sNum == 26)
             {
                 network = "21Sextreme";
                 networkdvd = false;
