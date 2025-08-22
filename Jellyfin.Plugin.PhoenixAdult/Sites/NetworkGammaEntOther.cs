@@ -31,7 +31,7 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
             if (httpResult.IsOK)
             {
-                Logger.Info($"[NetworkGammaEntOther] GetApiKey called. httpResult.Content: {httpResult.content}");
+                Logger.Info($"[NetworkGammaEntOther] GetApiKey called. httpResult.Content: {httpResult.Content}");
                 var match = Regex.Match(httpResult.Content, "\"apiKey\":\"([^\"]+)\"");
                 if (match.Success)
                 {
@@ -43,7 +43,7 @@ namespace PhoenixAdult.Sites
             httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
             if (httpResult.IsOK)
             {
-                Logger.Info($"[NetworkGammaEntOther] GetApiKey called. httpResult.Content fallback: {httpResult.content}");
+                Logger.Info($"[NetworkGammaEntOther] GetApiKey called. httpResult.Content fallback: {httpResult.Content}");
                 var match = Regex.Match(httpResult.Content, "\"apiKey\":\"([^\"]+)\"");
                 if (match.Success)
                 {
