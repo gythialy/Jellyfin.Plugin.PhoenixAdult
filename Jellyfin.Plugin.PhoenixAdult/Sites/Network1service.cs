@@ -96,6 +96,10 @@ namespace PhoenixAdult.Sites
             };
 
             var http = await HTTP.Request(url, cancellationToken, headers).ConfigureAwait(false);
+            if (http.IsOK)
+            {
+                Logger.Info($"[Network1service] GetAPI content: {http.Content}");
+            }
             return http.IsOK ? JObject.Parse(http.Content) : null;
         }
 

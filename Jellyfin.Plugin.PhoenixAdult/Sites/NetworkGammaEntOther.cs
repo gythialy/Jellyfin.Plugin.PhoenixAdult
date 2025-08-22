@@ -31,6 +31,7 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
             if (httpResult.IsOK)
             {
+                Logger.Info($"[NetworkGammaEntOther] GetApiKey called. httpResult.Content: {httpResult.content}");
                 var match = Regex.Match(httpResult.Content, "\"apiKey\":\"([^\"]+)\"");
                 if (match.Success)
                 {
@@ -42,6 +43,7 @@ namespace PhoenixAdult.Sites
             httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
             if (httpResult.IsOK)
             {
+                Logger.Info($"[NetworkGammaEntOther] GetApiKey called. httpResult.Content fallback: {httpResult.content}");
                 var match = Regex.Match(httpResult.Content, "\"apiKey\":\"([^\"]+)\"");
                 if (match.Success)
                 {
@@ -94,12 +96,14 @@ namespace PhoenixAdult.Sites
                 sceneId = searchTitle.Split(' ').First();
                 searchTitle = searchTitle.Replace(sceneId, string.Empty).Trim();
             }
+            Logger.Info($"[NetworkGammaEntOther] Search called. Id and Title: {sceneId} : {searchTitle}");
 
             string apiKey = await GetApiKey(siteNum, cancellationToken);
             if (apiKey == null)
             {
                 return result;
             }
+            Logger.Info($"[NetworkGammaEntOther] Search called. apiKey: {apiKey}");
 
             foreach (var sceneType in new[] { "scenes", "movies" })
             {
