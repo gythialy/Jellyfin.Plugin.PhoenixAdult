@@ -31,7 +31,7 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
             if (httpResult.IsOK)
             {
-                Logger.Info($"[NetworkGammaEntOther] GetApiKey called. httpResult.Content: {httpResult.Content}");
+                //Logger.Info($"[NetworkGammaEntOther] GetApiKey called. httpResult.Content: {httpResult.Content}");
                 var match = Regex.Match(httpResult.Content, "\"apiKey\":\"([^\"]+)\"");
                 if (match.Success)
                 {
@@ -43,7 +43,7 @@ namespace PhoenixAdult.Sites
             httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
             if (httpResult.IsOK)
             {
-                Logger.Info($"[NetworkGammaEntOther] GetApiKey called. httpResult.Content fallback: {httpResult.Content}");
+                //Logger.Info($"[NetworkGammaEntOther] GetApiKey called. httpResult.Content fallback: {httpResult.Content}");
                 var match = Regex.Match(httpResult.Content, "\"apiKey\":\"([^\"]+)\"");
                 if (match.Success)
                 {
@@ -72,9 +72,6 @@ namespace PhoenixAdult.Sites
                 },
             };
             var httpResult = await HTTP.Request(url, HttpMethod.Post, new StringContent(JsonConvert.SerializeObject(payload)), null, headers, cancellationToken);
-            Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. url: {url}");
-            Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. referer: {referer}");
-            Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. params: {JsonConvert.SerializeObject(payload)}");
             Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.IsOK:{httpResult.IsOK}");
             Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.StatusCode: {httpResult.StatusCode}");
             Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.Content: {httpResult.Content}");

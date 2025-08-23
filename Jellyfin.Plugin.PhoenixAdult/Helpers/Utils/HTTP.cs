@@ -115,8 +115,6 @@ namespace PhoenixAdult.Helpers.Utils
 
             var request = new HttpRequestMessage(method, new Uri(url));
 
-            Logger.Debug(string.Format(CultureInfo.InvariantCulture, "Requesting {1} \"{0}\"", request.RequestUri.AbsoluteUri, method.Method));
-
             request.Headers.TryAddWithoutValidation("User-Agent", GetUserAgent());
 
             if (param != null)
@@ -144,6 +142,8 @@ namespace PhoenixAdult.Helpers.Utils
             {
                 CacheHandler.InvalidateCache(request.RequestUri);
             }
+
+            Logger.Info(string.Format(CultureInfo.InvariantCulture, "Requesting {1} \"{0}\" data={2} Headers={3}", request.RequestUri.AbsoluteUri, method.Method, request.Content.ToString(), request.Headers.ToString()));
 
             HttpResponseMessage response = null;
             try
