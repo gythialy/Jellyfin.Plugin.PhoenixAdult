@@ -72,7 +72,12 @@ namespace PhoenixAdult.Sites
                 },
             };
             var httpResult = await HTTP.Request(url, HttpMethod.Post, new StringContent(JsonConvert.SerializeObject(payload)), null, headers, cancellationToken);
-            Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.IsOK: {url} {JsonConvert.SerializeObject(payload)} {httpResult.IsOK} {httpResult.StatusCode} {httpResult.Content}");
+            Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. url: {url}");
+            Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. referer: {referer}");
+            Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. params: {JsonConvert.SerializeObject(payload)}");
+            Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.IsOK:{httpResult.IsOK}");
+            Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.StatusCode: {httpResult.StatusCode}");
+            Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.Content: {httpResult.Content}");
             if (!httpResult.IsOK)
             {
                 return null;
