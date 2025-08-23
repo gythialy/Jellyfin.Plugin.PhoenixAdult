@@ -57,9 +57,10 @@ namespace PhoenixAdult.Sites
         {
             var headers = new Dictionary<string, string>
             {
-                {"Content-Type", "application/json"},
-                {"Referer", referer},
+                { "Referer", referer },
+                { "Content-Type", "application/json" }
             };
+
             var payload = new
             {
                 requests = new[]
@@ -71,7 +72,7 @@ namespace PhoenixAdult.Sites
                     },
                 },
             };
-            var httpResult = await HTTP.Request(url, HttpMethod.Post, new StringContent(JsonConvert.SerializeObject(payload)), null, headers, cancellationToken);
+            var httpResult = await HTTP.Request(url, HttpMethod.Post, new StringContent(JsonConvert.SerializeObject(payload)), headers, null, cancellationToken);
             Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.IsOK:{httpResult.IsOK}");
             Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.StatusCode: {httpResult.StatusCode}");
             Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.Content: {httpResult.Content}");
