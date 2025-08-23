@@ -81,7 +81,7 @@ namespace PhoenixAdult.Sites
                 return null;
             }
 
-            Logger.Info($"[NetworkGammaEntOther] results: {httpResult.Content}");
+            //Logger.Info($"[NetworkGammaEntOther] results: {httpResult.Content}");
             var results = JObject.Parse(httpResult.Content)["results"];
             if (results is JArray resultsArray && resultsArray.Count > 0)
             {
