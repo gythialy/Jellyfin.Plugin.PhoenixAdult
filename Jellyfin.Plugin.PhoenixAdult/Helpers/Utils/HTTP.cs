@@ -120,6 +120,7 @@ namespace PhoenixAdult.Helpers.Utils
             if (param != null)
             {
                 request.Content = param;
+                Logger.Info($"[HTTP Request] params: {param}");
             }
 
             if (headers != null)
@@ -128,6 +129,7 @@ namespace PhoenixAdult.Helpers.Utils
                 {
                     request.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
+                Logger.Info($"[HTTP Request] headers: {request.Headers.ToDictionary().ToString()}");
             }
 
             if (cookies != null)
@@ -143,7 +145,7 @@ namespace PhoenixAdult.Helpers.Utils
                 CacheHandler.InvalidateCache(request.RequestUri);
             }
 
-            Logger.Info(string.Format(CultureInfo.InvariantCulture, "Requesting {1} \"{0}\" data={2} Headers={3}", request.RequestUri.AbsoluteUri, method.Method, request.Content.ToString(), request.Headers.ToString()));
+            Logger.Info(string.Format(CultureInfo.InvariantCulture, "[HTTP Request] Requesting {1} \"{0}\"", request.RequestUri.AbsoluteUri, method.Method));
 
             HttpResponseMessage response = null;
             try
