@@ -130,7 +130,7 @@ namespace PhoenixAdult.Sites
             foreach (var sceneType in new[] { "scene", "movie", "serie", "trailer" })
             {
                 string url;
-                if (!string.IsNullOrEmpty(sceneID) && string.IsNullOrEmpty(searchTitle))
+                if (!string.IsNullOrEmpty(sceneID))
                 {
                     url = $"{Helper.GetSearchSearchURL(siteNum)}/v2/releases?type={sceneType}&id={sceneID}";
                 }

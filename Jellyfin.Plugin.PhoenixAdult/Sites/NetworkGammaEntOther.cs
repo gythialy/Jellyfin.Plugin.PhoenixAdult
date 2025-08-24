@@ -75,7 +75,7 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(url, HttpMethod.Post, new StringContent(JsonConvert.SerializeObject(payload)), headers, null, cancellationToken);
             Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.IsOK:{httpResult.IsOK}");
             Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.StatusCode: {httpResult.StatusCode}");
-            Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.Content: {httpResult.Content}");
+            //Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.Content: {httpResult.Content}");
             if (!httpResult.IsOK)
             {
                 return null;
@@ -111,7 +111,7 @@ namespace PhoenixAdult.Sites
             foreach (var sceneType in new[] { "scenes", "movies" })
             {
                 string url = $"{Helper.GetSearchSearchURL(siteNum)}?x-algolia-application-id=TSMKFA364Q&x-algolia-api-key={apiKey}";
-                string parameters = sceneId != null && string.IsNullOrEmpty(searchTitle)
+                string parameters = sceneId != null
                     ? $"filters={(sceneType == "scenes" ? "clip_id" : "movie_id")}={sceneId}"
                     : $"query={Uri.EscapeDataString(searchTitle)}";
 
