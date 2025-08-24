@@ -165,14 +165,21 @@ namespace PhoenixAdult.Sites
             Logger.Info("[NetworkStrike3] Checking for 'models'.");
             if (video["models"] != null)
             {
-                Logger.Info($"[NetworkStrike3] Found {((JArray)video["models"]).Count} models. Looping through them.");
+                Logger.Info($"[NetworkStrike3] Found {((JArray)video["models"]).Count} models. Looping through them.: {video["models"].ToString()}");
                 foreach (var actorLink in video["models"])
                 {
                     Logger.Info($"[NetworkStrike3] Processing model: {actorLink.ToString()}");
+                    string imageUrl = null;
+                    var imagesToken = actorLink["images"];
+                    if (imagesToken != null && imagesToken.Type != JTokenType.Null)
+                    {
+                        imageUrl = (string)imagesToken["listing"]?.FirstOrDefault()?["highdpi"]?["double"];
+                    }
+
                     result.People.Add(new PersonInfo
                     {
                         Name = (string)actorLink["name"],
-                        ImageUrl = (string)actorLink["images"]?["listing"]?.FirstOrDefault()?["highdpi"]?["double"],
+                        ImageUrl = imageUrl,
                         Type = PersonKind.Actor,
                     });
                 }
