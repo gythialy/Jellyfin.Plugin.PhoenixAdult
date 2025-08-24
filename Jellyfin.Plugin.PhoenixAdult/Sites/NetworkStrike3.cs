@@ -29,10 +29,22 @@ namespace PhoenixAdult.Sites
         private const string UpdateQuery = @"query getSearchResults($slug:String!,$site:Site!){findOneVideo(input:{slug:$slug,site:$site}){videoId title description releaseDate models{name slug images{listing{highdpi{double}}}}directors{name}categories{name}carousel{listing{highdpi{triple}}}}}";
         private const string SearchIdQuery = @"query getSearchResults($videoId:ID!,$site:Site!){findOneVideo(input:{videoId:$videoId,site:$site}){videoId title releaseDate slug}}";
 
-        private async Task<JObject> GetDataFromAPI(string url, string query, string variables, CancellationToken cancellationToken)
+        private async Task<JObject> GetDataFromAPI(string url, string query, string variables, string referer, CancellationToken cancellationToken)
         {
-            var param = new StringContent($"{{\"query\":\"{query}\",\"variables\":{variables}}}", Encoding.UTF8, "application/json");
-            var http = await HTTP.Request(url, HttpMethod.Post, param, cancellationToken);
+            var headers = new Dictionary<string, string>
+            {
+                { "Referer", referer },
+            };
+
+            var payload = new
+            {
+                query,
+                variables = JObject.Parse(variables),
+            };
+            var jsonPayload = JsonConvert.SerializeObject(payload);
+            var param = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+            var http = await HTTP.Request(url, HttpMethod.Post, param, headers, null, cancellationToken);
             return http.IsOK ? (JObject)JObject.Parse(http.Content)["data"] : null;
         }
 
@@ -51,7 +63,7 @@ namespace PhoenixAdult.Sites
             if (int.TryParse(parts[0], out var sceneID) && parts[0].Length > 4)
             {
                 var variables = JsonConvert.SerializeObject(new { videoId = sceneID, site = siteName });
-                var searchResult = await GetDataFromAPI(url, SearchIdQuery, variables, cancellationToken);
+                var searchResult = await GetDataFromAPI(url, SearchIdQuery, variables, Helper.GetSearchBaseURL(siteNum), cancellationToken);
                 if (searchResult?["findOneVideo"] != null)
                 {
                     var video = searchResult["findOneVideo"];
@@ -71,7 +83,7 @@ namespace PhoenixAdult.Sites
             else
             {
                 var variables = JsonConvert.SerializeObject(new { query = searchTitle, site = siteName, first = 10, skip = 0 });
-                var searchResults = await GetDataFromAPI(url, SearchQuery, variables, cancellationToken);
+                var searchResults = await GetDataFromAPI(url, SearchQuery, variables, Helper.GetSearchBaseURL(siteNum), cancellationToken);
                 if (searchResults?["searchVideos"]?["edges"] != null)
                 {
                     foreach (var searchResult in searchResults["searchVideos"]["edges"])
@@ -105,7 +117,7 @@ namespace PhoenixAdult.Sites
             string sceneURL = Helper.Decode(sceneID[0]);
             var variables = JsonConvert.SerializeObject(new { slug = sceneURL, site = Helper.GetSearchSiteName(siteNum).ToUpper() });
             var url = Helper.GetSearchSearchURL(siteNum);
-            var sceneData = await GetDataFromAPI(url, UpdateQuery, variables, cancellationToken);
+            var sceneData = await GetDataFromAPI(url, UpdateQuery, variables, Helper.GetSearchBaseURL(siteNum), cancellationToken);
             if (sceneData?["findOneVideo"] == null)
             {
                 return result;
@@ -166,7 +178,7 @@ namespace PhoenixAdult.Sites
             string sceneURL = Helper.Decode(sceneID[0]);
             var variables = JsonConvert.SerializeObject(new { slug = sceneURL, site = Helper.GetSearchSiteName(siteNum).ToUpper() });
             var url = Helper.GetSearchSearchURL(siteNum);
-            var sceneData = await GetDataFromAPI(url, UpdateQuery, variables, cancellationToken);
+            var sceneData = await GetDataFromAPI(url, UpdateQuery, variables, Helper.GetSearchBaseURL(siteNum), cancellationToken);
             if (sceneData?["findOneVideo"] == null)
             {
                 return result;
