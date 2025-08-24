@@ -114,21 +114,25 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
+            Logger.Info("[NetworkStrike3] Starting update.");
             string sceneURL = Helper.Decode(sceneID[0]);
             var variables = JsonConvert.SerializeObject(new { slug = sceneURL, site = Helper.GetSearchSiteName(siteNum).ToUpper() });
             var url = Helper.GetSearchSearchURL(siteNum);
             var sceneData = await GetDataFromAPI(url, UpdateQuery, variables, Helper.GetSearchBaseURL(siteNum), cancellationToken);
             if (sceneData?["findOneVideo"] == null)
             {
+                Logger.Error("[NetworkStrike3] 'findOneVideo' not found in API response. Aborting update.");
                 return result;
             }
 
             var video = (JObject)sceneData["findOneVideo"];
             var movie = (Movie)result.Item;
 
+            Logger.Info("[NetworkStrike3] Parsing basic info (Name, Overview, Studio).");
             movie.Name = (string)video["title"];
             movie.Overview = (string)video["description"];
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
+            movie.AddTag(Helper.GetSearchSiteName(siteNum));
 
             if (DateTime.TryParse((string)video["releaseDate"], out var releaseDate))
             {
@@ -142,18 +146,29 @@ namespace PhoenixAdult.Sites
                 movie.AddGenre("Anal");
             }
 
+            Logger.Info("[NetworkStrike3] Checking for 'categories'.");
             if (video["categories"] != null)
             {
+                Logger.Info($"[NetworkStrike3] Found {((JArray)video["categories"]).Count} categories. Looping through them.");
                 foreach (var genreLink in video["categories"])
                 {
+                    Logger.Info($"[NetworkStrike3] Processing category: {genreLink.ToString()}");
                     movie.AddGenre((string)genreLink["name"]);
                 }
+                Logger.Info("[NetworkStrike3] Finished processing 'categories'.");
+            }
+            else
+            {
+                Logger.Info("[NetworkStrike3] 'categories' field is null.");
             }
 
+            Logger.Info("[NetworkStrike3] Checking for 'models'.");
             if (video["models"] != null)
             {
+                Logger.Info($"[NetworkStrike3] Found {((JArray)video["models"]).Count} models. Looping through them.");
                 foreach (var actorLink in video["models"])
                 {
+                    Logger.Info($"[NetworkStrike3] Processing model: {actorLink.ToString()}");
                     result.People.Add(new PersonInfo
                     {
                         Name = (string)actorLink["name"],
@@ -161,13 +176,26 @@ namespace PhoenixAdult.Sites
                         Type = PersonKind.Actor,
                     });
                 }
+                Logger.Info("[NetworkStrike3] Finished processing 'models'.");
+            }
+            else
+            {
+                Logger.Info("[NetworkStrike3] 'models' field is null.");
             }
 
+            Logger.Info("[NetworkStrike3] Checking for 'directors'.");
             if (video["directors"]?.Any() == true)
             {
+                Logger.Info($"[NetworkStrike3] Found {((JArray)video["directors"]).Count} directors. Processing the first one.");
                 result.People.Add(new PersonInfo { Name = (string)video["directors"][0]["name"], Type = PersonKind.Director });
+                Logger.Info("[NetworkStrike3] Finished processing 'directors'.");
+            }
+            else
+            {
+                Logger.Info("[NetworkStrike3] 'directors' field is null or empty.");
             }
 
+            Logger.Info("[NetworkStrike3] Update method finished.");
             return result;
         }
 
