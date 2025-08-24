@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using FlareSolverrSharp;
@@ -120,7 +121,8 @@ namespace PhoenixAdult.Helpers.Utils
             if (param != null)
             {
                 request.Content = param;
-                Logger.Info($"[HTTP Request] params: {param}");
+                string contentString = await param.ReadAsStringAsync();
+                Logger.Info($"[HTTP Request] params: {contentString}");
             }
 
             if (headers != null)
@@ -129,7 +131,9 @@ namespace PhoenixAdult.Helpers.Utils
                 {
                     request.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
-                Logger.Info($"[HTTP Request] headers: {request.Headers.ToDictionary().ToString()}");
+
+                string jsonString = JsonSerializer.Serialize(request.Headers.ToDictionary(), new JsonSerializerOptions { WriteIndented = true });
+                Logger.Info($"[HTTP Request] headers: {jsonString}");
             }
 
             if (cookies != null)
