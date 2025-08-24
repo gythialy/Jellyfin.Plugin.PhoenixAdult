@@ -240,11 +240,22 @@ namespace PhoenixAdult.Sites
                 foreach (var image in video["carousel"])
                 {
                     string img = (string)image["listing"]?.FirstOrDefault()?["highdpi"]?["triple"];
-                    if(!string.IsNullOrEmpty(img))
+
+                    if (!string.IsNullOrEmpty(img))
                     {
                         result.Add(new RemoteImageInfo { Url = img, Type = ImageType.Backdrop });
                     }
                 }
+            }
+
+            if (result.Any(i => i.Type == ImageType.Backdrop) && !result.Any(i => i.Type == ImageType.Primary))
+            {
+                var firstBackdrop = result.First(i => i.Type == ImageType.Backdrop);
+                result.Add(new RemoteImageInfo
+                {
+                    Url = firstBackdrop.Url,
+                    Type = ImageType.Primary,
+                });
             }
 
             return result;

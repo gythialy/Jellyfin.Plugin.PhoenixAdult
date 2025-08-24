@@ -299,18 +299,33 @@ namespace PhoenixAdult.Sites
 
             foreach (var imageType in new[] { "poster", "cover" })
             {
-                if (details["images"]?[imageType] != null)
+                var imageToken = details["images"]?[imageType];
+                if (imageToken != null)
                 {
-                    var sortedImages = details["images"][imageType].Values<JProperty>().OrderBy(p => p.Name);
-                    foreach (var image in sortedImages)
+                    if (imageToken is JObject imageObject)
                     {
-                        imageUrls.Add(image.Value["xx"]["url"].ToString());
+                        var imageProperties = imageObject.Properties()
+                            .Where(p => int.TryParse(p.Name, out _))
+                            .OrderBy(p => p.Name);
+
+                        foreach (var imageProp in imageProperties)
+                        {
+                            if (imageProp.Value?["xx"]?["url"] != null)
+                            {
+                                imageUrls.Add(imageProp.Value["xx"]["url"].ToString());
+                            }
+                        }
+                    }
+                    else if (imageToken is JValue)
+                    {
+                        imageUrls.Add(imageToken.ToString());
                     }
                 }
             }
 
             bool first = true;
-            foreach(var imageUrl in imageUrls.Distinct())
+
+            foreach (var imageUrl in imageUrls.Distinct())
             {
                 var imageInfo = new RemoteImageInfo { Url = imageUrl };
                 if (first)
@@ -322,6 +337,7 @@ namespace PhoenixAdult.Sites
                 {
                     imageInfo.Type = ImageType.Backdrop;
                 }
+
                 images.Add(imageInfo);
             }
 
