@@ -36,7 +36,7 @@ namespace PhoenixAdult.Sites
 
             for (int i = 1; i < 5; i++)
             {
-                var searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchString}/?p={i}";
+                var searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchString}?p={i}";
                 var searchPageElements = await HTML.ElementFromURL(searchUrl, cancellationToken);
                 if (searchPageElements == null)
                 {
