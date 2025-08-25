@@ -157,7 +157,10 @@ namespace PhoenixAdult.Sites
                 foreach (var genreNode in genreNodes)
                 {
                     string genreName = genreNode.InnerText.Replace("Movies", string.Empty).Trim();
-                    movie.AddGenre(genreName);
+                    if (genreName != string.Empty)
+                    {
+                        movie.AddGenre(genreName);
+                    }
                 }
             }
 
