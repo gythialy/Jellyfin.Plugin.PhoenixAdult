@@ -17,6 +17,7 @@ namespace PhoenixAdult.Helpers.Utils
             if (http.IsOK)
             {
                 html = ElementFromStream(http.ContentStream);
+                Logger.Info(http.Content);
             }
             else
             {
