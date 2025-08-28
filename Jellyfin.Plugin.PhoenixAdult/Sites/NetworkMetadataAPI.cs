@@ -138,9 +138,9 @@ namespace PhoenixAdult.Sites
                 foreach (var actorLink in details["performers"])
                 {
                     string actorName = (string)actorLink["name"];
-                    if (actorLink["parent"]?["name"] != null)
+                    if (actorLink["parent"] is JObject parent)
                     {
-                        actorName = (string)actorLink["parent"]["name"];
+                        actorName = (string)parent["name"] ?? actorName;
                     }
 
                     result.People.Add(new PersonInfo
@@ -167,16 +167,26 @@ namespace PhoenixAdult.Sites
 
             var details = (JObject)sceneData["data"];
 
-            string posterUrl = (string)details["posters"]?["large"];
+            string posterUrl = null;
+            if (details["posters"] is JObject postersObject)
+            {
+                posterUrl = (string)postersObject["large"] ?? (string)postersObject["medium"] ?? (string)postersObject["small"];
+            }
+
+            if (string.IsNullOrEmpty(posterUrl))
+            {
+                posterUrl = (string)details["image"];
+            }
+
             if (!string.IsNullOrEmpty(posterUrl))
             {
                 result.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
             }
 
-            string backgroundUrl = (string)details["background"]?["large"];
-            if (!string.IsNullOrEmpty(backgroundUrl))
+            string backgroundUrl = null;
+            if (details["background"] is JObject backgroundObject)
             {
-                result.Add(new RemoteImageInfo { Url = backgroundUrl, Type = ImageType.Backdrop });
+                backgroundUrl = (string)backgroundObject["large"] ?? (string)backgroundObject["full"] ?? (string)backgroundObject["medium"] ?? (string)backgroundObject["small"];
             }
 
             return result;
