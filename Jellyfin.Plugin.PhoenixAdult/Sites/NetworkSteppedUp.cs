@@ -54,9 +54,10 @@ namespace PhoenixAdult.Sites
             }
 
             var searchResults = JObject.Parse(httpResult.Content);
-            if (searchResults["pageProps"]?["model_contents"] != null)
+            var modelContents = searchResults.SelectToken("pageProps.model_contents");
+            if (modelContents != null && modelContents.Type != JTokenType.Null)
             {
-                foreach (var searchResult in searchResults["pageProps"]["model_contents"])
+                foreach (var searchResult in modelContents)
                 {
                     string titleNoFormatting = searchResult["title"].ToString();
                     string curId = Helper.Encode(searchResult["slug"].ToString());

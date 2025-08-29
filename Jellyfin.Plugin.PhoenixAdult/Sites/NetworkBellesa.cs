@@ -76,7 +76,7 @@ namespace PhoenixAdult.Sites
                 var searchResults = await GetJSONfromAPI("search", $"limit=40&order[relevance]=DESC&q={Uri.EscapeDataString(searchTitle)}&providers=bellesa", siteNum, cancellationToken);
                 if (searchResults != null)
                 {
-                    var videos = searchResults.FirstOrDefault()?["videos"];
+                    var videos = searchResults.FirstOrDefault()?.SelectToken("videos");
                     if (videos != null)
                     {
                         foreach (var searchResult in videos)

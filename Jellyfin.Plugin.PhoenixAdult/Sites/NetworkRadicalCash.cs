@@ -186,9 +186,10 @@ namespace PhoenixAdult.Sites
                 images.Add(new RemoteImageInfo { Url = content["trailer_screencap"].ToString() });
             }
 
-            if (content["previews"]?["full"] != null)
+            var fullPreviews = content.SelectToken("previews.full");
+            if (fullPreviews != null && fullPreviews.Type != JTokenType.Null)
             {
-                foreach(var image in content["previews"]["full"])
+                foreach (var image in fullPreviews)
                 {
                     images.Add(new RemoteImageInfo { Url = image.ToString() });
                 }

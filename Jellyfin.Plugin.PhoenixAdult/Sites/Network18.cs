@@ -78,12 +78,13 @@ namespace PhoenixAdult.Sites
             }
 
             var searchResults = await GetDataFromAPI(searchQuery, "query", searchTitle, siteNum[0], cancellationToken);
-            if (searchResults?["data"]?["search"]?["search"]?["result"] == null)
+            var resultToken = searchResults?.SelectToken("data.search.search.result");
+            if (resultToken == null || resultToken.Type == JTokenType.Null)
             {
                 return result;
             }
 
-            foreach (var searchResult in searchResults["data"]["search"]["search"]["result"])
+            foreach (var searchResult in resultToken)
             {
                 if (searchResult["type"].ToString() == "VIDEO")
                 {
@@ -125,12 +126,11 @@ namespace PhoenixAdult.Sites
             string videoId = Helper.Decode(videoIdEncoded);
 
             var detailsPageElements = await GetDataFromAPI(findVideoQuery, "videoId", videoId, siteNumVal, cancellationToken);
-            if (detailsPageElements?["data"]?["video"]?["find"]?["result"] == null)
+            var sceneData = detailsPageElements?.SelectToken("data.video.find.result");
+            if (sceneData == null || sceneData.Type == JTokenType.Null)
             {
                 return result;
             }
-
-            var sceneData = detailsPageElements["data"]["video"]["find"]["result"];
 
             var movie = (Movie)result.Item;
             movie.Name = sceneData["title"].ToString();
@@ -168,7 +168,7 @@ namespace PhoenixAdult.Sites
 
                 var actorPhotoPaths = new List<string> { $"/members/models/{actorTalentId}/profile-sm.jpg" };
                 var actorPhotoData = await GetDataFromAPI(assetQuery, "paths", actorPhotoPaths, siteNumVal, cancellationToken);
-                string actorPhotoURL = actorPhotoData?["data"]?["asset"]?["batch"]?["result"]?[0]?["serve"]?["uri"]?.ToString() ?? string.Empty;
+                string actorPhotoURL = actorPhotoData?.SelectToken("data.asset.batch.result[0].serve.uri")?.ToString() ?? string.Empty;
 
                 result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
             }
@@ -191,12 +191,11 @@ namespace PhoenixAdult.Sites
             int sceneNumInt = int.Parse(Regex.Match(scene, @"\d+").Value);
 
             var detailsPageElements = await GetDataFromAPI(findVideoQuery, "videoId", videoId, siteNumVal, cancellationToken);
-            if (detailsPageElements?["data"]?["video"]?["find"]?["result"] == null)
+            var sceneData = detailsPageElements?.SelectToken("data.video.find.result");
+            if (sceneData == null || sceneData.Type == JTokenType.Null)
             {
                 return images;
             }
-
-            var sceneData = detailsPageElements["data"]["video"]["find"]["result"];
             string studio = Helper.GetSearchSiteName(new[] { siteNumVal });
 
             var imagePaths = new List<string>
@@ -210,14 +209,15 @@ namespace PhoenixAdult.Sites
             }
 
             var imagesData = await GetDataFromAPI(assetQuery, "paths", imagePaths, siteNumVal, cancellationToken);
-            if (imagesData?["data"]?["asset"]?["batch"]?["result"] != null)
+            var resultToken = imagesData?.SelectToken("data.asset.batch.result");
+            if (resultToken != null && resultToken.Type != JTokenType.Null)
             {
                 bool first = true;
-                foreach (var poster in imagesData["data"]["asset"]["batch"]["result"])
+                foreach (var poster in resultToken)
                 {
-                    if (poster?["serve"]?["uri"] != null)
+                    if (poster is JObject && poster.SelectToken("serve.uri") != null)
                     {
-                        string posterUrl = poster["serve"]["uri"].ToString();
+                        string posterUrl = poster.SelectToken("serve.uri").ToString();
                         var imageInfo = new RemoteImageInfo { Url = posterUrl };
                         if (first)
                         {

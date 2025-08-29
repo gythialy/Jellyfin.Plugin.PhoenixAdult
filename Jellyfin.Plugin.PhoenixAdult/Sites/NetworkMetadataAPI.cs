@@ -46,16 +46,17 @@ namespace PhoenixAdult.Sites
 
             string url = $"{Helper.GetSearchSearchURL(siteNum)}/scenes?parse={Uri.EscapeDataString(searchTitle)}";
             var searchResults = await GetDataFromAPI(url, cancellationToken);
-            if (searchResults?["data"] == null)
+            var data = searchResults?.SelectToken("data");
+            if (data == null || data.Type == JTokenType.Null)
             {
                 return result;
             }
 
-            foreach (var searchResult in searchResults["data"])
+            foreach (var searchResult in data)
             {
                 string curID = (string)searchResult["_id"];
                 string titleNoFormatting = (string)searchResult["title"];
-                string siteName = (string)searchResult["site"]?["name"];
+                string siteName = searchResult.SelectToken("site.name")?.ToString();
                 string sceneDate = (string)searchResult["date"];
                 DateTime.TryParseExact(sceneDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var releaseDate);
 
@@ -82,12 +83,11 @@ namespace PhoenixAdult.Sites
 
             string url = $"{Helper.GetSearchSearchURL(siteNum)}/scenes/{sceneID[0]}";
             var sceneData = await GetDataFromAPI(url, cancellationToken);
-            if (sceneData?["data"] == null)
+            var details = sceneData?.SelectToken("data");
+            if (details == null || details.Type == JTokenType.Null)
             {
                 return result;
             }
-
-            var details = (JObject)sceneData["data"];
             var movie = (Movie)result.Item;
 
             movie.Name = (string)details["title"];
@@ -105,9 +105,10 @@ namespace PhoenixAdult.Sites
                 {
                     string networkUrl = $"{Helper.GetSearchSearchURL(siteNum)}/sites/{networkId}";
                     var networkData = await GetDataFromAPI(networkUrl, cancellationToken);
-                    if (networkData?["data"] != null)
+                    var networkDetails = networkData?.SelectToken("data");
+                    if (networkDetails != null && networkDetails.Type != JTokenType.Null)
                     {
-                        studioName = (string)networkData["data"]["name"];
+                        studioName = (string)networkDetails["name"];
                         collections.Add(studioName);
                     }
                 }
@@ -138,9 +139,9 @@ namespace PhoenixAdult.Sites
                 foreach (var actorLink in details["performers"])
                 {
                     string actorName = (string)actorLink["name"];
-                    if (actorLink["parent"]?["name"] != null)
+                    if (actorLink["parent"] is JObject parent)
                     {
-                        actorName = (string)actorLink["parent"]["name"];
+                        actorName = (string)parent["name"] ?? actorName;
                     }
 
                     result.People.Add(new PersonInfo
@@ -160,20 +161,34 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteImageInfo>();
             string url = $"{Helper.GetSearchSearchURL(siteNum)}/scenes/{sceneID[0]}";
             var sceneData = await GetDataFromAPI(url, cancellationToken);
-            if (sceneData?["data"] == null)
+            var details = sceneData?.SelectToken("data");
+            if (details == null || details.Type == JTokenType.Null)
             {
                 return result;
             }
 
-            var details = (JObject)sceneData["data"];
+            string posterUrl = null;
+            if (details["posters"] is JObject postersObject)
+            {
+                posterUrl = (string)postersObject["large"] ?? (string)postersObject["medium"] ?? (string)postersObject["small"];
+            }
 
-            string posterUrl = (string)details["posters"]?["large"];
+            if (string.IsNullOrEmpty(posterUrl))
+            {
+                posterUrl = (string)details["image"];
+            }
+
             if (!string.IsNullOrEmpty(posterUrl))
             {
                 result.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
             }
 
-            string backgroundUrl = (string)details["background"]?["large"];
+            string backgroundUrl = null;
+            if (details["background"] is JObject backgroundObject)
+            {
+                backgroundUrl = (string)backgroundObject["large"] ?? (string)backgroundObject["full"] ?? (string)backgroundObject["medium"] ?? (string)backgroundObject["small"];
+            }
+
             if (!string.IsNullOrEmpty(backgroundUrl))
             {
                 result.Add(new RemoteImageInfo { Url = backgroundUrl, Type = ImageType.Backdrop });

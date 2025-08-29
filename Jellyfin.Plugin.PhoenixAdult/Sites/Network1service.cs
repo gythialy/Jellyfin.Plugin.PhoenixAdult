@@ -142,18 +142,19 @@ namespace PhoenixAdult.Sites
                 Logger.Info($"[Network1service] search url: {url}");
 
                 var searchResults = await GetDataFromAPI(url, instanceToken, cancellationToken).ConfigureAwait(false);
-                if (searchResults?["result"] == null)
+                var results = searchResults?.SelectToken("result");
+                if (results == null || results.Type == JTokenType.Null)
                 {
                     continue;
                 }
 
-                foreach (var searchResult in searchResults["result"])
+                foreach (var searchResult in results)
                 {
                     string titleNoFormatting = searchResult["title"].ToString().Replace("ï¿½", "'");
                     DateTime releaseDate = (DateTime)searchResult["dateReleased"];
                     string curID = searchResult["id"].ToString();
                     string siteName = searchResult["brand"].ToString();
-                    string subSite = searchResult["collections"]?.FirstOrDefault()?["name"]?.ToString().Trim() ?? string.Empty;
+                    string subSite = searchResult.SelectToken("collections")?.FirstOrDefault()?.SelectToken("name")?.ToString().Trim() ?? string.Empty;
                     string siteDisplay = !string.IsNullOrEmpty(subSite) ? $"{siteName}/{subSite}" : siteName;
 
                     if (sceneType == "trailer")
@@ -195,12 +196,11 @@ namespace PhoenixAdult.Sites
 
             var url = $"{Helper.GetSearchSearchURL(siteNum)}/v2/releases?type={sceneType}&id={curID}";
             var detailsPageElements = await GetDataFromAPI(url, instanceToken, cancellationToken).ConfigureAwait(false);
-            if (detailsPageElements?["result"]?.FirstOrDefault() == null)
+            var details = detailsPageElements?.SelectToken("result")?.FirstOrDefault();
+            if (details == null || details.Type == JTokenType.Null)
             {
                 return result;
             }
-
-            var details = detailsPageElements["result"][0];
 
             var movie = (Movie)result.Item;
             movie.Name = details["title"].ToString().Replace("ï¿½", "'");
@@ -208,7 +208,7 @@ namespace PhoenixAdult.Sites
             string description = details["description"]?.ToString();
             if (string.IsNullOrEmpty(description))
             {
-                description = details["parent"]?["description"]?.ToString();
+                description = details.SelectToken("parent.description")?.ToString();
             }
 
             movie.Overview = description;
@@ -223,9 +223,10 @@ namespace PhoenixAdult.Sites
                     seriesNames.Add(collection["name"].ToString());
                 }
             }
-            if (details["parent"]?["title"] != null)
+            var parentTitle = details.SelectToken("parent.title")?.ToString();
+            if (!string.IsNullOrEmpty(parentTitle))
             {
-                seriesNames.Add(details["parent"]["title"].ToString());
+                seriesNames.Add(parentTitle);
             }
 
             string mainSiteName = Helper.GetSearchSiteName(siteNum);
@@ -257,13 +258,13 @@ namespace PhoenixAdult.Sites
                 {
                     var actorPageURL = $"{Helper.GetSearchSearchURL(siteNum)}/v1/actors?id={actorLink["id"]}";
                     var actorData = await GetDataFromAPI(actorPageURL, instanceToken, cancellationToken);
-                    if (actorData?["result"]?.FirstOrDefault() == null)
+                    var actorDetails = actorData?.SelectToken("result")?.FirstOrDefault();
+                    if (actorDetails == null || actorDetails.Type == JTokenType.Null)
                     {
                         continue;
                     }
 
-                    var actorDetails = actorData["result"][0];
-                    string actorPhotoUrl = actorDetails["images"]?["profile"]?["0"]?["xs"]?["url"]?.ToString() ?? string.Empty;
+                    string actorPhotoUrl = actorDetails.SelectToken("images.profile.0.xs.url")?.ToString() ?? string.Empty;
                     result.People.Add(new PersonInfo { Name = actorDetails["name"].ToString(), Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
@@ -289,18 +290,18 @@ namespace PhoenixAdult.Sites
 
             var url = $"{Helper.GetSearchSearchURL(siteNum)}/v2/releases?type={sceneType}&id={curID}";
             var detailsPageElements = await GetDataFromAPI(url, instanceToken, cancellationToken).ConfigureAwait(false);
-            if (detailsPageElements?["result"]?.FirstOrDefault() == null)
+            var details = detailsPageElements?.SelectToken("result")?.FirstOrDefault();
+            if (details == null || details.Type == JTokenType.Null)
             {
                 return images;
             }
 
-            var details = detailsPageElements["result"][0];
             var imageUrls = new List<string>();
 
             foreach (var imageType in new[] { "poster", "cover" })
             {
-                var imageToken = details["images"]?[imageType];
-                if (imageToken != null)
+                var imageToken = details.SelectToken($"images.{imageType}");
+                if (imageToken != null && imageToken.Type != JTokenType.Null)
                 {
                     if (imageToken is JObject imageObject)
                     {
@@ -310,9 +311,10 @@ namespace PhoenixAdult.Sites
 
                         foreach (var imageProp in imageProperties)
                         {
-                            if (imageProp.Value?["xx"]?["url"] != null)
+                            var imageUrl = imageProp.Value?.SelectToken("xx.url")?.ToString();
+                            if (!string.IsNullOrEmpty(imageUrl))
                             {
-                                imageUrls.Add(imageProp.Value["xx"]["url"].ToString());
+                                imageUrls.Add(imageUrl);
                             }
                         }
                     }

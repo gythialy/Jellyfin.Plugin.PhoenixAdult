@@ -139,7 +139,8 @@ namespace PhoenixAdult.Sites
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            if (detailsPageElements["tags"]?["collection"] is JObject genres)
+            var tags = detailsPageElements.SelectToken("tags.collection");
+            if (tags is JObject genres)
             {
                 foreach (var genre in genres)
                 {
@@ -148,7 +149,8 @@ namespace PhoenixAdult.Sites
             }
 
             var actors = await GetJsonFromApi($"{Helper.GetSearchSearchURL(siteNum)}{apiUrl}{ModelQuery}{sceneId}", cancellationToken);
-            if (actors?["modelId"]?["collection"] is JObject actorCollection)
+            var actorCollectionToken = actors?.SelectToken("modelId.collection");
+            if (actorCollectionToken is JObject actorCollection)
             {
                 foreach(var actor in actorCollection)
                 {

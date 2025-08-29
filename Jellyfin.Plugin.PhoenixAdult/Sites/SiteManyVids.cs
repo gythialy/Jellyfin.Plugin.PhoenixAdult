@@ -67,7 +67,7 @@ namespace PhoenixAdult.Sites
             string titleNoFormatting = (string)searchResult["name"];
             string curID = Helper.Encode(sceneUrl);
             string searchID = sceneUrl.Split('/').Last().Split('-')[0];
-            string subSite = (string)searchResult["creator"]?["name"];
+            string subSite = searchResult.SelectToken("creator.name")?.ToString();
             string releaseDate = string.Empty;
             if (DateTime.TryParse((string)searchResult["uploadDate"], out var parsedDate))
             {

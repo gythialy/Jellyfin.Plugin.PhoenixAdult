@@ -160,9 +160,13 @@ namespace PhoenixAdult.Sites
             }
 
             var detailsPageElements = searchResults["results"].FirstOrDefault(r => r["id"].ToString() == sceneId);
-            if (detailsPageElements?["thumb"]?["image"] != null)
+            if (detailsPageElements != null)
             {
-                images.Add(new RemoteImageInfo { Url = detailsPageElements["thumb"]["image"].ToString(), Type = ImageType.Primary });
+                var imageUrl = detailsPageElements.SelectToken("thumb.image")?.ToString();
+                if (!string.IsNullOrEmpty(imageUrl))
+                {
+                    images.Add(new RemoteImageInfo { Url = imageUrl, Type = ImageType.Primary });
+                }
             }
 
             return images;

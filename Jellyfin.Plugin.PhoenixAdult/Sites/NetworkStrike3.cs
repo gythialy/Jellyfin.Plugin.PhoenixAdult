@@ -64,9 +64,9 @@ namespace PhoenixAdult.Sites
             {
                 var variables = JsonConvert.SerializeObject(new { videoId = sceneID, site = siteName });
                 var searchResult = await GetDataFromAPI(url, SearchIdQuery, variables, Helper.GetSearchBaseURL(siteNum), cancellationToken);
-                if (searchResult?["findOneVideo"] != null)
+                var video = searchResult?.SelectToken("findOneVideo");
+                if (video != null && video.Type != JTokenType.Null)
                 {
-                    var video = searchResult["findOneVideo"];
                     string titleNoFormatting = (string)video["title"];
                     string releaseDate = DateTime.Parse((string)video["releaseDate"]).ToString("yyyy-MM-dd");
                     string curID = Helper.Encode((string)video["slug"]);
@@ -84,9 +84,10 @@ namespace PhoenixAdult.Sites
             {
                 var variables = JsonConvert.SerializeObject(new { query = searchTitle, site = siteName, first = 10, skip = 0 });
                 var searchResults = await GetDataFromAPI(url, SearchQuery, variables, Helper.GetSearchBaseURL(siteNum), cancellationToken);
-                if (searchResults?["searchVideos"]?["edges"] != null)
+                var edges = searchResults?.SelectToken("searchVideos.edges");
+                if (edges != null && edges.Type != JTokenType.Null)
                 {
-                    foreach (var searchResult in searchResults["searchVideos"]["edges"])
+                    foreach (var searchResult in edges)
                     {
                         var node = searchResult["node"];
                         string titleNoFormatting = (string)node["title"];
@@ -98,7 +99,7 @@ namespace PhoenixAdult.Sites
                             ProviderIds = { { Plugin.Instance.Name, curID } },
                             Name = $"{titleNoFormatting} {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
-                            ImageUrl = (string)node["images"]?["listing"]?.FirstOrDefault()?["src"],
+                            ImageUrl = node.SelectToken("images.listing")?.FirstOrDefault()?.SelectToken("src")?.ToString(),
                         });
                     }
                 }
@@ -119,13 +120,12 @@ namespace PhoenixAdult.Sites
             var variables = JsonConvert.SerializeObject(new { slug = sceneURL, site = Helper.GetSearchSiteName(siteNum).ToUpper() });
             var url = Helper.GetSearchSearchURL(siteNum);
             var sceneData = await GetDataFromAPI(url, UpdateQuery, variables, Helper.GetSearchBaseURL(siteNum), cancellationToken);
-            if (sceneData?["findOneVideo"] == null)
+            var video = sceneData?.SelectToken("findOneVideo");
+            if (video == null || video.Type == JTokenType.Null)
             {
                 Logger.Error("[NetworkStrike3] 'findOneVideo' not found in API response. Aborting update.");
                 return result;
             }
-
-            var video = (JObject)sceneData["findOneVideo"];
             var movie = (Movie)result.Item;
 
             Logger.Info("[NetworkStrike3] Parsing basic info (Name, Overview, Studio).");
@@ -173,7 +173,7 @@ namespace PhoenixAdult.Sites
                     var imagesToken = actorLink["images"];
                     if (imagesToken != null && imagesToken.Type != JTokenType.Null)
                     {
-                        imageUrl = (string)imagesToken["listing"]?.FirstOrDefault()?["highdpi"]?["double"];
+                        imageUrl = imagesToken.SelectToken("listing")?.FirstOrDefault()?.SelectToken("highdpi.double")?.ToString();
                     }
 
                     result.People.Add(new PersonInfo
@@ -213,21 +213,25 @@ namespace PhoenixAdult.Sites
             var variables = JsonConvert.SerializeObject(new { slug = sceneURL, site = Helper.GetSearchSiteName(siteNum).ToUpper() });
             var url = Helper.GetSearchSearchURL(siteNum);
             var sceneData = await GetDataFromAPI(url, UpdateQuery, variables, Helper.GetSearchBaseURL(siteNum), cancellationToken);
-            if (sceneData?["findOneVideo"] == null)
+            var video = sceneData?.SelectToken("findOneVideo");
+            if (video == null || video.Type == JTokenType.Null)
             {
                 return result;
             }
 
-            var video = (JObject)sceneData["findOneVideo"];
-
             string posterUrl = null;
-            if (video["images"]?["movie"]?.Any() == true)
+            var movieImages = video.SelectToken("images.movie");
+            if (movieImages != null && movieImages.Any())
             {
-                posterUrl = (string)video["images"]["movie"].Last?["highdpi"]?["3x"] ?? (string)video["images"]["movie"].Last?["src"];
+                posterUrl = movieImages.Last.SelectToken("highdpi.3x")?.ToString() ?? movieImages.Last.SelectToken("src")?.ToString();
             }
-            else if (video["images"]?["poster"]?.Any() == true)
+            else
             {
-                posterUrl = (string)video["images"]["poster"].Last?["highdpi"]?["3x"] ?? (string)video["images"]["poster"].Last?["src"];
+                var posterImages = video.SelectToken("images.poster");
+                if (posterImages != null && posterImages.Any())
+                {
+                    posterUrl = posterImages.Last.SelectToken("highdpi.3x")?.ToString() ?? posterImages.Last.SelectToken("src")?.ToString();
+                }
             }
 
             if (!string.IsNullOrEmpty(posterUrl))
@@ -235,11 +239,12 @@ namespace PhoenixAdult.Sites
                 result.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
             }
 
-            if (video["carousel"] != null)
+            var carouselImages = video["carousel"];
+            if (carouselImages != null)
             {
-                foreach (var image in video["carousel"])
+                foreach (var image in carouselImages)
                 {
-                    string img = (string)image["listing"]?.FirstOrDefault()?["highdpi"]?["triple"];
+                    string img = image.SelectToken("listing")?.FirstOrDefault()?.SelectToken("highdpi.triple")?.ToString();
 
                     if (!string.IsNullOrEmpty(img))
                     {
