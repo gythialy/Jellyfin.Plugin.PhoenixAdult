@@ -133,7 +133,7 @@ namespace PhoenixAdult.Sites
 
                 if (!string.IsNullOrEmpty(actorName))
                 {
-                    result.People.Add(new PersonInfo
+                    result.AddPerson(new PersonInfo
                     {
                         Name = actorName,
                     });

@@ -65,7 +65,16 @@ namespace PhoenixAdult.ScheduledTasks
 
         public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
         {
-            yield return new TaskTriggerInfo { Type = TaskTriggerInfo.TriggerWeekly, DayOfWeek = DayOfWeek.Sunday, TimeOfDayTicks = TimeSpan.FromHours(12).Ticks };
+            yield return new TaskTriggerInfo
+            {
+#if __EMBY__
+                Type = TaskTriggerInfo.TriggerWeekly,
+#else
+                Type = TaskTriggerInfoType.WeeklyTrigger,
+#endif
+                DayOfWeek = DayOfWeek.Sunday,
+                TimeOfDayTicks = TimeSpan.FromHours(12).Ticks,
+            };
         }
     }
 }

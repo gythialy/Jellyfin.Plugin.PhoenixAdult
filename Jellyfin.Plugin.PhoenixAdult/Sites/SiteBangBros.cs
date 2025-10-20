@@ -110,7 +110,7 @@ namespace PhoenixAdult.Sites
                 var actorHTML = await HTML.ElementFromURL(actorPageURL, cancellationToken).ConfigureAwait(false);
                 actorPhoto = $"https:{actorHTML.SelectSingleText("//div[@class='profilePic_in']//img/@src")}";
 
-                result.People.Add(new PersonInfo
+                result.AddPerson(new PersonInfo
                 {
                     Name = actorName,
                     ImageUrl = actorPhoto,

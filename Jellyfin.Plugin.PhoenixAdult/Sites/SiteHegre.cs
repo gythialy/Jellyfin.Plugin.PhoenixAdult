@@ -124,7 +124,7 @@ namespace PhoenixAdult.Sites
                     ImageUrl = actorLink.SelectSingleText(".//img/@src").Replace("150x", "480x", StringComparison.OrdinalIgnoreCase).Replace("240x", "480x", StringComparison.OrdinalIgnoreCase),
                 };
 
-                result.People.Add(actor);
+                result.AddPerson(actor);
             }
 
             return result;

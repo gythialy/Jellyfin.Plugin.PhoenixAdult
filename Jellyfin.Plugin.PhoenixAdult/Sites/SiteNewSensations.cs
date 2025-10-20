@@ -131,7 +131,7 @@ namespace PhoenixAdult.Sites
                             var performerUrl = performerNode.Attributes["href"].Value;
                             var performerPage = await HTML.ElementFromURL(performerUrl, cancellationToken).ConfigureAwait(false);
                             var performerImg = performerPage.SelectSingleNode("//div[contains(@class, 'modelBioPic')]/img");
-                            result.People.Add(new PersonInfo
+                            result.AddPerson(new PersonInfo
                             {
                                 Name = performerNode.InnerText,
                                 ImageUrl = performerImg.Attributes["src0_1x"].Value,
@@ -165,7 +165,7 @@ namespace PhoenixAdult.Sites
 
                         foreach (var performerNode in performerNodes)
                         {
-                            result.People.Add(new PersonInfo
+                            result.AddPerson(new PersonInfo
                             {
                                 Name = performerNode.InnerText,
                             });
@@ -193,7 +193,7 @@ namespace PhoenixAdult.Sites
 
                         foreach (var performerNode in performerNodes)
                         {
-                            result.People.Add(new PersonInfo
+                            result.AddPerson(new PersonInfo
                             {
                                 Name = performerNode.InnerText,
                             });

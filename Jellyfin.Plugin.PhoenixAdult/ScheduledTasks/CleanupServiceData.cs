@@ -91,7 +91,15 @@ namespace PhoenixAdult.ScheduledTasks
 
         public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
         {
-            yield return new TaskTriggerInfo { Type = TaskTriggerInfo.TriggerInterval, IntervalTicks = TimeSpan.FromHours(24).Ticks };
+            yield return new TaskTriggerInfo
+            {
+#if __EMBY__
+                Type = TaskTriggerInfo.TriggerInterval,
+#else
+                Type = TaskTriggerInfoType.IntervalTrigger,
+#endif
+                IntervalTicks = TimeSpan.FromHours(24).Ticks,
+            };
         }
     }
 }

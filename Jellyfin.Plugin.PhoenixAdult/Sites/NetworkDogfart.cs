@@ -135,7 +135,7 @@ namespace PhoenixAdult.Sites
             {
                 var actorName = actorLink.InnerText;
 
-                result.People.Add(new PersonInfo
+                result.AddPerson(new PersonInfo
                 {
                     Name = actorName,
                 });

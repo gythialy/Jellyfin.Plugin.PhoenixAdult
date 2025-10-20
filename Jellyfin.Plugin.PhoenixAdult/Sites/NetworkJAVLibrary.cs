@@ -167,7 +167,7 @@ namespace PhoenixAdult.Sites
                         Name = actorName,
                     };
 
-                    result.People.Add(actor);
+                    result.AddPerson(actor);
                 }
             }
 

@@ -129,7 +129,7 @@ namespace PhoenixAdult.Sites
                 var performerUrl = performerNode.Attributes["href"].Value;
                 var performerPage = await HTML.ElementFromURL(performerUrl, cancellationToken).ConfigureAwait(false);
                 var performerImageNode = performerPage.SelectSingleNode("//div[@class='feature-image']//img");
-                result.People.Add(new PersonInfo
+                result.AddPerson(new PersonInfo
                 {
                     Name = name,
                     ImageUrl = performerImageNode.Attributes["src"].Value,

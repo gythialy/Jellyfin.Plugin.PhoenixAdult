@@ -128,7 +128,7 @@ namespace PhoenixAdult.Sites
                 string actorName = (string)actorLink["name"],
                        actorPhoto = $"https://i.bang.com/pornstars/{actorLink["id"]}.jpg";
 
-                result.People.Add(new PersonInfo
+                result.AddPerson(new PersonInfo
                 {
                     Name = actorName,
                     ImageUrl = actorPhoto,
