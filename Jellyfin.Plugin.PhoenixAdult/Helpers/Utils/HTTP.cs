@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using FlareSolverrSharp;
@@ -107,8 +108,6 @@ namespace PhoenixAdult.Helpers.Utils
                 IsOK = false,
             };
 
-            url = Uri.EscapeUriString(Uri.UnescapeDataString(url));
-
             if (method == null)
             {
                 method = HttpMethod.Get;
@@ -116,13 +115,13 @@ namespace PhoenixAdult.Helpers.Utils
 
             var request = new HttpRequestMessage(method, new Uri(url));
 
-            Logger.Debug(string.Format(CultureInfo.InvariantCulture, "Requesting {1} \"{0}\"", request.RequestUri.AbsoluteUri, method.Method));
-
             request.Headers.TryAddWithoutValidation("User-Agent", GetUserAgent());
 
             if (param != null)
             {
                 request.Content = param;
+                string contentString = await param.ReadAsStringAsync();
+                Logger.Info($"[HTTP Request] params: {contentString}");
             }
 
             if (headers != null)
@@ -131,6 +130,9 @@ namespace PhoenixAdult.Helpers.Utils
                 {
                     request.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
+
+                string jsonString = JsonSerializer.Serialize(request.Headers.ToDictionary(), new JsonSerializerOptions { WriteIndented = true });
+                Logger.Info($"[HTTP Request] headers: {jsonString}");
             }
 
             if (cookies != null)
@@ -145,6 +147,8 @@ namespace PhoenixAdult.Helpers.Utils
             {
                 CacheHandler.InvalidateCache(request.RequestUri);
             }
+
+            Logger.Info(string.Format(CultureInfo.InvariantCulture, "[HTTP Request] Requesting {1} \"{0}\"", request.RequestUri.AbsoluteUri, method.Method));
 
             HttpResponseMessage response = null;
             try
@@ -165,6 +169,7 @@ namespace PhoenixAdult.Helpers.Utils
 
             if (response != null)
             {
+                result.ResponseUrl = response.RequestMessage.RequestUri;
                 result.IsOK = response.IsSuccessStatusCode || additionalSuccessStatusCodes.Contains(response.StatusCode);
                 result.StatusCode = response.StatusCode;
 #if __EMBY__
@@ -188,41 +193,12 @@ namespace PhoenixAdult.Helpers.Utils
             => await Request(url, method, null, headers, cookies, cancellationToken, additionalSuccessStatusCodes).ConfigureAwait(false);
 
         public static async Task<HTTPResponse> Request(string url, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, params HttpStatusCode[] additionalSuccessStatusCodes)
-        {
-            var result = default(HTTPResponse);
-            if (string.IsNullOrEmpty(url))
-            {
-                return result;
-            }
-
-            try
-            {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, url))
-                {
-                    if (headers != null)
-                    {
-                        // Sanitize headers to ensure ASCII characters only
-                        foreach (var header in headers)
-                        {
-                            var sanitizedValue = System.Text.RegularExpressions.Regex.Replace(header.Value, @"[^\u0000-\u007F]", string.Empty);
-                            if (!string.IsNullOrEmpty(sanitizedValue))
-                            {
-                                request.Headers.TryAddWithoutValidation(header.Key, sanitizedValue);
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Error($"Request error: {e}");
-            }
-
-            return result;
-        }
+            => await Request(url, null, null, headers, cookies, cancellationToken, additionalSuccessStatusCodes).ConfigureAwait(false);
 
         internal struct HTTPResponse
         {
+            public Uri ResponseUrl { get; set; }
+
             public string Content { get; set; }
 
             public Stream ContentStream { get; set; }
