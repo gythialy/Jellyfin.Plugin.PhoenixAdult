@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -23,24 +24,23 @@ namespace PhoenixAdult.Sites
         private readonly string updateVariables = "{{\"slug\":\"{0}\",\"site\":\"{1}\"}}";
         private readonly string updateQuery = @"query getSearchResults($slug:String!,$site:Site!){findOneVideo(input:{slug:$slug,site:$site}){videoId title description releaseDate models{name slug images{listing{highdpi{double}}}}directors{name}categories{name}carousel{listing{highdpi{triple}}}}}";
 
-        public static async Task<JObject> GetDataFromAPI(string url, string query, string variables, CancellationToken cancellationToken)
+        public static async Task<JObject> GetDataFromAPI(string url, string query, string variables, string referer, CancellationToken cancellationToken)
         {
-            JObject json = null;
-
-            var param = new StringContent($"{{\"query\":\"{query}\",\"variables\":{variables}}}", Encoding.UTF8, "application/json");
-
-            Logger.Debug($"{url}, {query}, {variables}");
-
-            var http = await HTTP.Request(url, HttpMethod.Post, param, cancellationToken).ConfigureAwait(false);
-
-            if (http.IsOK)
+            var headers = new Dictionary<string, string>
             {
-                Logger.Debug("http.Content: " + http.Content);
-                json = (JObject)JObject.Parse(http.Content)["data"];
-                Logger.Debug("content to jobject ok");
-            }
+                { "Referer", referer },
+            };
 
-            return json;
+            var payload = new
+            {
+                query,
+                variables = JObject.Parse(variables),
+            };
+            var jsonPayload = JsonConvert.SerializeObject(payload);
+            var param = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+            var http = await HTTP.Request(url, HttpMethod.Post, param, headers, null, cancellationToken);
+            return http.IsOK ? (JObject)JObject.Parse(http.Content)["data"] : null;
         }
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
@@ -54,7 +54,7 @@ namespace PhoenixAdult.Sites
             var variables = string.Format(this.searchVariables, searchTitle, Helper.GetSearchSiteName(siteNum).ToUpper());
             var url = Helper.GetSearchSearchURL(siteNum);
             Logger.Debug($"search: {variables}, {url}");
-            var searchResults = await GetDataFromAPI(url, this.searchQuery, variables, cancellationToken).ConfigureAwait(false);
+            var searchResults = await GetDataFromAPI(url, this.searchQuery, variables, Helper.GetSearchBaseURL(siteNum), cancellationToken).ConfigureAwait(false);
             if (searchResults == null)
             {
                 return result;
@@ -100,7 +100,7 @@ namespace PhoenixAdult.Sites
             var variables = string.Format(this.updateVariables, sceneURL, Helper.GetSearchSiteName(siteNum).ToUpper());
             var url = Helper.GetSearchSearchURL(siteNum);
             Logger.Debug($"update: {variables}, {url}");
-            var sceneData = await GetDataFromAPI(url, this.updateQuery, variables, cancellationToken).ConfigureAwait(false);
+            var sceneData = await GetDataFromAPI(url, this.updateQuery, variables, Helper.GetSearchBaseURL(siteNum), cancellationToken).ConfigureAwait(false);
             if (sceneData == null)
             {
                 return result;
@@ -156,7 +156,7 @@ namespace PhoenixAdult.Sites
             var variables = string.Format(this.updateVariables, sceneURL, Helper.GetSearchSiteName(siteNum).ToUpper());
             var url = Helper.GetSearchSearchURL(siteNum);
             Logger.Debug($"get images: {variables}, {url}");
-            var sceneData = await GetDataFromAPI(url, this.updateQuery, variables, cancellationToken).ConfigureAwait(false);
+            var sceneData = await GetDataFromAPI(url, this.updateQuery, variables, Helper.GetSearchBaseURL(siteNum), cancellationToken).ConfigureAwait(false);
             if (sceneData == null)
             {
                 return result;
