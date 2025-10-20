@@ -138,7 +138,7 @@ namespace PhoenixAdult.Sites
                 var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken).ConfigureAwait(false);
                 var actorPhotoURL = "http:" + actorPage.SelectSingleText("//div[contains(@class, 'model-profile')]//img/@src");
 
-                result.People.Add(new PersonInfo
+                result.AddPerson(new PersonInfo
                 {
                     Name = actorName,
                     ImageUrl = actorPhotoURL,

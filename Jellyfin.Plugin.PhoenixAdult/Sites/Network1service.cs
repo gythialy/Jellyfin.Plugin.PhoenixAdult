@@ -267,7 +267,7 @@ namespace PhoenixAdult.Sites
                         actor.ImageUrl = (string)actorData["images"]["profile"]["0"]["xs"]["url"];
                     }
 
-                    result.People.Add(actor);
+                    result.AddPerson(actor);
                 }
             }
 

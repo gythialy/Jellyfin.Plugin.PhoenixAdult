@@ -157,7 +157,7 @@ namespace PhoenixAdult.Sites
                     ImageUrl = actorLink.SelectSingleText("./@src"),
                 };
 
-                result.People.Add(actor);
+                result.AddPerson(actor);
             }
 
             return result;

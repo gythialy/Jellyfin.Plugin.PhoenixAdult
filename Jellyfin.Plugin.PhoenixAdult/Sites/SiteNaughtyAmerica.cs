@@ -100,7 +100,7 @@ namespace PhoenixAdult.Sites
             foreach (var performer in performers)
             {
                 var performerName = performer.InnerText;
-                result.People.Add(new PersonInfo
+                result.AddPerson(new PersonInfo
                 {
                     Name = performerName,
                 });

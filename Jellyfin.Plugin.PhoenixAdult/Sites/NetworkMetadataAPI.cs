@@ -154,7 +154,7 @@ namespace PhoenixAdult.Sites
                         ImageUrl = (string)actorLink["image"],
                     };
 
-                    result.People.Add(actor);
+                    result.AddPerson(actor);
                 }
             }
 

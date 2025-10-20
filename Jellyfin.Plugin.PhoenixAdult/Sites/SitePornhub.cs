@@ -130,7 +130,7 @@ namespace PhoenixAdult.Sites
                 string actorName = actorLink.Attributes["data-mxptext"].Value,
                         actorPhotoURL = actorLink.SelectSingleText(".//img[@class='avatar']/@src");
 
-                result.People.Add(new PersonInfo
+                result.AddPerson(new PersonInfo
                 {
                     Name = actorName,
                     ImageUrl = actorPhotoURL,

@@ -300,7 +300,7 @@ namespace PhoenixAdult.Sites
                         actor.ImageUrl = $"https://images-fame.gammacdn.com/actors{actorPhotoURL}";
                     }
 
-                    result.People.Add(actor);
+                    result.AddPerson(actor);
                 }
             }
 

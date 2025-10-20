@@ -136,7 +136,7 @@ namespace PhoenixAdult.Sites
                     actor.ImageUrl = (string)actorLink["images"]["listing"].First()["highdpi"]["double"];
                 }
 
-                result.People.Add(actor);
+                result.AddPerson(actor);
             }
 
             return result;

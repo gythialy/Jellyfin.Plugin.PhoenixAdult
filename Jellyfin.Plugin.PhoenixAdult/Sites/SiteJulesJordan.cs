@@ -154,7 +154,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
 
-                result.People.Add(actor);
+                result.AddPerson(actor);
             }
 
             return result;

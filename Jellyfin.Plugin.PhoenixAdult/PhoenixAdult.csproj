@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">net8.0</TargetFramework>
+    <TargetFramework Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">net9.0</TargetFramework>
     <TargetFramework
       Condition="'$(Configuration)'=='Debug.Emby' or '$(Configuration)'=='Release.Emby'">netstandard2.1</TargetFramework>
     <RootNamespace>PhoenixAdult</RootNamespace>
@@ -77,12 +77,12 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">
-    <PackageReference Include="Jellyfin.Controller" Version="10.10.6" />
+    <PackageReference Include="Jellyfin.Controller" Version="10.11.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug.Emby' or '$(Configuration)'=='Release.Emby'">
-    <PackageReference Include="MediaBrowser.Server.Core" Version="4.8.10" />
+    <PackageReference Include="MediaBrowser.Server.Core" Version="4.9.1.80" />
     <PackageReference Include="StandardSocketsHttpHandler" Version="2.2.0.8" />
   </ItemGroup>
 
@@ -98,7 +98,7 @@
   </ItemGroup>
 
  <ItemGroup Condition="'$(Configuration)'=='Release' or '$(Configuration)'=='Release.Emby'">
-    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.40">
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.44">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

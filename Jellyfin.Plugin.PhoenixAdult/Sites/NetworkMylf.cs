@@ -249,7 +249,7 @@ namespace PhoenixAdult.Sites
                 if (actorData != null)
                 {
                     actorPhotoURL = (string)actorData["modelsContent"][actorID]["img"];
-                    result.People.Add(new PersonInfo
+                    result.AddPerson(new PersonInfo
                     {
                         Name = actorName,
                         ImageUrl = actorPhotoURL,

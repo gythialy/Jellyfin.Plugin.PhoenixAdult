@@ -186,7 +186,7 @@ namespace PhoenixAdult.Sites
                     res.ImageUrl = actorPhoto;
                 }
 
-                result.People.Add(res);
+                result.AddPerson(res);
             }
 
             return result;
