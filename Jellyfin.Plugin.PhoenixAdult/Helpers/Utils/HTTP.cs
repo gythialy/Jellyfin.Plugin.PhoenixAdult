@@ -189,36 +189,7 @@ namespace PhoenixAdult.Helpers.Utils
 
         public static async Task<HTTPResponse> Request(string url, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, params HttpStatusCode[] additionalSuccessStatusCodes)
         {
-            var result = default(HTTPResponse);
-            if (string.IsNullOrEmpty(url))
-            {
-                return result;
-            }
-
-            try
-            {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, url))
-                {
-                    if (headers != null)
-                    {
-                        // Sanitize headers to ensure ASCII characters only
-                        foreach (var header in headers)
-                        {
-                            var sanitizedValue = System.Text.RegularExpressions.Regex.Replace(header.Value, @"[^\u0000-\u007F]", string.Empty);
-                            if (!string.IsNullOrEmpty(sanitizedValue))
-                            {
-                                request.Headers.TryAddWithoutValidation(header.Key, sanitizedValue);
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Error($"Request error: {e}");
-            }
-
-            return result;
+            return await Request(url, HttpMethod.Get, null, headers, cookies, cancellationToken, additionalSuccessStatusCodes).ConfigureAwait(false);
         }
 
         internal struct HTTPResponse
