@@ -26,10 +26,10 @@ namespace PhoenixAdult.Sites
     {
         private static readonly Dictionary<int, string> actorDb = new Dictionary<int, string>
         {
-            {1024, "Aletta Ocean"}, {1025, "Eva Lovia"}, {1026, "Romi Rain"}, {1030, "Dani Daniels"},
-            {1031, "Chloe Toy"}, {1033, "Katya Clover"}, {1035, "Lisey Sweet"}, {1037, "Gina Gerson"},
-            {1038, "Valentina Nappi"}, {1039, "Vina Sky"}, {1058, "Vicki Valkyrie"}, {1075, "Dillion Harper"},
-            {1191, "Lilu Moon"},
+            { 1024, "Aletta Ocean" }, { 1025, "Eva Lovia" }, { 1026, "Romi Rain" }, { 1030, "Dani Daniels" },
+            { 1031, "Chloe Toy" }, { 1033, "Katya Clover" }, { 1035, "Lisey Sweet" }, { 1037, "Gina Gerson" },
+            { 1038, "Valentina Nappi" }, { 1039, "Vina Sky" }, { 1058, "Vicki Valkyrie" }, { 1075, "Dillion Harper" },
+            { 1191, "Lilu Moon" },
         };
         private const string Query = "content.load?_method=content.load&tz=1&limit=512&transitParameters[v1]=OhUOlmasXD&transitParameters[v2]=OhUOlmasXD&transitParameters[preset]=videos";
         private const string UpdateQuery = "content.load?_method=content.load&tz=1&filter[id][fields][0]=id&filter[id][values][0]={0}&limit=1&transitParameters[v1]=ykYa8ALmUD&transitParameters[preset]=scene";
@@ -50,6 +50,7 @@ namespace PhoenixAdult.Sites
                     return $"{ah}/{aet}/";
                 }
             }
+
             return null;
         }
 
@@ -101,6 +102,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -152,7 +154,7 @@ namespace PhoenixAdult.Sites
             var actorCollectionToken = actors?.SelectToken("modelId.collection");
             if (actorCollectionToken is JObject actorCollection)
             {
-                foreach(var actor in actorCollection)
+                foreach (var actor in actorCollection)
                 {
                     result.People.Add(new PersonInfo { Name = actor.Value["stageName"].ToString(), Type = PersonKind.Actor });
                 }
@@ -170,7 +172,7 @@ namespace PhoenixAdult.Sites
         {
             var images = new List<RemoteImageInfo>();
             var artObj = JArray.Parse(Helper.Decode(sceneID[0].Split('|')[3]));
-            foreach(var img in artObj)
+            foreach (var img in artObj)
             {
                 images.Add(new RemoteImageInfo { Url = img["url"].ToString() });
             }

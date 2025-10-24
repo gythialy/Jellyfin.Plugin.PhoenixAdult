@@ -60,9 +60,9 @@ namespace PhoenixAdult.Sites
                 {
                     var searchResults = HTML.ElementFromString(httpResult.Content);
                     var searchNodes = searchResults.SelectNodes("//div[@class='memVid']");
-                    if(searchNodes != null)
+                    if (searchNodes != null)
                     {
-                        foreach(var node in searchNodes)
+                        foreach (var node in searchNodes)
                         {
                             var titleNode = node.SelectSingleNode(".//div[@class='memVidTitle']//a");
                             string titleNoFormatting = titleNode?.GetAttributeValue("title", string.Empty);
@@ -78,6 +78,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -121,18 +122,18 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//div[@class='videopage-tags']/a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[@class='col-xs-6 col-sm-4 col-md-3']");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     string actorName = actor.SelectSingleNode(".//div[@class='vidpage-mobilePad']//a//strong")?.InnerText.Trim();
                     string actorPhotoUrl = actor.SelectSingleNode(".//img[@class='img-responsive imgHover']")?.GetAttributeValue("src", string.Empty);
@@ -161,15 +162,15 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//div[@class='col-xs-12 col-sm-6 col-md-6 vidCover']//img");
-            if(posterNode != null)
+            if (posterNode != null)
             {
                 images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("src", string.Empty), Type = ImageType.Primary });
             }
 
             var imageNodes = detailsPageElements.SelectNodes("//div[@class='vid-flex-container']//span");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     images.Add(new RemoteImageInfo { Url = img.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty).Replace("_thumb", string.Empty) });
                 }

@@ -86,7 +86,7 @@ namespace PhoenixAdult.Sites
                 var sceneImageNodes = doc.DocumentNode.SelectNodes(splitScenesXpath);
                 if (sceneImageNodes != null)
                 {
-                    foreach(var node in sceneImageNodes)
+                    foreach (var node in sceneImageNodes)
                     {
                         art.Add(node.GetAttributeValue("href", string.Empty));
                     }
@@ -98,7 +98,7 @@ namespace PhoenixAdult.Sites
                 var sceneImageNodes = doc.DocumentNode.SelectNodes(scenesXpath);
                 if (sceneImageNodes != null)
                 {
-                    foreach(var node in sceneImageNodes)
+                    foreach (var node in sceneImageNodes)
                     {
                         art.Add(node.GetAttributeValue("href", string.Empty));
                     }

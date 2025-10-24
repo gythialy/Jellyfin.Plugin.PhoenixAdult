@@ -34,6 +34,7 @@ namespace PhoenixAdult.Sites
                     return JObject.Parse(ldJsonNode.InnerText);
                 }
             }
+
             return null;
         }
 

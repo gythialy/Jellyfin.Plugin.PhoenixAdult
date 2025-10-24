@@ -75,6 +75,7 @@ namespace PhoenixAdult.Sites
             {
                 modelId = searchTitle.Split(' ').First();
             }
+
             string url = $"{Helper.GetSearchSearchURL(siteNum)}{modelId}.html";
             var modelHttp = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
             if (modelHttp.IsOK)
@@ -101,6 +102,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -144,9 +146,9 @@ namespace PhoenixAdult.Sites
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//a[@class='tag'][contains(@href, 'models')]");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
@@ -173,7 +175,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//video");
-            if(posterNode != null)
+            if (posterNode != null)
             {
                 images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("poster", string.Empty), Type = ImageType.Primary });
             }

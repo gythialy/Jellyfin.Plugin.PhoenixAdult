@@ -68,6 +68,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -97,7 +98,7 @@ namespace PhoenixAdult.Sites
                 movie.AddTag(movie.Name); // DVD Name as collection
 
                 var dateNode = detailsPageElements.SelectSingleNode("//div[@class='datePhotos']")?.InnerText.Replace("RELEASED:", string.Empty).Trim();
-                if(!string.IsNullOrEmpty(dateNode))
+                if (!string.IsNullOrEmpty(dateNode))
                 {
                     if (DateTime.TryParse(dateNode, out var parsedDate))
                     {
@@ -109,7 +110,7 @@ namespace PhoenixAdult.Sites
                 var genreNodes = detailsPageElements.SelectNodes("//div[@class='textLink']//a");
                 if (genreNodes != null)
                 {
-                    foreach(var genre in genreNodes)
+                    foreach (var genre in genreNodes)
                     {
                         movie.AddGenre(genre.InnerText.Trim());
                     }
@@ -156,6 +157,7 @@ namespace PhoenixAdult.Sites
                     result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
                 }
             }
+
             return result;
         }
 
@@ -175,7 +177,7 @@ namespace PhoenixAdult.Sites
             }
 
             var posterNode = detailsPageElements.SelectSingleNode("//span[@id='trailer_thumb']//img");
-            if(posterNode != null)
+            if (posterNode != null)
             {
                 result.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("src", string.Empty), Type = ImageType.Primary });
             }
@@ -185,7 +187,7 @@ namespace PhoenixAdult.Sites
                 var imageNodes = detailsPageElements.SelectNodes("//div[@class='videoBlock']//img/@src0_3x");
                 if (imageNodes != null)
                 {
-                    foreach(var img in imageNodes)
+                    foreach (var img in imageNodes)
                     {
                         result.Add(new RemoteImageInfo { Url = img.GetAttributeValue("src0_3x", string.Empty), Type = ImageType.Backdrop });
                     }

@@ -51,6 +51,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -101,15 +102,15 @@ namespace PhoenixAdult.Sites
             movie.AddGenre("Hardcore");
 
             var actorNodes = detailsPageElements.SelectNodes("//div[@class='item-info']/h5/a");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     string actorName = actor.InnerText.Trim();
                     string actorPageUrl = actor.GetAttributeValue("href", string.Empty);
                     string actorPhotoUrl = string.Empty;
                     var actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken);
-                    if(actorHttp.IsOK)
+                    if (actorHttp.IsOK)
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
                         actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='profile-pic']/img")?.GetAttributeValue("src0_3x", string.Empty);
@@ -118,6 +119,7 @@ namespace PhoenixAdult.Sites
                             actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actorPhotoUrl;
                         }
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }

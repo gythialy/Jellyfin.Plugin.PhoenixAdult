@@ -26,10 +26,10 @@ namespace PhoenixAdult.Sites
     {
         private static readonly Dictionary<string, List<string>> actorsDB = new Dictionary<string, List<string>>
         {
-            {"big-tit-mindfuck", new List<string> {"Anna Blaze"}},
-            {"issa-test-on-bbc-today", new List<string> {"Tristan Summers"}},
-            {"your-husband-isnt-here-but-i-am", new List<string> {"Penny Pax"}},
-            {"his-wife-got-some-scary-big-titties", new List<string> {"Mya Blair"}},
+            { "big-tit-mindfuck", new List<string> { "Anna Blaze" } },
+            { "issa-test-on-bbc-today", new List<string> { "Tristan Summers" } },
+            { "your-husband-isnt-here-but-i-am", new List<string> { "Penny Pax" } },
+            { "his-wife-got-some-scary-big-titties", new List<string> { "Mya Blair" } },
         };
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
@@ -70,6 +70,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -107,9 +108,9 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//li[contains(., 'Tags')]//parent::ul//a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -124,15 +125,16 @@ namespace PhoenixAdult.Sites
                     string modelUrl = actor.SelectSingleNode(".//@href")?.GetAttributeValue("href", string.Empty);
                     string actorPhotoUrl = string.Empty;
                     var actorHttp = await HTTP.Request(modelUrl, HttpMethod.Get, cancellationToken);
-                    if(actorHttp.IsOK)
+                    if (actorHttp.IsOK)
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
                         actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='profile-pic']//@src0_3x")?.GetAttributeValue("src0_3x", string.Empty);
-                        if(!string.IsNullOrEmpty(actorPhotoUrl) && !actorPhotoUrl.StartsWith("http"))
+                        if (!string.IsNullOrEmpty(actorPhotoUrl) && !actorPhotoUrl.StartsWith("http"))
                         {
                             actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actorPhotoUrl;
                         }
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
@@ -144,7 +146,7 @@ namespace PhoenixAdult.Sites
                     var key = match.Value.ToLower();
                     if (actorsDB.ContainsKey(key))
                     {
-                        foreach(var actorName in actorsDB[key])
+                        foreach (var actorName in actorsDB[key])
                         {
                             result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                         }
@@ -168,20 +170,21 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//div[@class='player_thumbs']//@src0_3x | //div[@class='player full_width']/script");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     string imageUrl = img.GetAttributeValue("src0_3x", string.Empty);
-                    if(string.IsNullOrEmpty(imageUrl))
+                    if (string.IsNullOrEmpty(imageUrl))
                     {
                         var match = Regex.Match(img.InnerText, @"(?<=src0_3x="")(.*?(?=""))");
-                        if(match.Success)
+                        if (match.Success)
                         {
                             imageUrl = match.Groups[1].Value;
                         }
                     }
-                    if(!string.IsNullOrEmpty(imageUrl) && !imageUrl.StartsWith("http"))
+
+                    if (!string.IsNullOrEmpty(imageUrl) && !imageUrl.StartsWith("http"))
                     {
                         imageUrl = Helper.GetSearchBaseURL(siteNum) + imageUrl;
                     }

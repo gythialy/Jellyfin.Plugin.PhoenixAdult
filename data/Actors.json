@@ -79,6 +79,7 @@
       "Chisato Shoda": ["Chisato Shouda"],
       "Chloe Cherry": ["Chloe Couture"],
       "Chris Strokes": ["Criss Strokes"],
+    "Christafeer Robien": ["Cristafeer Robien"],
       "CJ Miles": ["Cj Miles", "C.J. Miles"],
       "Clea Gaultier": ["CléA Gaultier"],
       "Clockwork Victoria": ["Clockwork Viktoria", "Viktoria Clockwork", "Victory Clockwork"],
@@ -88,6 +89,7 @@
       "Cory Chase": ["Corey Chase", "Cory Chade"],
       "Crystal Rae": ["Cyrstal Rae", "Crystal Ray", "Chrysal Ray"],
       "Dahlia Sky": ["Amber Rose", "Bailey Blue", "Dahlia Skye"],
+    "Daisy Phoenix": ["Daisy Pheonix"],
       "Dana Sofia": ["Dana SofíA"],
       "Darcie Belle": ["Darcie Bell"],
       "Darlene Amaro": ["Delanie", "Darlene", "Yorkine"],
@@ -164,7 +166,9 @@
       "Jmac": ["J Mac", "JMac"],
       "Johnny Bravo": ["Jhonny Bravo"],
       "Johnny Love": ["Johnny The Kid", "Myles Long"],
+    "Johnny Savage": ["Greek Savage"],
       "Jojo Kiss": ["Jo Jo Kiss"],
+    "Jonas Kaizer": ["Chris ?atharsis"],
       "Jordan Ashe": ["Jordan Ash", "Jordan Ashley", "Jorden Ashley"],
       "Jordi El Nino Polla": ["Jordi Enp", "Jordi El Niño Polla"],
       "Josephine Jackson": ["Josephina Jackson"],
@@ -226,6 +230,7 @@
       "Lola Taylor": ["Lolita Taylor"],
       "Lora Craft": ["Lara Craft"],
       "Luca Ferrero": ["Luca Ferraro"],
+    "Lucho": ["John Willson"],
       "Lucia Denville": ["Lucia Denvile"],
       "Lucie Wilde": ["Lucie Wild", "Busty Buffy"],
       "Lucy Valentine": ["Emma Wilson"],
@@ -282,11 +287,13 @@
       "Nova Sky": ["Jupiter Jetson"],
       "Nozomi Hatzuki": ["Nozomi Hatsuki"],
       "Olivia Jameson": ["Olive Bell", "Olivia Devine", "Olivia Divine"],
+    "Ondra Welik": ["Leon"],
       "Ornella Morgan": ["Ornella Morgen", "Morgan Rodriguez"],
       "Paul Suarez": ["Paul Suárez"],
       "Paula Shy": ["Christy Charming"],
       "Peaches Johnson": ["Peaches"],
       "Pecosa": ["La Pecosa"],
+    "Philippe Soine": ["Phillippe Soine"],
       "Pinky June": ["Grace Hartley"],
       "Polina Maxim": ["Polina Max", "Polina Maxima", "Venera Maxima", "Venera-Maxima", "Venera"],
       "Polly Pons": ["Polly Pon", "Poopea Pons"],
@@ -368,6 +375,7 @@
       "Thick Ass Daphne": ["Daphne ThickAss"],
       "Timea Bella": ["Lucianna Karel"],
       "Tony T.": ["Tony Tigaro"],
+    "Turman Merwan": ["Turman Merman"],
       "Val Steele": ["Valerica Steele", "Valerie Steele"],
       "Valentina Lapiedra": ["Andrea Lapiedra", "Valentina La Piedra"],
       "Vanessa Veracruz": ["Vanessa Vera Cruz"],
@@ -809,6 +817,7 @@
           "Brandi Sparks": ["BrandiSparks"],
           "Carla Cute": ["CarlaCute", "Carlacute", "carlacute"],
           "Darling Josefin": ["darlingjosefin"],
+        "Ember Springs": ["EmberSprings"],
           "Eva Elfie": ["EvaElfie"],
           "Evelin Stone": ["EvelinStone"],
           "Florane Russell": ["Florane_Russell"],
@@ -846,7 +855,7 @@
           "Valentina Nappi": ["valentinanappi"],
           "Vanna Bardot": ["vannabardot"],
           "Vanessa Veracruz": ["VanessaVeracruz"],
-          "Yiny Leon": ["YInyleon"]
+        "YinyLeon": ["Yiny Leon", "YInyleon"]
       },
       "14": {
           "Scarlet Domingo": ["Scarlett"]
@@ -859,6 +868,7 @@
           "Adrianna Babin": ["Adrianna"],
           "Adrianna Gold": ["Adrianne"],
           "Afrodite Night": ["Lauren"],
+        "Aila Donovan": ["Alla Donovan"],
           "Alana Jade": ["Alana G"],
           "Alana Leigh": ["Alanaleigh"],
           "Aleska Diamond": ["Alexa"],
@@ -1218,6 +1228,7 @@
           "Timea Bella": ["Luciana"],
           "Traci Lynn": ["Hallee"],
           "Tracy Gold": ["Noleta"],
+        "Tristan Summers": ["Tristan Taylor"],
           "Tyra Moon": ["Athina"],
           "Valerie Herrera": ["Valerie"],
           "Vanessa Monroe": ["Vanessa"],
@@ -1651,7 +1662,8 @@
       },
       "22": {
           "Agness Miller": ["Agness"],
-          "Morgan Layne": ["Morgan"]
+        "Morgan Layne": ["Morgan"],
+        "Jessica Robbin": ["Jessica Rabbit"]
       },
       "23": {
           "Goldie Baby": ["Nikia"],
@@ -1665,6 +1677,7 @@
           "Apolonia Lapiedra": ["Apolonia"],
           "Bambi Dee": ["Td Bambi"],
           "Camilla Krabbe": ["Camilla"],
+        "Ionie Luv Coxxx": ["Lonie Luv Coxxx"],
           "Lola Taylor": ["Lolita Taylor"],
           "Scarlet Domingo": ["Scarlet"]
       },
@@ -1679,7 +1692,8 @@
           "London Keyes": ["London Keys"]
       },
       "28": {
-          "Gabriella Lati": ["Gabrielle Lati"]
+        "Gabriella Lati": ["Gabrielle Lati"],
+        "Regina Blue": ["Regina"]
       },
       "29": {
           "Alice Miller": ["Paulina B"],
@@ -6161,11 +6175,38 @@
           "Krystal Banks": ["Krystal"]
       },
       "69": {
+        "Addison Vodka": ["Addison"],
+        "Ariana Grand": ["Ariana"],
+        "Carol Foxxx": ["Carol Foxx"],
+        "Cherry Torn": ["Cherry Thorn"],
+        "Christina Stevens": ["Kristina"],
+        "Christine DeShaffer": ["Christine De Shaffer"],
+        "Desiree Deluca": ["Desiree"],
+        "Graycee Baybee": ["Grace Baybee"],
           "Ice La Fox": ["Ice LaFox"],
+        "Jana Malto": ["Jana"],
           "Jesus Reyes Vazquez": ["Jesus Reyes Vazqeuz"],
+        "Red Julia": ["Judith"],
+        "Kalina Ryu": ["Lily Star"],
+        "Kay Carter": ["Kay Karter"],
+        "Kitti Skyway": ["Kitty Skyway"],
+        "Kya Tropic": ["Kya Clover"],
+        "Eva Gomez": ["Kylina"],
           "Lutro Steel": ["Lutro Steele"],
+        "Mai Ly": ["Mai Lynn"],
+        "Mandarine": ["Alexandrine"],
+        "Mazzy Paige": ["Mazzie Paige", "Mazzi"],
+        "Maude Carolle": ["Aude Lecocq"],
+        "Oksana Rose": ["Oksana"],
           "Oskar Meier": ["Oskar Mayer"],
+        "Fernanda Diaz": ["Sandra"],
+        "Stacey Donovan": ["Stacy Donovan"],
+        "Stephanie Saint": ["Stephanie Adams"],
+        "Susan Deloir": ["Sylvia Deloir"],
+        "Suzan Nielsen": ["Susan"],
           "Talon": ["Talon Valenti"],
+        "Vanessa D'Angely": ["Vanessa"],
+        "Will Ryder": ["Jeff Mullen"],
           "Zeus": ["Jesus 'Zeus'Munoz"]
       },
       "70": {
@@ -6192,8 +6233,10 @@
         "Bailey Brooke": [ "Bailey Brookes" ]
       },
       "73": {
-        "Alena H": [ "Helen" ],
-        "Goldie Baby": [ "Ms White-Kitten" ]
+        "Alice Fabre": ["Alice"]
+    },
+    "74": {
+        "Ryan Madison": ["Madison"]
       }
   },
     "ActorsStudioIndexes": {
@@ -6269,7 +6312,9 @@
       "69": ["Adult Empire"],
       "70": ["Heavy on Hotties"],
       "71": [ "LegalPorno" ],
-      "72": [ "DDFProd" ]
+      "72": [ "DDFProd" ],
+    "73": ["Brazzers"],
+    "74": ["Kelly Madison", "TeenFidelity", "PornFidelity"]
   },
     "ActorsReplaceJavBusSearch": {
       "1by": ["Katou Tsubaki"],

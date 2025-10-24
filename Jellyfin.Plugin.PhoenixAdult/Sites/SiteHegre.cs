@@ -50,7 +50,7 @@ namespace PhoenixAdult.Sites
             else
             {
                 string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{Uri.EscapeDataString(searchTitle)}";
-                if(searchDate.HasValue)
+                if (searchDate.HasValue)
                 {
                     searchUrl += $"&year={searchDate.Value.Year}";
                 }
@@ -95,6 +95,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -121,7 +122,7 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             movie.Name = sceneData.SelectSingleNode("//meta[@property='og:title']")?.GetAttributeValue("content", string.Empty).Trim();
             string summary = sceneData.SelectSingleNode("//div[@class='record-description-content record-box-content']")?.InnerText.Trim();
-            if(!string.IsNullOrEmpty(summary))
+            if (!string.IsNullOrEmpty(summary))
             {
                 movie.Overview = summary.Substring(0, summary.IndexOf("Runtime", StringComparison.OrdinalIgnoreCase)).Trim();
             }
@@ -137,7 +138,7 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNode = sceneData.SelectNodes("//a[@class='tag']");
-            if(genreNode != null)
+            if (genreNode != null)
             {
                 foreach (var genreLink in genreNode)
                 {
@@ -195,7 +196,7 @@ namespace PhoenixAdult.Sites
             }
 
             var posterUrl = sceneData.SelectSingleNode("//meta[@name='twitter:image']")?.GetAttributeValue("content", string.Empty);
-            if(!string.IsNullOrEmpty(posterUrl))
+            if (!string.IsNullOrEmpty(posterUrl))
             {
                 result.Add(new RemoteImageInfo { Url = posterUrl.Replace("board-image", "poster-image").Replace("1600x", "640x"), Type = ImageType.Primary });
                 result.Add(new RemoteImageInfo { Url = posterUrl.Replace("1600x", "1920x"), Type = ImageType.Backdrop });

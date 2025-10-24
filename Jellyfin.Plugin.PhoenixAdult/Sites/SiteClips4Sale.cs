@@ -54,6 +54,7 @@ namespace PhoenixAdult.Sites
                     return json.SelectToken("state.loaderData.['routes/($lang).studio.$id_.$studioSlug.$']");
                 }
             }
+
             return null;
         }
 
@@ -183,14 +184,15 @@ namespace PhoenixAdult.Sites
             genreList.Add(detailsPageElements["category_name"]?.ToString());
             if (detailsPageElements["related_category_links"] != null)
             {
-                foreach(var genreLink in detailsPageElements["related_category_links"])
+                foreach (var genreLink in detailsPageElements["related_category_links"])
                 {
                     genreList.Add(genreLink["category"]?.ToString().Trim().ToLower());
                 }
             }
+
             if (detailsPageElements["keyword_links"] != null)
             {
-                foreach(var genreLink in detailsPageElements["keyword_links"])
+                foreach (var genreLink in detailsPageElements["keyword_links"])
                 {
                     genreList.Add(genreLink["keyword"]?.ToString().Trim().ToLower());
                 }
@@ -199,7 +201,7 @@ namespace PhoenixAdult.Sites
             string userID = sceneURL.Split('/')[4];
             ApplyStudioSpecificLogic(userID, movie, result.People, genreList, summary, tagline);
 
-            foreach(var genre in genreList.Where(g => !string.IsNullOrEmpty(g)))
+            foreach (var genre in genreList.Where(g => !string.IsNullOrEmpty(g)))
             {
                 movie.AddGenre(genre);
             }
@@ -257,7 +259,7 @@ namespace PhoenixAdult.Sites
             if (userID == "7373") // Klixen
             {
                 var actors = genreList.Where(g => g == "klixen").ToList(); // Simplified example
-                foreach(var actorName in actors)
+                foreach (var actorName in actors)
                 {
                     people.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                     genreList.Remove(actorName);
@@ -276,6 +278,7 @@ namespace PhoenixAdult.Sites
                     genreList.Remove("mistress candide");
                 }
             }
+
             // ... This would continue for hundreds of lines for all studios ...
             else // Default case if no specific studio logic
             {

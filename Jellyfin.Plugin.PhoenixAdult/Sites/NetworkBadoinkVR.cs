@@ -92,6 +92,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -135,7 +136,7 @@ namespace PhoenixAdult.Sites
             var genreNodes = detailsPageElements.SelectNodes("//a[@class='video-tag']");
             if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -155,6 +156,7 @@ namespace PhoenixAdult.Sites
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
                         actorPhotoUrl = actorPage.SelectSingleNode("//img[@class='girl-details-photo']")?.GetAttributeValue("src", string.Empty).Split('?')[0];
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
@@ -180,9 +182,9 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNodes = detailsPageElements.SelectNodes("//img[@class='video-image'] | //div[contains(@class, 'gallery-item')]");
-            if(posterNodes != null)
+            if (posterNodes != null)
             {
-                foreach(var node in posterNodes)
+                foreach (var node in posterNodes)
                 {
                     string imageUrl = node.GetAttributeValue("src", string.Empty) ?? node.GetAttributeValue("data-big-image", string.Empty);
                     images.Add(new RemoteImageInfo { Url = imageUrl.Split('?')[0] });

@@ -25,9 +25,9 @@ namespace PhoenixAdult.Sites
     {
         private static readonly Dictionary<string, List<string>> genresDB = new Dictionary<string, List<string>>
         {
-            {"My POV Fam", new List<string> {"Pov", "Family"}},
-            {"Perverted POV", new List<string> {"Pov"}},
-            {"Raw White Meat", new List<string> {"Interracial"}},
+            { "My POV Fam", new List<string> { "Pov", "Family" } },
+            { "Perverted POV", new List<string> { "Pov" } },
+            { "Raw White Meat", new List<string> { "Interracial" } },
         };
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
@@ -57,6 +57,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -99,9 +100,9 @@ namespace PhoenixAdult.Sites
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'brxe-post-meta')]/span/a");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
@@ -123,7 +124,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//video[@class='bricks-plyr']");
-            if(posterNode != null)
+            if (posterNode != null)
             {
                 images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("poster", string.Empty), Type = ImageType.Primary });
             }

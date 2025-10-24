@@ -26,12 +26,12 @@ namespace PhoenixAdult.Sites
         private readonly Dictionary<string, string> _cookies = new Dictionary<string, string> { { "WarningModal", "true" } };
         private static readonly Dictionary<string, List<string>> channelIdDB = new Dictionary<string, List<string>>
         {
-            {"23", new List<string> {"harmony vision"}}, {"102", new List<string> {"butt formation"}}, {"105", new List<string> {"pure xxx films"}},
-            {"8110", new List<string> {"cosplay babes"}}, {"8111", new List<string> {"filthy and fisting"}}, {"8112", new List<string> {"fun movies"}},
-            {"8113", new List<string> {"herzog"}}, {"8114", new List<string> {"hot gold"}}, {"8115", new List<string> {"inflagranti"}},
-            {"8116", new List<string> {"japanhd"}}, {"8117", new List<string> {"Leche69"}}, {"8118", new List<string> {"magma film"}},
-            {"8119", new List<string> {"mmv films"}}, {"8120", new List<string> {"paradise films"}}, {"8121", new List<string> {"pornxn"}},
-            {"8122", new List<string> {"the undercover lover"}},
+            { "23", new List<string> { "harmony vision" } }, { "102", new List<string> { "butt formation" } }, { "105", new List<string> { "pure xxx films" } },
+            { "8110", new List<string> { "cosplay babes" } }, { "8111", new List<string> { "filthy and fisting" } }, { "8112", new List<string> { "fun movies" } },
+            { "8113", new List<string> { "herzog" } }, { "8114", new List<string> { "hot gold" } }, { "8115", new List<string> { "inflagranti" } },
+            { "8116", new List<string> { "japanhd" } }, { "8117", new List<string> { "Leche69" } }, { "8118", new List<string> { "magma film" } },
+            { "8119", new List<string> { "mmv films" } }, { "8120", new List<string> { "paradise films" } }, { "8121", new List<string> { "pornxn" } },
+            { "8122", new List<string> { "the undercover lover" } },
         };
 
         private string Slugify(string phrase)
@@ -104,6 +104,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -153,18 +154,18 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//a[contains(@href, '/search?s=')]");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//a[contains(@href, 'models/')]");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
@@ -191,9 +192,9 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//img[@class='item_cover'] | //meta[@name='twitter:image']");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("src", string.Empty) ?? img.GetAttributeValue("content", string.Empty) });
                 }

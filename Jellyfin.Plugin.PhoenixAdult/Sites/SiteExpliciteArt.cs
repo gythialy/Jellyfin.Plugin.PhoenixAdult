@@ -52,6 +52,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -80,28 +81,29 @@ namespace PhoenixAdult.Sites
             movie.AddStudio(tagline);
 
             var genreNodes = detailsPageElements.SelectNodes("//span[@class='tags']/a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[@class='player-info-row']/a");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     string actorName = actor.InnerText.Trim();
                     string modelUrl = actor.GetAttributeValue("href", string.Empty);
                     string actorPhotoUrl = string.Empty;
                     var actorHttp = await HTTP.Request(modelUrl, HttpMethod.Get, cancellationToken);
-                    if(actorHttp.IsOK)
+                    if (actorHttp.IsOK)
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
                         actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='pornstar-bio-left']//@src")?.GetAttributeValue("src", string.Empty);
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
@@ -122,10 +124,10 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var scriptNode = detailsPageElements.SelectSingleNode("//div[@id='player']//script");
-            if(scriptNode != null)
+            if (scriptNode != null)
             {
                 var match = Regex.Match(scriptNode.InnerText, "(?<=image: \").*(?=\")");
-                if(match.Success)
+                if (match.Success)
                 {
                     images.Add(new RemoteImageInfo { Url = match.Value, Type = ImageType.Primary });
                 }

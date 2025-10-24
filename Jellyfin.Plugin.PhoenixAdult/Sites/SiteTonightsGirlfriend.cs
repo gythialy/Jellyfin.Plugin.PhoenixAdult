@@ -66,11 +66,13 @@ namespace PhoenixAdult.Sites
                         SearchProviderName = Plugin.Instance.Name,
                     });
                 }
+
                 if (searchResults.Count < 9)
                 {
                     break;
                 }
             }
+
             return result;
         }
 
@@ -99,7 +101,7 @@ namespace PhoenixAdult.Sites
             var actors = detailsPageElements.SelectNodes("//p[@class='grey-performers']//a");
             string sceneInfo = detailsPageElements.SelectSingleNode("//p[@class='grey-performers']")?.InnerText;
 
-            foreach(var actorLink in actors)
+            foreach (var actorLink in actors)
             {
                 string actorName = actorLink.InnerText.Trim();
                 actorList.Add(actorName);
@@ -122,8 +124,8 @@ namespace PhoenixAdult.Sites
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            var maleActors = sceneInfo.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
-            foreach(var maleActor in maleActors)
+            var maleActors = sceneInfo.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var maleActor in maleActors)
             {
                 result.People.Add(new PersonInfo { Name = maleActor.Trim(), Type = PersonKind.Actor });
             }
@@ -134,7 +136,8 @@ namespace PhoenixAdult.Sites
                 genres.Add("Threesome");
                 genres.Add(actors.Count == 2 ? "BGG" : "BBG");
             }
-            foreach(var genre in genres)
+
+            foreach (var genre in genres)
             {
                 movie.AddGenre(genre);
             }

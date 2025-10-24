@@ -25,32 +25,32 @@ namespace PhoenixAdult.Sites
     {
         private static readonly Dictionary<string, Dictionary<string, string>> xPathMap = new Dictionary<string, Dictionary<string, string>>
         {
-            {"SexBabesVR", new Dictionary<string, string> {
-                {"date", "//div[contains(@class, 'video-detail__description--container')]/div[last()]"},
-                {"summary", "//div[contains(@class, 'video-detail')]/div/p"},
-                {"tags", "//a[contains(@class, 'tag')]"},
-                {"actor", "//div[@class='video-detail__description--author']//a"},
-                {"actorPhoto", "//img[contains(@class, 'cover-picture')]"},
-                {"images", "//a[contains(@data-fancybox, 'gallery')]//img/@src"},
-                {"poster", "//dl8-video"},
+            { "SexBabesVR", new Dictionary<string, string> {
+                { "date", "//div[contains(@class, 'video-detail__description--container')]/div[last()]" },
+                { "summary", "//div[contains(@class, 'video-detail')]/div/p" },
+                { "tags", "//a[contains(@class, 'tag')]" },
+                { "actor", "//div[@class='video-detail__description--author']//a" },
+                { "actorPhoto", "//img[contains(@class, 'cover-picture')]" },
+                { "images", "//a[contains(@data-fancybox, 'gallery')]//img/@src" },
+                { "poster", "//dl8-video" },
             }                        },
-            {"StasyQ VR", new Dictionary<string, string> {
-                {"date", "//div[@class='video-meta-date']"},
-                {"summary", "//div[@class='video-info']/p"},
-                {"tags", "//div[contains(@class, 'my-2 lh-lg')]//a"},
-                {"actor", "//div[@class='model-one-inner js-trigger-lazy-item']//a"},
-                {"actorPhoto", "//div[contains(@class, 'model-one-inner')]//img"},
-                {"images", "//div[contains(@class, 'video-gallery')]//div//figure//a/@href"},
-                {"poster", "//div[@class='splash-screen fullscreen-message is-visible'] | //dl8-video"},
+            { "StasyQ VR", new Dictionary<string, string> {
+                { "date", "//div[@class='video-meta-date']" },
+                { "summary", "//div[@class='video-info']/p" },
+                { "tags", "//div[contains(@class, 'my-2 lh-lg')]//a" },
+                { "actor", "//div[@class='model-one-inner js-trigger-lazy-item']//a" },
+                { "actorPhoto", "//div[contains(@class, 'model-one-inner')]//img" },
+                { "images", "//div[contains(@class, 'video-gallery')]//div//figure//a/@href" },
+                { "poster", "//div[@class='splash-screen fullscreen-message is-visible'] | //dl8-video" },
             }                        },
-            {"RealJamVR", new Dictionary<string, string> {
-                {"date", "//div[@class='ms-4 text-nowrap']"},
-                {"summary", "//div[@class='opacity-75 my-2']"},
-                {"tags", "//div[contains(@class, 'my-2 lh-lg')]//a"},
-                {"actor", "//div[@class='scene-view mx-auto']/a"},
-                {"actorPhoto", "//div[@class='col-12 col-lg-4 pe-lg-0']//img"},
-                {"images", "//img[@class='img-thumb']/@src"},
-                {"poster", "//div[@class='splash-screen fullscreen-message is-visible'] | //dl8-video"},
+            { "RealJamVR", new Dictionary<string, string> {
+                { "date", "//div[@class='ms-4 text-nowrap']" },
+                { "summary", "//div[@class='opacity-75 my-2']" },
+                { "tags", "//div[contains(@class, 'my-2 lh-lg')]//a" },
+                { "actor", "//div[@class='scene-view mx-auto']/a" },
+                { "actorPhoto", "//div[@class='col-12 col-lg-4 pe-lg-0']//img" },
+                { "images", "//img[@class='img-thumb']/@src" },
+                { "poster", "//div[@class='splash-screen fullscreen-message is-visible'] | //dl8-video" },
             }                        },
         };
 
@@ -127,7 +127,7 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
             var summaryNode = detailsPageElements.SelectSingleNode(siteXPath["summary"]);
-            if(summaryNode != null)
+            if (summaryNode != null)
             {
                 movie.Overview = summaryNode.InnerText.Trim();
             }
@@ -157,32 +157,33 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes(siteXPath["tags"]);
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes(siteXPath["actor"]);
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     string actorName = actor.InnerText.Trim();
                     string actorPageUrl = Helper.GetSearchBaseURL(siteNum) + actor.GetAttributeValue("href", string.Empty);
                     string actorPhotoUrl = string.Empty;
                     var actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken);
-                    if(actorHttp.IsOK)
+                    if (actorHttp.IsOK)
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
                         var photoNode = actorPage.SelectSingleNode(siteXPath["actorPhoto"]);
-                        if(photoNode != null)
+                        if (photoNode != null)
                         {
                             actorPhotoUrl = photoNode.GetAttributeValue("src", string.Empty).Split('?')[0];
                         }
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
@@ -206,9 +207,9 @@ namespace PhoenixAdult.Sites
             var siteXPath = xPathMap[siteName];
 
             var imageNodes = detailsPageElements.SelectNodes(siteXPath["images"]);
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     string imageUrl = img.GetAttributeValue("src", string.Empty).Split('?')[0];
                     if (imageUrl.StartsWith("http"))
@@ -222,7 +223,7 @@ namespace PhoenixAdult.Sites
             if (posterNode != null)
             {
                 string imageUrl = posterNode.GetAttributeValue("poster", string.Empty);
-                if(string.IsNullOrEmpty(imageUrl))
+                if (string.IsNullOrEmpty(imageUrl))
                 {
                     imageUrl = posterNode.GetAttributeValue("style", string.Empty).Split(new[] { "url(" }, StringSplitOptions.None).Last().Split(')')[0];
                 }

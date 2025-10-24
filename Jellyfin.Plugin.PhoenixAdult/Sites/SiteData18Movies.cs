@@ -87,6 +87,7 @@ namespace PhoenixAdult.Sites
                         }
                     }
                 }
+
                 if (numSearchPages > 1 && i + 1 != numSearchPages)
                 {
                     searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{encodedTitle}&key2={encodedTitle}&next=1&page={i + 1}";
@@ -148,25 +149,25 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//p[./b[contains(., 'Categories')]]//a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//b[contains(., 'Cast')]//following::div//a[contains(@href, '/pornstars/')]//img | //b[contains(., 'Cast')]//following::div//img[contains(@data-original, 'user')] | //h3[contains(., 'Cast')]//following::div[@style]//img");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     result.People.Add(new PersonInfo { Name = actor.GetAttributeValue("alt", string.Empty).Trim(), ImageUrl = actor.GetAttributeValue("data-src", string.Empty), Type = PersonKind.Actor });
                 }
             }
 
             var directorNode = detailsPageElements.SelectSingleNode("//p[./b[contains(., 'Director')]]")?.InnerText.Split(':').Last().Split('-')[0].Trim();
-            if(directorNode != "Unknown")
+            if (directorNode != "Unknown")
             {
                 result.People.Add(new PersonInfo { Name = directorNode, Type = PersonKind.Director });
             }

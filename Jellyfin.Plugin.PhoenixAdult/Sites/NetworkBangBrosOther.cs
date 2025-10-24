@@ -61,6 +61,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -116,18 +117,18 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//*[.//@class='fa fa-tag']");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//*[.//@class='fa fa-star']");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
@@ -135,7 +136,7 @@ namespace PhoenixAdult.Sites
 
             if (sceneId != null && sceneActorsDB.ContainsKey(sceneId))
             {
-                foreach(var actorName in sceneActorsDB[sceneId])
+                foreach (var actorName in sceneActorsDB[sceneId])
                 {
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                 }

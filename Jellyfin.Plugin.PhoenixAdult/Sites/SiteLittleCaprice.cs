@@ -79,6 +79,7 @@ namespace PhoenixAdult.Sites
                 {
                     videoPageUrl = $"{BaseUrl}{videoPageUrl}";
                 }
+
                 detailsDoc = new HtmlDocument();
                 var videoHttp = await HTTP.Request(videoPageUrl, HttpMethod.Get, cancellationToken);
                 detailsDoc.LoadHtml(videoHttp.Content);
@@ -141,6 +142,7 @@ namespace PhoenixAdult.Sites
             {
                 tagline = "Xpervo";
             }
+
             metadataResult.Item.Tagline = tagline;
 
             var title = detailsDoc.DocumentNode.SelectSingleNode("//div[@class='project-details']//h1").InnerText.Trim();
@@ -148,6 +150,7 @@ namespace PhoenixAdult.Sites
             {
                 title = title.Substring(tagline.Length);
             }
+
             metadataResult.Item.Name = title;
 
             var date = detailsDoc.DocumentNode.SelectSingleNode("//div[@class='relese-date']").InnerText.Trim().Split(':')[1];
@@ -163,10 +166,12 @@ namespace PhoenixAdult.Sites
                 {
                     metadataResult.Item.AddGenre("Threesome");
                 }
+
                 if (actors.Count == 4)
                 {
                     metadataResult.Item.AddGenre("Foursome");
                 }
+
                 if (actors.Count > 4)
                 {
                     metadataResult.Item.AddGenre("Orgy");
@@ -188,6 +193,7 @@ namespace PhoenixAdult.Sites
                         {
                             actorPageUrl = $"{BaseUrl}{actorPageUrl}";
                         }
+
                         var actorDoc = new HtmlDocument();
                         var actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken);
                         actorDoc.LoadHtml(actorHttp.Content);
@@ -201,6 +207,7 @@ namespace PhoenixAdult.Sites
                     {
                         // ignored
                     }
+
                     metadataResult.AddPerson(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonKind.Actor });
                 }
             }
@@ -230,6 +237,7 @@ namespace PhoenixAdult.Sites
                 {
                     videoPageUrl = $"{BaseUrl}{videoPageUrl}";
                 }
+
                 detailsDoc = new HtmlDocument();
                 var videoHttp = await HTTP.Request(videoPageUrl, HttpMethod.Get, cancellationToken);
                 detailsDoc.LoadHtml(videoHttp.Content);
@@ -268,6 +276,7 @@ namespace PhoenixAdult.Sites
                         {
                             photoUrl = $"{BaseUrl}{photoUrl}";
                         }
+
                         art.Add(photoUrl);
                     }
                     catch

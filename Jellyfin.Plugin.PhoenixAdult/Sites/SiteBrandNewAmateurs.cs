@@ -50,6 +50,7 @@ namespace PhoenixAdult.Sites
                     result.Add(item);
                 }
             }
+
             return result;
         }
 
@@ -99,14 +100,14 @@ namespace PhoenixAdult.Sites
             }
 
             var actorHttp = await HTTP.Request(actorURL, cancellationToken);
-            if(actorHttp.IsOK)
+            if (actorHttp.IsOK)
             {
                 var actorDoc = new HtmlDocument();
                 actorDoc.LoadHtml(actorHttp.Content);
                 var actorName = actorDoc.DocumentNode.SelectSingleNode("//h3")?.InnerText.Trim();
                 var actorPhotoNode = actorDoc.DocumentNode.SelectSingleNode("//div[@class='profile-pic']/img");
                 var actorPhotoURL = actorPhotoNode?.GetAttributeValue("src0_3x", string.Empty);
-                if(!actorPhotoURL.StartsWith("http"))
+                if (!actorPhotoURL.StartsWith("http"))
                 {
                     actorPhotoURL = Helper.GetSearchBaseURL(siteNum) + actorPhotoURL;
                 }
@@ -140,7 +141,7 @@ namespace PhoenixAdult.Sites
                 if (imageNode != null)
                 {
                     var imgUrl = imageNode.GetAttributeValue("content", string.Empty);
-                    if(!imgUrl.StartsWith("http"))
+                    if (!imgUrl.StartsWith("http"))
                     {
                         imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
                     }
@@ -148,6 +149,7 @@ namespace PhoenixAdult.Sites
                     images.Add(new RemoteImageInfo { Url = imgUrl, Type = ImageType.Primary });
                 }
             }
+
             return images;
         }
     }

@@ -28,20 +28,20 @@ namespace PhoenixAdult.Sites
         private readonly Dictionary<string, string> _cookies = new Dictionary<string, string> { { "age_verified", "yes" } };
         private static readonly Dictionary<string, List<string>> genresDB = new Dictionary<string, List<string>>
         {
-            {"Anal Mom", new List<string> {"Anal", "MILF"}}, {"BFFs", new List<string> {"Teen", "Group Sex"}},
-            {"Black Valley Girls", new List<string> {"Teen", "Ebony"}}, {"DadCrush", new List<string> {"Step Dad", "Step Daughter"}},
-            {"DaughterSwap", new List<string> {"Step Dad", "Step Daughter"}}, {"Dyked", new List<string> {"Hardcore", "Teen", "Lesbian"}},
-            {"Exxxtra Small", new List<string> {"Teen", "Small Tits"}}, {"Family Strokes", new List<string> {"Taboo Family"}},
-            {"Foster Tapes", new List<string> {"Taboo Sex"}}, {"Freeuse Fantasy", new List<string> {"Freeuse"}},
-            {"Ginger Patch", new List<string> {"Redhead"}}, {"Innocent High", new List<string> {"School Girl"}},
-            {"Little Asians", new List<string> {"Asian", "Teen"}}, {"Not My Grandpa", new List<string> {"Older/Younger"}},
-            {"Oye Loca", new List<string> {"Latina"}}, {"PervMom", new List<string> {"Step Mom"}},
-            {"POV Life", new List<string> {"POV"}}, {"Shoplyfter", new List<string> {"Strip"}},
-            {"ShoplyfterMylf", new List<string> {"Strip", "MILF"}}, {"Sis Loves Me", new List<string> {"Step Sister"}},
-            {"Teen Curves", new List<string> {"Big Ass"}}, {"Teen Pies", new List<string> {"Teen", "Creampie"}},
-            {"TeenJoi", new List<string> {"Teen", "JOI"}}, {"Teens Do Porn", new List<string> {"Teen"}},
-            {"Teens Love Black Cocks", new List<string> {"Teens", "BBC"}}, {"Teeny Black", new List<string> {"Teen", "Ebony"}},
-            {"Thickumz", new List<string> {"Thick"}}, {"Titty Attack", new List<string> {"Big Tits"}},
+            { "Anal Mom", new List<string> { "Anal", "MILF" } }, { "BFFs", new List<string> { "Teen", "Group Sex" } },
+            { "Black Valley Girls", new List<string> { "Teen", "Ebony" } }, { "DadCrush", new List<string> { "Step Dad", "Step Daughter" } },
+            { "DaughterSwap", new List<string> { "Step Dad", "Step Daughter" } }, { "Dyked", new List<string> { "Hardcore", "Teen", "Lesbian" } },
+            { "Exxxtra Small", new List<string> { "Teen", "Small Tits" } }, { "Family Strokes", new List<string> { "Taboo Family" } },
+            { "Foster Tapes", new List<string> { "Taboo Sex" } }, { "Freeuse Fantasy", new List<string> { "Freeuse" } },
+            { "Ginger Patch", new List<string> { "Redhead" } }, { "Innocent High", new List<string> { "School Girl" } },
+            { "Little Asians", new List<string> { "Asian", "Teen" } }, { "Not My Grandpa", new List<string> { "Older/Younger" } },
+            { "Oye Loca", new List<string> { "Latina" } }, { "PervMom", new List<string> { "Step Mom" } },
+            { "POV Life", new List<string> { "POV" } }, { "Shoplyfter", new List<string> { "Strip" } },
+            { "ShoplyfterMylf", new List<string> { "Strip", "MILF" } }, { "Sis Loves Me", new List<string> { "Step Sister" } },
+            { "Teen Curves", new List<string> { "Big Ass" } }, { "Teen Pies", new List<string> { "Teen", "Creampie" } },
+            { "TeenJoi", new List<string> { "Teen", "JOI" } }, { "Teens Do Porn", new List<string> { "Teen" } },
+            { "Teens Love Black Cocks", new List<string> { "Teens", "BBC" } }, { "Teeny Black", new List<string> { "Teen", "Ebony" } },
+            { "Thickumz", new List<string> { "Thick" } }, { "Titty Attack", new List<string> { "Big Tits" } },
         };
 
         private string Slugify(string phrase)
@@ -66,6 +66,7 @@ namespace PhoenixAdult.Sites
                     return JObject.Parse(match.Groups[1].Value)["content"];
                 }
             }
+
             return null;
         }
 
@@ -116,6 +117,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -155,7 +157,7 @@ namespace PhoenixAdult.Sites
 
             if (detailsPageElements["tags"] != null)
             {
-                foreach(var genre in detailsPageElements["tags"])
+                foreach (var genre in detailsPageElements["tags"])
                 {
                     movie.AddGenre(genre.ToString().Trim());
                 }
@@ -163,7 +165,7 @@ namespace PhoenixAdult.Sites
 
             if (genresDB.ContainsKey(tagline))
             {
-                foreach(var genre in genresDB[tagline])
+                foreach (var genre in genresDB[tagline])
                 {
                     movie.AddGenre(genre);
                 }

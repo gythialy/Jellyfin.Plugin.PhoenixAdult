@@ -130,6 +130,7 @@ namespace PhoenixAdult.Sites
                     // ignore
                 }
             }
+
             return result;
         }
 
@@ -182,7 +183,7 @@ namespace PhoenixAdult.Sites
             var genreNodes = detailsPageElements.SelectNodes("//div[@class='tags']//a");
             if (genreNodes != null)
             {
-                foreach(var genreNode in genreNodes)
+                foreach (var genreNode in genreNodes)
                 {
                     movie.AddGenre(genreNode.InnerText.Trim());
                 }

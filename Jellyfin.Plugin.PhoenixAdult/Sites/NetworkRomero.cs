@@ -52,7 +52,7 @@ namespace PhoenixAdult.Sites
 
                     var dateNode = node.SelectSingleNode(".//h2[2]") ?? node.SelectSingleNode(".//div[@class='entry-date']");
                     string releaseDate = string.Empty;
-                    if(dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim().Split(new[] { "&nbsp" }, StringSplitOptions.None).Last(), out var parsedDate))
+                    if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim().Split(new[] { "&nbsp" }, StringSplitOptions.None).Last(), out var parsedDate))
                     {
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
                     }
@@ -69,6 +69,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -103,7 +104,7 @@ namespace PhoenixAdult.Sites
             var summaryNodes = (siteNum[0] >= 1797 && siteNum[0] <= 1798)
                 ? detailsPageElements.SelectNodes("//div[@id='fullstory']/p")
                 : detailsPageElements.SelectNodes("//div[@class='cont']/p|//div[@class='cont']//div[@id='fullstory']/p|//div[@class='zapdesc']//div[not(contains(., 'Including'))][.//br]");
-            if(summaryNodes != null)
+            if (summaryNodes != null)
             {
                 movie.Overview = string.Join("\n", summaryNodes.Select(s => s.InnerText.Trim()).Where(s => !string.IsNullOrEmpty(s) && s != "\u00a0"));
             }
@@ -125,9 +126,9 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//div[@class='Cats']//a|//div[@class='zapdesc']/div/div/div[contains(., 'Including:')]");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -135,16 +136,16 @@ namespace PhoenixAdult.Sites
 
             var actorXPath = siteNum[0] == 896 ? "//div[contains(@class, 'tagsmodels')]//a" : "//div[contains(@class, 'tagsmodels')][./img[@alt='model icon']]//a";
             var actorNodes = detailsPageElements.SelectNodes(actorXPath);
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
             }
 
             var directorNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'director')]//a");
-            if(directorNode != null)
+            if (directorNode != null)
             {
                 result.People.Add(new PersonInfo { Name = directorNode.InnerText.Trim(), Type = PersonKind.Director });
             }
@@ -170,12 +171,12 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//img[(contains(@class, 'alignnone') and contains(@class, 'size-full') or contains(@class, 'size-medium')) and (not(contains(@class, 'wp-image-4512') or contains(@class, 'wp-image-492')))] | //div[@class='iehand']/a | //a[contains(@class, 'colorbox-cats')] | //div[@class='gallery']//a");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     string imageUrl = img.GetAttributeValue("src", string.Empty) ?? img.GetAttributeValue("href", string.Empty);
-                    if(imageUrl.Contains("?src="))
+                    if (imageUrl.Contains("?src="))
                     {
                         imageUrl = System.Web.HttpUtility.ParseQueryString(new Uri(imageUrl).Query).Get("src");
                     }

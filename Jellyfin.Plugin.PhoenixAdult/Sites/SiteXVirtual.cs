@@ -21,11 +21,8 @@ namespace PhoenixAdult.Sites
 {
     public class SiteXVirtual : IProviderBase
     {
-
-
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-
         // Simplified search logic, may need adjustments
         var result = new List<RemoteSearchResult>();
         var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
@@ -48,8 +45,8 @@ namespace PhoenixAdult.Sites
                 result.Add(item);
             }
         }
-        return result;
 
+        return result;
         }
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)

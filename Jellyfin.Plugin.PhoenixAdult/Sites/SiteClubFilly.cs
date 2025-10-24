@@ -42,6 +42,7 @@ namespace PhoenixAdult.Sites
                     SearchProviderName = Plugin.Instance.Name,
                 });
             }
+
             return result;
         }
 
@@ -129,9 +130,9 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//ul[@id='lstSceneFocus']/li/img");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("src", string.Empty), Type = ImageType.Backdrop });
                 }

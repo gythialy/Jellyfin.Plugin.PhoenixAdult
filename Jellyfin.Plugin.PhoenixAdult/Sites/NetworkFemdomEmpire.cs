@@ -132,6 +132,7 @@ namespace PhoenixAdult.Sites
                     movie.AddGenre(genreLink.InnerText.Trim());
                 }
             }
+
             movie.AddGenre("Femdom");
 
             var actorsNode = sceneData.SelectNodes("//div[contains(@class, 'featuring')][1]/ul/li/a");
@@ -181,6 +182,7 @@ namespace PhoenixAdult.Sites
                     result.Add(new RemoteImageInfo { Url = image, Type = ImageType.Backdrop });
                 }
             }
+
             return result;
         }
     }

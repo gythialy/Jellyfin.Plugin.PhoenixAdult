@@ -74,6 +74,7 @@ namespace PhoenixAdult.Sites
                 }
                 catch { }
             }
+
             return result;
         }
 
@@ -106,7 +107,7 @@ namespace PhoenixAdult.Sites
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Split(':').Last().Split(new[] { " - " }, StringSplitOptions.None).Last().Trim().Trim('"');
 
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='video_text']");
-            if(summaryNode != null)
+            if (summaryNode != null)
             {
                 movie.Overview = summaryNode.InnerText.Trim();
             }
@@ -126,9 +127,9 @@ namespace PhoenixAdult.Sites
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//span[@class='feature title']//a[contains(@href, 'models')]");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     string actorName = actor.InnerText.Trim();
                     string actorUrl = actor.GetAttributeValue("href", string.Empty);
@@ -139,7 +140,7 @@ namespace PhoenixAdult.Sites
 
                     string actorPhotoUrl = string.Empty;
                     var actorHttp = await HTTP.Request(actorUrl, HttpMethod.Get, cancellationToken);
-                    if(actorHttp.IsOK)
+                    if (actorHttp.IsOK)
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
                         actorPhotoUrl = actorPage.SelectSingleNode("//div[./h1]/img")?.GetAttributeValue("src", string.Empty);
@@ -148,6 +149,7 @@ namespace PhoenixAdult.Sites
                             actorPhotoUrl = $"https:{actorPhotoUrl}";
                         }
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
@@ -173,7 +175,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//video");
-            if(posterNode != null)
+            if (posterNode != null)
             {
                 string imageUrl = posterNode.GetAttributeValue("poster", string.Empty);
                 if (!imageUrl.StartsWith("http"))

@@ -38,6 +38,7 @@ namespace PhoenixAdult.Sites
                     return match.Groups[1].Value;
                 }
             }
+
             // Fallback if login page doesn't work
             url = $"{Helper.GetSearchBaseURL(siteNum)}/en";
             httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
@@ -50,6 +51,7 @@ namespace PhoenixAdult.Sites
                     return match.Groups[1].Value;
                 }
             }
+
             return null;
         }
 
@@ -87,6 +89,7 @@ namespace PhoenixAdult.Sites
             {
                 return resultsArray[0]["hits"] as JArray;
             }
+
             return null;
         }
 
@@ -99,6 +102,7 @@ namespace PhoenixAdult.Sites
                 sceneId = searchTitle.Split(' ').First();
                 searchTitle = searchTitle.Replace(sceneId, string.Empty).Trim();
             }
+
             Logger.Info($"[NetworkGammaEntOther] Search called. Id and Title: {sceneId} : {searchTitle}");
 
             string apiKey = await GetApiKey(siteNum, cancellationToken);
@@ -106,6 +110,7 @@ namespace PhoenixAdult.Sites
             {
                 return result;
             }
+
             Logger.Info($"[NetworkGammaEntOther] Search called. apiKey: {apiKey}");
 
             foreach (var sceneType in new[] { "scenes", "movies" })
@@ -137,6 +142,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -197,6 +203,7 @@ namespace PhoenixAdult.Sites
                         actorPhotoUrl = $"https://images-fame.gammacdn.com/actors{pictures[maxQuality]}";
                     }
                 }
+
                 result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
             }
 

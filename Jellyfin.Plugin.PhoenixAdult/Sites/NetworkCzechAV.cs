@@ -95,6 +95,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -158,9 +159,9 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//ul[@class='tags']/li");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -196,7 +197,7 @@ namespace PhoenixAdult.Sites
             var imageNodes = detailsPageElements.SelectNodes("//meta[@property='og:image'] | //img[@class='thumb'] | //div[contains(@class, 'gallery')]//a");
             if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     string imageUrl = img.GetAttributeValue("content", string.Empty) ?? img.GetAttributeValue("src", string.Empty) ?? img.GetAttributeValue("href", string.Empty);
                     images.Add(new RemoteImageInfo { Url = imageUrl });

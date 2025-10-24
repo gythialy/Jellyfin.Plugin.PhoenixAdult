@@ -69,6 +69,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -113,35 +114,36 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//span[@class='update_tags']/a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//p/span[@class='update_models']/a");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actorNode in actorNodes)
+                foreach (var actorNode in actorNodes)
                 {
                     string actorName = actorNode.InnerText.Trim();
                     string actorUrl = actorNode.GetAttributeValue("href", string.Empty);
                     string actorPhotoUrl = string.Empty;
-                    if(!string.IsNullOrEmpty(actorUrl))
+                    if (!string.IsNullOrEmpty(actorUrl))
                     {
                         var actorHttp = await HTTP.Request(actorUrl, HttpMethod.Get, cancellationToken);
-                        if(actorHttp.IsOK)
+                        if (actorHttp.IsOK)
                         {
                             var actorPage = HTML.ElementFromString(actorHttp.Content);
                             actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='cell_top cell_thumb']//@src0_1x")?.GetAttributeValue("src0_1x", string.Empty);
-                            if(!string.IsNullOrEmpty(actorPhotoUrl) && !actorPhotoUrl.StartsWith("http"))
+                            if (!string.IsNullOrEmpty(actorPhotoUrl) && !actorPhotoUrl.StartsWith("http"))
                             {
                                 actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actorPhotoUrl;
                             }
                         }
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }

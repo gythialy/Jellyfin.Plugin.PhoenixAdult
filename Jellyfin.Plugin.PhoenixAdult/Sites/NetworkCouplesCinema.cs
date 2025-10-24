@@ -80,6 +80,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -131,9 +132,9 @@ namespace PhoenixAdult.Sites
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'cast')]/a");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }

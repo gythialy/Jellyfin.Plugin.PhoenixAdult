@@ -61,6 +61,7 @@ namespace PhoenixAdult.Sites
                     SearchProviderName = Plugin.Instance.Name,
                 });
             }
+
             return result;
         }
 
@@ -90,7 +91,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("Porndoe Premium");
 
             var tagline = detailsPageElements.SelectSingleNode("//div[@class='-mvd-grid-actors']/span/a")?.InnerText.Trim();
-            if(!string.IsNullOrEmpty(tagline))
+            if (!string.IsNullOrEmpty(tagline))
             {
                 movie.AddTag(tagline);
             }
@@ -98,7 +99,7 @@ namespace PhoenixAdult.Sites
             var genreNodes = detailsPageElements.SelectNodes("//span[@class='-mvd-list-item']/a");
             if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -118,7 +119,7 @@ namespace PhoenixAdult.Sites
             var actorNodes = detailsPageElements.SelectNodes("//div[@class='-mvd-grid-actors']/span/a[@title]");
             if (actorNodes != null)
             {
-                foreach(var actorLink in actorNodes)
+                foreach (var actorLink in actorNodes)
                 {
                     string actorPageURL = actorLink.GetAttributeValue("href", string.Empty);
                     var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken);
@@ -155,12 +156,12 @@ namespace PhoenixAdult.Sites
             }
 
             var xpaths = new[] { "//picture[@class='-vcc-picture']//img/@src", "//div[@class='swiper-wrapper']/div/a/div/@data-bg" };
-            foreach(var xpath in xpaths)
+            foreach (var xpath in xpaths)
             {
                 var posterNodes = detailsPageElements.SelectNodes(xpath);
                 if (posterNodes != null)
                 {
-                    foreach(var poster in posterNodes)
+                    foreach (var poster in posterNodes)
                     {
                         result.Add(new RemoteImageInfo { Url = poster.GetAttributeValue(xpath.Split('@').Last(), string.Empty) });
                     }
@@ -170,7 +171,7 @@ namespace PhoenixAdult.Sites
             if (result.Any())
             {
                 result.First().Type = ImageType.Primary;
-                foreach(var image in result.Skip(1))
+                foreach (var image in result.Skip(1))
                 {
                     image.Type = ImageType.Backdrop;
                 }

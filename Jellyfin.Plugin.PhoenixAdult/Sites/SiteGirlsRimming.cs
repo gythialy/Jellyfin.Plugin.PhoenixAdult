@@ -50,6 +50,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -106,18 +107,19 @@ namespace PhoenixAdult.Sites
                         {
                             var googleResults = await GoogleSearch.GetSearchResults(actorName, siteNum, cancellationToken);
                             actorPageUrl = googleResults.FirstOrDefault(u => u.Contains("/models/"));
-                            if(actorPageUrl != null)
+                            if (actorPageUrl != null)
                             {
                                 actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken);
                             }
                         }
 
                         string actorPhotoUrl = string.Empty;
-                        if(actorHttp.IsOK)
+                        if (actorHttp.IsOK)
                         {
                             var actorPage = HTML.ElementFromString(actorHttp.Content);
                             actorPhotoUrl = actorPage.SelectSingleNode("//div[contains(@class, 'model_picture')]//img")?.GetAttributeValue("src0_3x", string.Empty);
                         }
+
                         result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                     }
                     else
@@ -126,6 +128,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             movie.AddGenre("Rim Job");
 
             return result;
@@ -149,7 +152,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//div[@id='fakeplayer']//img");
-            if(posterNode != null)
+            if (posterNode != null)
             {
                 images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("src0_3x", string.Empty), Type = ImageType.Primary });
             }

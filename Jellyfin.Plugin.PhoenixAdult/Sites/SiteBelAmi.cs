@@ -34,6 +34,7 @@ namespace PhoenixAdult.Sites
                 string releaseDate = detailsPageElements.SelectSingleNode("//div[contains(@class, 'video_detail')]//span[contains(@id, 'ContentPlaceHolder1_LabelReleased')]")?.InnerText;
                 return (title, releaseDate, detailsPageElements);
             }
+
             return (null, null, null);
         }
 
@@ -51,6 +52,7 @@ namespace PhoenixAdult.Sites
                     SearchProviderName = Plugin.Instance.Name,
                 });
             }
+
             return result;
         }
 
@@ -87,7 +89,7 @@ namespace PhoenixAdult.Sites
             var genreNodes = sceneInfo.detailsPageElements.SelectNodes("//div[contains(@class, 'video_detail')]//span[contains(@id, 'ContentPlaceHolder1_LabelTags')]//a");
             if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText);
                 }

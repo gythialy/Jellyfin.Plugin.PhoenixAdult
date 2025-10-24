@@ -49,6 +49,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -77,7 +78,7 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
             var descriptionNode = detailsPageElements.SelectSingleNode("//div[@data-id='description' and @class='hidden']");
-            if(descriptionNode != null)
+            if (descriptionNode != null)
             {
                 movie.Overview = descriptionNode.InnerText.Trim().Replace("Read less", string.Empty);
             }
@@ -94,28 +95,29 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//div/a[@class='tags__item']");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[@class='video-info__text']/a");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     string actorName = actor.InnerText.Trim();
                     string actorPageUrl = actor.GetAttributeValue("href", string.Empty);
                     string actorPhotoUrl = string.Empty;
                     var actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken);
-                    if(actorHttp.IsOK)
+                    if (actorHttp.IsOK)
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
                         actorPhotoUrl = actorPage.SelectSingleNode("//img[contains(@class, 'pornstar-detail__picture')]")?.GetAttributeValue("src", string.Empty);
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
@@ -141,9 +143,9 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//div[@class='video-detail__gallery-item']/a");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("href", string.Empty) });
                 }

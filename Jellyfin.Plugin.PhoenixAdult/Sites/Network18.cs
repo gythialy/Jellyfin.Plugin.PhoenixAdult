@@ -43,16 +43,16 @@ namespace PhoenixAdult.Sites
             { "thicc18", new List<string> { "Thicc" } },
         };
 
-        private async Task<JObject> GetDataFromAPI(string queryType, string variable, object query, int siteNum, CancellationToken cancellationToken)
+        private async Task<JObject> GetDataFromAPI(string queryType, string variable, object query, int[] siteNum, CancellationToken cancellationToken)
         {
-            string siteName = Helper.GetSearchSiteName(new [] { siteNum });
+            string siteName = Helper.GetSearchSiteName(siteNum);
             if (!apiKeyDB.ContainsKey(siteName))
             {
                 return null;
             }
 
             string apiKey = apiKeyDB[siteName][0];
-            string searchUrl = Helper.GetSearchSearchURL(new [] { siteNum });
+            string searchUrl = Helper.GetSearchSearchURL(siteNum);
 
             var variables = new Dictionary<string, object> { { variable, query } };
             var requestBody = new { query = queryType, variables };
@@ -89,12 +89,12 @@ namespace PhoenixAdult.Sites
                 if (searchResult["type"].ToString() == "VIDEO")
                 {
                     string sceneName = searchResult["name"].ToString();
-                    string curID = Helper.Encode(searchResult["itemId"].ToString());
                     string releaseDateStr = searchDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+                    string curID = Helper.Encode($"{searchResult["itemId"].ToString()}|{releaseDateStr}");
 
                     var item = new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDateStr}" } },
+                        ProviderIds = { { Plugin.Instance.Name, curID } },
                         Name = $"{sceneName} [{Helper.GetSearchSiteName(siteNum)}]",
                         SearchProviderName = Plugin.Instance.Name,
                     };
@@ -107,6 +107,7 @@ namespace PhoenixAdult.Sites
                     result.Add(item);
                 }
             }
+
             return result;
         }
 
@@ -118,10 +119,9 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string[] providerIds = sceneID[0].Split('|');
-            string videoIdEncoded = providerIds[0];
-            int siteNumVal = int.Parse(providerIds[1]);
-            string sceneDate = providerIds[2];
+            string[] providerIds = Helper.Decode(sceneID[0]).Split('|');
+            string videoId = providerIds[0];
+            string sceneDate = providerIds[1];
 
             string videoId = Helper.Decode(videoIdEncoded);
 
@@ -143,7 +143,7 @@ namespace PhoenixAdult.Sites
 
             movie.Overview = summary;
 
-            string studio = Helper.GetSearchSiteName(new[] { siteNumVal });
+            string studio = Helper.GetSearchSiteName(siteNum);
             movie.AddStudio(studio);
             movie.AddTag(studio);
 
@@ -228,6 +228,7 @@ namespace PhoenixAdult.Sites
                         {
                             imageInfo.Type = ImageType.Backdrop;
                         }
+
                         images.Add(imageInfo);
                     }
                 }

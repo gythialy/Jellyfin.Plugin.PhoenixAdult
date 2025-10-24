@@ -35,7 +35,7 @@ namespace PhoenixAdult.Sites
                 searchTitle = string.Join(" ", parts.Skip(1));
             }
 
-            if(sceneId != null)
+            if (sceneId != null)
             {
                 try
                 {
@@ -127,28 +127,29 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'genres-list')]/a[contains(@href, '/genre/')]");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//a[contains(@href, '/model/') and not(contains(@href, 'forum'))]");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     string actorName = actor.InnerText.Trim();
                     string actorUrl = actor.GetAttributeValue("href", string.Empty);
                     string actorPhotoUrl = string.Empty;
                     var actorHttp = await HTTP.Request(actorUrl, HttpMethod.Get, cancellationToken);
-                    if(actorHttp.IsOK)
+                    if (actorHttp.IsOK)
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
                         actorPhotoUrl = actorPage.SelectSingleNode("//div[contains(@class,'model')]//img")?.GetAttributeValue("src", string.Empty);
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
@@ -179,7 +180,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//div[contains(@class,'watch__video')]//video");
-            if(posterNode != null)
+            if (posterNode != null)
             {
                 images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("data-poster", string.Empty), Type = ImageType.Primary });
             }

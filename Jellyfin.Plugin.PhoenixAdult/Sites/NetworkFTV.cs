@@ -26,14 +26,14 @@ namespace PhoenixAdult.Sites
     {
         private static readonly Dictionary<int, List<string>> photoScenes = new Dictionary<int, List<string>>
         {
-            {226, new List<string> {"cool-colors", "shes-on-fire", "heating-up"}},
-            {209, new List<string> {"amazing-figure"}},
-            {210, new List<string> {"supersexy-vixen", "satin-sensuality", "outdoor-finale"}},
-            {130, new List<string> {"elegantly-sexual"}},
-            {1569, new List<string> {"model-like-no-other", "teen-penetration"}},
-            {1524, new List<string> {"petite-gaping", "penetration-limits"}},
-            {1573, new List<string>()},
-            {283, new List<string>()},
+            { 226, new List<string> { "cool-colors", "shes-on-fire", "heating-up" } },
+            { 209, new List<string> { "amazing-figure" } },
+            { 210, new List<string> { "supersexy-vixen", "satin-sensuality", "outdoor-finale" } },
+            { 130, new List<string> { "elegantly-sexual" } },
+            { 1569, new List<string> { "model-like-no-other", "teen-penetration" } },
+            { 1524, new List<string> { "petite-gaping", "penetration-limits" } },
+            { 1573, new List<string>() },
+            { 283, new List<string>() },
         };
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
@@ -81,6 +81,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -132,9 +133,9 @@ namespace PhoenixAdult.Sites
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[@id='ModelDescription']//h1");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                for(int i=0; i < actorNodes.Count; i++)
+                for (int i=0; i < actorNodes.Count; i++)
                 {
                     string actorName = actorNodes[i].InnerText.Replace("'s Statistics", string.Empty).Trim();
                     string actorPhotoUrl = detailsPageElements.SelectSingleNode($"//div[@id='Thumbs']/img[{i+1}]")?.GetAttributeValue("src", string.Empty);
@@ -164,7 +165,7 @@ namespace PhoenixAdult.Sites
                             var imageNodes = photoPageElements.SelectNodes("//img[@id='Magazine'] | //div[@class='gallery']//div[@class='row']//a | //div[@class='thumbs_horizontal']//a | //a[img[@class='t']]");
                             if (imageNodes != null)
                             {
-                                foreach(var img in imageNodes)
+                                foreach (var img in imageNodes)
                                 {
                                     images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("src", string.Empty) ?? img.GetAttributeValue("href", string.Empty) });
                                 }
@@ -173,6 +174,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return images;
         }
     }

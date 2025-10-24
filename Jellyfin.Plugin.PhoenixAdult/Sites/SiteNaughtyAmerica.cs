@@ -129,6 +129,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -154,7 +155,7 @@ namespace PhoenixAdult.Sites
                 movie.ProductionYear = details.PublishedAt.Year;
             }
 
-            foreach(var genre in details.Fantasies)
+            foreach (var genre in details.Fantasies)
             {
                 movie.AddGenre(genre);
             }
@@ -164,7 +165,7 @@ namespace PhoenixAdult.Sites
                 string actorPageURL = $"https://www.naughtyamerica.com/pornstar/{actor.ToLower().Replace(' ', '-').Replace("'", string.Empty)}";
                 var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken);
                 string actorPhotoURL = actorPage?.SelectSingleNode("//img[contains(@class, 'performer-pic')]")?.GetAttributeValue("data-src", string.Empty);
-                if(!string.IsNullOrEmpty(actorPhotoURL))
+                if (!string.IsNullOrEmpty(actorPhotoURL))
                 {
                     actorPhotoURL = "https:" + actorPhotoURL;
                 }

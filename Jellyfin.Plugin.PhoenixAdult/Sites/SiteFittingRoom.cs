@@ -45,6 +45,7 @@ namespace PhoenixAdult.Sites
                     SearchProviderName = Plugin.Instance.Name,
                 });
             }
+
             return result;
         }
 
@@ -89,7 +90,7 @@ namespace PhoenixAdult.Sites
 
             var collectionNode = detailsPageElements.SelectSingleNode("//div[@id='list_videos_related_videos_items']/div[1]/div[2]/a");
             string collection = collectionNode?.InnerText.Trim();
-            if(string.IsNullOrEmpty(collection))
+            if (string.IsNullOrEmpty(collection))
             {
                 if (movie.Name == "Huge Tits")
                 {
@@ -116,7 +117,7 @@ namespace PhoenixAdult.Sites
             }
 
             var actorLink = detailsPageElements.SelectSingleNode("//a[@class='model']/div[1]/img");
-            if(actorLink != null)
+            if (actorLink != null)
             {
                 string actorName = actorLink.GetAttributeValue("alt", string.Empty).Trim();
                 string actorPhotoUrl = actorLink.GetAttributeValue("src", string.Empty).Trim();
@@ -124,13 +125,14 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//meta[@property='article:tag']");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.GetAttributeValue("content", string.Empty).Replace(result.People.FirstOrDefault()?.Name ?? string.Empty, string.Empty).Trim().ToLower());
                 }
             }
+
             movie.AddGenre("Fitting Room");
 
             return result;

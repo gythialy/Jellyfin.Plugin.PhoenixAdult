@@ -69,7 +69,7 @@ namespace PhoenixAdult.Sites
                     // For now, passing a placeholder. This might need adjustment.
                     var c4sResults = await c4sProvider.Search(new[] { 105 }, c4sSearchTitle, searchDate, cancellationToken);
 
-                    foreach(var match in c4sResults)
+                    foreach (var match in c4sResults)
                     {
                         match.Name = GetCleanTitle(match.Name);
                         string originalId = match.ProviderIds[Plugin.Instance.Name];
@@ -108,7 +108,8 @@ namespace PhoenixAdult.Sites
                     string summary = detailsPageElements.SelectSingleNode("//div[@class='individualClipDescription']/p/text()")?.InnerText;
                     actorName = new Regex(@"(?<=[Ss]tarring\s)\w*\s\w*").Match(summary).Value;
                 }
-                if(!string.IsNullOrEmpty(actorName))
+
+                if (!string.IsNullOrEmpty(actorName))
                 {
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                 }
@@ -139,9 +140,9 @@ namespace PhoenixAdult.Sites
             movie.AddTag("Family Therapy");
 
             var genreNodes = detailsPageElementsDirect.SelectNodes("//a[@rel='category tag']");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -158,7 +159,7 @@ namespace PhoenixAdult.Sites
             if (actorNode != null)
             {
                 string actorText = new Regex(@"(?<=[Ss]tarring\s)\w*\s\w*(\s&\s\w*\s\w*)*").Match(actorNode.InnerText).Value;
-                foreach(var actorName in actorText.Split('&'))
+                foreach (var actorName in actorText.Split('&'))
                 {
                     result.People.Add(new PersonInfo { Name = actorName.Trim(), Type = PersonKind.Actor });
                 }

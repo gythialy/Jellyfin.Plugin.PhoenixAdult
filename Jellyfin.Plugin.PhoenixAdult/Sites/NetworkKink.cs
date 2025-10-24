@@ -90,6 +90,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -145,7 +146,7 @@ namespace PhoenixAdult.Sites
             var genreNodes = detailsPageElements.SelectNodes("//a[contains(@href, '/tag/')]");
             if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Replace(",", string.Empty).Trim());
                 }
@@ -180,9 +181,9 @@ namespace PhoenixAdult.Sites
             }
 
             var directorNodes = detailsPageElements.SelectNodes("//span[contains(@class, 'director-name')]/a");
-            if(directorNodes != null)
+            if (directorNodes != null)
             {
-                foreach(var director in directorNodes)
+                foreach (var director in directorNodes)
                 {
                     string directorName = director.InnerText.Trim();
                     string directorPageURL = Helper.GetSearchBaseURL(siteNum) + director.GetAttributeValue("href", string.Empty);
@@ -211,17 +212,18 @@ namespace PhoenixAdult.Sites
             }
 
             var xpaths = new[] { "//video/@poster", "//div[@class='player']/div/@poster", "//div[@id='galleryWrapper']//img/@data-image-file" };
-            foreach(var xpath in xpaths)
+            foreach (var xpath in xpaths)
             {
                 var posterNodes = detailsPageElements.SelectNodes(xpath);
-                if(posterNodes != null)
+                if (posterNodes != null)
                 {
-                    foreach(var poster in posterNodes)
+                    foreach (var poster in posterNodes)
                     {
                         images.Add(new RemoteImageInfo { Url = poster.GetAttributeValue(xpath.Split('@').Last(), string.Empty).Split('?')[0] });
                     }
                 }
             }
+
             return images;
         }
 
@@ -249,13 +251,14 @@ namespace PhoenixAdult.Sites
                 { "straponsquad", "Strapon Squad" }, { "sexualdisgrace", "Sexual Disgrace" }, { "fetishnetwork", "Fetish Network" },
                 { "fetishnetworkmale", "Fetish Network Male" },
             };
-            foreach(var pair in taglines)
+            foreach (var pair in taglines)
             {
                 if (channel.Contains(pair.Key))
                 {
                     return pair.Value;
                 }
             }
+
             return null;
         }
 

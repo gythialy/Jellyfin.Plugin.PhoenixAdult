@@ -40,6 +40,7 @@ namespace PhoenixAdult.Sites
                     SearchProviderName = Plugin.Instance.Name,
                 });
             }
+
             return result;
         }
 
@@ -75,18 +76,18 @@ namespace PhoenixAdult.Sites
             movie.AddTag(tagline);
 
             var genreNodes = detailsPageElements.SelectNodes("//span[@class='label label-primary']/a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim().ToLower());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[@class='breadcrumbs']/a");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
@@ -113,9 +114,9 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//section[@class='har_section har_image_bck har_wht_txt har_fixed'] | //img[@class='vidgal unos'] | //img[@class='vidgal dos'] | //img[@class='vidgal tres'] | //img[@class='vidgal quatros']");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("data-image", string.Empty) ?? img.GetAttributeValue("src", string.Empty) });
                 }

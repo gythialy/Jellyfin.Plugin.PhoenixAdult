@@ -35,7 +35,7 @@ namespace PhoenixAdult.Sites
             }
 
             var searchResults = new List<string>();
-            if(sceneId != null)
+            if (sceneId != null)
             {
                 string actorName = Regex.Replace(searchTitle, @"\s\d.*", string.Empty).Replace(' ', '-');
                 searchResults.Add($"{Helper.GetSearchSearchURL(siteNum)}{actorName}/{sceneId}/");
@@ -92,6 +92,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -135,7 +136,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            if(Regex.IsMatch(title, "Latest.*Videos"))
+            if (Regex.IsMatch(title, "Latest.*Videos"))
             {
                 title = Helper.Decode(providerIds[3]);
                 var actors = Helper.Decode(providerIds[4]).Split(',');
@@ -144,10 +145,11 @@ namespace PhoenixAdult.Sites
                     result.People.Add(new PersonInfo { Name = actor.Trim(), Type = PersonKind.Actor });
                 }
             }
+
             movie.Name = title.Replace("Coming Soon:", string.Empty).Trim();
 
             var summaryXPaths = new[] { "//div[contains(@class, 'p-desc')]/text()", "//div[contains(@class, 'desc')]/text()" };
-            foreach(var xpath in summaryXPaths)
+            foreach (var xpath in summaryXPaths)
             {
                 var summaryNodes = detailsPageElements.SelectNodes(xpath);
                 if (summaryNodes != null)
@@ -177,9 +179,9 @@ namespace PhoenixAdult.Sites
             foreach (var xpath in genreXPaths)
             {
                 var genreNodes = detailsPageElements.SelectNodes(xpath);
-                if(genreNodes != null)
+                if (genreNodes != null)
                 {
-                    foreach(var genre in genreNodes)
+                    foreach (var genre in genreNodes)
                     {
                         movie.AddGenre(genre.InnerText.Trim());
                     }
@@ -187,12 +189,12 @@ namespace PhoenixAdult.Sites
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div/span[@class='value']/a");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     string actorName = actor.InnerText.Trim();
-                    if(actorName.ToLower() != "extra")
+                    if (actorName.ToLower() != "extra")
                     {
                         result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                     }
@@ -241,13 +243,13 @@ namespace PhoenixAdult.Sites
             foreach (var xpath in xpaths)
             {
                 var imageNodes = detailsPageElements.SelectNodes(xpath);
-                if(imageNodes != null)
+                if (imageNodes != null)
                 {
                     foreach (var img in imageNodes)
                     {
                         var posterMatch = Regex.Match(img.InnerText, "(?<=poster: ').*(?=')");
                         string imageUrl = posterMatch.Success ? posterMatch.Groups[1].Value : (img.GetAttributeValue("src", string.Empty) ?? img.GetAttributeValue("href", string.Empty));
-                        if(!string.IsNullOrEmpty(imageUrl) && !imageUrl.Contains("shared-bits") && !imageUrl.Contains("/join"))
+                        if (!string.IsNullOrEmpty(imageUrl) && !imageUrl.Contains("shared-bits") && !imageUrl.Contains("/join"))
                         {
                             if (!imageUrl.StartsWith("http"))
                             {
@@ -278,7 +280,7 @@ namespace PhoenixAdult.Sites
             };
             string searchUrl = $"{Helper.GetSearchBaseURL(siteNum)}/search-es";
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Post, new FormUrlEncodedContent(values), cancellationToken);
-            if(httpResult.IsOK)
+            if (httpResult.IsOK)
             {
                 return HTML.ElementFromString(httpResult.Content);
             }

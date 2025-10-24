@@ -110,7 +110,7 @@ namespace PhoenixAdult.Sites
 
             movie.AddGenre("French porn");
             var movieNameNode = detailsPageElements.SelectSingleNode("//span[@class='movie']/a");
-            if(movieNameNode != null)
+            if (movieNameNode != null)
             {
                 movie.AddGenre("Blockbuster Movie");
             }
@@ -135,6 +135,7 @@ namespace PhoenixAdult.Sites
                         movie.AddGenre("Orgy");
                     }
                 }
+
                 foreach (var actor in actorNodes)
                 {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
@@ -142,7 +143,7 @@ namespace PhoenixAdult.Sites
             }
 
             var directorNode = detailsPageElements.SelectSingleNode("//span[@class='director']");
-            if(directorNode != null)
+            if (directorNode != null)
             {
                 result.People.Add(new PersonInfo { Name = directorNode.InnerText.Replace("Director :", string.Empty).Trim(), Type = PersonKind.Director });
             }
@@ -168,9 +169,9 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'photos')]//source");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     string imageUrl = img.GetAttributeValue("data-srcset", string.Empty).Split(',').Last().Split(' ').First();
                     string trash = $"_{imageUrl.Split('_').Last().Split('.').First()}";

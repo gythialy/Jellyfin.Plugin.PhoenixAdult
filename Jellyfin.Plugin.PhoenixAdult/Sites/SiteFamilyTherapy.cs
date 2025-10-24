@@ -59,6 +59,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -88,7 +89,7 @@ namespace PhoenixAdult.Sites
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
 
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='entry-content']/p[1]") ?? detailsPageElements.SelectSingleNode("//div[@class='entry-content']");
-            if(summaryNode != null)
+            if (summaryNode != null)
             {
                 movie.Overview = summaryNode.InnerText.Trim();
             }
@@ -97,9 +98,9 @@ namespace PhoenixAdult.Sites
             movie.AddTag("Family Therapy");
 
             var genreNodes = detailsPageElements.SelectNodes("//a[@rel='category tag']");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -113,15 +114,15 @@ namespace PhoenixAdult.Sites
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[@class='entry-content']/p[contains(text(),'starring') or contains(text(), 'Starring')]");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actorNode in actorNodes)
+                foreach (var actorNode in actorNodes)
                 {
                     var match = Regex.Match(actorNode.InnerText, @"(?<=[Ss]tarring\s)\w*\s\w*(\s&\s\w*\s\w*)*");
                     if (match.Success)
                     {
                         var actors = match.Value.Split('&');
-                        foreach(var actor in actors)
+                        foreach (var actor in actors)
                         {
                             result.People.Add(new PersonInfo { Name = actor.Trim(), Type = PersonKind.Actor });
                         }

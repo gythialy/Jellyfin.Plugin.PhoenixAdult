@@ -50,6 +50,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -126,7 +127,7 @@ namespace PhoenixAdult.Sites
                         posterUrl = posterUrl.Split(new[] { "url(" }, StringSplitOptions.None)[1].Split(')')[0];
                     }
 
-                    if(!posterUrl.StartsWith("http"))
+                    if (!posterUrl.StartsWith("http"))
                     {
                         posterUrl = Helper.GetSearchSearchURL(siteNum) + posterUrl;
                     }

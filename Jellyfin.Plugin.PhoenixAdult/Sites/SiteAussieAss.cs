@@ -26,10 +26,10 @@ namespace PhoenixAdult.Sites
     {
         private static readonly Dictionary<string, List<string>> actorsDB = new Dictionary<string, List<string>>
         {
-            {"Belinda Belfast", new List<string> {"belinda belfast"}},
-            {"Charlotte Star", new List<string> {"charlotte,star"}},
-            {"Charlie Brookes", new List<string> {"charlie, brookes", "charlie"}},
-            {"Monte Cooper", new List<string> {"monte, cooper", "monte cooper"}},
+            { "Belinda Belfast", new List<string> { "belinda belfast" } },
+            { "Charlotte Star", new List<string> { "charlotte,star" } },
+            { "Charlie Brookes", new List<string> { "charlie, brookes", "charlie" } },
+            { "Monte Cooper", new List<string> { "monte, cooper", "monte cooper" } },
         };
 
         private string Slugify(string phrase)
@@ -104,6 +104,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -182,7 +183,7 @@ namespace PhoenixAdult.Sites
             foreach (var xpath in xpaths)
             {
                 var imageNodes = detailsPageElements.SelectNodes(xpath);
-                if(imageNodes != null)
+                if (imageNodes != null)
                 {
                     foreach (var img in imageNodes)
                     {
@@ -202,6 +203,7 @@ namespace PhoenixAdult.Sites
                                 imageUrl = $"{Helper.GetSearchBaseURL(siteNum)}/{imageUrl}";
                             }
                         }
+
                         images.Add(new RemoteImageInfo { Url = imageUrl });
                     }
                 }
@@ -218,7 +220,7 @@ namespace PhoenixAdult.Sites
                     {
                         var altPage = HTML.ElementFromString(altHttp.Content);
                         var imageNodes = altPage.SelectNodes(xpaths[0]);
-                        if(imageNodes != null)
+                        if (imageNodes != null)
                         {
                             foreach (var img in imageNodes)
                             {

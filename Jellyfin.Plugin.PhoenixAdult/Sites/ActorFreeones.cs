@@ -55,6 +55,7 @@ namespace PhoenixAdult.Sites
             {
                 actorURL = Helper.GetSearchBaseURL(siteNum) + actorURL;
             }
+
             Logger.Info($"actorURL: {actorURL}");
 
             var actorData = await HTML.ElementFromURL(actorURL, cancellationToken).ConfigureAwait(false);

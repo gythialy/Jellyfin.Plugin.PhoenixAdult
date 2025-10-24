@@ -109,9 +109,11 @@ namespace PhoenixAdult.Sites
                     {
                         genreName = "Anal";
                     }
+
                     metadataResult.Item.AddGenre(genreName);
                 }
             }
+
             metadataResult.Item.AddGenre("French porn");
 
             foreach (var actorName in GetJmtvActors(sceneUrl))

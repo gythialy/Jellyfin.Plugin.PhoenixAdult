@@ -52,6 +52,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -93,9 +94,9 @@ namespace PhoenixAdult.Sites
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[@class='trailer_videoinfo']//p[contains(., 'Featuring')]//a | //div[@class='setdesc']//a[contains(@href, '/models/')]");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     string actorName = actor.InnerText.Trim();
                     string actorUrl = actor.GetAttributeValue("href", string.Empty);
@@ -110,7 +111,7 @@ namespace PhoenixAdult.Sites
 
                     string actorPhotoUrl = string.Empty;
                     var actorHttp = await HTTP.Request(actorUrl, HttpMethod.Get, cancellationToken);
-                    if(actorHttp.IsOK)
+                    if (actorHttp.IsOK)
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
                         actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='model_photo']//img[@id] | //div[@class='model_photo']/img")?.GetAttributeValue("src0_1x", string.Empty);
@@ -119,6 +120,7 @@ namespace PhoenixAdult.Sites
                             actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actorPhotoUrl;
                         }
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
@@ -144,9 +146,9 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//div[@class='trailerpage_photoblock_fullsize']//a | //div[@class='trailerposter']//img | //div[@class='player-thumb']//img");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     string imageUrl = img.GetAttributeValue("href", string.Empty) ?? img.GetAttributeValue("src0_4x", string.Empty);
                     if (!imageUrl.StartsWith("http"))

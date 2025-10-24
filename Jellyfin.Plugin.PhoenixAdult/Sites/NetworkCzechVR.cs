@@ -32,6 +32,7 @@ namespace PhoenixAdult.Sites
                 sceneId = searchTitle.Split(' ').First();
                 searchTitle = searchTitle.Replace(sceneId, string.Empty).Trim();
             }
+
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + searchTitle.Replace(' ', '-');
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)
@@ -67,6 +68,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -97,7 +99,7 @@ namespace PhoenixAdult.Sites
                 .Replace("Czech VR Network", string.Empty).Replace(" - Czech VR Fetish Porn Videos", string.Empty).Replace("Czech VR Fetish", string.Empty).Replace("Czech VR Casting", string.Empty).Replace("Czech VR", string.Empty).Trim();
 
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='text'] ?? //div[@class='textDetail']");
-            if(summaryNode != null)
+            if (summaryNode != null)
             {
                 movie.Overview = summaryNode.InnerText.Trim();
             }
@@ -114,18 +116,18 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//div[@class='tag new']//a | //div[@class='tag']//a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.ToLower().Trim());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[@class='modelky']//a | (//div[contains(@class, 'nazev')])[1]//div[@class='featuring']//a");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
@@ -154,7 +156,7 @@ namespace PhoenixAdult.Sites
             var imageNodes = detailsPageElements.SelectNodes("//div[@class='foto']//dl8-video | //div[@class='galerka']//a");
             if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     string imageUrl = (img.GetAttributeValue("poster", string.Empty) ?? img.GetAttributeValue("href", string.Empty)).Substring(1);
                     if (!imageUrl.StartsWith("http"))

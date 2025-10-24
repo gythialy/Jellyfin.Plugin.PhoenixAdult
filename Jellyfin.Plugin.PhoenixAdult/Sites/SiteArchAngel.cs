@@ -50,6 +50,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -90,7 +91,7 @@ namespace PhoenixAdult.Sites
             var genreNodes = detailsPageElements.SelectNodes("//ul[@class='tags']//a");
             if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -128,7 +129,7 @@ namespace PhoenixAdult.Sites
             var imageNodes = detailsPageElements.SelectNodes("//img[contains(@class, 'update_thumb')]");
             if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     string imageUrl = img.GetAttributeValue("src0_3x", string.Empty);
                     if (!imageUrl.StartsWith("http"))

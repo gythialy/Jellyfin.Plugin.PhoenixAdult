@@ -197,6 +197,7 @@ namespace PhoenixAdult.Sites
                             actorPhotoURL = img;
                         }
                     }
+
                     if (!string.IsNullOrEmpty(actorName))
                     {
                         result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
@@ -251,12 +252,13 @@ namespace PhoenixAdult.Sites
                     string movieID = match.Groups[0].Value;
                     imageUrls.Add($"https://i.bang.com/covers/{movieID}/front.jpg");
                 }
+
                 imageUrls.Add(thumbnailUrl);
             }
 
             if (videoPageElements["trailer"] != null)
             {
-                foreach(var img in videoPageElements["trailer"])
+                foreach (var img in videoPageElements["trailer"])
                 {
                     imageUrls.Add(img["thumbnailUrl"].ToString());
                 }
@@ -275,6 +277,7 @@ namespace PhoenixAdult.Sites
                 {
                     imageInfo.Type = ImageType.Backdrop;
                 }
+
                 images.Add(imageInfo);
             }
 

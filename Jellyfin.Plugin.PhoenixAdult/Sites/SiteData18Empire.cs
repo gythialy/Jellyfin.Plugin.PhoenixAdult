@@ -81,6 +81,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             // ... (rest of search logic including Google fallback would go here)
             return result;
         }
@@ -109,7 +110,7 @@ namespace PhoenixAdult.Sites
             movie.Overview = string.Join("\n\n", detailsPageElements.SelectNodes("//div[@class='synopsis']//text()").Select(n => n.InnerText));
 
             var studio = detailsPageElements.SelectSingleNode("//div[@class='studio']/a/text()")?.InnerText.Trim();
-            if(!string.IsNullOrEmpty(studio))
+            if (!string.IsNullOrEmpty(studio))
             {
                 movie.AddStudio(studio);
             }
@@ -125,9 +126,9 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//div[@class='categories']/a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -138,14 +139,14 @@ namespace PhoenixAdult.Sites
                 : detailsPageElements.SelectNodes("//div[@class='video-performer']/a/span/span");
             if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
             }
 
             var directorNode = detailsPageElements.SelectSingleNode("//div[@class='director']/a/text()");
-            if(directorNode != null && directorNode.InnerText.Split(':').Last().Trim() != "Unknown")
+            if (directorNode != null && directorNode.InnerText.Split(':').Last().Trim() != "Unknown")
             {
                 result.People.Add(new PersonInfo { Name = directorNode.InnerText.Split(':').Last().Trim(), Type = PersonKind.Director });
             }

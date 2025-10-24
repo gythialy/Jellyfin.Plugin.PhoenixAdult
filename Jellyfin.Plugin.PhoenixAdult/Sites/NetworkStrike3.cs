@@ -104,6 +104,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -155,6 +156,7 @@ namespace PhoenixAdult.Sites
                     Logger.Info($"[NetworkStrike3] Processing category: {genreLink.ToString()}");
                     movie.AddGenre((string)genreLink["name"]);
                 }
+
                 Logger.Info("[NetworkStrike3] Finished processing 'categories'.");
             }
             else
@@ -183,6 +185,7 @@ namespace PhoenixAdult.Sites
                         Type = PersonKind.Actor,
                     });
                 }
+
                 Logger.Info("[NetworkStrike3] Finished processing 'models'.");
             }
             else

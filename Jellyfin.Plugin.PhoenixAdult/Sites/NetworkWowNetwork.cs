@@ -73,6 +73,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -146,6 +147,7 @@ namespace PhoenixAdult.Sites
                     images.Add(new RemoteImageInfo { Url = imageUrl, Type = ImageType.Primary });
                 }
             }
+
             return Task.FromResult<IEnumerable<RemoteImageInfo>>(images);
         }
     }

@@ -88,6 +88,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -131,11 +132,12 @@ namespace PhoenixAdult.Sites
             var genreNodes = detailsPageElements.SelectNodes("//span[@class='update_tags']//a");
             if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim().ToLower());
                 }
             }
+
             movie.AddGenre("Amateur");
 
             var actorNodes = detailsPageElements.SelectNodes("//div[@class='backgroundcolor_info']//span[@class='update_models']/a");
@@ -156,6 +158,7 @@ namespace PhoenixAdult.Sites
                             actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actorPhotoUrl;
                         }
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }

@@ -48,6 +48,7 @@ namespace PhoenixAdult.Sites
                     return (JObject)JObject.Parse(match.Groups[1].Value)["content"];
                 }
             }
+
             return null;
         }
 
@@ -118,6 +119,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 

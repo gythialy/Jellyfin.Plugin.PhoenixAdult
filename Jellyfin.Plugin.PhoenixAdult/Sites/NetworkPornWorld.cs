@@ -115,6 +115,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -144,7 +145,7 @@ namespace PhoenixAdult.Sites
             movie.Name = GetTitle(detailsPageElements, siteNum);
 
             var descriptionNode = detailsPageElements.SelectSingleNode("//div[text()='Description:']/following-sibling::div");
-            if(descriptionNode != null)
+            if (descriptionNode != null)
             {
                 movie.Overview = descriptionNode.InnerText.Trim();
             }
@@ -161,18 +162,18 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'genres-list')]//a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//h1[contains(@class, 'watch__title')]//a");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
@@ -199,7 +200,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//video");
-            if(posterNode != null)
+            if (posterNode != null)
             {
                 images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("data-poster", string.Empty), Type = ImageType.Primary });
             }

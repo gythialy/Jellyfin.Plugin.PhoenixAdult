@@ -60,6 +60,7 @@ namespace PhoenixAdult.Sites
                     SearchProviderName = Plugin.Instance.Name,
                 });
             }
+
             return result;
         }
 
@@ -109,7 +110,7 @@ namespace PhoenixAdult.Sites
             }
 
             var actorNodes = sceneData.SelectNodes("//div[contains(., 'Actors')]/a");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
                 foreach (var actorLink in actorNodes)
                 {
@@ -175,9 +176,11 @@ namespace PhoenixAdult.Sites
                     {
                         imageInfo.Type = ImageType.Backdrop;
                     }
+
                     result.Add(imageInfo);
                 }
             }
+
             return result;
         }
     }

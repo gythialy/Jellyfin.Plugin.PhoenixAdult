@@ -100,6 +100,7 @@ namespace PhoenixAdult.Sites
             {
                 Logger.Info($"[Network1service] GetAPI content: {http.Content}");
             }
+
             return http.IsOK ? JObject.Parse(http.Content) : null;
         }
 

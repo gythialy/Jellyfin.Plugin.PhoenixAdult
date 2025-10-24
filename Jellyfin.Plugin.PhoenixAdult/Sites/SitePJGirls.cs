@@ -21,11 +21,8 @@ namespace PhoenixAdult.Sites
 {
     public class SitePJGirls : IProviderBase
     {
-
-
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-
         // Simplified search logic, may need adjustments
         var result = new List<RemoteSearchResult>();
         var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
@@ -46,13 +43,12 @@ namespace PhoenixAdult.Sites
                 result.Add(item);
             }
         }
-        return result;
 
+        return result;
         }
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
-
         var result = new MetadataResult<BaseItem>()
         {
             Item = new Movie(),
@@ -80,12 +76,10 @@ namespace PhoenixAdult.Sites
 
         // Actor and Genre logic needs to be manually added for each site
         return result;
-
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-
         // Simplified image logic, may need adjustments
         var images = new List<RemoteImageInfo>();
         var providerIds = sceneID[0].Split('|');
@@ -108,9 +102,8 @@ namespace PhoenixAdult.Sites
                 }
             }
         }
+
         return images;
-
-
         }
     }
 }

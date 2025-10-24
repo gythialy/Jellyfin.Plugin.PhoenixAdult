@@ -73,6 +73,7 @@ namespace PhoenixAdult.Sites
                     result.Add(item);
                 }
             }
+
             return result;
         }
 
@@ -119,6 +120,7 @@ namespace PhoenixAdult.Sites
             {
                 tagline = Helper.GetSearchSiteName(siteNum);
             }
+
             movie.AddTag(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//h5[contains(., 'Published')]");
@@ -158,6 +160,7 @@ namespace PhoenixAdult.Sites
                             }
                         }
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }

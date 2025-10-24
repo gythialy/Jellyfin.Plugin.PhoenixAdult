@@ -49,6 +49,7 @@ namespace PhoenixAdult.Sites
                     result.Add(item);
                 }
             }
+
             return result;
         }
 
@@ -135,6 +136,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return images;
         }
     }

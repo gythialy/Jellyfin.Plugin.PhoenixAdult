@@ -57,6 +57,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -86,7 +87,7 @@ namespace PhoenixAdult.Sites
             var titleNode = detailsPageElements.SelectSingleNode("//*[@class='video-player']//h3[@class='section-title']") ??
                             detailsPageElements.SelectSingleNode("//*[@class='video-player']//h1[@class='section-title']") ??
                             detailsPageElements.SelectSingleNode("//*[@class='video-player']//h2[@class='section-title']");
-            if(titleNode != null)
+            if (titleNode != null)
             {
                 movie.Name = titleNode.InnerText.Trim();
             }
@@ -112,18 +113,18 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//ul[@class='tags']//li//a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'models-list-thumbs')]//li");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     string actorName = actor.SelectSingleNode(".//span")?.InnerText;
                     string actorPhotoUrl = actor.SelectSingleNode(".//img")?.GetAttributeValue("src0_3x", string.Empty);
@@ -165,9 +166,9 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//div[@class='player-thumb']//img");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     string imageUrl = img.GetAttributeValue("src0_1x", string.Empty);
                     if (!imageUrl.StartsWith("http"))

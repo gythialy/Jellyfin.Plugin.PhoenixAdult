@@ -62,6 +62,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -100,28 +101,29 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//strong[contains(., 'Categori')]//following-sibling::a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//strong[contains(., 'Actr')]//following-sibling::a");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     string actorName = actor.InnerText.Trim();
                     string modelUrl = actor.GetAttributeValue("href", string.Empty);
                     string actorPhotoUrl = string.Empty;
                     var actorHttp = await HTTP.Request(modelUrl, HttpMethod.Get, cancellationToken);
-                    if(actorHttp.IsOK)
+                    if (actorHttp.IsOK)
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
                         actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='zona-imagen']//img")?.GetAttributeValue("src", string.Empty).Trim();
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
@@ -135,13 +137,13 @@ namespace PhoenixAdult.Sites
             string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
 
             var actorNodes = (await HTML.ElementFromURL(sceneUrl, cancellationToken))?.SelectNodes("//strong[contains(., 'Actr')]//following-sibling::a");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     string modelUrl = actor.GetAttributeValue("href", string.Empty);
                     var actorHttp = await HTTP.Request(modelUrl, HttpMethod.Get, cancellationToken);
-                    if(actorHttp.IsOK)
+                    if (actorHttp.IsOK)
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
                         var sceneNode = actorPage.SelectNodes("//div[@class='zona-listado2']")?.FirstOrDefault(s => s.SelectSingleNode(".//@href")?.GetAttributeValue("href", string.Empty) == sceneUrl);

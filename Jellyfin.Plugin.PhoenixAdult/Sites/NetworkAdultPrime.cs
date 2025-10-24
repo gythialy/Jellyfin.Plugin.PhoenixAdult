@@ -107,9 +107,9 @@ namespace PhoenixAdult.Sites
                 {
                     var searchPageElements = HTML.ElementFromString(httpResult.Content);
                     var searchNodes = searchPageElements.SelectNodes("//ul[@id='studio-videos-container']/li");
-                    if(searchNodes != null)
+                    if (searchNodes != null)
                     {
-                        foreach(var node in searchNodes)
+                        foreach (var node in searchNodes)
                         {
                             string titleNoFormatting = node.SelectSingleNode(".//span[contains(@class, 'title')]")?.InnerText.Trim();
                             string galleryId = node.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty).Split('=').Last();
@@ -122,7 +122,7 @@ namespace PhoenixAdult.Sites
                             {
                                 releaseDate = parsedDate.ToString("yyyy-MM-dd");
                             }
-                            else if(searchDate.HasValue)
+                            else if (searchDate.HasValue)
                             {
                                 releaseDate = searchDate.Value.ToString("yyyy-MM-dd");
                             }
@@ -193,7 +193,7 @@ namespace PhoenixAdult.Sites
             var genreNodes = detailsPageElements.SelectSingleNode("//p[@class='update-info-line regular'][./b[contains(., 'Niches')]]")?.InnerText.Split(':').Last().Split(',');
             if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.Trim());
                 }
@@ -229,7 +229,7 @@ namespace PhoenixAdult.Sites
             if (posterNode != null)
             {
                 string imageUrl = posterNode.GetAttributeValue("poster", string.Empty);
-                if(!imageUrl.StartsWith("http"))
+                if (!imageUrl.StartsWith("http"))
                 {
                     imageUrl = imageUrl.Split('(').Last().Split(')').First();
                 }

@@ -40,6 +40,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return null;
         }
 
@@ -96,7 +97,7 @@ namespace PhoenixAdult.Sites
                             {
                                 releaseDate = parsedDate.ToString("yyyy-MM-dd");
                             }
-                            else if(DateTime.TryParse(detailsPageElements.SelectSingleNode("//meta")?.GetAttributeValue("content", string.Empty), out parsedDate))
+                            else if (DateTime.TryParse(detailsPageElements.SelectSingleNode("//meta")?.GetAttributeValue("content", string.Empty), out parsedDate))
                             {
                                 releaseDate = parsedDate.ToString("yyyy-MM-dd");
                             }
@@ -111,6 +112,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -133,10 +135,10 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements["updates"]["short_title"].ToString();
 
-            if(netUrl != null)
+            if (netUrl != null)
             {
                 var httpResult = await HTTP.Request(netUrl, HttpMethod.Get, cancellationToken);
-                if(httpResult.IsOK)
+                if (httpResult.IsOK)
                 {
                     movie.Overview = (HTML.ElementFromString(httpResult.Content)).SelectSingleNode("//div[@class='the-content']/p")?.InnerText.Trim();
                 }

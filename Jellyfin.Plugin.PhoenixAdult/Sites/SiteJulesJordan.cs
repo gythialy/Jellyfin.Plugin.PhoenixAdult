@@ -99,7 +99,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("Jules Jordan");
 
             var dvdName = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Movie:')]")?.ParentNode.InnerText.Replace("Movie:", string.Empty).Replace("Feature: ", string.Empty).Trim();
-            if(!string.IsNullOrEmpty(dvdName))
+            if (!string.IsNullOrEmpty(dvdName))
             {
                 movie.AddTag(dvdName);
             }
@@ -112,7 +112,7 @@ namespace PhoenixAdult.Sites
             else
             {
                 var dateNode = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Date:')]")?.ParentNode.InnerText.Replace("Date:", string.Empty).Trim();
-                if(DateTime.TryParse(dateNode, out parsedDate))
+                if (DateTime.TryParse(dateNode, out parsedDate))
                 {
                     movie.PremiereDate = parsedDate;
                     movie.ProductionYear = parsedDate.Year;
@@ -122,7 +122,7 @@ namespace PhoenixAdult.Sites
             var genreNodes = detailsPageElements.SelectNodes("//span[contains(text(), 'Categories')]/a");
             if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim().ToLower());
                 }
@@ -134,13 +134,13 @@ namespace PhoenixAdult.Sites
 
             if (actorNodes != null)
             {
-                foreach(var actorLink in actorNodes)
+                foreach (var actorLink in actorNodes)
                 {
                     string actorName = actorLink.InnerText.Trim();
                     string actorPageURL = actorLink.GetAttributeValue("href", string.Empty);
                     var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken);
                     string actorPhotoURL = actorPage?.SelectSingleNode("//img[@class='model_bio_thumb stdimage thumbs target']")?.GetAttributeValue("src0_3x", string.Empty);
-                    if(!string.IsNullOrEmpty(actorPhotoURL) && !actorPhotoURL.StartsWith("http"))
+                    if (!string.IsNullOrEmpty(actorPhotoURL) && !actorPhotoURL.StartsWith("http"))
                     {
                         actorPhotoURL = Helper.GetSearchBaseURL(siteNum) + actorPhotoURL;
                     }
@@ -168,15 +168,15 @@ namespace PhoenixAdult.Sites
             }
 
             var videoPoster = detailsPageElements.SelectSingleNode("//video[@id='video-player']")?.GetAttributeValue("poster", string.Empty);
-            if(!string.IsNullOrEmpty(videoPoster))
+            if (!string.IsNullOrEmpty(videoPoster))
             {
                 result.Add(new RemoteImageInfo { Url = videoPoster, Type = ImageType.Primary });
             }
 
             var searchPageElements = await HTML.ElementFromURL($"{Helper.GetSearchSearchURL(siteNum)}{Uri.EscapeDataString(item.Name)}", cancellationToken);
-            if(searchPageElements != null)
+            if (searchPageElements != null)
             {
-                for(int i = 0; i < 7; i++)
+                for (int i = 0; i < 7; i++)
                 {
                     var posterNode = searchPageElements.SelectSingleNode($"//img[contains(@id,'set-target')]/@src{i}_1x");
                     if (posterNode != null)

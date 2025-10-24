@@ -88,6 +88,7 @@ namespace PhoenixAdult.Sites
                     network_sep_scene_pages = "/scene/";
                     network_sep_dvd = "/dvd";
                 }
+
                 if (sNum == 19)
                 {
                     networkscene = false;
@@ -186,6 +187,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -206,6 +208,7 @@ namespace PhoenixAdult.Sites
                         return DateTime.Parse(updatedDateNode.InnerText.Trim()).ToString("yyyy-MM-dd");
                 }
             }
+
             return string.Empty;
         }
 
@@ -220,7 +223,7 @@ namespace PhoenixAdult.Sites
             int sNum = int.Parse(sceneID[0].Split('|')[1]);
             string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!sceneURL.StartsWith("http"))
-                sceneURL = Helper.GetSearchBaseURL(new [] {sNum}) + sceneURL;
+                sceneURL = Helper.GetSearchBaseURL(new [] { sNum }) + sceneURL;
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
             if (detailsPageElements == null) return result;
@@ -242,7 +245,7 @@ namespace PhoenixAdult.Sites
             // Studio and Collections
             string studio = GetStudio(sNum);
             movie.AddStudio(studio);
-            string tagline = detailsPageElements.SelectSingleNode("//div[@class='studioLink']")?.InnerText.Trim() ?? Helper.GetSearchSiteName(new [] {sNum});
+            string tagline = detailsPageElements.SelectSingleNode("//div[@class='studioLink']")?.InnerText.Trim() ?? Helper.GetSearchSiteName(new [] { sNum });
             movie.AddTag(tagline);
 
             var dvdTitleNode = detailsPageElements.SelectSingleNode("//a[contains(@class, 'dvdLink')][1]");
@@ -253,14 +256,14 @@ namespace PhoenixAdult.Sites
             var genreNodes = detailsPageElements.SelectNodes("//div[@class='sceneCol sceneColCategories']//a | //div[@class='sceneCategories']//a | //p[@class='dvdCol']/a");
             if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                     movie.AddGenre(genre.InnerText.Trim().ToLower());
             }
 
             // Release Date
             var dateNode = detailsPageElements.SelectSingleNode("//*[@class='updatedDate']")?.InnerText.Replace("|", "").Trim()
                 ?? detailsPageElements.SelectSingleNode("//*[@class='updatedOn']")?.InnerText.Trim().Substring(8).Trim();
-            if(!string.IsNullOrEmpty(dateNode) && DateTime.TryParse(dateNode, out var parsedDate))
+            if (!string.IsNullOrEmpty(dateNode) && DateTime.TryParse(dateNode, out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
@@ -274,7 +277,7 @@ namespace PhoenixAdult.Sites
                 {
                     string actorName = actorLink.InnerText.Trim();
                     string actorPageURL = actorLink.GetAttributeValue("href", "");
-                    var actorPage = await HTML.ElementFromURL(Helper.GetSearchBaseURL(new [] {sNum}) + actorPageURL, cancellationToken);
+                    var actorPage = await HTML.ElementFromURL(Helper.GetSearchBaseURL(new [] { sNum }) + actorPageURL, cancellationToken);
                     string actorPhotoURL = actorPage?.SelectSingleNode("//img[@class='actorPicture'] | //span[@class='removeAvatarParent']/img")?.GetAttributeValue("src", "");
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
                 }
@@ -282,9 +285,9 @@ namespace PhoenixAdult.Sites
 
             // Director
             var directorNodes = detailsPageElements.SelectNodes("//div[@class='sceneCol sceneColDirectors']//a | //ul[@class='directedBy']/li/a");
-            if(directorNodes != null)
+            if (directorNodes != null)
             {
-                foreach(var director in directorNodes)
+                foreach (var director in directorNodes)
                     result.People.Add(new PersonInfo { Name = director.InnerText.Trim(), Type = PersonKind.Director });
             }
 
@@ -297,7 +300,7 @@ namespace PhoenixAdult.Sites
             int sNum = int.Parse(sceneID[0].Split('|')[1]);
             string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
             if (!sceneURL.StartsWith("http"))
-                sceneURL = Helper.GetSearchBaseURL(new [] {sNum}) + sceneURL;
+                sceneURL = Helper.GetSearchBaseURL(new [] { sNum }) + sceneURL;
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
             if (detailsPageElements == null) return images;
@@ -319,9 +322,9 @@ namespace PhoenixAdult.Sites
                 if (!string.IsNullOrEmpty(dvdBackCover)) imageUrls.Add(dvdBackCover);
 
                 var sceneImgNodes = detailsPageElements.SelectNodes("//img[@class='tlcImageItem img'] | //img[@class='img lazy']");
-                if(sceneImgNodes != null)
+                if (sceneImgNodes != null)
                 {
-                    foreach(var img in sceneImgNodes)
+                    foreach (var img in sceneImgNodes)
                         imageUrls.Add(img.GetAttributeValue("src", "") ?? img.GetAttributeValue("data-original", ""));
                 }
             }
@@ -340,6 +343,7 @@ namespace PhoenixAdult.Sites
                 {
                     imageInfo.Type = ImageType.Backdrop;
                 }
+
                 images.Add(imageInfo);
             }
 

@@ -27,19 +27,19 @@ namespace PhoenixAdult.Sites
         private static readonly Dictionary<string, Dictionary<int, List<string>>> actor_db = new Dictionary<string, Dictionary<int, List<string>>>
         {
             { "FuckedHard18", new Dictionary<int, List<string>> {
-                {434, new List<string> {"Abby Lane"}}, {435, new List<string> {"Abby Cross"}}, {445, new List<string> {"Alexa Rydell"}},
-                {446, new List<string> {"Alexa Nicole"}}, {469, new List<string> {"Alexis Grace"}}, {470, new List<string> {"Ashley Abott"}},
-                {474, new List<string> {"Ashlyn Molloy"}}, {481, new List<string> {"Ava White"}}, {482, new List<string> {"Ava Sparxxx"}},
-                {483, new List<string> {"Ava Taylor"}}, {486, new List<string> {"Dahlia Sky"}}, {487, new List<string> {"Bailey Bam"}},
-                {501, new List<string> {"Callie Cobra"}}, {502, new List<string> {"Callie Cyprus"}}, {503, new List<string> {"Callie Calypso"}},
+                { 434, new List<string> { "Abby Lane" } }, { 435, new List<string> { "Abby Cross" } }, { 445, new List<string> { "Alexa Rydell" } },
+                { 446, new List<string> { "Alexa Nicole" } }, { 469, new List<string> { "Alexis Grace" } }, { 470, new List<string> { "Ashley Abott" } },
+                { 474, new List<string> { "Ashlyn Molloy" } }, { 481, new List<string> { "Ava White" } }, { 482, new List<string> { "Ava Sparxxx" } },
+                { 483, new List<string> { "Ava Taylor" } }, { 486, new List<string> { "Dahlia Sky" } }, { 487, new List<string> { "Bailey Bam" } },
+                { 501, new List<string> { "Callie Cobra" } }, { 502, new List<string> { "Callie Cyprus" } }, { 503, new List<string> { "Callie Calypso" } },
             }                        },
             { "MassageGirls18", new Dictionary<int, List<string>> {
-                {134, new List<string> {"Melissa Mathews"}}, {135, new List<string> {"Melissa Mathews"}}, {137, new List<string> {"Abby Paradise"}},
-                {138, new List<string> {"Abby Cross"}}, {139, new List<string> {"Abby Lane"}}, {147, new List<string> {"Alexa Nicole"}},
+                { 134, new List<string> { "Melissa Mathews" } }, { 135, new List<string> { "Melissa Mathews" } }, { 137, new List<string> { "Abby Paradise" } },
+                { 138, new List<string> { "Abby Cross" } }, { 139, new List<string> { "Abby Lane" } }, { 147, new List<string> { "Alexa Nicole" } },
             }                        },
             { "NewGirlPOV", new Dictionary<int, List<string>> {
-                {1159, new List<string> {"Ashley Adams"}}, {1178, new List<string> {"Lola Hunter"}}, {1206, new List<string> {"Molly Manson"}},
-                {1242, new List<string> {"Naomi Woods"}}, {1280, new List<string> {"Melissa Moore"}},
+                { 1159, new List<string> { "Ashley Adams" } }, { 1178, new List<string> { "Lola Hunter" } }, { 1206, new List<string> { "Molly Manson" } },
+                { 1242, new List<string> { "Naomi Woods" } }, { 1280, new List<string> { "Melissa Moore" } },
             }                        },
         };
 
@@ -77,6 +77,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -123,13 +124,14 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//td[@class='plaintext']/a[@class='model_category_link']");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
+
             if (siteName != "NewGirlPOV")
             {
                 movie.AddGenre("18-Year-Old");
@@ -193,7 +195,7 @@ namespace PhoenixAdult.Sites
             var imageNodes = detailsPageElements.SelectNodes("//a[@class='jqModal']/img | //div[@id='overallthumb']/a/img");
             if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     string imageUrl = img.GetAttributeValue("src", string.Empty);
                     if (imageUrl.StartsWith("/"))
@@ -211,13 +213,13 @@ namespace PhoenixAdult.Sites
 
             string photoPageUrl = sceneUrl.Replace("vids", "highres");
             var photoHttp = await HTTP.Request(photoPageUrl, HttpMethod.Get, cancellationToken);
-            if(photoHttp.IsOK)
+            if (photoHttp.IsOK)
             {
                 var photoPage = HTML.ElementFromString(photoHttp.Content);
                 var photoNodes = photoPage.SelectNodes("//a[@class='jqModal']/img");
-                if(photoNodes != null)
+                if (photoNodes != null)
                 {
-                    foreach(var img in photoNodes)
+                    foreach (var img in photoNodes)
                     {
                         images.Add(new RemoteImageInfo { Url = Helper.GetSearchBaseURL(siteNum) + img.GetAttributeValue("src", string.Empty) });
                     }

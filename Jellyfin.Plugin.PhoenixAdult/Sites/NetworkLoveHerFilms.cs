@@ -57,6 +57,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -98,13 +99,14 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//div[@class='video-tags']/a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
+
             movie.AddGenre("Foot Sex");
 
             var actorNodes = detailsPageElements.SelectNodes("//div[@class='featured']/a");
@@ -133,7 +135,7 @@ namespace PhoenixAdult.Sites
                     try
                     {
                         var actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken);
-                        if(actorHttp.IsOK)
+                        if (actorHttp.IsOK)
                         {
                             var actorPage = HTML.ElementFromString(actorHttp.Content);
                             actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='picture']/img")?.GetAttributeValue("src0_3x", string.Empty);
@@ -142,7 +144,7 @@ namespace PhoenixAdult.Sites
                                 actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actorPhotoUrl;
                             }
                         }
-                    } catch {}
+                    } catch { }
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
@@ -168,9 +170,9 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//meta[@property='og:image'] | //div[@class='photos']/a/img");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("content", string.Empty) ?? img.GetAttributeValue("src", string.Empty) });
                 }

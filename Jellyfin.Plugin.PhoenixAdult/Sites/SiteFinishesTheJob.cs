@@ -62,6 +62,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -105,18 +106,18 @@ namespace PhoenixAdult.Sites
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//h2[contains(., 'Starring')]//a");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//p[contains(., 'Categories')]//a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -149,11 +150,11 @@ namespace PhoenixAdult.Sites
             }
 
             var imageNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'first-set')]//img");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
-                    if(img.GetAttributeValue("alt", string.Empty).Equals(item.Name, StringComparison.OrdinalIgnoreCase))
+                    if (img.GetAttributeValue("alt", string.Empty).Equals(item.Name, StringComparison.OrdinalIgnoreCase))
                     {
                         images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("src", string.Empty) });
                     }

@@ -50,6 +50,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -90,6 +91,7 @@ namespace PhoenixAdult.Sites
             {
                     tagline = studioNode.InnerText.Trim();
             }
+
             movie.AddTag(tagline);
             movie.AddStudio(tagline);
 
@@ -108,9 +110,9 @@ namespace PhoenixAdult.Sites
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'casting')]//div[contains(@class, 'slider-xl')]//div[@class='col-xs-2']");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     string actorName = actor.SelectSingleNode(".//a/strong")?.InnerText.Trim();
                     string actorPhotoUrl = actor.SelectSingleNode(".//img")?.GetAttributeValue("data-src", string.Empty);
@@ -144,9 +146,9 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'covers')]/a[contains(@class, 'cover')] | //div[contains(@class, 'screenshots')]//div[contains(@class, 'slider-xl')]/div[@class='slides']/div[@class='col-xs-2']/a");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     string imageUrl = (img.GetAttributeValue("href", string.Empty)).Replace("blur9/", "/");
                     if (!imageUrl.StartsWith("http"))

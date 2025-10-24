@@ -168,7 +168,7 @@ namespace PhoenixAdult.Sites
             var actorLinks = detailsPageElements.SelectNodes("//a[@class='avatar-box']");
             if (actorLinks != null)
             {
-                foreach(var actorLink in actorLinks)
+                foreach (var actorLink in actorLinks)
                 {
                     string actorName = actorLink.SelectSingleNode("./div/img")?.GetAttributeValue("title", string.Empty);
                     string actorPhotoURL = actorLink.SelectSingleNode("./div[@class='photo-frame']/img")?.GetAttributeValue("src", string.Empty);
@@ -213,7 +213,7 @@ namespace PhoenixAdult.Sites
             var posterNodes = detailsPageElements.SelectNodes("//a[contains(@href, '/cover/') or @class='sample-box']");
             if (posterNodes != null)
             {
-                foreach(var poster in posterNodes)
+                foreach (var poster in posterNodes)
                 {
                     string posterUrl = poster.GetAttributeValue("href", string.Empty);
                     if (!posterUrl.StartsWith("http"))
@@ -232,7 +232,7 @@ namespace PhoenixAdult.Sites
                 string coverImageCode = coverImageUrl.Split('/').Last().Split('.').First().Split('_').First();
                 string imageHost = string.Join("/", coverImageUrl.Split('/').Take(coverImageUrl.Split('/').Length - 2));
                 string thumbUrl = $"{imageHost}/thumb/{coverImageCode}.jpg";
-                if(thumbUrl.Contains("/images."))
+                if (thumbUrl.Contains("/images."))
                 {
                     thumbUrl = thumbUrl.Replace("thumb", "thumbs");
                 }

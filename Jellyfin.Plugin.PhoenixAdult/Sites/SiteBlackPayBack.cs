@@ -54,6 +54,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -83,9 +84,9 @@ namespace PhoenixAdult.Sites
             movie.AddStudio(tagline);
 
             var genreNodes = detailsPageElements.SelectNodes("//div[@class='featuring clear']//li/a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -113,9 +114,9 @@ namespace PhoenixAdult.Sites
                         }
 
                         var actorNodes = iafdSceneElements.SelectNodes("//div[@class='castbox']");
-                        if(actorNodes != null)
+                        if (actorNodes != null)
                         {
-                            foreach(var actor in actorNodes)
+                            foreach (var actor in actorNodes)
                             {
                                 string actorName = actor.InnerText.Trim();
                                 string actorPhotoUrl = actor.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty);
@@ -140,7 +141,7 @@ namespace PhoenixAdult.Sites
             }
 
             var scriptNode = (HTML.ElementFromString(httpResult.Content)).SelectSingleNode("//div[@class='player']/script");
-            if(scriptNode != null)
+            if (scriptNode != null)
             {
                 var match = Regex.Match(scriptNode.InnerText, "(?<=poster=\").*?(?=\")");
                 if (match.Success)

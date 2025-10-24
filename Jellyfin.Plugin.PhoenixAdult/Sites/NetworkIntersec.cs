@@ -57,6 +57,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -125,6 +126,7 @@ namespace PhoenixAdult.Sites
                     tagline = "Hotel Hostages";
                 }
             }
+
             movie.AddTag(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'has-text-white-ter')][1]//span[contains(@class, 'is-dark')][1]");
@@ -179,15 +181,15 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//video-js");
-            if(posterNode != null)
+            if (posterNode != null)
             {
                 images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("poster", string.Empty) });
             }
 
             var imageNodes = detailsPageElements.SelectNodes("//figure/img");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("src", string.Empty) });
                 }

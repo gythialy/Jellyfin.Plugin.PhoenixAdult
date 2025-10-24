@@ -26,34 +26,34 @@ namespace PhoenixAdult.Sites
     {
         private static readonly Dictionary<string, List<string>> genresDB = new Dictionary<string, List<string>>
         {
-            {"Trick Your GF", new List<string> {"Girlfriend", "Revenge"}},
-            {"Make Him Cuckold", new List<string> {"Cuckold"}},
-            {"She Is Nerdy", new List<string> {"Glasses", "Nerd"}},
-            {"Tricky Agent", new List<string> {"Agent", "Casting"}},
+            { "Trick Your GF", new List<string> { "Girlfriend", "Revenge" } },
+            { "Make Him Cuckold", new List<string> { "Cuckold" } },
+            { "She Is Nerdy", new List<string> { "Glasses", "Nerd" } },
+            { "Tricky Agent", new List<string> { "Agent", "Casting" } },
         };
 
         private static readonly Dictionary<string[], string[]> xPathDB = new Dictionary<string[], string[]>
         {
-            {new[] {"Trick Your GF", "Make Him Cuckold"}, new[] {".//a[contains(@class, 'link')]", ".//div[@class='description']"}},
-            {new[] {"She Is Nerdy"}, new[] {".//a[contains(@class, 'title')]", ".//div[@class='description']"}},
-            {new[] {"Tricky Agent"}, new[] {".//h3", ".//div[@class='text']"}},
+            { new[] { "Trick Your GF", "Make Him Cuckold" }, new[] { ".//a[contains(@class, 'link')]", ".//div[@class='description']" } },
+            { new[] { "She Is Nerdy" }, new[] { ".//a[contains(@class, 'title')]", ".//div[@class='description']" } },
+            { new[] { "Tricky Agent" }, new[] { ".//h3", ".//div[@class='text']" } },
         };
 
         private static readonly Dictionary<string, Tuple<int, int>> siteDB = new Dictionary<string, Tuple<int, int>>
         {
-            {"Trick Your GF", new Tuple<int, int>(7, 4)},
-            {"Make Him Cuckold", new Tuple<int, int>(9, 5)},
-            {"She Is Nerdy", new Tuple<int, int>(10, 12)},
-            {"Tricky Agent", new Tuple<int, int>(11, 4)},
+            { "Trick Your GF", new Tuple<int, int>(7, 4) },
+            { "Make Him Cuckold", new Tuple<int, int>(9, 5) },
+            { "She Is Nerdy", new Tuple<int, int>(10, 12) },
+            { "Tricky Agent", new Tuple<int, int>(11, 4) },
         };
 
         private static readonly Dictionary<string, List<string>> sceneActorsDB = new Dictionary<string, List<string>>
         {
-            {"snc162", new List<string> {"Adele Hotness"}},
-            {"darygf050", new List<string> {"Adina"}},
-            {"wrygf726", new List<string> {"Aggie"}},
-            {"wtag728", new List<string> {"Aggie"}},
-            {"pfc070", new List<string> {"Aimee Ryan"}},
+            { "snc162", new List<string> { "Adele Hotness" } },
+            { "darygf050", new List<string> { "Adina" } },
+            { "wrygf726", new List<string> { "Aggie" } },
+            { "wtag728", new List<string> { "Aggie" } },
+            { "pfc070", new List<string> { "Aimee Ryan" } },
         };
 
         public Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
@@ -111,7 +111,7 @@ namespace PhoenixAdult.Sites
 
             if (genresDB.ContainsKey(tagline))
             {
-                foreach(var genre in genresDB[tagline])
+                foreach (var genre in genresDB[tagline])
                 {
                     movie.AddGenre(genre);
                 }

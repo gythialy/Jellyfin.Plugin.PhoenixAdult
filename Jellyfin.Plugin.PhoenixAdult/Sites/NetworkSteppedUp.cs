@@ -26,12 +26,13 @@ namespace PhoenixAdult.Sites
         private async Task<string> GetBuildId(string url, CancellationToken cancellationToken)
         {
             var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
-            if(httpResult.IsOK)
+            if (httpResult.IsOK)
             {
                 var modelPageElements = HTML.ElementFromString(httpResult.Content);
                 var data = JObject.Parse(modelPageElements.SelectSingleNode("//script[@type='application/json']")?.InnerText);
                 return data["buildId"].ToString();
             }
+
             return null;
         }
 
@@ -75,6 +76,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -157,22 +159,22 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = JObject.Parse(httpResult.Content)["pageProps"]["content"];
 
-            if(detailsPageElements["trailer_screencap"] != null)
+            if (detailsPageElements["trailer_screencap"] != null)
             {
                 images.Add(new RemoteImageInfo { Url = detailsPageElements["trailer_screencap"].ToString() });
             }
 
             if (detailsPageElements["extra_thumbnails"] != null)
             {
-                foreach(var image in detailsPageElements["extra_thumbnails"])
+                foreach (var image in detailsPageElements["extra_thumbnails"])
                 {
                     images.Add(new RemoteImageInfo { Url = image.ToString() });
                 }
             }
 
-            if(detailsPageElements["thumbs"] != null)
+            if (detailsPageElements["thumbs"] != null)
             {
-                foreach(var image in detailsPageElements["thumbs"])
+                foreach (var image in detailsPageElements["thumbs"])
                 {
                     images.Add(new RemoteImageInfo { Url = image.ToString() });
                 }

@@ -26,7 +26,7 @@ namespace PhoenixAdult.Sites
     {
         private static readonly Dictionary<string, string> galleryFix = new Dictionary<string, string>
         {
-            {"The_Perfect_Threesome", "The_Perfect_Threesome_or_Pussy_Galore"},
+            { "The_Perfect_Threesome", "The_Perfect_Threesome_or_Pussy_Galore" },
         };
         private readonly Dictionary<string, string> _cookies = new Dictionary<string, string> { { "_warning", "True" } };
 
@@ -67,6 +67,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -111,7 +112,7 @@ namespace PhoenixAdult.Sites
             else
             {
                 var dateNode = detailsPageElements.SelectSingleNode("//h2");
-                if(dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out parsedDate))
+                if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out parsedDate))
                 {
                     movie.PremiereDate = parsedDate;
                     movie.ProductionYear = parsedDate.Year;
@@ -142,15 +143,16 @@ namespace PhoenixAdult.Sites
                     string actorPageUrl = actor.GetAttributeValue("href", string.Empty);
                     string actorPhotoUrl = string.Empty;
                     var actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken, null, _cookies);
-                    if(actorHttp.IsOK)
+                    if (actorHttp.IsOK)
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
                         var interchange = actorPage.SelectSingleNode("//img[@class='info-img']")?.GetAttributeValue("data-interchange", string.Empty);
-                        if(interchange != null)
+                        if (interchange != null)
                         {
                             actorPhotoUrl = interchange.Replace("[", string.Empty).Replace("]", string.Empty).Replace(", (small)", string.Empty).Replace(", (medium)", string.Empty).Replace(", (large)", string.Empty).Split(',').Last().Trim();
                         }
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
@@ -176,21 +178,21 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'gallery-item')]/a/img | //div[contains(@class, 'video-tour')]//a/img");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("src", string.Empty) });
                 }
             }
 
             var interchangeNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'widescreen')]//img | //div[contains(@class, 'columns')]/img");
-            if(interchangeNodes != null)
+            if (interchangeNodes != null)
             {
-                foreach(var img in interchangeNodes)
+                foreach (var img in interchangeNodes)
                 {
                     var interchange = img.GetAttributeValue("data-interchange", string.Empty);
-                    if(interchange != null)
+                    if (interchange != null)
                     {
                         images.Add(new RemoteImageInfo { Url = interchange.Replace("[", string.Empty).Replace("]", string.Empty).Replace(", (small)", string.Empty).Replace(", (medium)", string.Empty).Replace(", (large)", string.Empty).Split(',').Last().Trim() });
                     }

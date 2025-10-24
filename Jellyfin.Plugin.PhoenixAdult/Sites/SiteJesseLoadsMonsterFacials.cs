@@ -26,8 +26,8 @@ namespace PhoenixAdult.Sites
     {
         private static readonly Dictionary<string, List<string>> actorsDB = new Dictionary<string, List<string>>
         {
-            {"Aaliyah Love", new List<string> {"We Aaliyahlove"}}, {"Addison O'Riley", new List<string> {"This Addisonoriley"}},
-            {"Alana Foxx", new List<string> {"Yes. Alanafoxx"}}, {"Alexandria Devine", new List<string> {"If Alexandriadevine"}},
+            { "Aaliyah Love", new List<string> { "We Aaliyahlove" } }, { "Addison O'Riley", new List<string> { "This Addisonoriley" } },
+            { "Alana Foxx", new List<string> { "Yes. Alanafoxx" } }, { "Alexandria Devine", new List<string> { "If Alexandriadevine" } },
         };
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
@@ -58,7 +58,7 @@ namespace PhoenixAdult.Sites
 
                         string releaseDate = string.Empty;
                         var dateNode = sceneResult.SelectSingleNode(".//preceding::b[contains(., 'Update')]");
-                        if(dateNode != null && DateTime.TryParse(dateNode.InnerText.Split(':').Last().Trim(), out var parsedDate))
+                        if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Split(':').Last().Trim(), out var parsedDate))
                         {
                             releaseDate = parsedDate.ToString("yyyy-MM-dd");
                         }
@@ -76,6 +76,7 @@ namespace PhoenixAdult.Sites
                 tourPageUrl = $"{Helper.GetSearchSearchURL(siteNum)}/tour_{idx:D2}.html";
                 httpResult = await HTTP.Request(tourPageUrl, HttpMethod.Get, cancellationToken);
             }
+
             return result;
         }
 

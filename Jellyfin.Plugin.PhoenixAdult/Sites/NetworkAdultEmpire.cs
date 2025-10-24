@@ -199,12 +199,12 @@ namespace PhoenixAdult.Sites
             }
 
             var actorsWithoutHeadshots = detailsPageElements.SelectNodes("//div[contains(@class, 'video-performer-container')][2]/a");
-            if(actorsWithoutHeadshots != null)
+            if (actorsWithoutHeadshots != null)
             {
-                foreach(var actor in actorsWithoutHeadshots)
+                foreach (var actor in actorsWithoutHeadshots)
                 {
                      string actorName = actor.InnerText.Trim();
-                     if(!result.People.Any(p => p.Name.Equals(actorName, StringComparison.OrdinalIgnoreCase)))
+                     if (!result.People.Any(p => p.Name.Equals(actorName, StringComparison.OrdinalIgnoreCase)))
                     {
                         result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                     }
@@ -215,7 +215,7 @@ namespace PhoenixAdult.Sites
             if (directorNode != null)
             {
                 string directorName = directorNode.InnerText.Trim();
-                if(!result.People.Any(p => p.Name.Equals(directorName, StringComparison.OrdinalIgnoreCase)))
+                if (!result.People.Any(p => p.Name.Equals(directorName, StringComparison.OrdinalIgnoreCase)))
                 {
                     result.People.Add(new PersonInfo { Name = directorName, Type = PersonKind.Director });
                 }
@@ -247,7 +247,7 @@ namespace PhoenixAdult.Sites
             }
 
             bool first = true;
-            foreach(var poster in posters)
+            foreach (var poster in posters)
             {
                 string imageUrl = poster.GetAttributeValue("src", string.Empty).Replace("/320/", "/1280/");
                 var imageInfo = new RemoteImageInfo { Url = imageUrl };
@@ -260,6 +260,7 @@ namespace PhoenixAdult.Sites
                 {
                     imageInfo.Type = ImageType.Backdrop;
                 }
+
                 images.Add(imageInfo);
             }
 

@@ -84,7 +84,7 @@ namespace PhoenixAdult.Sites
             if (!searchResults.Any())
             {
                 var googleResults = await GoogleSearch.GetSearchResults($"{splitSearchTitle[0]} {splitSearchTitle[1]}", siteNum, cancellationToken);
-                foreach(var sceneURL in googleResults)
+                foreach (var sceneURL in googleResults)
                 {
                     if (sceneURL.Contains("?v=jav") && !sceneURL.Contains("videoreviews"))
                     {
@@ -135,13 +135,13 @@ namespace PhoenixAdult.Sites
             string title = ogTitle?.Split(new[] { ' ' }, 2).Last().Replace(" - JAVLibrary", string.Empty).Replace(javID, string.Empty).Trim();
 
             movie.Name = $"[{javID.ToUpper()}] {title}";
-            if(title.Length > 80)
+            if (title.Length > 80)
             {
                 movie.Overview = title;
             }
 
             var studio = detailsPageElements.SelectSingleNode("//td[contains(text(), 'Maker:')]/following-sibling::td/span/a")?.InnerText.Trim();
-            if(!string.IsNullOrEmpty(studio))
+            if (!string.IsNullOrEmpty(studio))
             {
                 movie.AddStudio(studio);
             }
@@ -161,7 +161,7 @@ namespace PhoenixAdult.Sites
             }
 
             var director = detailsPageElements.SelectSingleNode("//td[contains(text(), 'Director:')]/following-sibling::td/span/a")?.InnerText.Trim();
-            if(!string.IsNullOrEmpty(director))
+            if (!string.IsNullOrEmpty(director))
             {
                 result.People.Add(new PersonInfo { Name = director, Type = PersonKind.Director });
             }
@@ -173,7 +173,7 @@ namespace PhoenixAdult.Sites
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            foreach(var actor in ActorsDB)
+            foreach (var actor in ActorsDB)
             {
                 if (actor.Value.Contains(javID, StringComparer.OrdinalIgnoreCase))
                 {
@@ -184,7 +184,7 @@ namespace PhoenixAdult.Sites
             var actorNodes = detailsPageElements.SelectNodes("//span[@class='star']/a");
             if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     string actorName = actor.InnerText.Trim();
                     if (Plugin.Instance.Configuration.JAVActorNamingStyle == JAVActorNamingStyle.WesternStyle)
@@ -199,7 +199,7 @@ namespace PhoenixAdult.Sites
             var genreNodes = detailsPageElements.SelectNodes("//a[@rel='category tag']");
             if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -233,7 +233,7 @@ namespace PhoenixAdult.Sites
             if (imageNodes != null)
             {
                 var urlRegEx = new Regex(@"-([1-9]+)\.jpg");
-                foreach(var image in imageNodes)
+                foreach (var image in imageNodes)
                 {
                     string thumbnailURL = image.GetAttributeValue("src", string.Empty);
                     var idxSearch = urlRegEx.Match(thumbnailURL);

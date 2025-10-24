@@ -107,11 +107,12 @@ namespace PhoenixAdult.Sites
             if (string.IsNullOrEmpty(description))
             {
                 var paragraphs = sceneData.SelectNodes("//div[@class='col-12 content-pane-column']//p");
-                if(paragraphs != null)
+                if (paragraphs != null)
                 {
                     description = string.Join("\n\n", paragraphs.Select(p => p.InnerText.Trim()));
                 }
             }
+
             movie.Overview = description?.Trim();
 
             movie.AddStudio("Nubiles");
@@ -125,7 +126,7 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNode = sceneData.SelectNodes("//div[@class='categories']/a");
-            if(genreNode != null)
+            if (genreNode != null)
             {
                 foreach (var genreLink in genreNode)
                 {
@@ -147,10 +148,10 @@ namespace PhoenixAdult.Sites
             }
 
             // Add male actors from summary
-            if(!string.IsNullOrEmpty(movie.Overview))
+            if (!string.IsNullOrEmpty(movie.Overview))
             {
                 var maleActors = new[] { "Logan Long", "Patrick Delphia", "Seth Gamble", "Alex D.", "Lucas Frost", "Van Wylde", "Tyler Nixon", "Logan Pierce", "Johnny Castle", "Damon Dice", "Scott Carousel", "Dylan Snow", "Michael Vegas", "Xander Corvus", "Chad White" };
-                foreach(var actor in maleActors)
+                foreach (var actor in maleActors)
                 {
                     if (movie.Overview.Contains(actor, StringComparison.OrdinalIgnoreCase))
                     {

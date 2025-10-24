@@ -59,6 +59,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -96,7 +97,7 @@ namespace PhoenixAdult.Sites
             var genreNodes = detailsPageElements.SelectSingleNode("//meta[@name='keywords']")?.GetAttributeValue("content", string.Empty).Replace(".", string.Empty).Split(',');
             if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.Trim());
                 }
@@ -138,7 +139,7 @@ namespace PhoenixAdult.Sites
             var imageNodes = detailsPageElements.SelectNodes("//img[contains(@class, 'tour-area-thumb')]");
             if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     images.Add(new RemoteImageInfo { Url = Helper.GetSearchBaseURL(siteNum) + img.GetAttributeValue("data-src", string.Empty) });
                 }

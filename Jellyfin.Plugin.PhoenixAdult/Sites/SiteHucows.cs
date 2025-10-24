@@ -51,7 +51,7 @@ namespace PhoenixAdult.Sites
 
                     string sceneId = "N/A";
                     var imgNode = node.SelectSingleNode(".//img");
-                    if(imgNode != null)
+                    if (imgNode != null)
                     {
                         sceneId = imgNode.GetAttributeValue("src", string.Empty).Split('/').Last().Split('.').First();
                     }
@@ -64,6 +64,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -101,30 +102,30 @@ namespace PhoenixAdult.Sites
             }
 
             var summaryNode = detailsPageElements.SelectSingleNode("//article/div[@class='entry-content']/p");
-            if(summaryNode != null)
+            if (summaryNode != null)
             {
                 movie.Overview = summaryNode.InnerText.Trim();
             }
 
             var genres = new[] { "HuCows", "Breasts", "Nipples", "Nipple Torture", "Breast Torture", "Fetish", "BDSM" };
-            foreach(var genre in genres)
+            foreach (var genre in genres)
             {
                 movie.AddGenre(genre);
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//div/span/a[@rel='category tag']");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//a[@rel='tag']");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
@@ -151,9 +152,9 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNodes = detailsPageElements.SelectNodes("//div/article/div/a[@class='lightboxhover']/img | //div/center/a/img[@class='lightboxhover']");
-            if(imageNodes != null)
+            if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     images.Add(new RemoteImageInfo { Url = img.GetAttributeValue("src", string.Empty) });
                 }

@@ -33,14 +33,14 @@ namespace PhoenixAdult.Sites
 
             var searchResults = new HashSet<string>();
             var modelResults = await HTML.ElementFromURL($"{Helper.GetSearchSearchURL(siteNum)}{Uri.EscapeDataString(searchTitle)}", cancellationToken);
-            if(modelResults != null && int.Parse(modelResults.SelectSingleNode("//span[@id='browse-total-count']")?.InnerText.Trim() ?? "0") != 0)
+            if (modelResults != null && int.Parse(modelResults.SelectSingleNode("//span[@id='browse-total-count']")?.InnerText.Trim() ?? "0") != 0)
             {
                 foreach (var modelURL in modelResults.SelectNodes("//div[@id='browse-grid']/main/article//a[@class]/@href"))
                 {
                     var modelPageResults = await HTML.ElementFromURL(modelURL.GetAttributeValue("href", string.Empty), cancellationToken);
-                    if(modelPageResults != null)
+                    if (modelPageResults != null)
                     {
-                        foreach(var sceneURL in modelPageResults.SelectNodes("//div[@id='subject-shoots']//h2//@href"))
+                        foreach (var sceneURL in modelPageResults.SelectNodes("//div[@id='subject-shoots']//h2//@href"))
                         {
                             var url = sceneURL.GetAttributeValue("href", string.Empty);
                             if (!url.Contains("/nude_girl/") && !url.Contains("/shoots/") && !url.Contains("/fetish/") && !url.Contains("/updates/"))
@@ -142,9 +142,9 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//aside/div[contains(@class, 'description')]//a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -153,7 +153,7 @@ namespace PhoenixAdult.Sites
             var actorNodes = detailsPageElements.SelectNodes("//tr[contains(., 'Scene')]//a");
             if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     string actorName = actor.InnerText.Trim();
                     string modelURL = actor.GetAttributeValue("href", string.Empty);
@@ -178,12 +178,12 @@ namespace PhoenixAdult.Sites
             }
 
             var xpaths = new[] { "//div[contains(@class, 'tile-image')]/img/@src", "//div[contains(@class, 'video')]/@data-poster" };
-            foreach(var xpath in xpaths)
+            foreach (var xpath in xpaths)
             {
                 var imageNodes = detailsPageElements.SelectNodes(xpath);
                 if (imageNodes != null)
                 {
-                    foreach(var image in imageNodes)
+                    foreach (var image in imageNodes)
                     {
                         result.Add(new RemoteImageInfo { Url = image.GetAttributeValue(xpath.Split('@').Last(), string.Empty) });
                     }
@@ -193,7 +193,7 @@ namespace PhoenixAdult.Sites
             if (result.Any())
             {
                 result.First().Type = ImageType.Primary;
-                foreach(var image in result.Skip(1))
+                foreach (var image in result.Skip(1))
                 {
                     image.Type = ImageType.Backdrop;
                 }

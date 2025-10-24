@@ -184,7 +184,7 @@ namespace PhoenixAdult.Sites
                         }
 
                         var actorPageElements = await HTML.ElementFromURL(actorURL, cancellationToken);
-                        if(actorPageElements != null)
+                        if (actorPageElements != null)
                         {
                             string sceneLinkXPath, sceneTitleXPath, sceneDateXPath, subSiteXPath, dateFormat;
                             if (sceneURL.Contains("pornplus") || sceneURL.Contains("wetvr"))
@@ -205,27 +205,28 @@ namespace PhoenixAdult.Sites
                             }
 
                             var sceneLinks = actorPageElements.SelectNodes(sceneLinkXPath);
-                            if(sceneLinks != null)
+                            if (sceneLinks != null)
                             {
-                                foreach(var sceneLink in sceneLinks)
+                                foreach (var sceneLink in sceneLinks)
                                 {
                                     string sceneTitle = Regex.Replace(sceneLink.SelectSingleNode(sceneTitleXPath)?.InnerText.Trim().Replace(" ", string.Empty) ?? string.Empty, @"\W", string.Empty).ToLower();
-                                    if(Regex.Replace(movie.Name.Replace(" ", string.Empty), @"\W", string.Empty).ToLower() == sceneTitle)
+                                    if (Regex.Replace(movie.Name.Replace(" ", string.Empty), @"\W", string.Empty).ToLower() == sceneTitle)
                                     {
-                                        if(!string.IsNullOrEmpty(subSiteXPath))
+                                        if (!string.IsNullOrEmpty(subSiteXPath))
                                         {
                                             actorSubSite = sceneLink.SelectSingleNode(subSiteXPath)?.GetAttributeValue("alt", string.Empty).Trim();
                                         }
 
                                         actorDate = sceneLink.SelectSingleNode(sceneDateXPath)?.GetAttributeValue(sceneDateXPath.Split('@').Last(), string.Empty).Trim();
-                                        if(!string.IsNullOrEmpty(actorDate))
+                                        if (!string.IsNullOrEmpty(actorDate))
                                         {
-                                            if(DateTime.TryParseExact(actorDate, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                                            if (DateTime.TryParseExact(actorDate, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                                             {
                                                 movie.PremiereDate = parsedDate;
                                                 movie.ProductionYear = parsedDate.Year;
                                             }
                                         }
+
                                         break;
                                     }
                                 }
@@ -240,7 +241,7 @@ namespace PhoenixAdult.Sites
 
             if (ActorsDB.ContainsKey(movie.Name))
             {
-                foreach(var actor in ActorsDB[movie.Name])
+                foreach (var actor in ActorsDB[movie.Name])
                 {
                     result.People.Add(new PersonInfo { Name = actor, Type = PersonKind.Actor });
                 }
@@ -252,9 +253,9 @@ namespace PhoenixAdult.Sites
                  movie.ProductionYear = parsedSceneDate.Year;
             }
 
-            if(GenresDB.ContainsKey(siteName))
+            if (GenresDB.ContainsKey(siteName))
             {
-                foreach(var genre in GenresDB[siteName])
+                foreach (var genre in GenresDB[siteName])
                 {
                     movie.AddGenre(genre);
                 }
@@ -279,12 +280,12 @@ namespace PhoenixAdult.Sites
             }
 
             var xpaths = new[] { "//dl8-video/@poster", "//div/video/@poster", "(//img[contains(@src, 'handtouched')])[position() < 5]/@src" };
-            foreach(var xpath in xpaths)
+            foreach (var xpath in xpaths)
             {
                 var posterNodes = detailsPageElements.SelectNodes(xpath);
                 if (posterNodes != null)
                 {
-                    foreach(var poster in posterNodes)
+                    foreach (var poster in posterNodes)
                     {
                         string posterUrl = poster.GetAttributeValue(xpath.Split('@').Last(), string.Empty);
                         if (!posterUrl.StartsWith("http"))
@@ -298,10 +299,10 @@ namespace PhoenixAdult.Sites
             }
 
             // Set image types
-            if(result.Any())
+            if (result.Any())
             {
                 result.First().Type = ImageType.Primary;
-                foreach(var image in result.Skip(1))
+                foreach (var image in result.Skip(1))
                 {
                     image.Type = ImageType.Backdrop;
                 }

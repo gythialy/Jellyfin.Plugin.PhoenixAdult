@@ -54,6 +54,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -94,7 +95,7 @@ namespace PhoenixAdult.Sites
             var genreNodes = detailsPageElements.SelectNodes("//p[@class='tags']/a");
             if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -130,17 +131,17 @@ namespace PhoenixAdult.Sites
             var imageNodes = detailsPageElements.SelectNodes("//div[@class='stills clearfix']//img");
             if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     images.Add(new RemoteImageInfo { Url = Helper.GetSearchSearchURL(siteNum) + img.GetAttributeValue("src", string.Empty) });
                 }
             }
 
             var scriptNode = detailsPageElements.SelectSingleNode("//div[@class='mainpic']//script");
-            if(scriptNode != null)
+            if (scriptNode != null)
             {
                 var match = Regex.Match(scriptNode.InnerText, "'([^']*)'");
-                if(match.Success)
+                if (match.Success)
                 {
                     images.Add(new RemoteImageInfo { Url = Helper.GetSearchSearchURL(siteNum) + match.Groups[1].Value });
                 }

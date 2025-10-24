@@ -49,6 +49,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -123,9 +124,9 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//ul[@class='tags']/li/a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -176,7 +177,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var imageNode = detailsPageElements.SelectSingleNode("//div[@class='box-video box-video-html5']/video");
-            if(imageNode != null)
+            if (imageNode != null)
             {
                 images.Add(new RemoteImageInfo { Url = imageNode.GetAttributeValue("lazy", string.Empty), Type = ImageType.Primary });
             }

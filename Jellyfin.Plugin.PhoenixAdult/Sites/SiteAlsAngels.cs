@@ -66,6 +66,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -142,7 +143,7 @@ namespace PhoenixAdult.Sites
             var imageNodes = parentElement.SelectNodes(".//td[@class='videothumbnail']//img | .//td[@class='videothumbnail']//a");
             if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     string imageUrl = (img.GetAttributeValue("src", string.Empty) ?? img.GetAttributeValue("href", string.Empty)).Replace("..", searchBaseUrl);
                     images.Add(new RemoteImageInfo { Url = imageUrl });

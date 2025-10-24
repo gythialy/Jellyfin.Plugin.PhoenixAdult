@@ -67,6 +67,7 @@ namespace PhoenixAdult.Sites
                     });
                 }
             }
+
             return result;
         }
 
@@ -183,7 +184,7 @@ namespace PhoenixAdult.Sites
 
             if (video["screenshots"] != null)
             {
-                foreach(var screenshot in video["screenshots"])
+                foreach (var screenshot in video["screenshots"])
                 {
                     images.Add(new RemoteImageInfo { Url = screenshot.ToString() });
                 }

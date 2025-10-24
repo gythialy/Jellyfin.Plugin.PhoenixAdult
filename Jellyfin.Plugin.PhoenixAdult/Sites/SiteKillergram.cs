@@ -121,6 +121,7 @@ namespace PhoenixAdult.Sites
                     actors.Add(actor.InnerText.Trim());
                 }
             }
+
             return actors;
         }
 

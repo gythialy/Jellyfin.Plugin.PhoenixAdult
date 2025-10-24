@@ -74,6 +74,7 @@ namespace PhoenixAdult.Sites
                         }
                     }
                 }
+
                 if (numSearchPages > 1 && i + 1 != numSearchPages)
                 {
                     searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{encodedTitle}&key2={encodedTitle}&next=1&page={i + 1}";
@@ -137,7 +138,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio(detailsPageElements.SelectSingleNode("//b[contains(., 'Studio') or contains(., 'Network')]//following-sibling::b | //b[contains(., 'Studio') or contains(., 'Network')]//following-sibling::a | //p[contains(., 'Site:')]//following-sibling::a[@class='bold']")?.InnerText.Trim());
 
             var taglineNode = detailsPageElements.SelectSingleNode("//p[contains(., 'Site:')]//following-sibling::a[@class='bold'] | //b[contains(., 'Network')]//following-sibling::a | //p[contains(., 'Webserie:')]/a | //p[contains(., 'Movie:')]/a");
-            if(taglineNode != null)
+            if (taglineNode != null)
             {
                 movie.AddTag(taglineNode.InnerText.Trim());
             }
@@ -148,7 +149,7 @@ namespace PhoenixAdult.Sites
 
             var dateNode = detailsPageElements.SelectSingleNode("//span[contains(., 'Release date:')]");
             string date = dateNode?.InnerText.Replace("Release date:", string.Empty).Replace(", more updates...\n[Nav X]", string.Empty).Replace("* Movie Release", string.Empty).Trim() ?? sceneDate;
-            if(!string.IsNullOrEmpty(date))
+            if (!string.IsNullOrEmpty(date))
             {
                 if (DateTime.TryParse(date, out var parsedDate))
                 {
@@ -158,18 +159,18 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//div[./b[contains(., 'Categories')]]//a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
 
             var actorNodes = detailsPageElements.SelectNodes("//h3[contains(., 'Cast')]//following::div[./p[contains(., 'No Profile')]]//span[@class]/text() | //h3[contains(., 'Cast')]//following::div//a[contains(@href, '/name/')]/img/@alt");
-            if(actorNodes != null)
+            if (actorNodes != null)
             {
-                foreach(var actor in actorNodes)
+                foreach (var actor in actorNodes)
                 {
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
@@ -191,7 +192,7 @@ namespace PhoenixAdult.Sites
             var imageNodes = detailsPageElements.SelectNodes("//img[@id='photoimg']/@src | //img[contains(@src, 'th8')]/@src | //img[contains(@data-original, 'th8')]/@data-original");
             if (imageNodes != null)
             {
-                foreach(var image in imageNodes)
+                foreach (var image in imageNodes)
                 {
                     result.Add(new RemoteImageInfo { Url = image.GetAttributeValue(image.Name.Contains("data-") ? "data-original" : "src", string.Empty).Replace("/th8", string.Empty).Replace("-th8", string.Empty) });
                 }
@@ -201,7 +202,7 @@ namespace PhoenixAdult.Sites
             if (galleries != null)
             {
                 string id = Regex.Replace(sceneURL, ".*/", string.Empty);
-                foreach(var gallery in galleries)
+                foreach (var gallery in galleries)
                 {
                     string galleryID = gallery.GetAttributeValue("id", string.Empty).Replace("gallery", string.Empty);
                     string photoViewerURL = $"{Helper.GetSearchBaseURL(siteNum)}/sys/media_photos.php?s={id[0]}&scene={id.Substring(1)}&pic={galleryID}";
@@ -209,9 +210,9 @@ namespace PhoenixAdult.Sites
                     if (photoPageElements != null)
                     {
                         imageNodes = photoPageElements.SelectNodes("//img[@id='photoimg']/@src | //img[contains(@src, 'th8')]/@src | //img[contains(@data-original, 'th8')]/@data-original");
-                        if(imageNodes != null)
+                        if (imageNodes != null)
                         {
-                            foreach(var image in imageNodes)
+                            foreach (var image in imageNodes)
                             {
                                 result.Add(new RemoteImageInfo { Url = image.GetAttributeValue(image.Name.Contains("data-") ? "data-original" : "src", string.Empty).Replace("/th8", string.Empty).Replace("-th8", string.Empty) });
                             }

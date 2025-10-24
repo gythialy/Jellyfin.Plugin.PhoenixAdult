@@ -64,6 +64,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -105,9 +106,9 @@ namespace PhoenixAdult.Sites
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//div[@class='info-block']//a | //ul[@class='tags']//a");
-            if(genreNodes != null)
+            if (genreNodes != null)
             {
-                foreach(var genre in genreNodes)
+                foreach (var genre in genreNodes)
                 {
                     movie.AddGenre(genre.InnerText.Trim());
                 }
@@ -134,13 +135,13 @@ namespace PhoenixAdult.Sites
                 foreach (var actorNode in actorNodes)
                 {
                     string actorName = actorNode.InnerText.Trim();
-                    if(string.IsNullOrEmpty(actorName))
+                    if (string.IsNullOrEmpty(actorName))
                     {
                         actorName = actorNode.SelectSingleNode("//span")?.InnerText.Trim();
                     }
 
                     string actorPhotoUrl = actorNode.SelectSingleNode("//img")?.GetAttributeValue("src0_1x", string.Empty);
-                    if(string.IsNullOrEmpty(actorPhotoUrl))
+                    if (string.IsNullOrEmpty(actorPhotoUrl))
                     {
                         string actorPageUrl = actorNode.GetAttributeValue("href", string.Empty);
                         if (!actorPageUrl.StartsWith("http"))
@@ -149,7 +150,7 @@ namespace PhoenixAdult.Sites
                         }
 
                         var actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken);
-                        if(actorHttp.IsOK)
+                        if (actorHttp.IsOK)
                         {
                             var actorPage = HTML.ElementFromString(actorHttp.Content);
                             var imgNode = actorPage.SelectSingleNode("//img[contains(@class, 'model_bio_thumb')]");
@@ -160,6 +161,7 @@ namespace PhoenixAdult.Sites
                             }
                         }
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
@@ -187,7 +189,7 @@ namespace PhoenixAdult.Sites
             var imageNodes = detailsPageElements.SelectNodes("//img[contains(@class, 'update_thumb')]");
             if (imageNodes != null)
             {
-                foreach(var img in imageNodes)
+                foreach (var img in imageNodes)
                 {
                     string imageUrl = img.GetAttributeValue("src", string.Empty) ?? img.GetAttributeValue("src0_1x", string.Empty);
                     if (imageUrl.StartsWith("http"))
