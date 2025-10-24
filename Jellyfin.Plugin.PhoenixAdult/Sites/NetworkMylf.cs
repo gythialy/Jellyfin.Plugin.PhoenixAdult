@@ -97,7 +97,7 @@ namespace PhoenixAdult.Sites
                     string curID = ((JProperty)sceneData.First).Name;
                     var details = (JObject)sceneData[curID];
                     string titleNoFormatting = (string)details["title"];
-                    string subSite = (string)details["site"]?["name"] ?? Helper.GetSearchSiteName(siteNum);
+                    string subSite = details.SelectToken("site.name")?.ToString() ?? Helper.GetSearchSiteName(siteNum);
 
                     string releaseDateStr = string.Empty;
                     if (details["publishedDate"] != null && DateTime.TryParse((string)details["publishedDate"], out var releaseDate))
@@ -135,19 +135,18 @@ namespace PhoenixAdult.Sites
             string sceneType = providerIds[3];
 
             var detailsPageElements = await GetJSONfromPage($"{Helper.GetSearchSearchURL(siteNum)}{sceneName}", cancellationToken);
-            if (detailsPageElements?[sceneType]?[sceneName] == null)
+            var details = detailsPageElements?.SelectToken($"{sceneType}.{sceneName}");
+            if (details == null || details.Type == JTokenType.Null)
             {
                 return result;
             }
-
-            var details = (JObject)detailsPageElements[sceneType][sceneName];
 
             var movie = (Movie)result.Item;
             movie.Name = (string)details["title"];
             movie.Overview = HTML.StripHtml((string)details["description"]);
             movie.AddStudio("MYLF");
 
-            string subSite = (string)details["site"]?["name"] ?? Helper.GetSearchSiteName(siteNum);
+            string subSite = details.SelectToken("site.name")?.ToString() ?? Helper.GetSearchSiteName(siteNum);
             movie.AddTag(subSite);
 
             if (DateTime.TryParse(sceneDate, out var releaseDate))
@@ -159,12 +158,12 @@ namespace PhoenixAdult.Sites
             var genres = new List<string> { "MILF", "Mature" };
             if (details["tags"]?.Any() == true)
             {
-                foreach(var tag in details["tags"])
+                foreach (var tag in details["tags"])
                 {
                     genres.Add((string)tag);
                 }
             }
-            if(details["models"].Count() > 1 && subSite != "Mylfed")
+            if (details["models"].Count() > 1 && subSite != "Mylfed")
             {
                 genres.Add("Threesome");
             }
@@ -186,9 +185,10 @@ namespace PhoenixAdult.Sites
                 string actorPhotoURL = string.Empty;
 
                 var actorData = await GetJSONfromPage($"{Helper.GetSearchBaseURL(siteNum)}/models/{actorID}", cancellationToken);
-                if (actorData?["modelsContent"]?[actorID] != null)
+                var actorPhotoToken = actorData?.SelectToken($"modelsContent.{actorID}.img");
+                if (actorPhotoToken != null && actorPhotoToken.Type != JTokenType.Null)
                 {
-                    actorPhotoURL = (string)actorData["modelsContent"][actorID]["img"];
+                    actorPhotoURL = actorPhotoToken.ToString();
                 }
 
                 result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
@@ -205,12 +205,11 @@ namespace PhoenixAdult.Sites
             string sceneType = providerIds[3];
 
             var detailsPageElements = await GetJSONfromPage($"{Helper.GetSearchSearchURL(siteNum)}{sceneName}", cancellationToken);
-            if (detailsPageElements?[sceneType]?[sceneName] == null)
+            var details = detailsPageElements?.SelectToken($"{sceneType}.{sceneName}");
+            if (details == null || details.Type == JTokenType.Null)
             {
                 return result;
             }
-
-            var details = (JObject)detailsPageElements[sceneType][sceneName];
 
             string img = (string)details["img"];
             result.Add(new RemoteImageInfo { Url = img, Type = ImageType.Primary });

@@ -100,7 +100,7 @@ namespace PhoenixAdult.Sites
                         var details = content.Value;
                         string curId = content.Name;
                         string titleNoFormatting = details["title"].ToString();
-                        string subSite = details["site"]?["name"]?.ToString() ?? Helper.GetSearchSiteName(siteNum);
+                        string subSite = details.SelectToken("site.name")?.ToString() ?? Helper.GetSearchSiteName(siteNum);
                         string releaseDate = string.Empty;
                         if (details["publishedDate"] != null && DateTime.TryParse(details["publishedDate"].ToString(), out var parsedDate))
                         {
@@ -132,7 +132,8 @@ namespace PhoenixAdult.Sites
             string sceneDate = providerIds[2];
             string sceneType = providerIds[3] + "Content";
 
-            var detailsPageElements = (await GetJsonFromPage($"{Helper.GetSearchSearchURL(siteNum)}{sceneName}", cancellationToken))?[sceneType]?[sceneName];
+            var json = await GetJsonFromPage($"{Helper.GetSearchSearchURL(siteNum)}{sceneName}", cancellationToken);
+            var detailsPageElements = json?.SelectToken($"{sceneType}.{sceneName}");
             if (detailsPageElements == null)
             {
                 return result;
@@ -143,7 +144,7 @@ namespace PhoenixAdult.Sites
             movie.Overview = detailsPageElements["description"].ToString();
             movie.AddStudio("TeamSkeet");
 
-            string tagline = detailsPageElements["site"]?["name"]?.ToString() ?? Helper.GetSearchSiteName(siteNum);
+            string tagline = detailsPageElements.SelectToken("site.name")?.ToString() ?? Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
@@ -191,10 +192,15 @@ namespace PhoenixAdult.Sites
             string sceneName = sceneID[0].Split('|')[0];
             string sceneType = sceneID[0].Split('|')[3] + "Content";
 
-            var detailsPageElements = (await GetJsonFromPage($"{Helper.GetSearchSearchURL(siteNum)}{sceneName}", cancellationToken))?[sceneType]?[sceneName];
-            if (detailsPageElements?["img"] != null)
+            var json = await GetJsonFromPage($"{Helper.GetSearchSearchURL(siteNum)}{sceneName}", cancellationToken);
+            var detailsPageElements = json?.SelectToken($"{sceneType}.{sceneName}");
+            if (detailsPageElements != null)
             {
-                images.Add(new RemoteImageInfo { Url = detailsPageElements["img"].ToString(), Type = ImageType.Primary });
+                var img = detailsPageElements.SelectToken("img")?.ToString();
+                if (!string.IsNullOrEmpty(img))
+                {
+                    images.Add(new RemoteImageInfo { Url = img, Type = ImageType.Primary });
+                }
             }
 
             return images;

@@ -188,12 +188,13 @@ namespace PhoenixAdult.Sites
                 string actorName = actor["name"]?.ToString();
                 var actorData = (await GetAlgolia(url, "all_actors", $"filters=actor_id={actor["actor_id"]}", Helper.GetSearchBaseURL(siteNum), cancellationToken))?.FirstOrDefault();
                 string actorPhotoUrl = string.Empty;
-                if(actorData?["pictures"] != null)
+                var pictures = actorData?.SelectToken("pictures");
+                if (pictures != null && pictures.Type != JTokenType.Null)
                 {
-                    var maxQuality = (actorData["pictures"] as JObject)?.Properties().Select(p => p.Name).OrderByDescending(q => q).FirstOrDefault();
-                    if(maxQuality != null)
+                    var maxQuality = (pictures as JObject)?.Properties().Select(p => p.Name).OrderByDescending(q => q).FirstOrDefault();
+                    if (maxQuality != null)
                     {
-                        actorPhotoUrl = $"https://images-fame.gammacdn.com/actors{actorData["pictures"][maxQuality]}";
+                        actorPhotoUrl = $"https://images-fame.gammacdn.com/actors{pictures[maxQuality]}";
                     }
                 }
                 result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
@@ -223,13 +224,22 @@ namespace PhoenixAdult.Sites
                 return images;
             }
 
-            if (detailsPageElements["pictures"]?["nsfw"]?["top"] != null)
+            var pictures = detailsPageElements.SelectToken("pictures");
+            if (pictures is JObject)
             {
-                var maxQuality = (detailsPageElements["pictures"]["nsfw"]["top"] as JObject)?.Properties().Select(p => p.Name).OrderByDescending(q => q).FirstOrDefault();
-                if (maxQuality != null)
+                var top = pictures.SelectToken("nsfw.top");
+                if (top is JObject topObject)
                 {
-                    string pictureUrl = $"https://images-fame.gammacdn.com/movies/{detailsPageElements["pictures"][maxQuality]}";
-                    images.Add(new RemoteImageInfo { Url = pictureUrl, Type = ImageType.Primary });
+                    var maxQuality = topObject.Properties().Select(p => p.Name).OrderByDescending(q => q).FirstOrDefault();
+                    if (maxQuality != null)
+                    {
+                        var picturePath = pictures[maxQuality]?.ToString();
+                        if (!string.IsNullOrEmpty(picturePath))
+                        {
+                            string pictureUrl = $"https://images-fame.gammacdn.com/movies/{picturePath}";
+                            images.Add(new RemoteImageInfo { Url = pictureUrl, Type = ImageType.Primary });
+                        }
+                    }
                 }
             }
 

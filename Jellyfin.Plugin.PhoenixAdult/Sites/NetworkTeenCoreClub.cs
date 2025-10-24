@@ -41,9 +41,10 @@ namespace PhoenixAdult.Sites
             }
 
             var data = JObject.Parse(httpResult.Content);
-            if (data["videos"]?["data"] != null)
+            var videos = data.SelectToken("videos.data");
+            if (videos != null && videos.Type != JTokenType.Null)
             {
-                foreach (var searchResult in data["videos"]["data"])
+                foreach (var searchResult in videos)
                 {
                     string titleNoFormatting = searchResult["title"]["en"].ToString();
                     string releaseDate = string.Empty;
@@ -127,9 +128,10 @@ namespace PhoenixAdult.Sites
 
             foreach (var genreData in video["genres"])
             {
-                if(genreData["title"]?["en"] != null)
+                var genre = genreData.SelectToken("title.en")?.ToString();
+                if (!string.IsNullOrEmpty(genre))
                 {
-                    movie.AddGenre(genreData["title"]["en"].ToString());
+                    movie.AddGenre(genre);
                 }
             }
 
@@ -149,29 +151,34 @@ namespace PhoenixAdult.Sites
             var data = JObject.Parse(httpResult.Content);
             var video = data["video"];
 
-            if (video["artwork"]?["small"] != null)
+            var artworkSmall = video.SelectToken("artwork.small")?.ToString();
+            if (!string.IsNullOrEmpty(artworkSmall))
             {
-                images.Add(new RemoteImageInfo { Url = video["artwork"]["small"].ToString() });
+                images.Add(new RemoteImageInfo { Url = artworkSmall });
             }
 
-            if (video["artwork"]?["large"] != null)
+            var artworkLarge = video.SelectToken("artwork.large")?.ToString();
+            if (!string.IsNullOrEmpty(artworkLarge))
             {
-                images.Add(new RemoteImageInfo { Url = video["artwork"]["large"].ToString() });
+                images.Add(new RemoteImageInfo { Url = artworkLarge });
             }
 
-            if (video["cover"]?["small"] != null)
+            var coverSmall = video.SelectToken("cover.small")?.ToString();
+            if (!string.IsNullOrEmpty(coverSmall))
             {
-                images.Add(new RemoteImageInfo { Url = video["cover"]["small"].ToString() });
+                images.Add(new RemoteImageInfo { Url = coverSmall });
             }
 
-            if (video["cover"]?["medium"] != null)
+            var coverMedium = video.SelectToken("cover.medium")?.ToString();
+            if (!string.IsNullOrEmpty(coverMedium))
             {
-                images.Add(new RemoteImageInfo { Url = video["cover"]["medium"].ToString() });
+                images.Add(new RemoteImageInfo { Url = coverMedium });
             }
 
-            if (video["cover"]?["large"] != null)
+            var coverLarge = video.SelectToken("cover.large")?.ToString();
+            if (!string.IsNullOrEmpty(coverLarge))
             {
-                images.Add(new RemoteImageInfo { Url = video["cover"]["large"].ToString() });
+                images.Add(new RemoteImageInfo { Url = coverLarge });
             }
 
             if (video["screenshots"] != null)

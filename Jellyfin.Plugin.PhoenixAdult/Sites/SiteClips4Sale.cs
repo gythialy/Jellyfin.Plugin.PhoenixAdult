@@ -46,12 +46,12 @@ namespace PhoenixAdult.Sites
                 var json = JObject.Parse(jsonDataMatch.Groups[1].Value);
                 if (query == "clip")
                 {
-                    return json["state"]?["loaderData"]?["routes/($lang).studio.$id_.$clipId.$clipSlug"]?["clip"];
+                    return json.SelectToken("state.loaderData.['routes/($lang).studio.$id_.$clipId.$clipSlug'].clip");
                 }
 
                 if (query == "search")
                 {
-                    return json["state"]?["loaderData"]?["routes/($lang).studio.$id_.$studioSlug.$"];
+                    return json.SelectToken("state.loaderData.['routes/($lang).studio.$id_.$studioSlug.$']");
                 }
             }
             return null;
@@ -110,12 +110,13 @@ namespace PhoenixAdult.Sites
             string slug = searchPageJson["studioSlug"]?.ToString();
             string searchURL = $"{Helper.GetSearchSearchURL(siteNum)}{userID}/{slug}/Cat0-AllCategories/Page1/C4SSort-display_order_desc/Limit50/search/{Uri.EscapeDataString(title)}";
             var searchJson = await GetJSONfromPage(searchURL, "search", cancellationToken);
-            if (searchJson?["clips"] == null)
+            var clips = searchJson?.SelectToken("clips");
+            if (clips == null || clips.Type == JTokenType.Null)
             {
                 return result;
             }
 
-            foreach (var searchResult in searchJson["clips"])
+            foreach (var searchResult in clips)
             {
                 string sceneURL = Helper.GetSearchBaseURL(siteNum) + searchResult["link"];
                 string curID = Helper.Encode(sceneURL);
