@@ -56,8 +56,8 @@ namespace PhoenixAdult.Sites
                     if (sceneURL.Contains("/scenes/") && !searchResults.Contains(sceneURL))
                     {
                         string urlID = Regex.Replace(sceneURL, ".*/", string.Empty);
-                        string siteDisplay = searchResult.SelectSingleNode(".//i")?.InnerText.Trim();
-                        string titleNoFormatting = searchResult.SelectSingleNode(".//p[@class='gen12 bold']")?.InnerText;
+                        string siteDisplay = Helper.ParseTitle(searchResult.SelectSingleNode(".//i")?.InnerText.Trim());
+                        string titleNoFormatting = Helper.ParseTitle(searchResult.SelectSingleNode(".//p[@class='gen12 bold']")?.InnerText);
                         string curID = Helper.Encode(sceneURL);
 
                         if (titleNoFormatting?.Contains("...") == true)
@@ -130,7 +130,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements.SelectSingleNode("//h1").InnerText;
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1").InnerText);
 
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='gen12']/div[contains(., 'Story')]") ?? detailsPageElements.SelectSingleNode("//div[@class='gen12']//div[@class='hideContent boxdesc' and contains(., 'Description')]") ?? detailsPageElements.SelectSingleNode("//div[@class='gen12']/div[contains(., 'Movie Description')]");
             movie.Overview = summaryNode?.InnerText.Split(new[] { "Story -", "---", "--" }, StringSplitOptions.RemoveEmptyEntries).Last().Trim();
@@ -140,7 +140,7 @@ namespace PhoenixAdult.Sites
             var taglineNode = detailsPageElements.SelectSingleNode("//p[contains(., 'Site:')]//following-sibling::a[@class='bold'] | //b[contains(., 'Network')]//following-sibling::a | //p[contains(., 'Webserie:')]/a | //p[contains(., 'Movie:')]/a");
             if (taglineNode != null)
             {
-                movie.AddTag(taglineNode.InnerText.Trim());
+                movie.AddTag(Helper.ParseTitle(taglineNode.InnerText.Trim()));
             }
             else
             {
@@ -167,12 +167,12 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var actorNodes = detailsPageElements.SelectNodes("//h3[contains(., 'Cast')]//following::div[./p[contains(., 'No Profile')]]//span[@class]/text() | //h3[contains(., 'Cast')]//following::div//a[contains(@href, '/name/')]/img/@alt");
+            var actorNodes = detailsPageElements.SelectNodes("//h3[contains(., 'Cast')]//following::div[./p[contains(., 'No Profile')]]//span[@class] | //h3[contains(., 'Cast')]//following::div//a[contains(@href, '/name/')]/img");
             if (actorNodes != null)
             {
                 foreach (var actor in actorNodes)
                 {
-                    result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
+                    result.People.Add(new PersonInfo { Name = actor.GetAttributeValue("alt", actor.InnerText).Trim(), ImageUrl = actor.GetAttributeValue("data-src", string.Empty), Type = PersonKind.Actor });
                 }
             }
 

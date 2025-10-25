@@ -72,8 +72,8 @@ namespace PhoenixAdult.Sites
                     continue;
                 }
 
-                string titleNoFormatting = detailsPageElements.SelectSingleNode("//title")?.InnerText.Split(':').Last().Split('|')[0].Trim();
-                string subSite = detailsPageElements.SelectSingleNode("//div[@id='shoot-featured-image']//h4")?.InnerText.Trim();
+                string titleNoFormatting = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//title")?.InnerText.Split(':').Last().Split('|')[0].Trim());
+                string subSite = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@id='shoot-featured-image']//h4")?.InnerText.Trim());
                 string curID = Helper.Encode(sceneURL);
                 string modelURL = detailsPageElements.SelectSingleNode("//tr[contains(., 'Scene')]//a")?.GetAttributeValue("href", string.Empty);
 
@@ -128,11 +128,15 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements.SelectSingleNode("//title")?.InnerText.Split(':').Last().Split('|')[0].Trim();
-            movie.Overview = detailsPageElements.SelectSingleNode("//aside/div[contains(@class, 'description')]")?.InnerText.Replace('\n', ' ').Trim();
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//title")?.InnerText.Split(':').Last().Split('|')[0].Trim());
+            try
+            {
+                movie.Overview = detailsPageElements.SelectSingleNode("//aside/div[contains(@class, 'description')]")?.InnerText.Replace("\n", string.Empty).Trim();
+            }
+            catch { }
             movie.AddStudio("Abby Winters");
 
-            string tagline = detailsPageElements.SelectSingleNode("//div[@id='shoot-featured-image']//h4")?.InnerText.Trim();
+            string tagline = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@id='shoot-featured-image']//h4")?.InnerText.Trim());
             movie.AddTag(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))

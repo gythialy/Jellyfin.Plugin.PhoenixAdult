@@ -145,7 +145,7 @@ namespace PhoenixAdult.Sites
                         foreach (var searchResult in searchResults)
                         {
                             var titleNode = searchResult.SelectSingleNode(".//a[1]");
-                            string titleNoFormatting = titleNode.InnerText.Trim().Replace("BONUS-", "BONUS - ").Replace("BTS-", "BTS - ");
+                            string titleNoFormatting = Helper.ParseTitle(titleNode.InnerText.Trim().Replace("BONUS-", "BONUS - ").Replace("BTS-", "BTS - "));
                             string curID = Helper.Encode(titleNode.GetAttributeValue("href", ""));
                             string releaseDateStr = ParseReleaseDate(searchResult, cancellationToken).Result;
 
@@ -231,10 +231,10 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
 
             // Title
-            movie.Name = detailsPageElements.SelectSingleNode("//h1[@class='sceneTitle']")?.InnerText.Trim()
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[@class='sceneTitle']")?.InnerText.Trim()
                 ?? detailsPageElements.SelectSingleNode("//meta[@name='twitter:title']")?.GetAttributeValue("content", "").Trim()
                 ?? detailsPageElements.SelectSingleNode("//h3[@class='dvdTitle']")?.InnerText.Trim()
-                ?? detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
+                ?? detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim());
 
             // Summary
              movie.Overview = detailsPageElements.SelectSingleNode("//meta[@name='twitter:description']")?.GetAttributeValue("content", "").Trim()

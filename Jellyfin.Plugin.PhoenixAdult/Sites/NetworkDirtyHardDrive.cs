@@ -91,7 +91,24 @@ namespace PhoenixAdult.Sites
             if (actorNode != null)
             {
                 string actorName = actorNode.InnerText.Trim();
-                result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                string actorPhotoUrl = string.Empty;
+                var actorPageUrlNode = actorNode.SelectSingleNode("./a");
+                if (string.IsNullOrEmpty(actorName) && actorPageUrlNode != null)
+                {
+                    string actorPageUrl = actorPageUrlNode.GetAttributeValue("href", string.Empty);
+                    actorName = actorPageUrl.Split('/').Last().Replace(".html", string.Empty).Replace("pornstar_", string.Empty).Replace("_", " ").ToTitleCase();
+                    if (!actorPageUrl.StartsWith("http"))
+                    {
+                        actorPageUrl = Helper.GetSearchBaseURL(siteNum) + actorPageUrl;
+                    }
+                    var actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken);
+                    if (actorHttp.IsOK)
+                    {
+                        var actorPage = HTML.ElementFromString(actorHttp.Content);
+                        actorPhotoUrl = actorPage.SelectSingleNode("//div[@id='global-model-img']//img")?.GetAttributeValue("src", string.Empty);
+                    }
+                }
+                result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
             }
 
             return result;

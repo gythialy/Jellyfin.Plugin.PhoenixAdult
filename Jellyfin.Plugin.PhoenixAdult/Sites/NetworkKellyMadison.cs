@@ -37,7 +37,7 @@ namespace PhoenixAdult.Sites
                 searchTitle = searchTitle.Replace(searchTitle.Split(' ').First(), string.Empty).Trim();
             }
 
-            string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
+            string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{Uri.EscapeDataString(searchTitle)}&type=episodes";
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, null, _cookies);
             if (!httpResult.IsOK)
             {
@@ -68,13 +68,14 @@ namespace PhoenixAdult.Sites
 
             foreach (var node in searchResults)
             {
-                var titleNode = node.SelectSingleNode(".//a[@class='text-km'] | .//a[@class='text-pf'] | .//a[@class='text-tf']");
+                var titleNode = node.SelectSingleNode(".//h3");
                 string titleNoFormatting = titleNode?.InnerText.Trim();
-                string sceneUrl = titleNode?.GetAttributeValue("href", string.Empty);
-                string episodeId = node.SelectSingleNode(".//span[@class='card-footer-item'][last()]")?.InnerText.Split('#').Last().Trim();
+                string sceneUrl = node.GetAttributeValue("href", string.Empty);
+                string episodeId = node.SelectSingleNode(".//span[@class='video-title']")?.InnerText.Split('#').Last().Trim();
+                string subsite = node.SelectSingleNode(".//span[@class='badge badge-brand']")?.InnerText.Trim().Replace("PF", "PornFidelity").Replace("TF", "TeenFidelity").Replace("KM", "Kelly Madison");
                 string curId = Helper.Encode(sceneUrl);
                 string releaseDate = string.Empty;
-                var dateNode = node.SelectSingleNode(".//span[.//i[@class='far fa-calendar-alt']]");
+                var dateNode = node.SelectSingleNode(".//time");
                 if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
                 {
                     releaseDate = parsedDate.ToString("yyyy-MM-dd");
@@ -82,8 +83,8 @@ namespace PhoenixAdult.Sites
 
                 result.Add(new RemoteSearchResult
                 {
-                    ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{Helper.Encode(titleNoFormatting)}|{Helper.Encode(node.OuterHtml)}" } },
-                    Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
+                    ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
+                    Name = $"{titleNoFormatting} [{subsite}] {releaseDate}",
                     SearchProviderName = Plugin.Instance.Name,
                 });
             }
@@ -134,8 +135,17 @@ namespace PhoenixAdult.Sites
             {
                 tagline = "TeenFidelity";
             }
+            else if (movie.Name.ToLower().Contains("kelly madison"))
+            {
+                tagline = "Kelly Madison";
+            }
+            else
+            {
+                tagline = Helper.GetSearchSiteName(siteNum);
+            }
 
             movie.AddTag(tagline);
+            movie.AddCollection(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//li[.//i[@class='fas fa-calendar']]");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Split(':').Last().Trim(), out var parsedDate))

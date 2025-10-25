@@ -97,7 +97,7 @@ namespace PhoenixAdult.Sites
                     var sceneData = (JObject)detailsPageElements[sceneType];
                     string curID = ((JProperty)sceneData.First).Name;
                     var details = (JObject)sceneData[curID];
-                    string titleNoFormatting = (string)details["title"];
+                    string titleNoFormatting = Helper.ParseTitle((string)details["title"]);
                     string subSite = details.SelectToken("site.name")?.ToString() ?? Helper.GetSearchSiteName(siteNum);
 
                     string releaseDateStr = string.Empty;
@@ -144,7 +144,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-            movie.Name = (string)details["title"];
+            movie.Name = Helper.ParseTitle((string)details["title"]);
             movie.Overview = HTML.StripHtml((string)details["description"]);
             movie.AddStudio("MYLF");
 

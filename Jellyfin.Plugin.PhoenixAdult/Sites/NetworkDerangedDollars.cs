@@ -36,7 +36,7 @@ namespace PhoenixAdult.Sites
                 if (httpResult.IsOK)
                 {
                     var detailsPageElements = HTML.ElementFromString(httpResult.Content);
-                    string titleNoFormatting = detailsPageElements.SelectSingleNode("//h3[@class='mas_title']")?.InnerText.Trim();
+                    string titleNoFormatting = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h3[@class='mas_title']")?.InnerText.Trim());
                     string subSite = detailsPageElements.SelectSingleNode("//title")?.InnerText.Split('|')[1].Trim().Replace(".com", string.Empty);
                     string curId = Helper.Encode(sceneUrl);
                     string releaseDate = string.Empty;
@@ -79,7 +79,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements.SelectSingleNode("//h3[@class='mas_title']")?.InnerText.Trim();
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h3[@class='mas_title']")?.InnerText.Trim());
             movie.Overview = detailsPageElements.SelectSingleNode("//p[@class='mas_longdescription']")?.InnerText.Trim();
             movie.AddStudio("Deranged Dollars");
 
@@ -97,18 +97,36 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var genre in genreNodes)
                 {
-                    movie.AddGenre(genre.InnerText.Trim());
+                    movie.AddGenre(Helper.ParseTitle(genre.InnerText.Trim()));
                 }
             }
 
-            var actorStr = detailsPageElements.SelectSingleNode("//div[@class='lch']/span")?.InnerText.Split(',').First();
+            var actorStr = detailsPageElements.SelectSingleNode("//div[@class='lch']/span")?.InnerText.Split(new[] { ',' }, 2)[0];
             if (actorStr != null)
             {
                 var actors = Regex.Split(actorStr.Contains(":") ? actorStr.Split(':')[1] : actorStr, ",|&|/|And");
+                var modelHttpResult1 = await HTTP.Request(Helper.GetSearchSearchURL(siteNum) + "?models", HttpMethod.Get, cancellationToken);
+                var modelHttpResult2 = await HTTP.Request(Helper.GetSearchSearchURL(siteNum) + "?models/2", HttpMethod.Get, cancellationToken);
+                var models = new List<HtmlNode>();
+                if (modelHttpResult1.IsOK)
+                {
+                    models.AddRange(HTML.ElementFromString(modelHttpResult1.Content).SelectNodes("//div[@class='item']"));
+                }
+                if (modelHttpResult2.IsOK)
+                {
+                    models.AddRange(HTML.ElementFromString(modelHttpResult2.Content).SelectNodes("//div[@class='item']"));
+                }
                 foreach (var actor in actors)
                 {
                     string actorName = Regex.Replace(actor.Trim(), @"\W", " ").Replace("Nurses", string.Empty).Replace("Nurse", string.Empty);
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                    string actorPhotoUrl = string.Empty;
+                    var model = models.FirstOrDefault(m => (m.InnerText.Contains(":") ? m.InnerText.Split(':')[1] : m.InnerText).Trim().Contains(actorName));
+                    if (model != null)
+                    {
+                        actorName = (model.InnerText.Contains(":") ? model.InnerText.Split(':')[1] : model.InnerText).Trim();
+                        actorPhotoUrl = Helper.GetSearchSearchURL(siteNum) + model.SelectSingleNode(".//@src").GetAttributeValue("src", string.Empty);
+                    }
+                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
 

@@ -40,7 +40,7 @@ namespace PhoenixAdult.Sites
                 foreach (var node in searchNodes)
                 {
                     var titleNode = node.SelectSingleNode("./a");
-                    string titleNoFormatting = titleNode?.GetAttributeValue("title", string.Empty).Trim();
+                    string titleNoFormatting = Helper.ParseTitle(titleNode?.GetAttributeValue("title", string.Empty).Trim());
                     string curId = Helper.Encode(titleNode?.GetAttributeValue("href", string.Empty));
                     string releaseDate = string.Empty;
                     var dateNode = node.SelectSingleNode(".//p[@class='video-date']");
@@ -84,7 +84,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements.SelectSingleNode("//div[@class='main-info-left']/h1")?.InnerText.Trim();
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@class='main-info-left']/h1")?.InnerText.Trim());
             movie.Overview = detailsPageElements.SelectSingleNode("//p[@class='description']")?.InnerText.Trim();
             movie.AddStudio("LoveHerFilms");
 

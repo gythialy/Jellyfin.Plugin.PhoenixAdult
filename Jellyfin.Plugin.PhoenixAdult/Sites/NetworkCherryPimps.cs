@@ -42,7 +42,7 @@ namespace PhoenixAdult.Sites
                     foreach (var node in searchNodes)
                     {
                         var titleNode = node.SelectSingleNode("(.//p[@class='text-thumb'] | .//div[@class='item-title'])/a");
-                        string titleNoFormatting = titleNode?.InnerText.Trim();
+                        string titleNoFormatting = Helper.ParseTitle(titleNode?.InnerText.Trim());
                         string curId = Helper.Encode(titleNode?.GetAttributeValue("href", string.Empty));
                         string subSite = node.SelectSingleNode(".//p[@class='text-thumb']/a[@class='badge'] | .//div[@class='item-sitename']/a")?.InnerText.Trim();
                         var dateNode = node.SelectSingleNode(".//span[@class='date'] | .//div[@class='item-date']");
@@ -91,7 +91,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements.SelectSingleNode("//*[@class='trailer-block_title'] | //h1")?.InnerText.Trim();
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//*[@class='trailer-block_title'] | //h1")?.InnerText.Trim());
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='info-block']//p[@class='text'] | //div[@class='update-info-block']//p")?.InnerText.Trim();
             movie.AddStudio("Cherry Pimps");
 

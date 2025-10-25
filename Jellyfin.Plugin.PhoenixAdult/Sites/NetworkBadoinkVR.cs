@@ -72,7 +72,7 @@ namespace PhoenixAdult.Sites
                     {
                         foreach (var node in searchNodes)
                         {
-                            string titleNoFormatting = node.SelectSingleNode(".//a[contains(@class, 'video-card-title')]")?.GetAttributeValue("title", string.Empty);
+                            string titleNoFormatting = Helper.ParseTitle(node.SelectSingleNode(".//a[contains(@class, 'video-card-title')]")?.GetAttributeValue("title", string.Empty));
                             string curId = Helper.Encode(node.SelectSingleNode(".//a[contains(@class, 'video-card-title')]")?.GetAttributeValue("href", string.Empty));
                             string girlName = node.SelectSingleNode(".//a[@class='video-card-link']")?.InnerText;
                             string releaseDate = string.Empty;
@@ -119,7 +119,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements.SelectSingleNode("//h1[contains(@class, 'video-title')]")?.InnerText.Trim();
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[contains(@class, 'video-title')]")?.InnerText.Trim());
             movie.Overview = detailsPageElements.SelectSingleNode("//p[@class='video-description']")?.InnerText.Trim();
             movie.AddStudio("BadoinkVR");
 
@@ -181,26 +181,38 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
-            var posterNodes = detailsPageElements.SelectNodes("//img[@class='video-image'] | //div[contains(@class, 'gallery-item')]");
-            if (posterNodes != null)
+            var xpaths = new[] { "//img[@class='video-image']/@src", "//div[contains(@class, 'gallery-item')]/@data-big-image" };
+            foreach (var xpath in xpaths)
             {
-                foreach (var node in posterNodes)
+                var imageNodes = detailsPageElements.SelectNodes(xpath);
+                if (imageNodes != null)
                 {
-                    string imageUrl = node.GetAttributeValue("src", string.Empty) ?? node.GetAttributeValue("data-big-image", string.Empty);
-                    images.Add(new RemoteImageInfo { Url = imageUrl.Split('?')[0] });
+                    foreach (var image in imageNodes)
+                    {
+                        string imageUrl = image.GetAttributeValue(xpath.Split('@').Last(), string.Empty).Split('?')[0];
+                        if (!images.Any(i => i.Url == imageUrl))
+                        {
+                            images.Add(new RemoteImageInfo { Url = imageUrl });
+                        }
+                    }
                 }
             }
 
             var galleryNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'gallery-item')]");
             if (galleryNode != null)
             {
-                string sceneBaseUrl = galleryNode.GetAttributeValue("data-big-image", string.Empty).Split(new[] { ".jpg" }, StringSplitOptions.None)[0].Split('_').First();
+                string sceneBaseUrl = galleryNode.GetAttributeValue("data-big-image", string.Empty).Split(new[] { ".jpg" }, StringSplitOptions.None)[0];
+                sceneBaseUrl = Regex.Replace(sceneBaseUrl, @"_\d+$", string.Empty);
                 var photoNumNode = detailsPageElements.SelectSingleNode("//span[@class='gallery-zip-info']");
                 if (photoNumNode != null && int.TryParse(photoNumNode.InnerText.Split(' ')[0], out var photoNum))
                 {
                     for (int i = 1; i < photoNum + 2; i++)
                     {
-                        images.Add(new RemoteImageInfo { Url = $"{sceneBaseUrl}_{i}.jpg" });
+                        string imageUrl = $"{sceneBaseUrl}_{i}.jpg";
+                        if (!images.Any(img => img.Url == imageUrl))
+                        {
+                            images.Add(new RemoteImageInfo { Url = imageUrl });
+                        }
                     }
                 }
             }
@@ -208,6 +220,10 @@ namespace PhoenixAdult.Sites
             if (images.Any())
             {
                 images.First().Type = ImageType.Primary;
+                foreach (var image in images.Skip(1))
+                {
+                    image.Type = ImageType.Backdrop;
+                }
             }
 
             return images;

@@ -59,7 +59,7 @@ namespace PhoenixAdult.Sites
                 {
                     var detailsPageElements = HTML.ElementFromString(directHttp.Content);
                     var titleNode = detailsPageElements.SelectSingleNode("//h1[@class='description']");
-                    string titleNoFormatting = titleNode?.InnerText.Trim();
+                    string titleNoFormatting = Helper.ParseTitle(titleNode?.InnerText.Trim());
                     string curId = Helper.Encode(directUrl);
 
                     string releaseDate = string.Empty;
@@ -104,17 +104,17 @@ namespace PhoenixAdult.Sites
                     var siteNumVal = siteNum[0];
                     if (siteNumVal == 815 || siteNumVal == 1337 || siteNumVal == 1776 || siteNumVal == 1800)
                     {
-                        titleNoFormatting = searchResultNode.SelectSingleNode(".//img[contains(@class, 'img-full-fluid')]")?.GetAttributeValue("title", string.Empty).Trim();
+                        titleNoFormatting = Helper.ParseTitle(searchResultNode.SelectSingleNode(".//img[contains(@class, 'img-full-fluid')]")?.GetAttributeValue("title", string.Empty).Trim());
                         curId = Helper.Encode(searchResultNode.SelectSingleNode(".//article[contains(@class, 'scene-update')]/a")?.GetAttributeValue("href", string.Empty));
                     }
                     else if (siteNumVal == 1766 || siteNumVal == 1779 || siteNumVal == 1790 || siteNumVal == 1792)
                     {
-                        titleNoFormatting = searchResultNode.SelectSingleNode(".//a[@class='scene-title']/p")?.InnerText.Split(new[] { " | " }, StringSplitOptions.None)[0].Trim();
+                        titleNoFormatting = Helper.ParseTitle(searchResultNode.SelectSingleNode(".//a[@class='scene-title']/p")?.InnerText.Split(new[] { " | " }, StringSplitOptions.None)[0].Trim());
                         curId = Helper.Encode(searchResultNode.SelectSingleNode(".//a[@class='scene-title']")?.GetAttributeValue("href", string.Empty));
                     }
                     else
                     {
-                        titleNoFormatting = searchResultNode.SelectSingleNode(".//a[@class='scene-title']/h6")?.InnerText.Trim();
+                        titleNoFormatting = Helper.ParseTitle(searchResultNode.SelectSingleNode(".//a[@class='scene-title']/h6")?.InnerText.Trim());
                         curId = Helper.Encode(searchResultNode.SelectSingleNode(".//a[@class='scene-title']")?.GetAttributeValue("href", string.Empty));
                     }
 
@@ -156,7 +156,7 @@ namespace PhoenixAdult.Sites
 
             var movie = (Movie)result.Item;
 
-            movie.Name = detailsPageElements.SelectSingleNode("//h1[@class='description']")?.InnerText.Trim();
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[@class='description']")?.InnerText.Trim());
 
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='synopsis']/p");
             if (summaryNode != null)
@@ -240,7 +240,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var img in imageNodes)
                 {
-                    string imageUrl = img.GetAttributeValue("src", string.Empty).Replace("/320/", "/1280/");
+                    string imageUrl = img.GetAttributeValue("src", string.Empty).Replace("/320/", "/3840/").Replace("/10/", "/3840/").Replace("_320c.jpg", "_10.jpg");
                     if (!string.IsNullOrEmpty(imageUrl))
                     {
                         images.Add(new RemoteImageInfo { Url = imageUrl, Type = ImageType.Backdrop });
