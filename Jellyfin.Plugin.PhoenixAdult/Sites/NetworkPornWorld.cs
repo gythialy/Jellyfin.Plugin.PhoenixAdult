@@ -210,7 +210,7 @@ namespace PhoenixAdult.Sites
 
         private string GetTitle(HtmlNode detailsPageElements, int[] siteNum)
         {
-            string titleNoFormatting = detailsPageElements.SelectSingleNode("//title")?.InnerText.Trim();
+            string titleNoFormatting = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//title")?.InnerText.Trim());
             return Regex.Replace(titleNoFormatting, @" - PornWorld$", string.Empty);
         }
     }

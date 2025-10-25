@@ -62,7 +62,7 @@ namespace PhoenixAdult.Sites
                     doc.LoadHtml(http.Content);
 
                     var titleNode = doc.DocumentNode.SelectSingleNode("//title");
-                    var titleNoFormatting = titleNode != null ? titleNode.InnerText.Split('|').Last().Trim() : string.Empty;
+                    var titleNoFormatting = titleNode != null ? Helper.ParseTitle(titleNode.InnerText.Split('|').Last().Trim()) : string.Empty;
 
                     var siteNameNode = doc.DocumentNode.SelectSingleNode("//a[@class='player-additional__site ph_register']");
                     var subSite = siteNameNode != null ? siteNameNode.InnerText.Trim() : Helper.GetSearchSiteName(siteNum);
@@ -112,7 +112,7 @@ namespace PhoenixAdult.Sites
                     foreach (var searchResultNode in doc.DocumentNode.SelectNodes("//div[@class='item__description']"))
                     {
                         var titleNode = searchResultNode.SelectSingleNode(".//a[@class='item__title']");
-                        var titleNoFormatting = titleNode != null ? titleNode.InnerText.Trim() : string.Empty;
+                        var titleNoFormatting = titleNode != null ? Helper.ParseTitle(titleNode.InnerText.Trim()) : string.Empty;
                         sceneURL = $"{Helper.GetSearchBaseURL(siteNum)}{titleNode.GetAttributeValue("href", string.Empty)}";
 
                         var siteNameNode = searchResultNode.SelectSingleNode(".//a[@class='item__site']");
@@ -175,7 +175,7 @@ namespace PhoenixAdult.Sites
             var titleNode = doc.DocumentNode.SelectSingleNode("//title");
             if (titleNode != null)
             {
-                movie.Name = titleNode.InnerText.Split('|').Last().Trim();
+                movie.Name = Helper.ParseTitle(titleNode.InnerText.Split('|').Last().Trim());
             }
 
             var summaryNode = doc.DocumentNode.SelectSingleNode("//div[@class='player-description__text']");

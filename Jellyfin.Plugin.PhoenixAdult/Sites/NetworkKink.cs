@@ -123,7 +123,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements.SelectSingleNode("//h1[contains(@class, 'fs-0')]")?.InnerText.Trim();
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[contains(@class, 'fs-0')]")?.InnerText.Trim());
             movie.Overview = detailsPageElements.SelectSingleNode("//div[contains(@class, 'description')]/span[contains(@class, 'fw-200')]")?.InnerText.Replace('\n', ' ').Trim();
 
             string channel = detailsPageElements.SelectSingleNode("//div[contains(@class, 'shoot-detail-legend')]//a[contains(@href, '/channel/')]")?.InnerText.Trim().ToLower();

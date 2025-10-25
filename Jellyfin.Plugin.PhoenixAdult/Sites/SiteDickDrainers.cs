@@ -48,7 +48,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var node in searchNodes)
                 {
-                    string titleNoFormatting = node.SelectSingleNode(".//h4")?.InnerText.Trim();
+                    string titleNoFormatting = Helper.ParseTitle(node.SelectSingleNode(".//h4")?.InnerText.Trim());
                     string sceneUrl = node.SelectSingleNode(".//h4//@href")?.GetAttributeValue("href", string.Empty);
                     string curId = Helper.Encode(sceneUrl);
                     string releaseDate = string.Empty;
@@ -68,6 +68,38 @@ namespace PhoenixAdult.Sites
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
+                }
+            }
+
+            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            foreach (var sceneUrl in googleResults)
+            {
+                if (sceneUrl.Contains("trailers") && result.All(r => r.ProviderIds[Plugin.Instance.Name].Split('|')[0] != Helper.Encode(sceneUrl)))
+                {
+                    var http = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
+                    if (http.IsOK)
+                    {
+                        var detailsPageElements = HTML.ElementFromString(http.Content);
+                        string titleNoFormatting = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h3")?.InnerText.Trim());
+                        string curId = Helper.Encode(sceneUrl);
+                        string releaseDate = string.Empty;
+                        var dateNode = detailsPageElements.SelectSingleNode("//div[@class='videoInfo clear']/p");
+                        if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+                        {
+                            releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                        }
+                        else if (searchDate.HasValue)
+                        {
+                            releaseDate = searchDate.Value.ToString("yyyy-MM-dd");
+                        }
+
+                        result.Add(new RemoteSearchResult
+                        {
+                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
+                            Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
+                            SearchProviderName = Plugin.Instance.Name,
+                        });
+                    }
                 }
             }
 
@@ -95,7 +127,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements.SelectSingleNode("//h3")?.InnerText.Trim();
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h3")?.InnerText.Trim());
             movie.Overview = string.Join(" ", detailsPageElements.SelectNodes("//div[@class='videoDetails clear']//p/span//text()")?.Select(t => t.InnerText) ?? new string[0]).Replace("FULL VIDEO", string.Empty);
 
             string tagline = Helper.GetSearchSiteName(siteNum);

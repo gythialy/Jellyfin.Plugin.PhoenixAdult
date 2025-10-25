@@ -47,21 +47,42 @@ namespace PhoenixAdult.Sites
                 var searchResultNodes = searchPageHtml.SelectNodes("//div[contains(@class, 'movie-preview') or contains(@class, 'video_container')]");
                 if (searchResultNodes != null)
                 {
-                    foreach (var searchResultNode in searchResultNodes)
+                    foreach (var searchResult in searchResultNodes)
                     {
-                        var sceneUrlNode = searchResultNode.SelectSingleNode("./a[contains(@class, 'group')]");
-                        if (sceneUrlNode == null)
+                        var sceneUrlNode = searchResult.SelectSingleNode("./a[contains(@class, 'group')]");
+                        if (sceneUrlNode == null) continue;
+
+                        string sceneURL = sceneUrlNode.GetAttributeValue("href", string.Empty);
+                        string titleNoFormatting = sceneURL.Contains("dvd") ?
+                            Helper.ParseTitle(searchResult.SelectSingleNode("./a/div")?.InnerText.Trim()) :
+                            Helper.ParseTitle(searchResult.SelectSingleNode("./a/span")?.InnerText.Trim());
+
+                        if (!sceneURL.StartsWith("http"))
                         {
-                            continue;
+                            sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
                         }
 
-                        string sceneUrl = sceneUrlNode.GetAttributeValue("href", string.Empty);
-                        if (!sceneUrl.StartsWith("http"))
+                        string curID = Helper.Encode(sceneURL);
+                        string releaseDateStr = string.Empty;
+                        var dateNode = searchResult.SelectSingleNode(".//span[@class='hidden xs:inline-block truncate']");
+                        if (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Split('•').Last().Trim(), "MMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                         {
-                            sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
+                            releaseDateStr = parsedDate.ToString("yyyy-MM-dd");
+                        }
+                        else if (searchDate.HasValue)
+                        {
+                            releaseDateStr = searchDate.Value.ToString("yyyy-MM-dd");
                         }
 
-                        searchResults.Add(sceneUrl);
+                        if (!searchResults.Contains(sceneURL))
+                        {
+                            result.Add(new RemoteSearchResult
+                            {
+                                ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDateStr}" } },
+                                Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDateStr}",
+                                SearchProviderName = Plugin.Instance.Name,
+                            });
+                        }
                     }
                 }
             }
@@ -82,7 +103,7 @@ namespace PhoenixAdult.Sites
 
                 var videoPageElements = JObject.Parse(ldJsonNode.InnerText.Replace("\n", string.Empty).Trim());
 
-                string titleNoFormatting = videoPageElements["name"].ToString();
+                string titleNoFormatting = Helper.ParseTitle(HTML.Clean(videoPageElements["name"].ToString()));
                 string curID = Helper.Encode(searchURL);
                 string releaseDateStr = string.Empty;
 
@@ -134,24 +155,26 @@ namespace PhoenixAdult.Sites
             var videoPageElements = JObject.Parse(ldJsonNode.InnerText.Replace("\n", string.Empty).Trim());
 
             var movie = (Movie)result.Item;
-            movie.Name = HTML.Clean(videoPageElements["name"].ToString());
+            movie.Name = Helper.ParseTitle(HTML.Clean(videoPageElements["name"].ToString()));
             movie.Overview = HTML.Clean(videoPageElements["description"].ToString());
-            movie.AddStudio(Regex.Replace(videoPageElements["productionCompany"]["name"].ToString().Trim(), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
+            movie.AddStudio(Regex.Replace(Helper.ParseTitle(videoPageElements["productionCompany"]["name"].ToString().Trim()), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
 
             string tagline = detailsPageElements.SelectSingleNode("//p[contains(., 'Series:')]/a[contains(@href, 'originals') or contains(@href, 'videos')]")?.InnerText.Trim();
             if (!string.IsNullOrEmpty(tagline))
             {
-                movie.AddTag(Regex.Replace(tagline, @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
+                movie.AddTag(Regex.Replace(Helper.ParseTitle(tagline), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
+                movie.AddCollection(Regex.Replace(Helper.ParseTitle(tagline), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
             }
             else
             {
                 movie.AddTag(movie.Studios.First());
+                movie.AddCollection(movie.Studios.First());
             }
 
             string dvdTitle = detailsPageElements.SelectSingleNode("//p[contains(., 'Movie')]/a[contains(@href, 'dvd')]")?.InnerText.Trim();
             if (!string.IsNullOrEmpty(dvdTitle) && siteNumVal == 1365)
             {
-                movie.AddTag(dvdTitle);
+                movie.AddCollection(dvdTitle);
             }
 
             if (DateTime.TryParse(videoPageElements["datePublished"].ToString(), out var releaseDate))

@@ -35,7 +35,7 @@ namespace PhoenixAdult.Sites
                 if (httpResult.IsOK)
                 {
                     var detailsPageElements = HTML.ElementFromString(httpResult.Content);
-                    string titleNoFormatting = detailsPageElements.SelectSingleNode("//div[@class='trailer_videoinfo']//h3 | //div[@class='trailer_toptitle_left']")?.InnerText.Trim();
+                    string titleNoFormatting = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@class='trailer_videoinfo']//h3 | //div[@class='trailer_toptitle_left']")?.InnerText.Trim());
                     string curId = Helper.Encode(sceneUrl);
                     string releaseDate = string.Empty;
                     var dateNode = detailsPageElements.SelectSingleNode("//div[@class='setdesc']//b[contains(., 'Added')]");
@@ -79,7 +79,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements.SelectSingleNode("//div[@class='trailer_videoinfo']//h3 | //div[@class='trailer_toptitle_left']")?.InnerText.Trim();
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@class='trailer_videoinfo']//h3 | //div[@class='trailer_toptitle_left']")?.InnerText.Trim());
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='trailer_videoinfo']//p | //div[@class='trailerpage_info']/p[not(@class)]")?.InnerText;
             movie.AddStudio("Grooby");
 

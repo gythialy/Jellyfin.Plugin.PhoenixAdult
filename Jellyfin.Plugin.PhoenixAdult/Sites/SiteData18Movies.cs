@@ -96,7 +96,42 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            // ... (rest of search logic including Google fallback would go here)
+            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            foreach (var movieUrl in googleResults)
+            {
+                string url = movieUrl.Split('-')[0].Replace("http:", "https:");
+                if (url.Contains("/movies/") && !url.EndsWith(".html") && !searchResults.Contains(url) && !siteResults.Contains(url))
+                {
+                    searchResults.Add(url);
+                }
+            }
+
+            foreach (var movieUrl in searchResults)
+            {
+                var httpResult = await HTTP.Request(movieUrl, cancellationToken, new Dictionary<string, string> { { "Referer", "https://www.data18.com" } }, new Dictionary<string, string> { { "data_user_captcha", "1" } });
+                var detailsPageElements = HTML.ElementFromString(httpResult.Content);
+                if (detailsPageElements == null) continue;
+
+                string titleNoFormatting = detailsPageElements.SelectSingleNode("//h1").InnerText;
+                string curId = Helper.Encode(movieUrl);
+                var dateNode = detailsPageElements.SelectSingleNode("//@datetime");
+                string releaseDate = (dateNode != null && DateTime.TryParse(dateNode.GetAttributeValue("datetime", string.Empty).Trim(), out var parsedDate)) ? parsedDate.ToString("yyyy-MM-dd") : (searchDate.HasValue ? searchDate.Value.ToString("yyyy-MM-dd") : string.Empty);
+                var studioNode = detailsPageElements.SelectSingleNode("//b[contains(., 'Studio') or contains(., 'Network')]//following-sibling::a | //b[contains(., 'Studio') or contains(., 'Network')]//following-sibling::b | //p[contains(., 'Site:')]//following-sibling::a[@class='bold']");
+                string studio = studioNode?.InnerText.Trim() ?? string.Empty;
+
+                result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{studio}] {releaseDate}" });
+
+                var sceneCountMatch = detailsPageElements.SelectSingleNode("//div[@id='relatedscenes']//span")?.InnerText.Split(' ')[0].Trim();
+                int sceneCount = !string.IsNullOrEmpty(sceneCountMatch) && int.TryParse(sceneCountMatch, out var countVal) ? countVal : 0;
+
+                for (int j = 1; j <= sceneCount; j++)
+                {
+                    string section = "Scene " + j;
+                    string scene = Helper.Encode(detailsPageElements.SelectSingleNode($"//a[contains(., '{section}')]/@href").GetAttributeValue("href", string.Empty));
+                    result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{scene}|{siteNum[0]}|{releaseDate}|{titleNoFormatting}|{j}" } }, Name = $"{titleNoFormatting} [{section}][{studio}] {releaseDate}" });
+                }
+            }
+
             return result;
         }
 
@@ -178,7 +213,44 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var result = new List<RemoteImageInfo>();
-            // ... (Image logic would be ported here) ...
+            string[] providerIds = sceneID[0].Split('|');
+            string sceneURL = Helper.Decode(providerIds[0]);
+
+            var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken, new Dictionary<string, string> { { "Referer", "https://www.data18.com" } }, new Dictionary<string, string> { { "data_user_captcha", "1" } });
+            if (detailsPageElements == null)
+            {
+                return result;
+            }
+
+            var imageNodes = detailsPageElements.SelectNodes("//a[@id='enlargecover']//@data-featherlight | //img[@id='backcoverzone']//@src | //img[@id='imgposter']//@src | //img[contains(@src, 'th8')]/@src | //img[contains(@data-original, 'th8')]/@data-original");
+            if (imageNodes != null)
+            {
+                foreach (var img in imageNodes)
+                {
+                    result.Add(new RemoteImageInfo { Url = img.GetAttributeValue(img.Name == "a" ? "data-featherlight" : (img.Name == "img" ? "src" : "data-original"), string.Empty) });
+                }
+            }
+
+            var galleries = detailsPageElements.SelectNodes("//div[@id='galleriesoff']//div");
+            if (galleries != null)
+            {
+                string movieId = Regex.Replace(sceneURL, ".*/", string.Empty);
+                foreach (var gallery in galleries)
+                {
+                    string galleryId = gallery.GetAttributeValue("id", string.Empty).Replace("gallery", string.Empty);
+                    string photoViewerUrl = $"{Helper.GetSearchBaseURL(siteNum)}/sys/media_photos.php?movie={movieId.Substring(1)}&pic={galleryId}";
+                    var req = await HTTP.Request(photoViewerUrl, cancellationToken);
+                    var photoPageElements = HTML.ElementFromString(req.Content);
+                    var photoNodes = photoPageElements.SelectNodes("//a[@id='enlargecover']//@data-featherlight | //img[@id='backcoverzone']//@src | //img[@id='imgposter']//@src | //img[contains(@src, 'th8')]/@src | //img[contains(@data-original, 'th8')]/@data-original");
+                    if (photoNodes != null)
+                    {
+                        foreach (var img in photoNodes)
+                        {
+                            result.Add(new RemoteImageInfo { Url = (img.GetAttributeValue(img.Name == "a" ? "data-featherlight" : (img.Name == "img" ? "src" : "data-original"), string.Empty)).Replace("/th8", "").Replace("-th8", "") });
+                        }
+                    }
+                }
+            }
             return result;
         }
     }

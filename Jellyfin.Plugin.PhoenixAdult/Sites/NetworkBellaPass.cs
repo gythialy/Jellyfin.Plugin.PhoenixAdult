@@ -30,6 +30,15 @@ namespace PhoenixAdult.Sites
             string searchUrl = $"{Helper.GetSearchSearchURL(siteNum).Replace("/search.php?query=", "/trailers/")}{searchTitle.ToLower().Replace(' ', '-')}.html";
             var directResults = new List<string> { searchUrl };
 
+            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            foreach (var sceneURL in googleResults)
+            {
+                if (sceneURL.Contains("/trailers/"))
+                {
+                    directResults.Add(sceneURL);
+                }
+            }
+
             string searchPageUrl = Helper.GetSearchSearchURL(siteNum) + searchTitle.ToLower().Replace(' ', '-');
             var httpResult = await HTTP.Request(searchPageUrl, HttpMethod.Get, cancellationToken);
             if (httpResult.IsOK)
@@ -119,7 +128,15 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements.SelectSingleNode("//h3")?.InnerText.Trim();
+            var siteNumVal = int.Parse(providerIds[1]);
+            if (siteNumVal == 1246 || siteNumVal == 1553)
+            {
+                movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim());
+            }
+            else
+            {
+                movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h3")?.InnerText.Trim());
+            }
 
             var description = detailsPageElements.SelectSingleNode("//div[contains(@class, 'videoDetails')]//p");
             if (description != null)

@@ -47,7 +47,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var node in searchNodes)
                 {
-                    string titleNoFormatting = node.SelectSingleNode(".//a[contains(@class, 'title')]")?.InnerText.Trim();
+                    string titleNoFormatting = Helper.ParseTitle(node.SelectSingleNode(".//a[contains(@class, 'title')]")?.InnerText.Trim());
                     string sceneUrl = node.SelectSingleNode(".//a[contains(@class, 'title')]")?.GetAttributeValue("href", string.Empty).Trim().Split('?')[0];
                     string curId = Helper.Encode(sceneUrl);
                     string actors = Helper.Encode(node.SelectSingleNode(".//small[@class='i-model']")?.InnerText);
@@ -122,7 +122,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            string title = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
+            string title = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim());
             if (string.IsNullOrEmpty(title))
             {
                 var actors = detailsPageElements.SelectNodes("//div/span[@class='value']/a");

@@ -124,12 +124,12 @@ namespace PhoenixAdult.Sites
                 movie.ProductionYear = sceneDateObj.Year;
             }
 
-            var genreNodes = sceneData.SelectNodes("//div[contains(@class, 'featuring')][2]//ul//li/a");
+            var genreNodes = sceneData.SelectNodes("//div[contains(@class, 'featuring')][2]//ul//li");
             if (genreNodes != null)
             {
                 foreach (var genreLink in genreNodes)
                 {
-                    movie.AddGenre(genreLink.InnerText.Trim());
+                    movie.AddGenre(Helper.ParseTitle(genreLink.InnerText.Trim().ToLower().Replace("categories:", string.Empty).Replace("tags:", string.Empty)));
                 }
             }
 

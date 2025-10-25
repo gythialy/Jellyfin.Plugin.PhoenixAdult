@@ -41,7 +41,7 @@ namespace PhoenixAdult.Sites
                 foreach (var node in searchNodes)
                 {
                     var titleNode = node.SelectSingleNode(".//div[@class='vtitle']");
-                    string titleNoFormatting = titleNode?.InnerText.Trim();
+                    string titleNoFormatting = Helper.ParseTitle(titleNode?.InnerText.Trim());
                     string sceneUrl = node.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty);
                     string curId = Helper.Encode(sceneUrl);
                     result.Add(new RemoteSearchResult
@@ -74,7 +74,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements.SelectSingleNode("//title")?.InnerText.Trim();
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//title")?.InnerText.Trim());
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='player-info-desc']")?.InnerText.Trim();
 
             string tagline = Helper.GetSearchSiteName(siteNum);
