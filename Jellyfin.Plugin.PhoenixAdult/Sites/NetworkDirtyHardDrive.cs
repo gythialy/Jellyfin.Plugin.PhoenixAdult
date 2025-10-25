@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -96,7 +97,7 @@ namespace PhoenixAdult.Sites
                 if (string.IsNullOrEmpty(actorName) && actorPageUrlNode != null)
                 {
                     string actorPageUrl = actorPageUrlNode.GetAttributeValue("href", string.Empty);
-                    actorName = actorPageUrl.Split('/').Last().Replace(".html", string.Empty).Replace("pornstar_", string.Empty).Replace("_", " ").ToTitleCase();
+                    actorName = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(actorPageUrl.Split('/').Last().Replace(".html", string.Empty).Replace("pornstar_", string.Empty).Replace("_", " "));
                     if (!actorPageUrl.StartsWith("http"))
                     {
                         actorPageUrl = Helper.GetSearchBaseURL(siteNum) + actorPageUrl;
