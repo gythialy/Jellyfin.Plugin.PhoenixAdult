@@ -374,7 +374,7 @@ namespace PhoenixAdult.Helpers
             return GetProviderBySiteID(48);
         }
 
-        public static string ParseTitle(string title)
+        public static string ParseTitle(string title, int siteNum)
         {
             if (string.IsNullOrEmpty(title))
             {
