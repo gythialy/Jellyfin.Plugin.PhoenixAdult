@@ -28,7 +28,7 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteSearchResult>();
             var modelResultsUrls = new List<string>();
             var searchResultsUrls = new List<string>();
-            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
 
             string directSearch = searchTitle.Contains(" ") ? searchTitle.Replace(' ', '-').ToLower() : searchTitle;
             modelResultsUrls.Add($"{Helper.GetSearchBaseURL(siteNum)}/models/{directSearch}.html");

@@ -47,7 +47,7 @@ namespace PhoenixAdult.Sites
                 searchTitle = searchTitle.Replace(sceneId, string.Empty).Trim();
             }
 
-            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var sceneURL in googleResults)
             {
                 if (sceneURL.Contains("/videos/") && !sceneURL.Contains("/page/") && !searchResults.Contains(sceneURL))

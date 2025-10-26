@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,7 +29,7 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
             var searchResults = googleResults.Where(u => u.Contains("/tour1/") && u.EndsWith(".html"));
 
             foreach (var sceneUrl in searchResults)
@@ -96,7 +97,7 @@ namespace PhoenixAdult.Sites
                 if (string.IsNullOrEmpty(actorName) && actorPageUrlNode != null)
                 {
                     string actorPageUrl = actorPageUrlNode.GetAttributeValue("href", string.Empty);
-                    actorName = actorPageUrl.Split('/').Last().Replace(".html", string.Empty).Replace("pornstar_", string.Empty).Replace("_", " ").ToTitleCase();
+                    actorName = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(actorPageUrl.Split('/').Last().Replace(".html", string.Empty).Replace("pornstar_", string.Empty).Replace("_", " "));
                     if (!actorPageUrl.StartsWith("http"))
                     {
                         actorPageUrl = Helper.GetSearchBaseURL(siteNum) + actorPageUrl;

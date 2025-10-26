@@ -373,5 +373,74 @@ namespace PhoenixAdult.Helpers
         {
             return GetProviderBySiteID(48);
         }
+
+        public static string ParseTitle(string title, int siteNum)
+        {
+            if (string.IsNullOrEmpty(title))
+            {
+                return title;
+            }
+
+            var s = Regex.Replace(title, @"w\/(?!\s)", "w/ ", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"\,(?!\s|\d)", ", ");
+            s = s.Replace("_", " ");
+            s = s.Replace("’", "'");
+            s = s.Replace("´", "'");
+
+            var wordList = s.Split(' ').ToList();
+            var final = new List<string>();
+
+            var pattern = new Regex(@"\W");
+            var firstWord = ParseWord(wordList[0]);
+            var cleanFirstWord = pattern.Replace(firstWord, string.Empty);
+            if (cleanFirstWord.Length > 1)
+            {
+                firstWord = char.ToUpper(firstWord[0]) + firstWord.Substring(1);
+            }
+            else
+            {
+                firstWord = firstWord.ToUpper();
+            }
+            final.Add(firstWord);
+
+            for (int i = 1; i < wordList.Count; i++)
+            {
+                final.Add(ParseWord(wordList[i]));
+            }
+
+            var output = string.Join(" ", final);
+            return output;
+        }
+
+        private static string ParseWord(string word)
+        {
+            var lowerExceptions = new List<string> { "a", "y", "n", "an", "of", "the", "and", "for", "to", "onto", "but", "or", "nor", "at", "with", "vs", "in", "on", "com", "co", "org" };
+            var upperExceptions = new List<string> { "bbc", "xxx", "bbw", "bf", "bff", "bts", "pov", "dp", "gf", "bj", "wtf", "cfnm", "bwc", "fm", "tv", "ai", "hd", "milf", "gilf", "dilf", "dtf", "zz", "xxxl", "usa", "nsa", "hr", "ii", "iii", "iv", "bbq", "avn", "xtc", "atv", "joi", "rpg", "wunf", "uk", "asap", "sss", "nf", "pawg" };
+            var symbolsClean = new List<char> { '-', '/', '.', '+', '\'' };
+
+            var pattern = new Regex(@"\W");
+            var cleanWord = pattern.Replace(word, string.Empty);
+
+            if (symbolsClean.Any(s => word.Contains(s)))
+            {
+                return word;
+            }
+            else if (upperExceptions.Contains(cleanWord.ToLower()))
+            {
+                return word.ToUpper();
+            }
+            else if (word.All(char.IsUpper) && !lowerExceptions.Contains(cleanWord.ToLower()))
+            {
+                return word.ToUpper();
+            }
+            else if (!word.All(char.IsLower) && !word.All(char.IsUpper) && !lowerExceptions.Contains(cleanWord.ToLower()))
+            {
+                return word;
+            }
+            else
+            {
+                return lowerExceptions.Contains(cleanWord.ToLower()) ? word.ToLower() : CultureInfo.InvariantCulture.TextInfo.ToTitleCase(word);
+            }
+        }
     }
 }

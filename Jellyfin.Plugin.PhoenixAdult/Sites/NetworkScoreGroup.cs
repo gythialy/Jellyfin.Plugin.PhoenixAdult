@@ -62,7 +62,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
             string urlId = Helper.GetSearchSearchURL(siteNum).Replace(Helper.GetSearchBaseURL(siteNum), string.Empty);
             searchResults.AddRange(googleResults.Where(u => u.Contains(urlId) && !u.Contains("?") && !result.Any(r => Helper.Decode(r.ProviderIds.FirstOrDefault().Value.Split('|')[0]) == u)));
 

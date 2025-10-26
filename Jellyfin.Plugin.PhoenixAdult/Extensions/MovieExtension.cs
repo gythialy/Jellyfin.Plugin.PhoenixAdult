@@ -19,5 +19,20 @@ namespace PhoenixAdult.Extensions
                 movie.Tags = tags.ToArray();
             }
         }
+
+        public static void AddCollection(this Movie movie, string collection)
+        {
+            if (string.IsNullOrEmpty(collection))
+            {
+                return;
+            }
+
+            var collections = movie.Tags?.ToList() ?? new System.Collections.Generic.List<string>();
+            if (!collections.Contains(collection, System.StringComparer.OrdinalIgnoreCase))
+            {
+                collections.Add(collection);
+                movie.Tags = collections.ToArray();
+            }
+        }
     }
 }

@@ -71,7 +71,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var sceneUrl in googleResults)
             {
                 if (sceneUrl.Contains("trailers") && result.All(r => r.ProviderIds[Plugin.Instance.Name].Split('|')[0] != Helper.Encode(sceneUrl)))
