@@ -370,7 +370,9 @@ namespace PhoenixAdult.Sites
     class SearchData
     {
         public string SearchTitle { get; }
+
         public DateTime? SearchDate { get; }
+
         public string Encoded { get; }
 
         public SearchData(string title, DateTime? date)

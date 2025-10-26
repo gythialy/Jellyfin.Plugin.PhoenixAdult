@@ -27,12 +27,19 @@ namespace PhoenixAdult.Sites
         private class NaughtyAmericaScene
         {
             public string Id { get; set; }
+
             public string Title { get; set; }
+
             public string Site { get; set; }
+
             public DateTime PublishedAt { get; set; }
+
             public List<string> Fantasies { get; set; }
+
             public List<string> Performers { get; set; }
+
             public string Synopsis { get; set; }
+
             public List<string> Photos { get; set; }
         }
 
