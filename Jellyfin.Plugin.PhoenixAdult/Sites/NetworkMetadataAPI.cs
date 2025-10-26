@@ -187,11 +187,7 @@ namespace PhoenixAdult.Sites
             if (details["background"] is JObject backgroundObject)
             {
                 backgroundUrl = (string)backgroundObject["large"] ?? (string)backgroundObject["full"] ?? (string)backgroundObject["medium"] ?? (string)backgroundObject["small"];
-            }
-
-            if (!string.IsNullOrEmpty(backgroundUrl))
-            {
-                backgroundUrl = (string)backgroundObject["large"] ?? (string)backgroundObject["full"] ?? (string)backgroundObject["medium"] ?? (string)backgroundObject["small"];
+                result.Add(new RemoteImageInfo { Url = backgroundUrl, Type = ImageType.Backdrop });
             }
 
             return result;

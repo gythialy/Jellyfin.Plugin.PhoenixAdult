@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -16,7 +15,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
-using PhoenixAdult.Helpers.Utils;
 
 #if __EMBY__
 #else
@@ -65,7 +63,7 @@ namespace PhoenixAdult.Sites
                 { "Referer", searchUrl },
             };
 
-            var http = await HTTP.Request(searchUrl, HttpMethod.Post, param, cancellationToken, headers).ConfigureAwait(false);
+            var http = await HTTP.Request(searchUrl, param, cancellationToken, headers).ConfigureAwait(false);
             return http.IsOK ? JObject.Parse(http.Content) : null;
         }
 
@@ -77,7 +75,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var searchResults = await GetDataFromAPI(searchQuery, "query", searchTitle, siteNum[0], cancellationToken);
+            var searchResults = await GetDataFromAPI(searchQuery, "query", searchTitle, siteNum, cancellationToken);
             var resultToken = searchResults?.SelectToken("data.search.search.result");
             if (resultToken == null || resultToken.Type == JTokenType.Null)
             {
@@ -90,7 +88,7 @@ namespace PhoenixAdult.Sites
                 {
                     string sceneName = searchResult["name"].ToString();
                     string releaseDateStr = searchDate?.ToString("yyyy-MM-dd") ?? string.Empty;
-                    string curID = Helper.Encode($"{searchResult["itemId"].ToString()}|{releaseDateStr}");
+                    string curID = Helper.Encode($"{searchResult["itemId"]}|{siteNum[0]}|{releaseDateStr}");
 
                     var item = new RemoteSearchResult
                     {
@@ -121,11 +119,9 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = Helper.Decode(sceneID[0]).Split('|');
             string videoId = providerIds[0];
-            string sceneDate = providerIds[1];
+            string sceneDate = providerIds[2];
 
-            string videoId = Helper.Decode(videoIdEncoded);
-
-            var detailsPageElements = await GetDataFromAPI(findVideoQuery, "videoId", videoId, siteNumVal, cancellationToken);
+            var detailsPageElements = await GetDataFromAPI(findVideoQuery, "videoId", videoId, siteNum, cancellationToken);
             var sceneData = detailsPageElements?.SelectToken("data.video.find.result");
             if (sceneData == null || sceneData.Type == JTokenType.Null)
             {
@@ -167,7 +163,7 @@ namespace PhoenixAdult.Sites
                 string actorTalentId = actorLink["talent"]["talentId"].ToString();
 
                 var actorPhotoPaths = new List<string> { $"/members/models/{actorTalentId}/profile-sm.jpg" };
-                var actorPhotoData = await GetDataFromAPI(assetQuery, "paths", actorPhotoPaths, siteNumVal, cancellationToken);
+                var actorPhotoData = await GetDataFromAPI(assetQuery, "paths", actorPhotoPaths, siteNum, cancellationToken);
                 string actorPhotoURL = actorPhotoData?.SelectToken("data.asset.batch.result[0].serve.uri")?.ToString() ?? string.Empty;
 
                 result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
@@ -180,23 +176,21 @@ namespace PhoenixAdult.Sites
         {
             var images = new List<RemoteImageInfo>();
 
-            string[] providerIds = sceneID[0].Split('|');
-            string videoIdEncoded = providerIds[0];
-            int siteNumVal = int.Parse(providerIds[1]);
+            string[] providerIds = Helper.Decode(sceneID[0]).Split('|');
+            string videoId = providerIds[0];
 
-            string videoId = Helper.Decode(videoIdEncoded);
             var videoIdParts = videoId.Split(':');
             string modelId = videoIdParts[0];
             string scene = videoIdParts[videoIdParts.Length - 2];
             int sceneNumInt = int.Parse(Regex.Match(scene, @"\d+").Value);
 
-            var detailsPageElements = await GetDataFromAPI(findVideoQuery, "videoId", videoId, siteNumVal, cancellationToken);
+            var detailsPageElements = await GetDataFromAPI(findVideoQuery, "videoId", videoId, siteNum, cancellationToken);
             var sceneData = detailsPageElements?.SelectToken("data.video.find.result");
             if (sceneData == null || sceneData.Type == JTokenType.Null)
             {
                 return images;
             }
-            string studio = Helper.GetSearchSiteName(new[] { siteNumVal });
+            string studio = Helper.GetSearchSiteName(siteNum);
 
             var imagePaths = new List<string>
             {
@@ -208,7 +202,7 @@ namespace PhoenixAdult.Sites
                 imagePaths.Add($"/members/models/{modelId}/scenes/{scene}/photos/thumbs/{studio.ToLower()}-{modelId}-{sceneNumInt}-{i}.jpg");
             }
 
-            var imagesData = await GetDataFromAPI(assetQuery, "paths", imagePaths, siteNumVal, cancellationToken);
+            var imagesData = await GetDataFromAPI(assetQuery, "paths", imagePaths, siteNum, cancellationToken);
             var resultToken = imagesData?.SelectToken("data.asset.batch.result");
             if (resultToken != null && resultToken.Type != JTokenType.Null)
             {

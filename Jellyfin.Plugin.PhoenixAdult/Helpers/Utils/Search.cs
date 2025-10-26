@@ -66,8 +66,7 @@ namespace PhoenixAdult.Helpers.Utils
             try
             {
                 // Fallback to DuckDuckGo
-                var client = new DuckDuckGoSearchClient();
-                var searchResults = await client.GetSearchResultsAsync(searchTerm);
+                var searchResults = await DDGClient.SearchAsync(searchTerm);
                 if (searchResults != null)
                 {
                     results.AddRange(searchResults.Select(result => result.Url));
