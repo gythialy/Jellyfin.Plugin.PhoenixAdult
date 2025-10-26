@@ -44,22 +44,9 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            HtmlNodeCollection searchResults;
-            using (JsonDocument doc = JsonDocument.Parse(httpResult.Content))
-            {
-                JsonElement root = doc.RootElement;
-                if (root.TryGetProperty("html", out JsonElement htmlElement))
-                {
-                    string htmlContent = htmlElement.GetString();
-                    var htmlDoc = new HtmlDocument();
-                    htmlDoc.LoadHtml(htmlContent);
-                    searchResults = htmlDoc.DocumentNode.ChildNodes;
-                }
-                else
-                {
-                    return result;
-                }
-            }
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(httpResult.Content);
+            var searchResults = htmlDoc.DocumentNode.SelectNodes("//a[contains(@class, \"video-card\")]");
 
             if (searchResults == null)
             {
@@ -76,15 +63,17 @@ namespace PhoenixAdult.Sites
                 string curId = Helper.Encode(sceneUrl);
                 string releaseDate = string.Empty;
                 var dateNode = node.SelectSingleNode(".//time");
-                if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+                if (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "MM/dd/yy", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsedDate))
                 {
                     releaseDate = parsedDate.ToString("yyyy-MM-dd");
                 }
 
+                string displayDate = !string.IsNullOrEmpty(releaseDate) ? releaseDate : string.Empty;
+
                 result.Add(new RemoteSearchResult
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
-                    Name = $"{titleNoFormatting} [{subsite}] {releaseDate}",
+                    Name = $"{titleNoFormatting} [{subsite}] {displayDate}",
                     SearchProviderName = Plugin.Instance.Name,
                 });
             }
@@ -118,10 +107,10 @@ namespace PhoenixAdult.Sites
             HtmlNodeCollection actorNodes;
             try
             {
-                movie.Name = detailsPageElements.SelectSingleNode("//div[@class='level-left']")?.InnerText.Trim();
-                movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='column is-three-fifths']")?.InnerText.Replace("Episode Summary", string.Empty).Trim();
+                movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[contains(@class, 'title')]")?.InnerText.Trim(), siteNum[0]);
+                movie.Overview = detailsPageElements.SelectSingleNode("//div[contains(., 'Episode Summary')]/p")?.InnerText.Trim();
                 movie.AddStudio("Kelly Madison Productions");
-                actorNodes = detailsPageElements.SelectNodes("//a[@class='is-underlined']");
+                actorNodes = detailsPageElements.SelectNodes("//p[contains(., 'Starring')]//a[contains(@href, '/models/')]");
             }
             catch
             {
@@ -204,6 +193,7 @@ namespace PhoenixAdult.Sites
             string sceneId = Helper.Decode(sceneID[0].Split('|')[0]).Split('/').Last();
             images.Add(new RemoteImageInfo { Url = $"https://tour-cdn.kellymadisonmedia.com/content/episode/poster_image/{sceneId}/poster.jpg", Type = ImageType.Primary });
             images.Add(new RemoteImageInfo { Url = $"https://tour-cdn.kellymadisonmedia.com/content/episode/episode_thumb_image_1/{sceneId}/1.jpg" });
+            images.Add(new RemoteImageInfo { Url = $"https://tour-cdn.kellymadisonmedia.com/content/episode/episode_thumb_image_1/{sceneId}/01.jpg" });
             return Task.FromResult<IEnumerable<RemoteImageInfo>>(images);
         }
     }
