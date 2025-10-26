@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -36,7 +37,7 @@ namespace PhoenixAdult.Sites
                 searchUrl = $"{searchUrl}?_lang=en";
             }
 
-            var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
+            var httpResult = await HTTP.Request(searchUrl, cancellationToken);
             if (httpResult.IsOK)
             {
                 var searchPageElements = HTML.ElementFromString(httpResult.Content);
@@ -47,11 +48,31 @@ namespace PhoenixAdult.Sites
                     {
                         string sceneUrl = searchResult.SelectSingleNode(siteXPath["searchURL"]).GetAttributeValue("href", string.Empty).Split('?')[0];
                         directSearchResults.Add(sceneUrl);
-                        var searchResultData = XPathResultBuilder(siteXPath["searchTitle"], siteXPath["searchDate"], siteXPath["searchDateFormat"], sceneUrl, sceneUrl, lang, siteNum, searchData, searchResult);
-                        if (searchResultData != null)
+
+                        string titleNoFormatting = searchResult.SelectSingleNode(siteXPath["searchTitle"]).InnerText.Trim();
+                        string curId = Helper.Encode(sceneUrl);
+
+                        string releaseDate = string.Empty;
+                        var dateNode = searchResult.SelectSingleNode(siteXPath["searchDate"]);
+                        if (dateNode != null)
                         {
-                            result.Add(searchResultData);
+                            string cleanDate = Regex.Replace(dateNode.InnerText.Split(':').Last().Trim(), @"(\d)(st|nd|rd|th)", "$1");
+                            if (DateTime.TryParseExact(cleanDate, siteXPath["searchDateFormat"], CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                            {
+                                releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                            }
                         }
+                        else if (searchDate.HasValue)
+                        {
+                            releaseDate = searchDate.Value.ToString("yyyy-MM-dd");
+                        }
+
+                        result.Add(new RemoteSearchResult
+                        {
+                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                            Name = $"{releaseDate} [{Helper.GetSearchSiteName(siteNum)}] {Helper.ParseTitle(titleNoFormatting, siteNum[0])}",
+                            SearchProviderName = Plugin.Instance.Name,
+                        });
                     }
                 }
             }
@@ -68,7 +89,7 @@ namespace PhoenixAdult.Sites
 
             foreach (var sceneURL in searchResults)
             {
-                var resultData = null;
+                RemoteSearchResult resultData = null;
                 var url = sceneURL;
                 if (siteNum[0] >= 1851 && siteNum[0] <= 1859)
                 {
@@ -77,7 +98,7 @@ namespace PhoenixAdult.Sites
 
                 if (url.Contains("/model/"))
                 {
-                    var actorHttp = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
+                    var actorHttp = await HTTP.Request(url, cancellationToken);
                     if (actorHttp.IsOK)
                     {
                         var actorPageElements = HTML.ElementFromString(actorHttp.Content);
@@ -86,11 +107,35 @@ namespace PhoenixAdult.Sites
                         {
                             foreach (var searchResult in actorSearchNodes)
                             {
-                                var searchUrl = searchResult.SelectSingleNode(siteXPath["searchURL"]).GetAttributeValue("href", string.Empty).Split('?')[0].Replace("dev.", string.Empty);
-                                if (!searchUrl.Contains("/join"))
+                                var actorSceneUrl = searchResult.SelectSingleNode(siteXPath["searchURL"]).GetAttributeValue("href", string.Empty).Split('?')[0].Replace("dev.", string.Empty);
+                                if (!actorSceneUrl.Contains("/join") && !directSearchResults.Contains(actorSceneUrl))
                                 {
-                                    resultData = XPathResultBuilder(siteXPath["searchTitle"], siteXPath["searchDate"], siteXPath["searchDateFormat"], searchUrl, searchUrl, lang, siteNum, searchData, searchResult, directSearchResults);
+                                    string titleNoFormatting = searchResult.SelectSingleNode(siteXPath["searchTitle"]).InnerText.Trim();
+                                    string curId = Helper.Encode(actorSceneUrl);
+
+                                    string releaseDate = string.Empty;
+                                    var dateNode = searchResult.SelectSingleNode(siteXPath["searchDate"]);
+                                    if (dateNode != null)
+                                    {
+                                        string cleanDate = Regex.Replace(dateNode.InnerText.Split(':').Last().Trim(), @"(\d)(st|nd|rd|th)", "$1");
+                                        if (DateTime.TryParseExact(cleanDate, siteXPath["searchDateFormat"], CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                                        {
+                                            releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                                        }
+                                    }
+                                    else if (searchDate.HasValue)
+                                    {
+                                        releaseDate = searchDate.Value.ToString("yyyy-MM-dd");
+                                    }
+
+                                    resultData = new RemoteSearchResult
+                                    {
+                                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                                        Name = $"{releaseDate} [{Helper.GetSearchSiteName(siteNum)}] {Helper.ParseTitle(titleNoFormatting, siteNum[0])}",
+                                        SearchProviderName = Plugin.Instance.Name,
+                                    };
                                 }
+
                                 if (resultData != null)
                                 {
                                     result.Add(resultData);
@@ -101,11 +146,38 @@ namespace PhoenixAdult.Sites
                 }
                 else
                 {
-                    var sceneHttp = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
+                    var sceneHttp = await HTTP.Request(url, cancellationToken);
                     if (sceneHttp.IsOK)
                     {
-                        var detailsPageElements = HTML.ElementFromString(sceneHttp.Content);
-                        resultData = XPathResultBuilder(siteXPath["title"], siteXPath["date"], siteXPath["dateFormat"], sceneHttp.Url, sceneURL.Split('?')[0], lang, siteNum, searchData, detailsPageElements, directSearchResults);
+                        if (!directSearchResults.Contains(sceneURL.Split('?')[0]))
+                        {
+                            var detailsPageElements = HTML.ElementFromString(sceneHttp.Content);
+                            string titleNoFormatting = detailsPageElements.SelectSingleNode(siteXPath["title"]).InnerText.Trim();
+                            string curId = Helper.Encode(sceneURL.Split('?')[0]);
+
+                            string releaseDate = string.Empty;
+                            var dateNode = detailsPageElements.SelectSingleNode(siteXPath["date"]);
+                            if (dateNode != null)
+                            {
+                                string cleanDate = Regex.Replace(dateNode.InnerText.Split(':').Last().Trim(), @"(\d)(st|nd|rd|th)", "$1");
+                                if (DateTime.TryParseExact(cleanDate, siteXPath["dateFormat"], CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                                {
+                                    releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                                }
+                            }
+                            else if (searchDate.HasValue)
+                            {
+                                releaseDate = searchDate.Value.ToString("yyyy-MM-dd");
+                            }
+
+                            resultData = new RemoteSearchResult
+                            {
+                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                                Name = $"{releaseDate} [{Helper.GetSearchSiteName(siteNum)}] {Helper.ParseTitle(titleNoFormatting, siteNum[0])}",
+                                SearchProviderName = Plugin.Instance.Name,
+                            };
+                        }
+
                         if (resultData != null)
                         {
                             result.Add(resultData);
@@ -131,7 +203,7 @@ namespace PhoenixAdult.Sites
                 sceneUrl = $"{sceneUrl}?_lang=en";
             }
 
-            var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
+            var httpResult = await HTTP.Request(sceneUrl, cancellationToken);
             if (!httpResult.IsOK)
             {
                 return result;
@@ -141,7 +213,7 @@ namespace PhoenixAdult.Sites
             var siteXPath = GetXPathMap(siteNum);
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode(siteXPath["title"]).InnerText.Trim());
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode(siteXPath["title"]).InnerText.Trim(), siteNum[0]);
 
             string description = string.Empty;
             foreach (var desc in detailsPageElements.SelectNodes(siteXPath["summary"]))
@@ -163,7 +235,7 @@ namespace PhoenixAdult.Sites
                 movie.AddStudio("Radical Cash");
             }
 
-            string tagline = string.Empty;
+            string tagline;
             if (siteNum[0] == 1066)
             {
                 tagline = $"{Helper.GetSearchSiteName(siteNum)}: {detailsPageElements.SelectSingleNode("//p[@class='series']").InnerText.Trim()}";
@@ -216,7 +288,7 @@ namespace PhoenixAdult.Sites
                     string actorPhotoUrl = actor.SelectSingleNode(siteXPath["actorPhoto"]).GetAttributeValue("src", string.Empty);
                     if (siteNum[0] >= 1860 && siteNum[0] <= 1862)
                     {
-                        var actorHttp = await HTTP.Request(actorPhotoUrl, HttpMethod.Get, cancellationToken);
+                        var actorHttp = await HTTP.Request(actorPhotoUrl, cancellationToken);
                         if (actorHttp.IsOK)
                         {
                             var modelPageElements = HTML.ElementFromString(actorHttp.Content);
@@ -239,7 +311,7 @@ namespace PhoenixAdult.Sites
                 sceneUrl = $"{sceneUrl}?_lang=en";
             }
 
-            var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
+            var httpResult = await HTTP.Request(sceneUrl, cancellationToken);
             if (!httpResult.IsOK)
             {
                 return images;
@@ -270,38 +342,6 @@ namespace PhoenixAdult.Sites
             }
 
             return images;
-        }
-
-        private RemoteSearchResult XPathResultBuilder(string titleXPath, string dateXPath, string dateFormat, string redirectURL, string sceneURL, string lang, int[] siteNum, SearchQuery searchData, HtmlNode searchResult, List<string> searchResults = null)
-        {
-            if (searchResults != null && !searchResults.Contains(redirectURL))
-            {
-                string titleNoFormatting = searchResult.SelectSingleNode(titleXPath).InnerText.Trim();
-                string curId = Helper.Encode(sceneURL);
-
-                string releaseDate = string.Empty;
-                var dateNode = searchResult.SelectSingleNode(dateXPath);
-                if (dateNode != null)
-                {
-                    string cleanDate = Regex.Replace(dateNode.InnerText.Split(':').Last().Trim(), @"(\d)(st|nd|rd|th)", "$1");
-                    if (DateTime.TryParseExact(cleanDate, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
-                    {
-                        releaseDate = parsedDate.ToString("yyyy-MM-dd");
-                    }
-                }
-                else if (searchData.date.HasValue)
-                {
-                    releaseDate = searchData.date.Value.ToString("yyyy-MM-dd");
-                }
-
-                return new RemoteSearchResult
-                {
-                    ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
-                    Name = $"{releaseDate} [{Helper.GetSearchSiteName(siteNum)}] {Helper.ParseTitle(titleNoFormatting)}",
-                    SearchProviderName = Plugin.Instance.Name,
-                };
-            }
-            return null;
         }
 
         private Dictionary<string, string> GetXPathMap(int[] siteNum)
