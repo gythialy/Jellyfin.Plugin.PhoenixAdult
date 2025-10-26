@@ -60,7 +60,6 @@ namespace PhoenixAdult.Sites
                 string sceneUrl = node.GetAttributeValue("href", string.Empty);
                 string episodeId = node.SelectSingleNode(".//span[@class='video-title']")?.InnerText.Split('#').Last().Trim();
                 string subsite = node.SelectSingleNode(".//span[@class='badge badge-brand']")?.InnerText.Trim().Replace("PF", "PornFidelity").Replace("TF", "TeenFidelity").Replace("KM", "Kelly Madison");
-                string curId = Helper.Encode(sceneUrl);
                 string releaseDate = string.Empty;
                 var dateNode = node.SelectSingleNode(".//time");
                 if (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "MM/dd/yy", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsedDate))
@@ -69,10 +68,11 @@ namespace PhoenixAdult.Sites
                 }
 
                 string displayDate = !string.IsNullOrEmpty(releaseDate) ? releaseDate : string.Empty;
+                string curId = Helper.Encode($"{sceneUrl}|{releaseDate}");
 
                 result.Add(new RemoteSearchResult
                 {
-                    ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
+                    ProviderIds = { { Plugin.Instance.Name, curId } },
                     Name = $"{titleNoFormatting} [{subsite}] {displayDate}",
                     SearchProviderName = Plugin.Instance.Name,
                 });
@@ -89,11 +89,9 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string[] providerIds = sceneID[0].Split('|');
-            string sceneUrl = Helper.Decode(providerIds[0]);
-            string sceneDate = providerIds[2];
-            string title = providerIds.Length > 3 ? Helper.Decode(providerIds[3]) : null;
-            var searchResult = providerIds.Length > 4 ? HTML.ElementFromString(Helper.Decode(providerIds[4])) : null;
+            string[] providerIds = Helper.Decode(sceneID[0]).Split('|');
+            string sceneUrl = providerIds[0];
+            string sceneDate = providerIds[1];
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken, null, _cookies);
             if (!httpResult.IsOK)
@@ -103,11 +101,13 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
+            string title = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[contains(@class, 'title')]")?.InnerText.Trim(), siteNum);
+
             var movie = (Movie)result.Item;
             HtmlNodeCollection actorNodes;
             try
             {
-                movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[contains(@class, 'title')]")?.InnerText.Trim(), siteNum[0]);
+                movie.Name = title;
                 movie.Overview = detailsPageElements.SelectSingleNode("//div[contains(., 'Episode Summary')]/p")?.InnerText.Trim();
                 movie.AddStudio("Kelly Madison Productions");
                 actorNodes = detailsPageElements.SelectNodes("//p[contains(., 'Starring')]//a[contains(@href, '/models/')]");
@@ -116,7 +116,7 @@ namespace PhoenixAdult.Sites
             {
                 movie.Name = title;
                 movie.AddStudio("Kelly Madison Productions");
-                actorNodes = searchResult.SelectNodes(".//a[contains(@href, '/models/')]");
+                actorNodes = detailsPageElements.SelectNodes(".//a[contains(@href, '/models/')]");
             }
 
             string tagline = "Kelly Madison";
@@ -190,7 +190,7 @@ namespace PhoenixAdult.Sites
         public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string sceneId = Helper.Decode(sceneID[0].Split('|')[0]).Split('/').Last();
+            string sceneId = Helper.Decode(sceneID[0]).Split('|')[0].Split('/').Last();
             images.Add(new RemoteImageInfo { Url = $"https://tour-cdn.kellymadisonmedia.com/content/episode/poster_image/{sceneId}/poster.jpg", Type = ImageType.Primary });
             images.Add(new RemoteImageInfo { Url = $"https://tour-cdn.kellymadisonmedia.com/content/episode/episode_thumb_image_1/{sceneId}/1.jpg" });
             images.Add(new RemoteImageInfo { Url = $"https://tour-cdn.kellymadisonmedia.com/content/episode/episode_thumb_image_1/{sceneId}/01.jpg" });
