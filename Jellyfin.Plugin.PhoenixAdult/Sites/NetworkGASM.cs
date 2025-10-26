@@ -64,7 +64,7 @@ namespace PhoenixAdult.Sites
                     var searchResult = HTML.ElementFromString(httpResult.Content);
                     string titleNoFormatting = searchResult.SelectSingleNode("//h1[@class='post_title']/span")?.InnerText;
                     string curId = Helper.Encode(sceneUrl);
-                    string subSite = Helper.ParseTitle(searchResult.SelectSingleNode("//a[contains(@href, '/studio/profile/')]")?.InnerText.Split(':').Last().Trim());
+                    string subSite = Helper.ParseTitle(searchResult.SelectSingleNode("//a[contains(@href, '/studio/profile/')]")?.InnerText.Split(':').Last().Trim(), siteNum);
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
@@ -134,17 +134,17 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[@class='post_title']/span")?.InnerText.Trim());
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[@class='post_title']/span")?.InnerText.Trim(), siteNum);
             movie.Overview = detailsPageElements.SelectSingleNode("//h2[@class='post_description']")?.InnerText.Replace("´", "'").Replace("’", "'");
             movie.AddStudio("GASM");
 
-            string tagline = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//a[contains(@href, '/studio/profile/')]")?.InnerText.Trim());
+            string tagline = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//a[contains(@href, '/studio/profile/')]")?.InnerText.Trim(), siteNum);
             movie.AddTag(tagline);
 
             var dvd = detailsPageElements.SelectSingleNode("//div[@class='post_item dvd']/h1");
             if (dvd != null)
             {
-                movie.AddCollection(Helper.ParseTitle(dvd.InnerText.ToLower()));
+                movie.AddCollection(Helper.ParseTitle(dvd.InnerText.ToLower(), siteNum));
             }
 
             var dateNode = detailsPageElements.SelectSingleNode("//h3[@class='post_date']");

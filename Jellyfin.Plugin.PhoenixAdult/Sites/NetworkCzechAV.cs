@@ -79,7 +79,7 @@ namespace PhoenixAdult.Sites
                     }
                     else
                     {
-                        titleNoFormatting = Helper.ParseTitle(node.SelectSingleNode("./a/h1|./a/h2")?.InnerText.Trim());
+                        titleNoFormatting = Helper.ParseTitle(node.SelectSingleNode("./a/h1|./a/h2")?.InnerText.Trim(), siteNum);
                         curId = Helper.Encode(node.SelectSingleNode("./a")?.GetAttributeValue("href", string.Empty));
                         if (searchDate.HasValue)
                         {
@@ -127,11 +127,11 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             if (siteNum[0] == 1583)
             {
-                movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//span[@class='name']")?.InnerText.Trim());
+                movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//span[@class='name']")?.InnerText.Trim(), siteNum);
             }
             else
             {
-                movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[@class='nice-title']|//h2[@class='nice-title']")?.InnerText.Split(':').Last().Trim());
+                movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[@class='nice-title']|//h2[@class='nice-title']")?.InnerText.Split(':').Last().Trim(), siteNum);
             }
 
             var descriptionNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'desc')]//p");

@@ -43,7 +43,7 @@ namespace PhoenixAdult.Sites
                     var titleNode = node.SelectSingleNode("./div/a");
                     if (titleNode != null)
                     {
-                        string titleNoFormatting = Helper.ParseTitle(titleNode.InnerText.Trim());
+                        string titleNoFormatting = Helper.ParseTitle(titleNode.InnerText.Trim(), siteNum);
                         string sceneUrl = titleNode.GetAttributeValue("href", string.Empty);
                         if (sceneUrl.Contains("_vids.html", StringComparison.OrdinalIgnoreCase))
                         {
@@ -94,7 +94,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//span[@class='title_bar_hilite']")?.InnerText.Trim());
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//span[@class='title_bar_hilite']")?.InnerText.Trim(), siteNum);
             movie.Overview = detailsPageElements.SelectSingleNode("//span[@class='update_description']")?.InnerText.Trim();
 
             string tagline = Helper.GetSearchSiteName(siteNum);
@@ -118,7 +118,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var genre in genreNodes)
                 {
-                    movie.AddGenre(Helper.ParseTitle(genre.InnerText.Trim()));
+                    movie.AddGenre(Helper.ParseTitle(genre.InnerText.Trim(), siteNum));
                 }
             }
 

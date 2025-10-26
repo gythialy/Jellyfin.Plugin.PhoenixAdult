@@ -39,7 +39,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var node in searchNodes)
                 {
-                    string titleNoFormatting = Helper.ParseTitle(node.SelectSingleNode(".//h2")?.InnerText.Trim());
+                    string titleNoFormatting = Helper.ParseTitle(node.SelectSingleNode(".//h2")?.InnerText.Trim(), siteNum);
                     string sceneUrl = node.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty);
                     if (!sceneUrl.StartsWith("http"))
                     {
@@ -96,7 +96,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//meta[@itemprop='name']/@content|//h1/text()")?.GetAttributeValue("content", string.Empty).Split('|')[0].Split(new[] { "- Free Video" }, StringSplitOptions.None)[0].Trim());
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//meta[@itemprop='name']/@content|//h1/text()")?.GetAttributeValue("content", string.Empty).Split('|')[0].Split(new[] { "- Free Video" }, StringSplitOptions.None)[0].Trim(), siteNum);
 
             string summary = string.Empty;
             var summaryNodes = (siteNum[0] >= 1797 && siteNum[0] <= 1798)

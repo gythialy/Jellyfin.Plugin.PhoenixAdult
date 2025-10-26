@@ -70,14 +70,14 @@ namespace PhoenixAdult.Sites
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
-                            Name = $"{releaseDate} [{Helper.GetSearchSiteName(siteNum)}] {Helper.ParseTitle(titleNoFormatting, siteNum[0])}",
+                            Name = $"{releaseDate} [{Helper.GetSearchSiteName(siteNum)}] {Helper.ParseTitle(titleNoFormatting, siteNum)}",
                             SearchProviderName = Plugin.Instance.Name,
                         });
                     }
                 }
             }
 
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var sceneURL in googleResults)
             {
                 var url = sceneURL.Split('?')[0].Replace("dev.", string.Empty);
@@ -131,7 +131,7 @@ namespace PhoenixAdult.Sites
                                     resultData = new RemoteSearchResult
                                     {
                                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
-                                        Name = $"{releaseDate} [{Helper.GetSearchSiteName(siteNum)}] {Helper.ParseTitle(titleNoFormatting, siteNum[0])}",
+                                        Name = $"{releaseDate} [{Helper.GetSearchSiteName(siteNum)}] {Helper.ParseTitle(titleNoFormatting, siteNum)}",
                                         SearchProviderName = Plugin.Instance.Name,
                                     };
                                 }
@@ -173,7 +173,7 @@ namespace PhoenixAdult.Sites
                             resultData = new RemoteSearchResult
                             {
                                 ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
-                                Name = $"{releaseDate} [{Helper.GetSearchSiteName(siteNum)}] {Helper.ParseTitle(titleNoFormatting, siteNum[0])}",
+                                Name = $"{releaseDate} [{Helper.GetSearchSiteName(siteNum)}] {Helper.ParseTitle(titleNoFormatting, siteNum)}",
                                 SearchProviderName = Plugin.Instance.Name,
                             };
                         }
@@ -213,7 +213,7 @@ namespace PhoenixAdult.Sites
             var siteXPath = GetXPathMap(siteNum);
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode(siteXPath["title"]).InnerText.Trim(), siteNum[0]);
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode(siteXPath["title"]).InnerText.Trim(), siteNum);
 
             string description = string.Empty;
             foreach (var desc in detailsPageElements.SelectNodes(siteXPath["summary"]))

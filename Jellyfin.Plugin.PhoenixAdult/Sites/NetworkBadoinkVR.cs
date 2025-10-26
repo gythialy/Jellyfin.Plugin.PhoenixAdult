@@ -72,7 +72,7 @@ namespace PhoenixAdult.Sites
                     {
                         foreach (var node in searchNodes)
                         {
-                            string titleNoFormatting = Helper.ParseTitle(node.SelectSingleNode(".//a[contains(@class, 'video-card-title')]")?.GetAttributeValue("title", string.Empty));
+                            string titleNoFormatting = Helper.ParseTitle(node.SelectSingleNode(".//a[contains(@class, 'video-card-title')]")?.GetAttributeValue("title", string.Empty), siteNum);
                             string curId = Helper.Encode(node.SelectSingleNode(".//a[contains(@class, 'video-card-title')]")?.GetAttributeValue("href", string.Empty));
                             string girlName = node.SelectSingleNode(".//a[@class='video-card-link']")?.InnerText;
                             string releaseDate = string.Empty;
@@ -119,7 +119,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[contains(@class, 'video-title')]")?.InnerText.Trim());
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[contains(@class, 'video-title')]")?.InnerText.Trim(), siteNum);
             movie.Overview = detailsPageElements.SelectSingleNode("//p[@class='video-description']")?.InnerText.Trim();
             movie.AddStudio("BadoinkVR");
 

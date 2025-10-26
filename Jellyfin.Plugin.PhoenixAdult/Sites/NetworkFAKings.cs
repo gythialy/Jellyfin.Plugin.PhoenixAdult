@@ -42,9 +42,9 @@ namespace PhoenixAdult.Sites
                         foreach (var node in searchNodes)
                         {
                             var titleNode = node.SelectSingleNode(".//h3");
-                            string titleNoFormatting = Helper.ParseTitle(titleNode?.InnerText.Trim());
+                            string titleNoFormatting = Helper.ParseTitle(titleNode?.InnerText.Trim(), siteNum);
                             string curId = Helper.Encode(node.SelectSingleNode(".//@href")?.GetAttributeValue("href", string.Empty));
-                            string subSite = Helper.ParseTitle(node.SelectSingleNode(".//strong/a")?.InnerText.Trim());
+                            string subSite = Helper.ParseTitle(node.SelectSingleNode(".//strong/a")?.InnerText.Trim(), siteNum);
                             string releaseDate = string.Empty;
                             var dateNode = node.SelectSingleNode(".//p[@class='txtmininfo calen sinlimite']");
                             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
@@ -87,11 +87,11 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim());
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim(), siteNum);
             movie.Overview = detailsPageElements.SelectSingleNode("//span[@class='grisoscuro']")?.InnerText.Trim();
             movie.AddStudio("FAKings");
 
-            string tagline = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//strong[contains(., 'Serie')]//following-sibling::a")?.InnerText.Trim());
+            string tagline = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//strong[contains(., 'Serie')]//following-sibling::a")?.InnerText.Trim(), siteNum);
             movie.AddTag(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))

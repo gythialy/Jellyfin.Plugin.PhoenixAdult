@@ -125,7 +125,7 @@ namespace PhoenixAdult.Sites
                 {
                     foreach (var searchResult in searchResults)
                     {
-                        string titleNoFormatting = Helper.ParseTitle(searchResult["title"].ToString());
+                        string titleNoFormatting = Helper.ParseTitle(searchResult["title"].ToString(), siteNum);
                         string curId = searchResult[sceneType == "scenes" ? "clip_id" : "movie_id"].ToString();
                         string releaseDate = string.Empty;
                         if (DateTime.TryParse(searchResult[sceneType == "scenes" ? "release_date" : "date_created"].ToString(), out var parsedDate))
@@ -174,7 +174,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements["title"].ToString());
+            movie.Name = Helper.ParseTitle(detailsPageElements["title"].ToString(), siteNum);
             movie.Overview = detailsPageElements["description"].ToString().Replace("</br>", "\n").Replace("<br>", "\n");
             movie.AddStudio(detailsPageElements["network_name"]?.ToString() ?? detailsPageElements["studio_name"]?.ToString());
 

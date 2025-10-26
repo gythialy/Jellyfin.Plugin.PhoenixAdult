@@ -26,7 +26,7 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             var searchResults = googleResults.Where(u => u.Contains("/updates/") && u.Contains("/tour_hwxxx/"));
 
             foreach (var sceneUrl in searchResults)

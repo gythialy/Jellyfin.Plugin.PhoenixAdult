@@ -60,7 +60,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var searchResult in modelContents)
                 {
-                    string titleNoFormatting = Helper.ParseTitle(searchResult["title"].ToString());
+                    string titleNoFormatting = Helper.ParseTitle(searchResult["title"].ToString(), siteNum);
                     string curId = Helper.Encode(searchResult["slug"].ToString());
                     string releaseDate = string.Empty;
                     if (DateTime.TryParse(searchResult["publish_date"].ToString(), out var parsedDate))
@@ -109,7 +109,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = JObject.Parse(httpResult.Content)["pageProps"]["content"];
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements["title"].ToString());
+            movie.Name = Helper.ParseTitle(detailsPageElements["title"].ToString(), siteNum);
             movie.Overview = detailsPageElements["description"].ToString();
             movie.AddStudio("Stepped Up Media");
 

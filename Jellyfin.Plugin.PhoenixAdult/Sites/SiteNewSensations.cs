@@ -39,7 +39,7 @@ namespace PhoenixAdult.Sites
                 $"{Helper.GetSearchSearchURL(siteNum)}dvds/{searchTitle.Replace(" ", "-")}.html",
             };
 
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var url in googleResults)
             {
                 if ((url.Contains("/updates/") || url.Contains("/dvds/") || url.Contains("/scenes/")) && (url.Contains("/tour_ns/") || url.Contains("/tour_famxxx/")))

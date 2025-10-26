@@ -96,7 +96,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var movieUrl in googleResults)
             {
                 string url = movieUrl.Split('-')[0].Replace("http:", "https:");

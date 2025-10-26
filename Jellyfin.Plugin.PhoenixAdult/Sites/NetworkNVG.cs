@@ -54,7 +54,7 @@ namespace PhoenixAdult.Sites
                 searchTitle = searchTitle.Replace(id.ToString(), string.Empty).Trim();
             }
 
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             var searchResults = googleResults.Where(u => !u.Contains("/tag/") && !u.Contains("/category/"));
 
             if (!searchResults.Any() && sceneId.HasValue)

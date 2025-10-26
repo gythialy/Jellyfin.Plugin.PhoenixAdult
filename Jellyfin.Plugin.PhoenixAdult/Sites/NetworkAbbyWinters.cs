@@ -51,7 +51,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var sceneURL in googleResults)
             {
                 var url = sceneURL.Replace("/cn/", "/").Replace("/de/", "/").Replace("/jp/", "/").Replace("/ja/", "/").Replace("/en/", "/");
@@ -71,8 +71,8 @@ namespace PhoenixAdult.Sites
                     continue;
                 }
 
-                string titleNoFormatting = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//title")?.InnerText.Split(':').Last().Split('|')[0].Trim());
-                string subSite = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@id='shoot-featured-image']//h4")?.InnerText.Trim());
+                string titleNoFormatting = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//title")?.InnerText.Split(':').Last().Split('|')[0].Trim(), siteNum);
+                string subSite = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@id='shoot-featured-image']//h4")?.InnerText.Trim(), siteNum);
                 string curID = Helper.Encode(sceneURL);
                 string modelURL = detailsPageElements.SelectSingleNode("//tr[contains(., 'Scene')]//a")?.GetAttributeValue("href", string.Empty);
 
@@ -127,7 +127,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//title")?.InnerText.Split(':').Last().Split('|')[0].Trim());
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//title")?.InnerText.Split(':').Last().Split('|')[0].Trim(), siteNum);
             try
             {
                 movie.Overview = detailsPageElements.SelectSingleNode("//aside/div[contains(@class, 'description')]")?.InnerText.Replace("\n", string.Empty).Trim();
@@ -135,7 +135,7 @@ namespace PhoenixAdult.Sites
             catch { }
             movie.AddStudio("Abby Winters");
 
-            string tagline = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@id='shoot-featured-image']//h4")?.InnerText.Trim());
+            string tagline = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@id='shoot-featured-image']//h4")?.InnerText.Trim(), siteNum);
             movie.AddTag(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))

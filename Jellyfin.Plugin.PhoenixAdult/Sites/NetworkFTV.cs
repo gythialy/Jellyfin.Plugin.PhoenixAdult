@@ -52,7 +52,7 @@ namespace PhoenixAdult.Sites
                 searchResults.Add($"{Helper.GetSearchSearchURL(siteNum)}{sceneId}.html");
             }
 
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             searchResults.AddRange(googleResults.Where(u => u.Contains("/update/")));
 
             foreach (var sceneUrl in searchResults.Distinct())

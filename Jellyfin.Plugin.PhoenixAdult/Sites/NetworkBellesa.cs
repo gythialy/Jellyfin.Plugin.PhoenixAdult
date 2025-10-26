@@ -57,7 +57,7 @@ namespace PhoenixAdult.Sites
                 if (scenePageElements != null && scenePageElements.Any())
                 {
                     var scene = scenePageElements[0];
-                    string titleNoFormatting = Helper.ParseTitle(scene["title"].ToString());
+                    string titleNoFormatting = Helper.ParseTitle(scene["title"].ToString(), siteNum);
                     string curId = scene["id"].ToString();
                     string subSite = scene["content_provider"][0]["name"].ToString();
                     long date = (long)scene["posted_on"];
@@ -81,7 +81,7 @@ namespace PhoenixAdult.Sites
                     {
                         foreach (var searchResult in videos)
                         {
-                            string titleNoFormatting = Helper.ParseTitle(searchResult["title"].ToString());
+                            string titleNoFormatting = Helper.ParseTitle(searchResult["title"].ToString(), siteNum);
                             string curId = searchResult["id"].ToString();
                             long date = (long)searchResult["posted_on"];
                             string releaseDate = DateTimeOffset.FromUnixTimeSeconds(date).ToString("yyyy-MM-dd");
@@ -121,7 +121,7 @@ namespace PhoenixAdult.Sites
             var scene = detailsPageElements[0];
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(scene["title"].ToString());
+            movie.Name = Helper.ParseTitle(scene["title"].ToString(), siteNum);
             movie.Overview = scene["description"].ToString();
             movie.AddStudio("Bellesa");
 

@@ -307,7 +307,7 @@ namespace PhoenixAdult.Sites
                         foreach (var searchResult in searchNodes)
                         {
                             var xPath = xPathDB.FirstOrDefault(kvp => kvp.Key.Contains(Helper.GetSearchSiteName(siteNum))).Value;
-                            string titleNoFormatting = Helper.ParseTitle(searchResult.SelectSingleNode(xPath[0])?.InnerText.Trim());
+                            string titleNoFormatting = Helper.ParseTitle(searchResult.SelectSingleNode(xPath[0])?.InnerText.Trim(), siteNum);
 
                             var match = Regex.Match(searchResult.SelectSingleNode(".//li/img")?.GetAttributeValue("src", string.Empty) ?? string.Empty, @"(?<=tour_thumbs/).*(?=/)");
                             if (match.Success)
@@ -407,7 +407,7 @@ namespace PhoenixAdult.Sites
             var xPath = xPathDB.FirstOrDefault(kvp => kvp.Key.Contains(Helper.GetSearchSiteName(siteNum))).Value;
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode(xPath[0])?.InnerText.Trim());
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode(xPath[0])?.InnerText.Trim(), siteNum);
             movie.Overview = detailsPageElements.SelectSingleNode(xPath[1])?.InnerText.Trim();
             movie.AddStudio("Dirty Flix");
 

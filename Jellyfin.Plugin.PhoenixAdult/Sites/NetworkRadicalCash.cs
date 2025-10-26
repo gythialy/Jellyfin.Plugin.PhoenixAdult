@@ -48,7 +48,7 @@ namespace PhoenixAdult.Sites
                 {
                     if (siteNum[0] == 1835)
                     {
-                        string titleNoFormatting = $"BTS: {Helper.ParseTitle(searchResult["title"].ToString())}";
+                        string titleNoFormatting = $"BTS: {Helper.ParseTitle(searchResult["title"].ToString(), siteNum)}";
                         string releaseDate = string.Empty;
                         if (DateTime.TryParse(searchResult["publish_date"].ToString(), out var parsedDate))
                         {
@@ -123,7 +123,7 @@ namespace PhoenixAdult.Sites
             var content = siteNum[0] == 1677 ? videoPageElements["props"]["pageProps"]["content"] : video;
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(video["title"].ToString());
+            movie.Name = Helper.ParseTitle(video["title"].ToString(), siteNum);
             movie.Overview = video["description"].ToString();
             if (!movie.Overview.EndsWith("."))
             {

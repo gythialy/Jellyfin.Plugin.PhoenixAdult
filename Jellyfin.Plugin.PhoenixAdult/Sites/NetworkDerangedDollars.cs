@@ -27,7 +27,7 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             var searchResults = googleResults.Where(u => u.Contains("/session/"));
 
             foreach (var sceneUrl in searchResults)
@@ -36,7 +36,7 @@ namespace PhoenixAdult.Sites
                 if (httpResult.IsOK)
                 {
                     var detailsPageElements = HTML.ElementFromString(httpResult.Content);
-                    string titleNoFormatting = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h3[@class='mas_title']")?.InnerText.Trim());
+                    string titleNoFormatting = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h3[@class='mas_title']")?.InnerText.Trim(), siteNum);
                     string subSite = detailsPageElements.SelectSingleNode("//title")?.InnerText.Split('|')[1].Trim().Replace(".com", string.Empty);
                     string curId = Helper.Encode(sceneUrl);
                     string releaseDate = string.Empty;
@@ -79,7 +79,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h3[@class='mas_title']")?.InnerText.Trim());
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h3[@class='mas_title']")?.InnerText.Trim(), siteNum);
             movie.Overview = detailsPageElements.SelectSingleNode("//p[@class='mas_longdescription']")?.InnerText.Trim();
             movie.AddStudio("Deranged Dollars");
 
@@ -97,7 +97,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var genre in genreNodes)
                 {
-                    movie.AddGenre(Helper.ParseTitle(genre.InnerText.Trim()));
+                    movie.AddGenre(Helper.ParseTitle(genre.InnerText.Trim(), siteNum));
                 }
             }
 

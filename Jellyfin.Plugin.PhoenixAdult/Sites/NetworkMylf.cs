@@ -65,7 +65,7 @@ namespace PhoenixAdult.Sites
                 $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Slugify()}",
             };
 
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var sceneURL in googleResults)
             {
                 if (sceneURL.Contains("/movies/"))
@@ -97,7 +97,7 @@ namespace PhoenixAdult.Sites
                     var sceneData = (JObject)detailsPageElements[sceneType];
                     string curID = ((JProperty)sceneData.First).Name;
                     var details = (JObject)sceneData[curID];
-                    string titleNoFormatting = Helper.ParseTitle((string)details["title"]);
+                    string titleNoFormatting = Helper.ParseTitle((string)details["title"], siteNum);
                     string subSite = details.SelectToken("site.name")?.ToString() ?? Helper.GetSearchSiteName(siteNum);
 
                     string releaseDateStr = string.Empty;
@@ -144,7 +144,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle((string)details["title"]);
+            movie.Name = Helper.ParseTitle((string)details["title"], siteNum);
             movie.Overview = HTML.StripHtml((string)details["description"]);
             movie.AddStudio("MYLF");
 

@@ -41,7 +41,7 @@ namespace PhoenixAdult.Sites
                 searchResults.Add(Helper.GetSearchSearchURL(siteNum) + sceneId);
             }
 
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var sceneURL in googleResults)
             {
                 if ((sceneURL.Contains("/video/") || sceneURL.Contains("/videos/")) && !sceneURL.Contains("/page/") && !searchResults.Contains(sceneURL))
@@ -56,7 +56,7 @@ namespace PhoenixAdult.Sites
                 if (httpResult.IsOK)
                 {
                     var detailsPageElements = HTML.ElementFromString(httpResult.Content);
-                    string titleNoFormatting = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1").InnerText);
+                    string titleNoFormatting = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1").InnerText, siteNum);
                     string curId = Helper.Encode(sceneUrl);
                     string releaseDate = string.Empty;
                     var dateNode = detailsPageElements.SelectSingleNode("//div[@class='content-date']");
@@ -102,7 +102,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[contains(@class, 'content-title')]").InnerText.Trim());
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[contains(@class, 'content-title')]").InnerText.Trim(), siteNum);
             movie.Overview = detailsPageElements.SelectNodes("//div[contains(@class, 'content-desc')]")[1].InnerText.Trim();
             movie.AddStudio("Caramel Cash");
 

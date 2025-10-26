@@ -129,7 +129,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var genreLink in genreNodes)
                 {
-                    movie.AddGenre(Helper.ParseTitle(genreLink.InnerText.Trim().ToLower().Replace("categories:", string.Empty).Replace("tags:", string.Empty)));
+                    movie.AddGenre(Helper.ParseTitle(genreLink.InnerText.Trim().ToLower().Replace("categories:", string.Empty).Replace("tags:", string.Empty), siteNum));
                 }
             }
 

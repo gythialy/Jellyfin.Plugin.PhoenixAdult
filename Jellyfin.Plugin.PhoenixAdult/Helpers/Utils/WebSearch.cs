@@ -9,7 +9,7 @@ using DuckDuckGoSearch;
 
 namespace PhoenixAdult.Helpers.Utils
 {
-    internal static class Search
+    internal static class WebSearch
     {
         public static async Task<List<string>> GetSearchResults(string text, int[] siteNum, CancellationToken cancellationToken)
         {

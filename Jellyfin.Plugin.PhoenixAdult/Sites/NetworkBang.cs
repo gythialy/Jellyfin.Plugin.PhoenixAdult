@@ -30,7 +30,7 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteSearchResult>();
             var searchResults = new HashSet<string>();
 
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var sceneURL in googleResults)
             {
                 var url = sceneURL.Split('?')[0];
@@ -54,8 +54,8 @@ namespace PhoenixAdult.Sites
 
                         string sceneURL = sceneUrlNode.GetAttributeValue("href", string.Empty);
                         string titleNoFormatting = sceneURL.Contains("dvd") ?
-                            Helper.ParseTitle(searchResult.SelectSingleNode("./a/div")?.InnerText.Trim()) :
-                            Helper.ParseTitle(searchResult.SelectSingleNode("./a/span")?.InnerText.Trim());
+                            Helper.ParseTitle(searchResult.SelectSingleNode("./a/div")?.InnerText.Trim(), siteNum) :
+                            Helper.ParseTitle(searchResult.SelectSingleNode("./a/span")?.InnerText.Trim(), siteNum);
 
                         if (!sceneURL.StartsWith("http"))
                         {
@@ -103,7 +103,7 @@ namespace PhoenixAdult.Sites
 
                 var videoPageElements = JObject.Parse(ldJsonNode.InnerText.Replace("\n", string.Empty).Trim());
 
-                string titleNoFormatting = Helper.ParseTitle(HTML.Clean(videoPageElements["name"].ToString()));
+                string titleNoFormatting = Helper.ParseTitle(HTML.Clean(videoPageElements["name"].ToString()), siteNum);
                 string curID = Helper.Encode(searchURL);
                 string releaseDateStr = string.Empty;
 
@@ -157,13 +157,13 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             movie.Name = Helper.ParseTitle(HTML.Clean(videoPageElements["name"].ToString()));
             movie.Overview = HTML.Clean(videoPageElements["description"].ToString());
-            movie.AddStudio(Regex.Replace(Helper.ParseTitle(videoPageElements["productionCompany"]["name"].ToString().Trim()), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
+            movie.AddStudio(Regex.Replace(Helper.ParseTitle(videoPageElements["productionCompany"]["name"].ToString().Trim(), siteNum), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
 
             string tagline = detailsPageElements.SelectSingleNode("//p[contains(., 'Series:')]/a[contains(@href, 'originals') or contains(@href, 'videos')]")?.InnerText.Trim();
             if (!string.IsNullOrEmpty(tagline))
             {
-                movie.AddTag(Regex.Replace(Helper.ParseTitle(tagline), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
-                movie.AddCollection(Regex.Replace(Helper.ParseTitle(tagline), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
+                movie.AddTag(Regex.Replace(Helper.ParseTitle(tagline, siteNum), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
+                movie.AddCollection(Regex.Replace(Helper.ParseTitle(tagline, siteNum), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
             }
             else
             {

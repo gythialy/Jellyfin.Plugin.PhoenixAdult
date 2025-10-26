@@ -47,7 +47,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var node in searchNodes)
                 {
-                    string titleNoFormatting = Helper.ParseTitle(node.SelectSingleNode(".//a[contains(@class, 'title')]")?.InnerText.Trim());
+                    string titleNoFormatting = Helper.ParseTitle(node.SelectSingleNode(".//a[contains(@class, 'title')]")?.InnerText.Trim(), siteNum);
                     string sceneUrl = node.SelectSingleNode(".//a[contains(@class, 'title')]")?.GetAttributeValue("href", string.Empty).Trim().Split('?')[0];
                     string curId = Helper.Encode(sceneUrl);
                     string actors = Helper.Encode(node.SelectSingleNode(".//small[@class='i-model']")?.InnerText);
@@ -62,7 +62,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             string urlId = Helper.GetSearchSearchURL(siteNum).Replace(Helper.GetSearchBaseURL(siteNum), string.Empty);
             searchResults.AddRange(googleResults.Where(u => u.Contains(urlId) && !u.Contains("?") && !result.Any(r => Helper.Decode(r.ProviderIds.FirstOrDefault().Value.Split('|')[0]) == u)));
 
@@ -122,7 +122,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            string title = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim());
+            string title = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim(), siteNum);
             if (string.IsNullOrEmpty(title))
             {
                 var actors = detailsPageElements.SelectNodes("//div/span[@class='value']/a");

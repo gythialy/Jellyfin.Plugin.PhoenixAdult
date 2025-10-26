@@ -77,7 +77,7 @@ namespace PhoenixAdult.Sites
                 if (httpResult.IsOK)
                 {
                     var detailsPageElements = HTML.ElementFromString(httpResult.Content);
-                    string titleNoFormatting = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1")?.InnerText.Split(':').Last().Trim());
+                    string titleNoFormatting = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1")?.InnerText.Split(':').Last().Trim(), siteNum);
                     string curId = Helper.Encode(sceneUrl);
                     string releaseDate = string.Empty;
                     var dateNode = detailsPageElements.SelectSingleNode("//p[@class='update-info-line regular']/b[1][./preceding-sibling::i[contains(@class, 'calendar')]]");
@@ -171,7 +171,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1")?.InnerText.Split(':').Last().Split(new[] { "Full video by" }, StringSplitOptions.None)[0].Trim());
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1")?.InnerText.Split(':').Last().Split(new[] { "Full video by" }, StringSplitOptions.None)[0].Trim(), siteNum);
 
             string summary = detailsPageElements.SelectSingleNode("//p[contains(@class, 'description')]")?.InnerText.Trim();
             if (summary != null && !skipGeneric.Any(s => summary.StartsWith(s, StringComparison.OrdinalIgnoreCase)))
@@ -204,7 +204,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var genre in genreNodes)
                 {
-                    movie.AddGenre(Helper.ParseTitle(genre.Trim()));
+                    movie.AddGenre(Helper.ParseTitle(genre.Trim(), siteNum));
                 }
             }
 

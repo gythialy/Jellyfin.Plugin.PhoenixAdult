@@ -56,8 +56,8 @@ namespace PhoenixAdult.Sites
                     if (sceneURL.Contains("/scenes/") && !searchResults.Contains(sceneURL))
                     {
                         string urlID = Regex.Replace(sceneURL, ".*/", string.Empty);
-                        string siteDisplay = Helper.ParseTitle(searchResult.SelectSingleNode(".//i")?.InnerText.Trim());
-                        string titleNoFormatting = Helper.ParseTitle(searchResult.SelectSingleNode(".//p[@class='gen12 bold']")?.InnerText);
+                        string siteDisplay = Helper.ParseTitle(searchResult.SelectSingleNode(".//i")?.InnerText.Trim(), siteNum);
+                        string titleNoFormatting = Helper.ParseTitle(searchResult.SelectSingleNode(".//p[@class='gen12 bold']")?.InnerText, siteNum);
                         string curID = Helper.Encode(sceneURL);
 
                         if (titleNoFormatting?.Contains("...") == true)
@@ -83,7 +83,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var sceneURL in googleResults)
             {
                 var url = sceneURL.Replace("/content/", "/scenes/").Replace("http:", "https:");
@@ -130,7 +130,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1").InnerText);
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1").InnerText, siteNum);
 
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='gen12']/div[contains(., 'Story')]") ?? detailsPageElements.SelectSingleNode("//div[@class='gen12']//div[@class='hideContent boxdesc' and contains(., 'Description')]") ?? detailsPageElements.SelectSingleNode("//div[@class='gen12']/div[contains(., 'Movie Description')]");
             movie.Overview = summaryNode?.InnerText.Split(new[] { "Story -", "---", "--" }, StringSplitOptions.RemoveEmptyEntries).Last().Trim();
@@ -140,7 +140,7 @@ namespace PhoenixAdult.Sites
             var taglineNode = detailsPageElements.SelectSingleNode("//p[contains(., 'Site:')]//following-sibling::a[@class='bold'] | //b[contains(., 'Network')]//following-sibling::a | //p[contains(., 'Webserie:')]/a | //p[contains(., 'Movie:')]/a");
             if (taglineNode != null)
             {
-                movie.AddTag(Helper.ParseTitle(taglineNode.InnerText.Trim()));
+                movie.AddTag(Helper.ParseTitle(taglineNode.InnerText.Trim(), siteNum));
             }
             else
             {

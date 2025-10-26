@@ -30,7 +30,7 @@ namespace PhoenixAdult.Sites
             string searchUrl = $"{Helper.GetSearchSearchURL(siteNum).Replace("/search.php?query=", "/trailers/")}{searchTitle.ToLower().Replace(' ', '-')}.html";
             var directResults = new List<string> { searchUrl };
 
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var sceneURL in googleResults)
             {
                 if (sceneURL.Contains("/trailers/"))
@@ -131,11 +131,11 @@ namespace PhoenixAdult.Sites
             var siteNumVal = int.Parse(providerIds[1]);
             if (siteNumVal == 1246 || siteNumVal == 1553)
             {
-                movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim());
+                movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim(), siteNum);
             }
             else
             {
-                movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h3")?.InnerText.Trim());
+                movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h3")?.InnerText.Trim(), siteNum);
             }
 
             var description = detailsPageElements.SelectSingleNode("//div[contains(@class, 'videoDetails')]//p");

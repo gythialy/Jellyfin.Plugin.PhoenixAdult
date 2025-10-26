@@ -40,7 +40,7 @@ namespace PhoenixAdult.Sites
             string directUrl = $"{Helper.GetSearchBaseURL(siteNum)}/movies/{Slugify(searchTitle)}";
             var searchResults = new List<string> { directUrl };
 
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             searchResults.AddRange(googleResults.Where(u => u.Contains("/movies/") && !u.Contains("/page-")));
 
             foreach (var sceneUrl in searchResults.Distinct())

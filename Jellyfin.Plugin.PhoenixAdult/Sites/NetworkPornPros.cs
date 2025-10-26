@@ -84,7 +84,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            string titleNoFormatting = Helper.ParseTitle(searchResult["title"]?.ToString() ?? string.Empty, siteNum[0]);
+            string titleNoFormatting = Helper.ParseTitle(searchResult["title"]?.ToString() ?? string.Empty, siteNum);
             string subSite = searchResult["sponsor"]?["name"]?.ToString() ?? string.Empty;
             string curID = Helper.Encode(slug);
 
@@ -124,7 +124,7 @@ namespace PhoenixAdult.Sites
 
             var movie = (Movie)result.Item;
 
-            movie.Name = Helper.ParseTitle(detailsPageElements["title"]?.ToString() ?? string.Empty, siteNum[0]);
+            movie.Name = Helper.ParseTitle(detailsPageElements["title"]?.ToString() ?? string.Empty, siteNum);
 
             string summary = detailsPageElements["description"]?.ToString().Trim();
             if (!string.IsNullOrEmpty(summary) && !summary.Equals("n/a", StringComparison.OrdinalIgnoreCase))

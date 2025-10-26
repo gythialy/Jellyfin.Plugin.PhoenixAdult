@@ -26,7 +26,7 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             var searchResults = googleResults.Where(u => u.Contains("/trailers/")).Select(u => u.Split('?')[0]);
 
             foreach (var sceneUrl in searchResults)
@@ -35,7 +35,7 @@ namespace PhoenixAdult.Sites
                 if (httpResult.IsOK)
                 {
                     var detailsPageElements = HTML.ElementFromString(httpResult.Content);
-                    string titleNoFormatting = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@class='trailer_videoinfo']//h3 | //div[@class='trailer_toptitle_left']")?.InnerText.Trim());
+                    string titleNoFormatting = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@class='trailer_videoinfo']//h3 | //div[@class='trailer_toptitle_left']")?.InnerText.Trim(), siteNum);
                     string curId = Helper.Encode(sceneUrl);
                     string releaseDate = string.Empty;
                     var dateNode = detailsPageElements.SelectSingleNode("//div[@class='setdesc']//b[contains(., 'Added')]");
@@ -79,7 +79,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@class='trailer_videoinfo']//h3 | //div[@class='trailer_toptitle_left']")?.InnerText.Trim());
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@class='trailer_videoinfo']//h3 | //div[@class='trailer_toptitle_left']")?.InnerText.Trim(), siteNum);
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='trailer_videoinfo']//p | //div[@class='trailerpage_info']/p[not(@class)]")?.InnerText;
             movie.AddStudio("Grooby");
 

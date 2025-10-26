@@ -37,7 +37,7 @@ namespace PhoenixAdult.Sites
             string directUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Replace(' ', '_')}";
             var searchResults = new List<string> { directUrl };
 
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             searchResults.AddRange(googleResults.Where(u => u.Contains("/videos/")));
 
             foreach (var sceneUrl in searchResults.Distinct())

@@ -28,7 +28,7 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteSearchResult>();
             string directUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Replace(' ', '-').ToLower()}.html";
             var searchResults = new List<string> { directUrl };
-            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             searchResults.AddRange(googleResults.Where(u => u.Contains("/updates/")));
 
             foreach (var sceneUrl in searchResults.Distinct())
