@@ -109,13 +109,13 @@ namespace PhoenixAdult.Sites
             {
                 movie.Name = title;
                 movie.Overview = detailsPageElements.SelectSingleNode("//div[contains(., 'Episode Summary')]/p")?.InnerText.Trim();
-                movie.AddStudio("Kelly Madison Productions");
+                movie.AddStudio("Kelly Madison");
                 actorNodes = detailsPageElements.SelectNodes("//p[contains(., 'Starring')]//a[contains(@href, '/models/')]");
             }
             catch
             {
                 movie.Name = title;
-                movie.AddStudio("Kelly Madison Productions");
+                movie.AddStudio("Kelly Madison");
                 actorNodes = detailsPageElements.SelectNodes(".//a[contains(@href, '/models/')]");
             }
 
@@ -191,9 +191,8 @@ namespace PhoenixAdult.Sites
         {
             var images = new List<RemoteImageInfo>();
             string sceneId = Helper.Decode(sceneID[0]).Split('|')[0].Split('/').Last();
-            images.Add(new RemoteImageInfo { Url = $"https://tour-cdn.kellymadisonmedia.com/content/episode/poster_image/{sceneId}/poster.jpg", Type = ImageType.Primary });
-            images.Add(new RemoteImageInfo { Url = $"https://tour-cdn.kellymadisonmedia.com/content/episode/episode_thumb_image_1/{sceneId}/1.jpg" });
-            images.Add(new RemoteImageInfo { Url = $"https://tour-cdn.kellymadisonmedia.com/content/episode/episode_thumb_image_1/{sceneId}/01.jpg" });
+            images.Add(new RemoteImageInfo { Url = $"https://tour-content-cdn.kellymadisonmedia.com/episode/poster_image/{sceneId}/poster.jpg", Type = ImageType.Primary });
+            images.Add(new RemoteImageInfo { Url = $"https://tour-content-cdn.kellymadisonmedia.com/episode/episode_thumb_image_1/{sceneId}/01.jpg", Type = ImageType.Backdrop });
             return Task.FromResult<IEnumerable<RemoteImageInfo>>(images);
         }
     }
