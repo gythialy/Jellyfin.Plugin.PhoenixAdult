@@ -155,7 +155,7 @@ namespace PhoenixAdult.Sites
             var videoPageElements = JObject.Parse(ldJsonNode.InnerText.Replace("\n", string.Empty).Trim());
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(HTML.Clean(videoPageElements["name"].ToString()));
+            movie.Name = Helper.ParseTitle(HTML.Clean(videoPageElements["name"].ToString()), siteNum);
             movie.Overview = HTML.Clean(videoPageElements["description"].ToString());
             movie.AddStudio(Regex.Replace(Helper.ParseTitle(videoPageElements["productionCompany"]["name"].ToString().Trim(), siteNum), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
 

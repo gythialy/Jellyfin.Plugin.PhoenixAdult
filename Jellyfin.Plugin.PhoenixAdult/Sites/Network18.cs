@@ -15,6 +15,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
+using PhoenixAdult.Helpers.Utils;
+
 
 #if __EMBY__
 #else
@@ -63,7 +65,7 @@ namespace PhoenixAdult.Sites
                 { "Referer", searchUrl },
             };
 
-            var http = await HTTP.Request(searchUrl, param, cancellationToken, headers).ConfigureAwait(false);
+            var http = await HTTP.Request(searchUrl, HttpMethod.Get, param, cancellationToken, headers).ConfigureAwait(false);
             return http.IsOK ? JObject.Parse(http.Content) : null;
         }
 

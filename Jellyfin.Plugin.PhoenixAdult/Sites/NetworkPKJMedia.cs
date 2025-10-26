@@ -47,7 +47,7 @@ namespace PhoenixAdult.Sites
                 foreach (var node in searchNodes)
                 {
                     var titleNode = node.SelectSingleNode("//div[@class='bricks-layout-inner']/div/h3/a");
-                    string titleNoFormatting = Helper.ParseTitle(titleNode?.InnerTex, siteNum);
+                    string titleNoFormatting = Helper.ParseTitle(titleNode?.InnerText, siteNum);
                     string curId = Helper.Encode(titleNode?.GetAttributeValue("href", string.Empty));
                     result.Add(new RemoteSearchResult
                     {

@@ -69,7 +69,7 @@ namespace PhoenixAdult.Helpers.Utils
                 var searchResults = await DDGClient.SearchAsync(searchTerm);
                 if (searchResults != null)
                 {
-                    results.AddRange(searchResults.Select(result => result.Url));
+                    results.AddRange(searchResults.Select(result => result.Link));
                 }
             }
             catch (Exception)
