@@ -41,7 +41,7 @@ namespace PhoenixAdult.Sites
 
             if (!string.IsNullOrEmpty(searchTitle))
             {
-                var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+                var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
                 searchResults.AddRange(googleResults.Where(u => u.Contains("/video/")));
             }
 

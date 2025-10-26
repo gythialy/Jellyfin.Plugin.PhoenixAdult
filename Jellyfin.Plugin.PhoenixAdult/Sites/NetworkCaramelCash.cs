@@ -40,7 +40,7 @@ namespace PhoenixAdult.Sites
                 searchResults.Add(Helper.GetSearchSearchURL(siteNum) + sceneId);
             }
 
-            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var sceneURL in googleResults)
             {
                 if ((sceneURL.Contains("/video/") || sceneURL.Contains("/videos/")) && !sceneURL.Contains("/page/") && !searchResults.Contains(sceneURL))

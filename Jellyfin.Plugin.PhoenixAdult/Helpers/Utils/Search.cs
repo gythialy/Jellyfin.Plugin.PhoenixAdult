@@ -1,22 +1,25 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using DuckDuckGoSearch;
 
 namespace PhoenixAdult.Helpers.Utils
 {
-    internal static class GoogleSearch
+    internal static class Search
     {
         public static async Task<List<string>> GetSearchResults(string text, int[] siteNum, CancellationToken cancellationToken)
         {
             var results = new List<string>();
             string searchTerm;
 
+            string site = null;
             if (siteNum != null)
             {
-                var site = new Uri(Helper.GetSearchBaseURL(siteNum)).Host;
+                site = new Uri(Helper.GetSearchBaseURL(siteNum)).Host;
                 searchTerm = $"site:{site} {text}";
             }
             else
@@ -24,8 +27,14 @@ namespace PhoenixAdult.Helpers.Utils
                 searchTerm = text;
             }
 
-            if (!string.IsNullOrEmpty(searchTerm))
+            if (string.IsNullOrEmpty(searchTerm))
             {
+                return results;
+            }
+
+            try
+            {
+                // Try Google first
                 var url = "https://www.google.com/search?q=" + searchTerm;
                 var html = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
 
@@ -43,6 +52,30 @@ namespace PhoenixAdult.Helpers.Utils
                         results.Add(searchURL);
                     }
                 }
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
+
+            if (results.Any())
+            {
+                return results;
+            }
+
+            try
+            {
+                // Fallback to DuckDuckGo
+                var client = new DuckDuckGoSearchClient();
+                var searchResults = await client.GetSearchResultsAsync(searchTerm);
+                if (searchResults != null)
+                {
+                    results.AddRange(searchResults.Select(result => result.Url));
+                }
+            }
+            catch (Exception)
+            {
+                // ignored
             }
 
             return results;

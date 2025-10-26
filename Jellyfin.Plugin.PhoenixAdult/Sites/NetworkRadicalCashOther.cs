@@ -56,7 +56,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var sceneURL in googleResults)
             {
                 var url = sceneURL.Split('?')[0].Replace("dev.", string.Empty);

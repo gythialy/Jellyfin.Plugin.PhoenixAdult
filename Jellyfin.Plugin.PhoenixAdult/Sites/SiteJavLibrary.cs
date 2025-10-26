@@ -83,7 +83,7 @@ namespace PhoenixAdult.Sites
 
             if (!searchResults.Any())
             {
-                var googleResults = await GoogleSearch.GetSearchResults($"{splitSearchTitle[0]} {splitSearchTitle[1]}", siteNum, cancellationToken);
+                var googleResults = await Search.GetSearchResults($"{splitSearchTitle[0]} {splitSearchTitle[1]}", siteNum, cancellationToken);
                 foreach (var sceneURL in googleResults)
                 {
                     if (sceneURL.Contains("?v=jav") && !sceneURL.Contains("videoreviews"))

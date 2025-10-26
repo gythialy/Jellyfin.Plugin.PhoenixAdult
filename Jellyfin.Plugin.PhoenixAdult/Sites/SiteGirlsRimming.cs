@@ -29,7 +29,7 @@ namespace PhoenixAdult.Sites
             string directUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.ToLower().Replace(' ', '-')}.html";
             var searchResults = new List<string> { directUrl };
 
-            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
             searchResults.AddRange(googleResults.Where(u => u.Contains("/trailers/")));
 
             foreach (var sceneUrl in searchResults.Distinct())
@@ -105,7 +105,7 @@ namespace PhoenixAdult.Sites
                         var actorHttp = await HTTP.Request(actorPageUrl, HttpMethod.Get, cancellationToken);
                         if (!actorHttp.IsOK)
                         {
-                            var googleResults = await GoogleSearch.GetSearchResults(actorName, siteNum, cancellationToken);
+                            var googleResults = await Search.GetSearchResults(actorName, siteNum, cancellationToken);
                             actorPageUrl = googleResults.FirstOrDefault(u => u.Contains("/models/"));
                             if (actorPageUrl != null)
                             {

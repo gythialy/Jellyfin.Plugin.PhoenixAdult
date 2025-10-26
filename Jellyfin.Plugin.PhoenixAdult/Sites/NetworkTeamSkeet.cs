@@ -77,7 +77,7 @@ namespace PhoenixAdult.Sites
             directUrl = Helper.GetSearchSearchURL(siteNum) + directUrl;
             var searchResultsUrls = new List<string> { directUrl };
 
-            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
             searchResultsUrls.AddRange(googleResults.Where(u => u.Contains("/movies/")));
 
             foreach (var sceneUrl in searchResultsUrls.Distinct())

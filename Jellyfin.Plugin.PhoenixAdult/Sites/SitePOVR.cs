@@ -25,7 +25,7 @@ namespace PhoenixAdult.Sites
         {
             // Simplified search logic, may need adjustments
             var result = new List<RemoteSearchResult>();
-            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var sceneURL in googleResults)
             {
                 var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);

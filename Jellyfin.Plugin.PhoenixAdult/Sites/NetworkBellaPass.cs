@@ -30,7 +30,7 @@ namespace PhoenixAdult.Sites
             string searchUrl = $"{Helper.GetSearchSearchURL(siteNum).Replace("/search.php?query=", "/trailers/")}{searchTitle.ToLower().Replace(' ', '-')}.html";
             var directResults = new List<string> { searchUrl };
 
-            var googleResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await Search.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var sceneURL in googleResults)
             {
                 if (sceneURL.Contains("/trailers/"))
