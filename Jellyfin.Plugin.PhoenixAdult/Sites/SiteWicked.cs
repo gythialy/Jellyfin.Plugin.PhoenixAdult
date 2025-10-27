@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -42,7 +44,7 @@ namespace PhoenixAdult.Sites
                     {
                         foreach (var searchResult in searchResults)
                         {
-                            var titleNoFormatting = searchResult.SelectSingleNode(".//h3").InnerText.Trim().TitleCase().Replace("Xxx", "XXX");
+                            var titleNoFormatting = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(searchResult.SelectSingleNode(".//h3").InnerText.Trim()).Replace("Xxx", "XXX");
                             var curId = Helper.Encode(searchResult.SelectSingleNode(".//a").GetAttributeValue("href", string.Empty));
                             var releaseDate = DateTime.Parse(searchResult.SelectSingleNode(".//p[@class='sceneDate']").InnerText.Trim()).ToString("yyyy-MM-dd");
                             result.Add(new RemoteSearchResult
@@ -54,7 +56,7 @@ namespace PhoenixAdult.Sites
                         }
                     }
 
-                    var dvdTitle = searchDoc.DocumentNode.SelectSingleNode("//h3[@class='dvdTitle']")?.InnerText.Trim().TitleCase().Replace("Xxx", "XXX");
+                    var dvdTitle = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(searchDoc.DocumentNode.SelectSingleNode("//h3[@class='dvdTitle']")?.InnerText.Trim()).Replace("Xxx", "XXX");
                     if (!string.IsNullOrEmpty(dvdTitle))
                     {
                         var curId = Helper.Encode(searchDoc.DocumentNode.SelectSingleNode("//link[@rel='canonical']").GetAttributeValue("href", string.Empty));
@@ -75,7 +77,7 @@ namespace PhoenixAdult.Sites
                 {
                     var searchDoc = new HtmlDocument();
                     searchDoc.LoadHtml(searchHttp.Content);
-                    var titleNoFormatting = searchDoc.DocumentNode.SelectSingleNode("//h1//span").InnerText.Trim().TitleCase().Replace("Xxx", "XXX");
+                    var titleNoFormatting = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(searchDoc.DocumentNode.SelectSingleNode("//h1//span").InnerText.Trim()).Replace("Xxx", "XXX");
                     var curId = Helper.Encode(searchDoc.DocumentNode.SelectSingleNode("//link[@rel='canonical']").GetAttributeValue("href", string.Empty));
                     var releaseDate = DateTime.Parse(searchDoc.DocumentNode.SelectSingleNode("//li[@class='updatedDate']").InnerText.Replace("Updated", "").Replace("|", "").Trim()).ToString("yyyy-MM-dd");
                     result.Add(new RemoteSearchResult
@@ -109,7 +111,7 @@ namespace PhoenixAdult.Sites
 
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
-            movie.Name = doc.DocumentNode.SelectSingleNode("//h1//span").InnerText.Trim().TitleCase().Replace("Xxx", "XXX");
+            movie.Name = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(doc.DocumentNode.SelectSingleNode("//h1//span").InnerText.Trim()).Replace("Xxx", "XXX");
             movie.AddStudio("Wicked Pictures");
             var dateNode = doc.DocumentNode.SelectSingleNode("//li[@class='updatedOn'] | //li[@class='updatedDate']");
             var date = dateNode?.InnerText.Replace("Updated", "").Replace("|", "").Trim();
@@ -154,7 +156,7 @@ namespace PhoenixAdult.Sites
                 {
                     var dvdDoc = new HtmlDocument();
                     dvdDoc.LoadHtml(dvdHttp.Content);
-                    var tagline = dvdDoc.DocumentNode.SelectSingleNode("//h3[@class='dvdTitle']").InnerText.Trim().TitleCase().Replace("Xxx", "XXX");
+                    var tagline = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(dvdDoc.DocumentNode.SelectSingleNode("//h3[@class='dvdTitle']").InnerText.Trim()).Replace("Xxx", "XXX");
                     movie.AddTag(tagline);
                     movie.AddCollection(tagline);
                     movie.Overview = dvdDoc.DocumentNode.SelectSingleNode("//p[@class='descriptionText']")?.InnerText.Trim();
