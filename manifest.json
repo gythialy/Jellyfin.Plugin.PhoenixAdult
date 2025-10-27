@@ -1,0 +1,69 @@
+[
+  {
+    "category": "Metadata",
+    "guid": "8f97371f-8617-463c-9859-a33072182494",
+    "name": "PhoenixAdult",
+    "description": "This metadata provider helps fill Jellyfin/Emby with information for your adult videos by pulling from the original site.",
+    "owner": "DirtyRacer",
+    "overview": "Manage Your Adult Videos in Jellyfin/Emby",
+    "imageUrl": "https://raw.githubusercontent.com/gythialy/Jellyfin.Plugin.PhoenixAdult/master/docs/thumb.png",
+    "versions": [
+      {
+        "checksum": "aed6be7754d0523910eb1ea3ab100a65",
+        "changelog": "Auto Released by Actions",
+        "targetAbi": "10.11.0",
+        "sourceUrl": "https://github.com/gythialy/Jellyfin.Plugin.PhoenixAdult/releases/download/v2025.1027.123.0/Jellyfin.plugin.PhoenixAdult@v2025.1027.123.0.zip",
+        "timestamp": "2025-10-27T01:24:11Z",
+        "version": "2025.1027.123.0"
+      },
+      {
+        "checksum": "c949f8da572415c5046d2f9b4d9ce54d",
+        "changelog": "Auto Released by Actions",
+        "targetAbi": "10.11.0",
+        "sourceUrl": "https://github.com/gythialy/Jellyfin.Plugin.PhoenixAdult/releases/download/v2025.1026.918.0/Jellyfin.plugin.PhoenixAdult@v2025.1026.918.0.zip",
+        "timestamp": "2025-10-26T09:19:16Z",
+        "version": "2025.1026.918.0"
+      },
+      {
+        "checksum": "6fb09fa04ecf0a283c1ef0f50be03e00",
+        "changelog": "Auto Released by Actions",
+        "targetAbi": "10.9.0.0",
+        "sourceUrl": "https://github.com/gythialy/Jellyfin.Plugin.PhoenixAdult/releases/download/v2024.1105.1442.0/Jellyfin.plugin.PhoenixAdult@v2024.1105.1442.0.zip",
+        "timestamp": "2024-11-05T14:42:46Z",
+        "version": "2024.1105.1442.0"
+      },
+      {
+        "checksum": "b326203abe477b7d3d292ed6bfd22581",
+        "changelog": "Auto Released by Actions",
+        "targetAbi": "10.9.0.0",
+        "sourceUrl": "https://github.com/gythialy/Jellyfin.Plugin.PhoenixAdult/releases/download/v2024.1018.2348.0/Jellyfin.plugin.PhoenixAdult@v2024.1018.2348.0.zip",
+        "timestamp": "2024-10-18T23:48:58Z",
+        "version": "2024.1018.2348.0"
+      },
+      {
+        "checksum": "584392d0982a33b12c8070a23f4f29ed",
+        "changelog": "Auto Released by Actions",
+        "targetAbi": "10.9.0.0",
+        "sourceUrl": "https://github.com/gythialy/Jellyfin.Plugin.PhoenixAdult/releases/download/v2024.1017.1341.0/Jellyfin.PhoenixAdult@v2024.1017.1341.0.zip",
+        "timestamp": "2024-10-17T13:42:04Z",
+        "version": "2024.1017.1341.0"
+      },
+      {
+        "checksum": "dd84ee42c8239b5ad8dc24e3db2f367d",
+        "changelog": "Auto Released by Actions",
+        "targetAbi": "10.9.0.0",
+        "sourceUrl": "https://github.com/gythialy/Jellyfin.Plugin.PhoenixAdult/releases/download/v2024.912.147.0/Jellyfin.PhoenixAdult@v2024.912.147.0.zip",
+        "timestamp": "2024-09-12T01:48:40Z",
+        "version": "2024.912.147.0"
+      },
+      {
+        "checksum": "edf62877842f2663fcc12801d3b7f284",
+        "changelog": "Auto Released by Actions",
+        "targetAbi": "10.9.0.0",
+        "sourceUrl": "https://github.com/gythialy/Jellyfin.Plugin.PhoenixAdult/releases/download/v2024.910.811.0/Jellyfin.PhoenixAdult@v2024.910.811.0.zip",
+        "timestamp": "2024-09-10T08:12:19Z",
+        "version": "2024.910.811.0"
+      }
+    ]
+  }
+]
