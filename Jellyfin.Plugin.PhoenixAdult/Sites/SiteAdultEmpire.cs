@@ -81,7 +81,7 @@ namespace PhoenixAdult.Sites
                     {
                         foreach (var searchResult in searchResultNodes)
                         {
-                            var resultType = searchResult.GetAttributeValue("href", string.Empty).Split('-').Last().Replace(".html", "").Replace("ray", "Blu-Ray").TitleCase();
+                            var resultType = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(searchResult.GetAttributeValue("href", string.Empty).Split('-').Last().Replace(".html", "").Replace("ray", "Blu-Ray"));
                             var urlId = searchResult.GetAttributeValue("href", string.Empty).Split('/')[1];
                             var movieUrl = $"{Helper.GetSearchBaseURL(siteNum)}/{urlId}";
                             if (!searchResults.Contains(movieUrl))
