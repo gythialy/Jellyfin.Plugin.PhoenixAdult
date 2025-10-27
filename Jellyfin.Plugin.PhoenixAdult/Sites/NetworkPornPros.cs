@@ -46,7 +46,7 @@ namespace PhoenixAdult.Sites
             string searchSite = Helper.GetSearchSearchURL(siteNum);
 
             var headers = new Dictionary<string, string> { { "x-site", site } };
-            string url = $"{searchSite}/{searchType}/{slug}";
+            string url = $"{searchSite}/{slug}";
 
             var req = await HTTP.Request(url, cancellationToken, headers: headers);
             if (!req.IsOK)
@@ -57,7 +57,7 @@ namespace PhoenixAdult.Sites
                     string newSite = site.Replace("pornplus", subSite);
                     string newSearchSite = searchSite.Replace("pornplus", subSite);
                     headers["x-site"] = newSite;
-                    url = $"{newSearchSite}/{searchType}/{slug}";
+                    url = $"{newSearchSite}/{slug}";
                     req = await HTTP.Request(url, cancellationToken, headers: headers);
                 }
             }
