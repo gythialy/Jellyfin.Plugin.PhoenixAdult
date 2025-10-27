@@ -27,7 +27,18 @@ namespace PhoenixAdult.Sites
         {
             JObject json = null;
 
-            var param = new StringContent($"{{\"query\":\"{query}\",\"variables\":{variables}}}", Encoding.UTF8, "application/json");
+            // Parse variables as JSON to ensure proper format
+            var variablesObj = JObject.Parse(variables);
+
+            // Create proper JSON object for GraphQL request
+            var requestBodyObj = new JObject
+            {
+                ["query"] = query,
+                ["variables"] = variablesObj,
+            };
+
+            var requestBody = requestBodyObj.ToString(Newtonsoft.Json.Formatting.None);
+            var param = new StringContent(requestBody, Encoding.UTF8, "application/json");
 
             Logger.Debug($"{url}, {query}, {variables}");
 
@@ -36,8 +47,19 @@ namespace PhoenixAdult.Sites
             if (http.IsOK)
             {
                 Logger.Debug("http.Content: " + http.Content);
-                json = (JObject)JObject.Parse(http.Content)["data"];
-                Logger.Debug("content to jobject ok");
+                if (!string.IsNullOrEmpty(http.Content))
+                {
+                    var parsed = JObject.Parse(http.Content);
+                    if (parsed["data"] != null)
+                    {
+                        json = (JObject)parsed["data"];
+                        Logger.Debug("content to jobject ok");
+                    }
+                    else
+                    {
+                        Logger.Error($"GraphQL Error Response: {http.Content}");
+                    }
+                }
             }
 
             return json;
