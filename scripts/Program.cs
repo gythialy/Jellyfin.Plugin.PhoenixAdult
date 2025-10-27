@@ -4,7 +4,7 @@ using System.Reflection;
 
 class Program
 {
-    // dotnet run ../Jellyfin.Plugin.PhoenixAdult/bin/Release/net8.0/PhoenixAdult.dll
+    // dotnet run ../Jellyfin.Plugin.PhoenixAdult/bin/Release/net9.0/PhoenixAdult.dll
     static void Main(string[] args)
     {
         if (args.Length == 0)
