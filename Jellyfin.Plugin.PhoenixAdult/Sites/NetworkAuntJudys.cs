@@ -99,7 +99,7 @@ namespace PhoenixAdult.Sites
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddStudio(tagline);
-            movie.AddTag(tagline);
+            movie.AddCollection(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='gallery_info']//div[@class='cell update_date']");
             if (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))

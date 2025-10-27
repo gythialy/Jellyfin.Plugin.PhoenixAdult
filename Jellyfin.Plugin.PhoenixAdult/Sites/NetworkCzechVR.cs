@@ -107,6 +107,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("CzechVR");
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
+            movie.AddCollection(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'nazev')]//div[@class='datum']");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))

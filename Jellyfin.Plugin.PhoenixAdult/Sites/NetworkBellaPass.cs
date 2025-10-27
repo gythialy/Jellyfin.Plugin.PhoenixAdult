@@ -148,12 +148,13 @@ namespace PhoenixAdult.Sites
             if (siteName == "Hussie Pass" || siteName == "Babe Archives" || siteName == "See Him Fuck")
             {
                 movie.AddStudio(siteName);
-                movie.AddTag(siteName);
+                movie.AddCollection(siteName);
             }
             else
             {
                 movie.AddStudio("BellaPass");
                 movie.AddTag(siteName);
+                movie.AddCollection(siteName);
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'featuring')]//a[contains(@href, '/categories/')]");

@@ -116,6 +116,7 @@ namespace PhoenixAdult.Sites
 
             string tagline = detailsPageElements.SelectSingleNode("//span[contains(@class, 'type')]")?.InnerText.Split('|')[0].Trim();
             movie.AddTag(tagline);
+            movie.AddCollection(tagline);
 
             if (!string.IsNullOrEmpty(searchDate) && DateTime.TryParse(searchDate, out var parsedDate))
             {

@@ -185,6 +185,7 @@ namespace PhoenixAdult.Sites
             if (tagline != null)
             {
                 movie.AddTag(tagline);
+                movie.AddCollection(tagline);
             }
 
             var dateNode = detailsPageElements.SelectSingleNode("//p[@class='update-info-line regular']/b[1][./preceding-sibling::i[contains(@class, 'calendar')]]");
