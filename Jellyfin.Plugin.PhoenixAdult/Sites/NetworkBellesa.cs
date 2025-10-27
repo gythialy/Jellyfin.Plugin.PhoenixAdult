@@ -127,6 +127,7 @@ namespace PhoenixAdult.Sites
 
             string tagline = scene["content_provider"][0]["name"].ToString();
             movie.AddTag(tagline);
+            movie.AddCollection(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

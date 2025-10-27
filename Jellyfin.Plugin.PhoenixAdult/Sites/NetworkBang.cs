@@ -167,7 +167,6 @@ namespace PhoenixAdult.Sites
             }
             else
             {
-                movie.AddTag(movie.Studios.First());
                 movie.AddCollection(movie.Studios.First());
             }
 
@@ -290,7 +289,7 @@ namespace PhoenixAdult.Sites
             bool first = true;
             foreach (var imageUrl in imageUrls.Distinct())
             {
-                var imageInfo = new RemoteImageInfo { Url = imageUrl };
+                var imageInfo = new RemoteImageInfo { Url = imageUrl.Split('?')[0] };
                 if (first)
                 {
                     imageInfo.Type = ImageType.Primary;

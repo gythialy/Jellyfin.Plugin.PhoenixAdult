@@ -137,6 +137,7 @@ namespace PhoenixAdult.Sites
 
             string tagline = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@id='shoot-featured-image']//h4")?.InnerText.Trim(), siteNum);
             movie.AddTag(tagline);
+            movie.AddCollection(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

@@ -97,6 +97,7 @@ namespace PhoenixAdult.Sites
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
+            movie.AddCollection(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='info-block_data']//p[@class='text'] | //div[@class='update-info-row']");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Split('|')[0].Replace("Added", string.Empty).Replace(":", string.Empty).Trim(), out var parsedDate))

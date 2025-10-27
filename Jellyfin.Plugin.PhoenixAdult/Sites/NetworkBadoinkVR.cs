@@ -125,6 +125,7 @@ namespace PhoenixAdult.Sites
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
+            movie.AddCollection(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//p[@itemprop='uploadDate']");
             if (dateNode != null && DateTime.TryParse(dateNode.GetAttributeValue("content", string.Empty), out var parsedDate))

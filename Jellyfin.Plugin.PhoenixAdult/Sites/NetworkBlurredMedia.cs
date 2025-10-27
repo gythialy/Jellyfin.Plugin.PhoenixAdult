@@ -86,6 +86,7 @@ namespace PhoenixAdult.Sites
             movie.Name = detailsPageElements.SelectSingleNode("//h1[@class='title']")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//section[@name='descriptionIntro']/p")?.InnerText.Trim();
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
+            movie.AddCollection(Helper.GetSearchSiteName(siteNum));
 
             var dateNode = detailsPageElements.SelectSingleNode("//time[@class='video__date']");
             if (dateNode != null && DateTime.TryParse(dateNode.GetAttributeValue("datetime", string.Empty), out var parsedDate))

@@ -108,6 +108,7 @@ namespace PhoenixAdult.Sites
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
+            movie.AddCollection(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'content-date')]");
             if (dateNode != null)

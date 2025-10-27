@@ -97,6 +97,7 @@ namespace PhoenixAdult.Sites
             movie.Name = detailsPageElements.SelectSingleNode("//div[@class='movie_title']")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']/span[contains(text(), 'Description:')]")?.ParentNode.InnerText.Replace("Description:", string.Empty).Trim();
             movie.AddStudio("Jules Jordan");
+            movie.AddCollection("Jules Jordan");
 
             var dvdName = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Movie:')]")?.ParentNode.InnerText.Replace("Movie:", string.Empty).Replace("Feature: ", string.Empty).Trim();
             if (!string.IsNullOrEmpty(dvdName))

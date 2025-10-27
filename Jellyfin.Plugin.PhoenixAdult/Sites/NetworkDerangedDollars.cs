@@ -85,6 +85,7 @@ namespace PhoenixAdult.Sites
 
             string tagline = detailsPageElements.SelectSingleNode("//title")?.InnerText.Split('|')[1].Trim().Replace(".com", string.Empty);
             movie.AddTag(tagline);
+            movie.AddCollection(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

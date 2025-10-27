@@ -171,6 +171,7 @@ namespace PhoenixAdult.Sites
             {
                 string tagline = taglineNode.InnerText.Trim();
                 movie.AddTag(tagline);
+                movie.AddCollection(tagline);
             }
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='release-date']");
