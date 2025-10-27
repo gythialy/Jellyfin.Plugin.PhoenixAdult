@@ -56,7 +56,7 @@ namespace PhoenixAdult.Sites
                             var movieUrl = searchResult.GetAttributeValue("href", string.Empty).Split('-')[0];
                             if (movieUrl.Contains("/movies/") && !searchResults.Contains(movieUrl))
                             {
-                                var titleNoFormatting = Helper.ParseTitle(searchResult.SelectSingleNode(".//p[@class='gen12 bold']").InnerText, siteNum[0]);
+                                var titleNoFormatting = Helper.ParseTitle(searchResult.SelectSingleNode(".//p[@class='gen12 bold']").InnerText, siteNum);
                                 if (titleNoFormatting.Contains("..."))
                                 {
                                     searchResults.Add(movieUrl);
@@ -119,7 +119,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var googleResults = await SearchEngine.Search(searchTitle, cancellationToken, siteNum);
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
             foreach (var movieUrl in googleResults)
             {
                 var url = movieUrl.Split('-')[0].Replace("http:", "https:");
@@ -136,7 +136,7 @@ namespace PhoenixAdult.Sites
                 {
                     var detailDoc = new HtmlDocument();
                     detailDoc.LoadHtml(httpResult.Content);
-                    var titleNoFormatting = Helper.ParseTitle(detailDoc.DocumentNode.SelectSingleNode("//h1").InnerText, siteNum[0]);
+                    var titleNoFormatting = Helper.ParseTitle(detailDoc.DocumentNode.SelectSingleNode("//h1").InnerText, siteNum);
                     var curId = Helper.Encode(movieUrl);
                     var dateNode = detailDoc.DocumentNode.SelectSingleNode("//@datetime");
                     var releaseDate = dateNode != null && DateTime.TryParse(dateNode.GetAttributeValue("datetime", string.Empty).Trim(), out var parsedDate)
@@ -192,7 +192,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1").InnerText, siteNum[0]);
+            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1").InnerText, siteNum);
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='gen12']//div[contains(., 'Description')]");
             var summary = summaryNode?.InnerText.Split(new[] { "---", "Description -" }, StringSplitOptions.RemoveEmptyEntries).Last().Trim();
             if (!string.IsNullOrEmpty(summary))

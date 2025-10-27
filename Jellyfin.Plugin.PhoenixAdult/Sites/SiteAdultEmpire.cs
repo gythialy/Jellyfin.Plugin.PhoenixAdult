@@ -86,7 +86,7 @@ namespace PhoenixAdult.Sites
                             var movieUrl = $"{Helper.GetSearchBaseURL(siteNum)}/{urlId}";
                             if (!searchResults.Contains(movieUrl))
                             {
-                                var titleNoFormatting = Helper.ParseTitle(searchResult.SelectSingleNode("./a").InnerText.Trim(), siteNum[0]);
+                                var titleNoFormatting = Helper.ParseTitle(searchResult.SelectSingleNode("./a").InnerText.Trim(), siteNum);
                                 var curId = Helper.Encode(movieUrl);
                                 var (releaseDate, displayDate) = GetReleaseDateAndDisplayDate(null, searchDate);
                                 var detailHttp = await HTTP.Request(movieUrl, HttpMethod.Get, cancellationToken, null, cookies);
@@ -124,7 +124,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
 
-                var googleResults = await SearchEngine.Search(searchTitle, cancellationToken, siteNum);
+                var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
                 foreach (var movieUrl in googleResults)
                 {
                     var cleanUrl = movieUrl.Substring(0, movieUrl.LastIndexOf('/'));
@@ -143,7 +143,7 @@ namespace PhoenixAdult.Sites
                     var detailDoc = new HtmlDocument();
                     detailDoc.LoadHtml(detailHttp.Content);
                     var urlId = movieUrl.Split('/').Last();
-                    var titleNoFormatting = Helper.ParseTitle(detailDoc.DocumentNode.SelectSingleNode("//h1").InnerText.Trim(), siteNum[0]);
+                    var titleNoFormatting = Helper.ParseTitle(detailDoc.DocumentNode.SelectSingleNode("//h1").InnerText.Trim(), siteNum);
                     var curId = Helper.Encode(movieUrl);
                     var (releaseDate, displayDate) = GetReleaseDateAndDisplayDate(detailDoc.DocumentNode, searchDate);
                     var studioNode = detailDoc.DocumentNode.SelectSingleNode("//li[contains(., 'Studio:')]/a");
@@ -194,7 +194,7 @@ namespace PhoenixAdult.Sites
             var splitScene = providerIds.Length > 3;
             var sceneNum = splitScene ? int.Parse(providerIds[3]) : 0;
             var sceneIndex = splitScene ? int.Parse(providerIds[4]) : 0;
-            movie.Name = Helper.ParseTitle(doc.DocumentNode.SelectSingleNode("//h1").InnerText.Trim(), siteNum[0]);
+            movie.Name = Helper.ParseTitle(doc.DocumentNode.SelectSingleNode("//h1").InnerText.Trim(), siteNum);
             if (splitScene)
             {
                 movie.Name = $"{movie.Name} [Scene {sceneNum}]";
@@ -213,12 +213,12 @@ namespace PhoenixAdult.Sites
             if (taglineNode != null)
             {
                 var tagline = Regex.Replace(taglineNode.InnerText.Trim().Split('"')[1], @"\(.*\)", "").Trim();
-                movie.AddTag(Helper.ParseTitle(tagline, siteNum[0]));
-                movie.AddCollection(Helper.ParseTitle(tagline, siteNum[0]));
+                movie.AddTag(Helper.ParseTitle(tagline, siteNum));
+                movie.AddCollection(Helper.ParseTitle(tagline, siteNum));
             }
             else if (splitScene)
             {
-                movie.AddCollection(Helper.ParseTitle(doc.DocumentNode.SelectSingleNode("//h1").InnerText, siteNum[0]).Trim());
+                movie.AddCollection(Helper.ParseTitle(doc.DocumentNode.SelectSingleNode("//h1").InnerText, siteNum).Trim());
             }
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
