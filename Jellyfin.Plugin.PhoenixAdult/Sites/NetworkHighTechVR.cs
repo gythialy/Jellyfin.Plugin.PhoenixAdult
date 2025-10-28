@@ -25,7 +25,9 @@ namespace PhoenixAdult.Sites
     {
         private static readonly Dictionary<string, Dictionary<string, string>> xPathMap = new Dictionary<string, Dictionary<string, string>>
         {
-            { "SexBabesVR", new Dictionary<string, string> {
+            {
+                "SexBabesVR", new Dictionary<string, string>
+            {
                 { "date", "//div[contains(@class, 'video-detail__description--container')]/div[last()]" },
                 { "summary", "//div[contains(@class, 'video-detail')]/div/p" },
                 { "tags", "//a[contains(@class, 'tag')]" },
@@ -33,8 +35,11 @@ namespace PhoenixAdult.Sites
                 { "actorPhoto", "//img[contains(@class, 'cover-picture')]" },
                 { "images", "//a[contains(@data-fancybox, 'gallery')]//img/@src" },
                 { "poster", "//dl8-video" },
-            }                        },
-            { "StasyQ VR", new Dictionary<string, string> {
+            }
+            },
+            {
+                "StasyQ VR", new Dictionary<string, string>
+            {
                 { "date", "//div[@class='video-meta-date']" },
                 { "summary", "//div[@class='video-info']/p" },
                 { "tags", "//div[contains(@class, 'my-2 lh-lg')]//a" },
@@ -42,8 +47,11 @@ namespace PhoenixAdult.Sites
                 { "actorPhoto", "//div[contains(@class, 'model-one-inner')]//img" },
                 { "images", "//div[contains(@class, 'video-gallery')]//div//figure//a/@href" },
                 { "poster", "//div[@class='splash-screen fullscreen-message is-visible'] | //dl8-video" },
-            }                        },
-            { "RealJamVR", new Dictionary<string, string> {
+            }
+            },
+            {
+                "RealJamVR", new Dictionary<string, string>
+            {
                 { "date", "//div[@class='ms-4 text-nowrap']" },
                 { "summary", "//div[@class='opacity-75 my-2']" },
                 { "tags", "//div[contains(@class, 'my-2 lh-lg')]//a" },
@@ -51,7 +59,8 @@ namespace PhoenixAdult.Sites
                 { "actorPhoto", "//div[@class='col-12 col-lg-4 pe-lg-0']//img" },
                 { "images", "//img[@class='img-thumb']/@src" },
                 { "poster", "//div[@class='splash-screen fullscreen-message is-visible'] | //dl8-video" },
-            }                        },
+            }
+            },
         };
 
         private string Slugify(string phrase)
@@ -96,7 +105,7 @@ namespace PhoenixAdult.Sites
 
             result.Add(new RemoteSearchResult
             {
-                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                ProviderIds = { { Plugin.Instance.Name, curId } },
                 Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                 SearchProviderName = Plugin.Instance.Name,
             });
@@ -112,7 +121,7 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string sceneUrl = $"{Helper.GetSearchSearchURL(siteNum)}{sceneID[0].Split('|')[0]}";
+            string sceneUrl = $"{Helper.GetSearchSearchURL(siteNum)}{sceneID[0]}";
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)
             {
@@ -147,7 +156,7 @@ namespace PhoenixAdult.Sites
                 }
 
                 movie.AddTag(tagline);
-                }
+            }
 
             var dateNode = detailsPageElements.SelectSingleNode(siteXPath["date"]);
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
@@ -194,7 +203,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string sceneUrl = $"{Helper.GetSearchSearchURL(siteNum)}{sceneID[0].Split('|')[0]}";
+            string sceneUrl = $"{Helper.GetSearchSearchURL(siteNum)}{sceneID[0]}";
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)
             {

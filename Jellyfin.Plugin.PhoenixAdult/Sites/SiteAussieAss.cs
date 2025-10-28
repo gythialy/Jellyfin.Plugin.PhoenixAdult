@@ -35,10 +35,13 @@ namespace PhoenixAdult.Sites
         private string Slugify(string phrase)
         {
             string str = phrase.ToLowerInvariant();
+
             // invalid chars
             str = Regex.Replace(str, @"[^a-z0-9\s-]", string.Empty);
+
             // convert multiple spaces into one space
             str = Regex.Replace(str, @"\s+", " ").Trim();
+
             // cut and trim
             str = str.Substring(0, str.Length <= 45 ? str.Length : 45).Trim();
             str = Regex.Replace(str, @"\s", "-"); // hyphens
@@ -65,7 +68,7 @@ namespace PhoenixAdult.Sites
                     string titleNoFormatting = Regex.Replace(searchResults.SelectSingleNode("//h1|//h4/span")?.InnerText.Trim() ?? string.Empty, @"^\d+", string.Empty).Trim().ToLower();
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{Helper.Encode(sceneUrl)}|{siteNum[0]}" } },
+                        ProviderIds = { { Plugin.Instance.Name, Helper.Encode(sceneUrl) } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -96,7 +99,7 @@ namespace PhoenixAdult.Sites
 
                             result.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
+                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                                 Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                                 SearchProviderName = Plugin.Instance.Name,
                             });
@@ -118,7 +121,7 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string sceneUrl = Helper.Decode(providerIds[0]);
-            string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
+            string sceneDate = providerIds.Length > 1 ? providerIds[1] : null;
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)

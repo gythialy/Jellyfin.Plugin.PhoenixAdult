@@ -12,7 +12,6 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
 using MediaBrowser.Model.Entities;
 
-
 #if __EMBY__
 #else
 using Jellyfin.Data.Enums;
@@ -78,7 +77,7 @@ namespace PhoenixAdult.Sites
 
                                 searchResults.Add(new RemoteSearchResult
                                 {
-                                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{titleNoFormattingID}|{releaseDate}" } },
+                                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{titleNoFormattingID}|{releaseDate}" } },
                                     Name = $"{titleNoFormatting} {releaseDate} [{SiteName}]",
                                 });
                             }
@@ -118,7 +117,7 @@ namespace PhoenixAdult.Sites
             metadataResult.Item.OfficialRating = "XXX";
             metadataResult.Item.SetProviderId(Plugin.Instance.Name, sceneUrl);
 
-            var date = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[3]));
+            var date = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[2]));
             if (!string.IsNullOrEmpty(date))
             {
                 metadataResult.Item.PremiereDate = DateTime.Parse(date);

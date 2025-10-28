@@ -43,7 +43,7 @@ namespace PhoenixAdult.Sites
                     string curId = Helper.Encode(Helper.GetSearchBaseURL(siteNum) + node.GetAttributeValue("href", string.Empty));
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                        ProviderIds = { { Plugin.Instance.Name, curId } },
                         Name = $"{titleNoFormatting} [CumLouder]",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -61,7 +61,7 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;

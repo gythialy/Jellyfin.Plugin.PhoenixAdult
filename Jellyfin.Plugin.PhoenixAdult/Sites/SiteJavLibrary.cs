@@ -74,7 +74,7 @@ namespace PhoenixAdult.Sites
 
                     searchResults.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                        ProviderIds = { { Plugin.Instance.Name, curID } },
                         Name = $"[{javid}] {titleNoFormatting}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -102,7 +102,7 @@ namespace PhoenixAdult.Sites
                             string curID = Helper.Encode(searchResultPage.SelectSingleNode("//meta[@property='og:url']")?.GetAttributeValue("content", string.Empty).Replace("//www", "https://www"));
                             searchResults.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                                ProviderIds = { { Plugin.Instance.Name, curID } },
                                 Name = $"[{javid}] {titleNoFormatting}",
                                 SearchProviderName = Plugin.Instance.Name,
                             });
@@ -122,7 +122,7 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             var detailsPageElements = await HTML.ElementFromURL(sceneUrl, cancellationToken);
             if (detailsPageElements == null)
             {
@@ -211,7 +211,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             var detailsPageElements = await HTML.ElementFromURL(sceneUrl, cancellationToken);
             if (detailsPageElements == null)
             {

@@ -74,7 +74,7 @@ namespace PhoenixAdult.Sites
 
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                            ProviderIds = { { Plugin.Instance.Name, curId } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -93,7 +93,7 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)
             {
@@ -135,10 +135,10 @@ namespace PhoenixAdult.Sites
             var actorNodes = detailsPageElements.SelectNodes("//div[@id='ModelDescription']//h1");
             if (actorNodes != null)
             {
-                for (int i=0; i < actorNodes.Count; i++)
+                for (int i = 0; i < actorNodes.Count; i++)
                 {
                     string actorName = actorNodes[i].InnerText.Replace("'s Statistics", string.Empty).Trim();
-                    string actorPhotoUrl = detailsPageElements.SelectSingleNode($"//div[@id='Thumbs']/img[{i+1}]")?.GetAttributeValue("src", string.Empty);
+                    string actorPhotoUrl = detailsPageElements.SelectSingleNode($"//div[@id='Thumbs']/img[{i + 1}]")?.GetAttributeValue("src", string.Empty);
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
@@ -149,7 +149,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             var match = Regex.Match(sceneUrl, @"-([0-9]{1,})\.");
             if (match.Success && int.TryParse(match.Groups[1].Value, out var id))
             {

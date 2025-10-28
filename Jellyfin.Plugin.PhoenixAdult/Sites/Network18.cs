@@ -17,7 +17,6 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
-
 #if __EMBY__
 #else
 using Jellyfin.Data.Enums;
@@ -90,7 +89,7 @@ namespace PhoenixAdult.Sites
                 {
                     string sceneName = searchResult["name"].ToString();
                     string releaseDateStr = searchDate?.ToString("yyyy-MM-dd") ?? string.Empty;
-                    string curID = Helper.Encode($"{searchResult["itemId"]}|{siteNum[0]}|{releaseDateStr}");
+                    string curID = Helper.Encode($"{searchResult["itemId"]}|{releaseDateStr}");
 
                     var item = new RemoteSearchResult
                     {
@@ -121,7 +120,7 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = Helper.Decode(sceneID[0]).Split('|');
             string videoId = providerIds[0];
-            string sceneDate = providerIds[2];
+            string sceneDate = providerIds[1];
 
             var detailsPageElements = await GetDataFromAPI(findVideoQuery, "videoId", videoId, siteNum, cancellationToken);
             var sceneData = detailsPageElements?.SelectToken("data.video.find.result");
@@ -192,6 +191,7 @@ namespace PhoenixAdult.Sites
             {
                 return images;
             }
+
             string studio = Helper.GetSearchSiteName(siteNum);
 
             var imagePaths = new List<string>

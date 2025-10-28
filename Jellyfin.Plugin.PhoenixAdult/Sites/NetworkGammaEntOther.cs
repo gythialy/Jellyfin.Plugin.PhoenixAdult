@@ -60,7 +60,7 @@ namespace PhoenixAdult.Sites
             var headers = new Dictionary<string, string>
             {
                 { "Referer", referer },
-                { "Content-Type", "application/json" }
+                { "Content-Type", "application/json" },
             };
 
             var payload = new
@@ -77,6 +77,7 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(url, HttpMethod.Post, new StringContent(JsonConvert.SerializeObject(payload)), headers, null, cancellationToken);
             Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.IsOK:{httpResult.IsOK}");
             Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.StatusCode: {httpResult.StatusCode}");
+
             //Logger.Info($"[NetworkGammaEntOther] GetAlgolia called. httpResult.Content: {httpResult.Content}");
             if (!httpResult.IsOK)
             {
@@ -135,7 +136,7 @@ namespace PhoenixAdult.Sites
 
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{sceneType}|{releaseDate}" } },
+                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{sceneType}|{releaseDate}" } },
                             Name = $"[{sceneType.Capitalize()}] {titleNoFormatting} {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -156,8 +157,8 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string sceneId = providerIds[0];
-            string sceneType = providerIds[2];
-            string sceneDate = providerIds[3];
+            string sceneType = providerIds[1];
+            string sceneDate = providerIds[2];
             string apiKey = await GetApiKey(siteNum, cancellationToken);
             if (apiKey == null)
             {
@@ -215,7 +216,7 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string[] providerIds = sceneID[0].Split('|');
             string sceneId = providerIds[0];
-            string sceneType = providerIds[2];
+            string sceneType = providerIds[1];
             string apiKey = await GetApiKey(siteNum, cancellationToken);
             if (apiKey == null)
             {

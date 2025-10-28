@@ -112,7 +112,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDateStr}|{sceneType}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDateStr}|{sceneType}" } },
                         Name = $"{titleNoFormatting} [{subSite}] {releaseDateStr}",
                         SearchProviderName = Plugin.Instance.Name,
                         ImageUrl = (string)details["img"],
@@ -133,8 +133,8 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string sceneName = providerIds[0];
-            string sceneDate = providerIds[2];
-            string sceneType = providerIds[3];
+            string sceneDate = providerIds[1];
+            string sceneType = providerIds[2];
 
             var detailsPageElements = await GetJSONfromPage($"{Helper.GetSearchSearchURL(siteNum)}{sceneName}", cancellationToken);
             var details = detailsPageElements?.SelectToken($"{sceneType}.{sceneName}");
@@ -165,6 +165,7 @@ namespace PhoenixAdult.Sites
                     genres.Add((string)tag);
                 }
             }
+
             if (details["models"].Count() > 1 && subSite != "Mylfed")
             {
                 genres.Add("Threesome");
@@ -204,7 +205,7 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteImageInfo>();
             string[] providerIds = sceneID[0].Split('|');
             string sceneName = providerIds[0];
-            string sceneType = providerIds[3];
+            string sceneType = providerIds[2];
 
             var detailsPageElements = await GetJSONfromPage($"{Helper.GetSearchSearchURL(siteNum)}{sceneName}", cancellationToken);
             var details = detailsPageElements?.SelectToken($"{sceneType}.{sceneName}");

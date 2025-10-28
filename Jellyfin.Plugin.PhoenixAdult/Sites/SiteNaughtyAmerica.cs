@@ -89,7 +89,7 @@ namespace PhoenixAdult.Sites
                     string releaseDate = scenePageElements.PublishedAt.ToString("yyyy-MM-dd");
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{scenePageElements.Id}|{siteNum[0]}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{scenePageElements.Id}" } },
                         Name = $"{scenePageElements.Title} [{scenePageElements.Site}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -122,7 +122,7 @@ namespace PhoenixAdult.Sites
                             string siteName = searchResult.SelectSingleNode(".//a[@class='site-title']")?.InnerText;
                             result.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                                ProviderIds = { { Plugin.Instance.Name, $"{curID}" } },
                                 Name = $"{titleNoFormatting} [{siteName}] {releaseDate}",
                                 SearchProviderName = Plugin.Instance.Name,
                             });
@@ -143,7 +143,7 @@ namespace PhoenixAdult.Sites
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
             var result = new MetadataResult<BaseItem>() { Item = new Movie(), People = new List<PersonInfo>() };
-            string sceneId = sceneID[0].Split('|')[0];
+            string sceneId = sceneID[0];
             var details = await GetNaughtyAmerica(sceneId, cancellationToken);
             if (details == null)
             {
@@ -185,7 +185,7 @@ namespace PhoenixAdult.Sites
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            string sceneId = sceneID[0].Split('|')[0];
+            string sceneId = sceneID[0];
             var details = await GetNaughtyAmerica(sceneId, cancellationToken);
             return details?.Photos.Select((url, index) => new RemoteImageInfo { Url = url, Type = index == 0 ? ImageType.Primary : ImageType.Backdrop }) ?? new List<RemoteImageInfo>();
         }

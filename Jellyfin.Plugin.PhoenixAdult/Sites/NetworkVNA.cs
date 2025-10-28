@@ -85,7 +85,7 @@ namespace PhoenixAdult.Sites
 
                     var item = new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                        ProviderIds = { { Plugin.Instance.Name, curID } },
                         Name = $"[{Helper.GetSearchSiteName(siteNum)}] {titleNoFormatting} {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     };
@@ -104,9 +104,8 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
             var movie = (Movie)result.Item;
-            var providerIds = sceneID[0].Split('|');
-            var sceneURL = Helper.Decode(providerIds[0]);
-            var siteNumVal = int.Parse(providerIds[1]);
+            var sceneURL = Helper.Decode(sceneID[0]);
+            var siteNumVal = siteNum[0];
 
             var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
             if (doc == null)
@@ -182,8 +181,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            var providerIds = sceneID[0].Split('|');
-            var sceneURL = Helper.Decode(providerIds[0]);
+            var sceneURL = Helper.Decode(sceneID[0]);
 
             var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
             if (doc != null)

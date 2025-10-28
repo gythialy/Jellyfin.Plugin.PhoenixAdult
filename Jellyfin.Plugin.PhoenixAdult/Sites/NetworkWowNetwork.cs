@@ -41,7 +41,7 @@ namespace PhoenixAdult.Sites
                 pages.AddRange(pageNodes.Select(p => p.GetAttributeValue("href", string.Empty)));
             }
 
-            foreach(var page in pages)
+            foreach (var page in pages)
             {
                 var pageHttp = await HTTP.Request(page, HttpMethod.Get, cancellationToken);
                 if (pageHttp.IsOK)
@@ -59,7 +59,7 @@ namespace PhoenixAdult.Sites
 
                             result.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{image}" } },
+                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{image}" } },
                                 Name = $"{titleNoFormatting} [{siteName}]",
                                 SearchProviderName = Plugin.Instance.Name,
                             });
@@ -132,15 +132,17 @@ namespace PhoenixAdult.Sites
         public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string image = Helper.Decode(sceneID[0].Split('|')[2]);
+            string image = Helper.Decode(sceneID[0].Split('|')[1]);
             if (!string.IsNullOrEmpty(image))
             {
                 images.Add(new RemoteImageInfo { Url = image });
             }
+
             if (images.Any())
             {
                 images.First().Type = ImageType.Primary;
             }
+
             return Task.FromResult<IEnumerable<RemoteImageInfo>>(images);
         }
     }

@@ -67,7 +67,7 @@ namespace PhoenixAdult.Sites
                     string subSite = Helper.ParseTitle(searchResult.SelectSingleNode("//a[contains(@href, '/studio/profile/')]")?.InnerText.Split(':').Last().Trim(), siteNum);
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                        ProviderIds = { { Plugin.Instance.Name, curId } },
                         Name = $"{titleNoFormatting} [{subSite}]",
                         SearchProviderName = Plugin.Instance.Name,
                     });

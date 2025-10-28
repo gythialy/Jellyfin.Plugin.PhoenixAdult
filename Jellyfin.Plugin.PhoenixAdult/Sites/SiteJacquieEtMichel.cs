@@ -12,7 +12,6 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
 using MediaBrowser.Model.Entities;
 
-
 #if __EMBY__
 #else
 using Jellyfin.Data.Enums;
@@ -50,7 +49,7 @@ namespace PhoenixAdult.Sites
 
                     searchResults.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                        ProviderIds = { { Plugin.Instance.Name, curID } },
                         Name = $"{titleNoFormatting} [{SiteName}] {releaseDate}",
                     });
                 }
@@ -66,7 +65,7 @@ namespace PhoenixAdult.Sites
 
                 searchResults.Add(new RemoteSearchResult
                 {
-                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                    ProviderIds = { { Plugin.Instance.Name, curID } },
                     Name = $"{titleNoFormatting} [{SiteName}]",
                 });
             }
@@ -76,8 +75,7 @@ namespace PhoenixAdult.Sites
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
-            var metadataId = sceneID[0].Split('|');
-            var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
+            var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(sceneID[0]));
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = $"{BaseUrl}{sceneUrl}";
@@ -126,8 +124,7 @@ namespace PhoenixAdult.Sites
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            var metadataId = sceneID[0].Split('|');
-            var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
+            var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(sceneID[0]));
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = $"{BaseUrl}{sceneUrl}";

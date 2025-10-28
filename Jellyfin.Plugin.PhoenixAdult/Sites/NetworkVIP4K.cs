@@ -93,7 +93,7 @@ namespace PhoenixAdult.Sites
 
                     var item = new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     };
@@ -138,7 +138,7 @@ namespace PhoenixAdult.Sites
 
                         var item = new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
+                            ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } },
                             Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
                         };
@@ -161,7 +161,7 @@ namespace PhoenixAdult.Sites
 
             var providerIds = sceneID[0].Split('|');
             var sceneURL = Helper.Decode(providerIds[0]);
-            var sceneDate = providerIds[2];
+            var sceneDate = providerIds[1];
 
             var http = await HTTP.Request(sceneURL, cancellationToken);
             if (!http.IsOK)

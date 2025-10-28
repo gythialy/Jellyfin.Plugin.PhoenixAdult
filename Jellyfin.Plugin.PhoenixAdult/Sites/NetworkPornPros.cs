@@ -96,7 +96,7 @@ namespace PhoenixAdult.Sites
 
             result.Add(new RemoteSearchResult
             {
-                ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
+                ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } },
                 Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
                 SearchProviderName = Plugin.Instance.Name,
             });
@@ -114,7 +114,7 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string slug = Helper.Decode(providerIds[0]);
-            string sceneDate = providerIds.Length > 2 ? providerIds[2] : string.Empty;
+            string sceneDate = providerIds.Length > 1 ? providerIds[1] : string.Empty;
 
             var detailsPageElements = await GetDataFromAPI(siteNum, "releases", slug, cancellationToken);
             if (detailsPageElements == null)
@@ -145,8 +145,8 @@ namespace PhoenixAdult.Sites
             }
             else if (DateTime.TryParse(sceneDate, out var parsedSceneDate))
             {
-                 movie.PremiereDate = parsedSceneDate;
-                 movie.ProductionYear = parsedSceneDate.Year;
+                movie.PremiereDate = parsedSceneDate;
+                movie.ProductionYear = parsedSceneDate.Year;
             }
 
             var junkTags = new List<string> { tagline.Replace(" ", string.Empty).ToLower() };

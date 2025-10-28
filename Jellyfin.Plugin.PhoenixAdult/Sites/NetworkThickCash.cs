@@ -70,7 +70,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{descriptionId}|{releaseDate}|{posterId}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{descriptionId}|{releaseDate}|{posterId}" } },
                         Name = $"{titleNoFormatting} [Thick Cash/{subSite}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -90,8 +90,8 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string sceneTitle = Helper.Decode(providerIds[0]);
-            string sceneDescription = Helper.Decode(providerIds[2]);
-            string sceneDate = providerIds[3];
+            string sceneDescription = Helper.Decode(providerIds[1]);
+            string sceneDate = providerIds[2];
 
             var movie = (Movie)result.Item;
             movie.Name = sceneTitle;
@@ -102,7 +102,10 @@ namespace PhoenixAdult.Sites
             movie.AddTag(tagline);
 
             string subSite = Helper.GetSearchSiteName(siteNum).ToLower();
-            if (subSite == "family lust") movie.AddGenre("Family Roleplay");
+            if (subSite == "family lust")
+            {
+                movie.AddGenre("Family Roleplay");
+            }
             else if (subSite == "over 40 handjobs")
             {
                 movie.AddGenre("MILF");
@@ -131,7 +134,7 @@ namespace PhoenixAdult.Sites
         public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string scenePoster = Helper.Decode(sceneID[0].Split('|')[4]);
+            string scenePoster = Helper.Decode(sceneID[0].Split('|')[3]);
             images.Add(new RemoteImageInfo { Url = scenePoster, Type = ImageType.Primary });
             return Task.FromResult<IEnumerable<RemoteImageInfo>>(images);
         }

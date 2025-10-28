@@ -40,7 +40,7 @@ namespace PhoenixAdult.Sites
                 string releaseDate = searchDate?.ToString("yyyy-MM-dd") ?? string.Empty;
                 result.Add(new RemoteSearchResult
                 {
-                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
+                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } },
                     Name = $"{url} [{Helper.GetSearchSiteName(siteNum)}]",
                     SearchProviderName = Plugin.Instance.Name,
                 });
@@ -60,7 +60,7 @@ namespace PhoenixAdult.Sites
 
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|" } },
+                            ProviderIds = { { Plugin.Instance.Name, $"{curID}|" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -81,7 +81,7 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string sceneURL = Helper.Decode(providerIds[0]);
-            string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
+            string sceneDate = providerIds.Length > 1 ? providerIds[1] : null;
             if (!sceneURL.StartsWith("http"))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;

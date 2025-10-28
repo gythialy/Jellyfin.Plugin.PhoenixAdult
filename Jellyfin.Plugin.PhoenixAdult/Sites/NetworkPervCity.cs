@@ -41,7 +41,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                        ProviderIds = { { Plugin.Instance.Name, curId } },
                         Name = $"{titleNoFormatting} [PervCity/{subSite}]",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -59,7 +59,7 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)
             {
@@ -116,7 +116,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)
             {

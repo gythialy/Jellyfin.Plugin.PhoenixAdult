@@ -88,6 +88,7 @@ namespace PhoenixAdult.Sites
             {
                 return result;
             }
+
             var movie = (Movie)result.Item;
 
             movie.Name = (string)details["title"];

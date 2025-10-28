@@ -48,13 +48,15 @@ namespace PhoenixAdult.Sites
                         string titleNoFormatting = scenePageElements.SelectSingleNode("//h1[contains(@class,'watch__title')]")?.InnerText.Trim();
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                            ProviderIds = { { Plugin.Instance.Name, curId } },
                             Name = $"{titleNoFormatting} [AnalVids]",
                             SearchProviderName = Plugin.Instance.Name,
                         });
                     }
                 }
-                catch { }
+                catch
+                {
+                }
             }
 
             var searchHttp = await HTTP.Request(Helper.GetSearchSearchURL(siteNum) + searchTitle, HttpMethod.Get, cancellationToken);
@@ -74,7 +76,7 @@ namespace PhoenixAdult.Sites
                             string releaseDate = searchDate?.ToString("yyyy-MM-dd") ?? string.Empty;
                             result.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
+                                ProviderIds = { { Plugin.Instance.Name, curId } },
                                 Name = $"{titleNoFormatting} [AnalVids] {releaseDate}",
                                 SearchProviderName = Plugin.Instance.Name,
                             });
@@ -94,7 +96,7 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
@@ -117,7 +119,7 @@ namespace PhoenixAdult.Sites
             if (tagline != null)
             {
                 movie.AddTag(tagline);
-                }
+            }
 
             var dateNode = detailsPageElements.SelectSingleNode("//i[contains(@class,'bi-calendar3')]");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText, out var parsedDate))
@@ -165,7 +167,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;

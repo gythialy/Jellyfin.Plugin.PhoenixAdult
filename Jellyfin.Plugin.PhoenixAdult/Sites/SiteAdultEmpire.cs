@@ -69,7 +69,7 @@ namespace PhoenixAdult.Sites
 
             if (!directId)
             {
-                var encodedTitle = searchTitle.Replace("&", "").Replace("'", "").Replace(",", "").Replace("#", "").Replace(" ", "+");
+                var encodedTitle = searchTitle.Replace("&", string.Empty).Replace("'", string.Empty).Replace(",", string.Empty).Replace("#", string.Empty).Replace(" ", "+");
                 var searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{encodedTitle}";
                 var searchHttp = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, new Dictionary<string, string> { { "Referer", "http://www.data18.empirestores.co" } }, cookies);
                 if (searchHttp.IsOK)
@@ -81,7 +81,7 @@ namespace PhoenixAdult.Sites
                     {
                         foreach (var searchResult in searchResultNodes)
                         {
-                            var resultType = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(searchResult.GetAttributeValue("href", string.Empty).Split('-').Last().Replace(".html", "").Replace("ray", "Blu-Ray"));
+                            var resultType = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(searchResult.GetAttributeValue("href", string.Empty).Split('-').Last().Replace(".html", string.Empty).Replace("ray", "Blu-Ray"));
                             var urlId = searchResult.GetAttributeValue("href", string.Empty).Split('/')[1];
                             var movieUrl = $"{Helper.GetSearchBaseURL(siteNum)}/{urlId}";
                             if (!searchResults.Contains(movieUrl))
@@ -212,7 +212,7 @@ namespace PhoenixAdult.Sites
             var taglineNode = doc.DocumentNode.SelectSingleNode("//h2/a[@label='Series']");
             if (taglineNode != null)
             {
-                var tagline = Regex.Replace(taglineNode.InnerText.Trim().Split('"')[1], @"\(.*\)", "").Trim();
+                var tagline = Regex.Replace(taglineNode.InnerText.Trim().Split('"')[1], @"\(.*\)", string.Empty).Trim();
                 movie.AddTag(Helper.ParseTitle(tagline, siteNum));
                 movie.AddCollection(Helper.ParseTitle(tagline, siteNum));
             }

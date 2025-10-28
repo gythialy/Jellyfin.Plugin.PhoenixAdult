@@ -72,7 +72,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{Helper.Encode(searchTitle)}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}|{Helper.Encode(searchTitle)}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -104,7 +104,7 @@ namespace PhoenixAdult.Sites
 
                             result.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{Helper.Encode(searchTitle)}|{Helper.Encode(sceneUrl)}" } },
+                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}|{Helper.Encode(searchTitle)}|{Helper.Encode(sceneUrl)}" } },
                                 Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                                 SearchProviderName = Plugin.Instance.Name,
                             });
@@ -126,9 +126,9 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             int sceneId = int.Parse(providerIds[0]);
-            string sceneDate = providerIds[2];
-            string actors = Helper.Decode(providerIds[3]);
-            string netUrl = providerIds.Length > 4 ? Helper.Decode(providerIds[4]) : null;
+            string sceneDate = providerIds[1];
+            string actors = Helper.Decode(providerIds[2]);
+            string netUrl = providerIds.Length > 3 ? Helper.Decode(providerIds[3]) : null;
 
             var detailsPageElements = await GetPageData(siteNum, sceneId, cancellationToken);
 

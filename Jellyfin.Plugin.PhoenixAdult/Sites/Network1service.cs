@@ -165,7 +165,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{sceneType}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{sceneType}" } },
                         Name = $"{titleNoFormatting} [{siteDisplay}] {releaseDate:yyyy-MM-dd}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -187,7 +187,7 @@ namespace PhoenixAdult.Sites
             string[] providerIds = sceneID[0].Split('|');
             Logger.Info($"[Network1service] Update providerIds: {string.Join(" / ", providerIds)}");
             string curID = providerIds[0];
-            string sceneType = providerIds[2];
+            string sceneType = providerIds[1];
 
             var instanceToken = await GetToken(siteNum, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrEmpty(instanceToken))
@@ -224,6 +224,7 @@ namespace PhoenixAdult.Sites
                     seriesNames.Add(collection["name"].ToString());
                 }
             }
+
             var parentTitle = details.SelectToken("parent.title")?.ToString();
             if (!string.IsNullOrEmpty(parentTitle))
             {
@@ -281,7 +282,7 @@ namespace PhoenixAdult.Sites
             string[] providerIds = sceneID[0].Split('|');
             Logger.Info($"[Network1service] GetImages providerIds: {string.Join(" / ", providerIds)}");
             string curID = providerIds[0];
-            string sceneType = providerIds[2];
+            string sceneType = providerIds[1];
 
             var instanceToken = await GetToken(siteNum, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrEmpty(instanceToken))

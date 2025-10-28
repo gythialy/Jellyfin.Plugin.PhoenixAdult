@@ -73,7 +73,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{descriptionId}|{releaseDate}|{actors}|{posterId}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{descriptionId}|{releaseDate}|{actors}|{posterId}" } },
                         Name = $"{titleNoFormatting} [PureCFNM/{subSite}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -93,7 +93,7 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string sceneTitle = Helper.Decode(providerIds[0]);
-            string sceneDescription = Helper.Decode(providerIds[2]);
+            string sceneDescription = Helper.Decode(providerIds[1]);
             string sceneDate = providerIds[3];
             string sceneActors = providerIds[4];
 
@@ -106,7 +106,10 @@ namespace PhoenixAdult.Sites
             movie.AddTag(tagline);
 
             string subSite = Helper.GetSearchSiteName(siteNum).ToLower();
-            if (subSite == "amateurcfnm") movie.AddGenre("CFNM");
+            if (subSite == "amateurcfnm")
+            {
+                movie.AddGenre("CFNM");
+            }
             else if (subSite == "cfnmgames")
             {
                 movie.AddGenre("CFNM");
@@ -170,7 +173,7 @@ namespace PhoenixAdult.Sites
         public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string scenePoster = Helper.Decode(sceneID[0].Split('|')[5]);
+            string scenePoster = Helper.Decode(sceneID[0].Split('|')[4]);
             images.Add(new RemoteImageInfo { Url = scenePoster, Type = ImageType.Primary });
             return Task.FromResult<IEnumerable<RemoteImageInfo>>(images);
         }

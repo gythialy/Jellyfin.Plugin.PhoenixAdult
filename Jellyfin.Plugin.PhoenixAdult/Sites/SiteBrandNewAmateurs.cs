@@ -43,7 +43,7 @@ namespace PhoenixAdult.Sites
 
                     var item = new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}|{actorURL}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}|{actorURL}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
                         SearchProviderName = Plugin.Instance.Name,
                     };
@@ -64,7 +64,7 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             var providerIds = sceneID[0].Split('|');
             var sceneURL = Helper.Decode(providerIds[0]);
-            var actorURL = Helper.Decode(providerIds[3]);
+            var actorURL = Helper.Decode(providerIds[2]);
 
             if (!sceneURL.StartsWith("http"))
             {

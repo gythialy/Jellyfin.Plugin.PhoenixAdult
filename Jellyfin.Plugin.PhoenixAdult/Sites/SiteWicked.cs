@@ -49,7 +49,7 @@ namespace PhoenixAdult.Sites
                             var releaseDate = DateTime.Parse(searchResult.SelectSingleNode(".//p[@class='sceneDate']").InnerText.Trim()).ToString("yyyy-MM-dd");
                             result.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                                ProviderIds = { { Plugin.Instance.Name, curId } },
                                 Name = $"{titleNoFormatting} [Wicked/Scene] {releaseDate}",
                                 SearchProviderName = Plugin.Instance.Name,
                             });
@@ -60,10 +60,10 @@ namespace PhoenixAdult.Sites
                     if (!string.IsNullOrEmpty(dvdTitle))
                     {
                         var curId = Helper.Encode(searchDoc.DocumentNode.SelectSingleNode("//link[@rel='canonical']").GetAttributeValue("href", string.Empty));
-                        var releaseDate = DateTime.Parse(searchDoc.DocumentNode.SelectSingleNode("//li[@class='updatedOn']").InnerText.Replace("Updated", "").Trim()).ToString("yyyy-MM-dd");
+                        var releaseDate = DateTime.Parse(searchDoc.DocumentNode.SelectSingleNode("//li[@class='updatedOn']").InnerText.Replace("Updated", string.Empty).Trim()).ToString("yyyy-MM-dd");
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                            ProviderIds = { { Plugin.Instance.Name, curId } },
                             Name = $"{dvdTitle} [Wicked/Full Movie] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -79,10 +79,10 @@ namespace PhoenixAdult.Sites
                     searchDoc.LoadHtml(searchHttp.Content);
                     var titleNoFormatting = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(searchDoc.DocumentNode.SelectSingleNode("//h1//span").InnerText.Trim()).Replace("Xxx", "XXX");
                     var curId = Helper.Encode(searchDoc.DocumentNode.SelectSingleNode("//link[@rel='canonical']").GetAttributeValue("href", string.Empty));
-                    var releaseDate = DateTime.Parse(searchDoc.DocumentNode.SelectSingleNode("//li[@class='updatedDate']").InnerText.Replace("Updated", "").Replace("|", "").Trim()).ToString("yyyy-MM-dd");
+                    var releaseDate = DateTime.Parse(searchDoc.DocumentNode.SelectSingleNode("//li[@class='updatedDate']").InnerText.Replace("Updated", string.Empty).Replace("|", string.Empty).Trim()).ToString("yyyy-MM-dd");
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                        ProviderIds = { { Plugin.Instance.Name, curId } },
                         Name = $"{titleNoFormatting} [Wicked/Scene] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -96,8 +96,7 @@ namespace PhoenixAdult.Sites
         {
             var result = new MetadataResult<BaseItem> { Item = new Movie(), People = new List<PersonInfo>() };
             var movie = (Movie)result.Item;
-            var providerIds = sceneID[0].Split('|');
-            var sceneURL = Helper.Decode(providerIds[0]);
+            var sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http"))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
@@ -114,7 +113,7 @@ namespace PhoenixAdult.Sites
             movie.Name = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(doc.DocumentNode.SelectSingleNode("//h1//span").InnerText.Trim()).Replace("Xxx", "XXX");
             movie.AddStudio("Wicked Pictures");
             var dateNode = doc.DocumentNode.SelectSingleNode("//li[@class='updatedOn'] | //li[@class='updatedDate']");
-            var date = dateNode?.InnerText.Replace("Updated", "").Replace("|", "").Trim();
+            var date = dateNode?.InnerText.Replace("Updated", string.Empty).Replace("|", string.Empty).Trim();
             if (!string.IsNullOrEmpty(date) && DateTime.TryParse(date, out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
@@ -211,8 +210,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            var providerIds = sceneID[0].Split('|');
-            var sceneURL = Helper.Decode(providerIds[0]);
+            var sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http"))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;

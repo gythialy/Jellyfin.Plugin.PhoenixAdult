@@ -56,12 +56,11 @@ namespace PhoenixAdult.Sites
                     string titleNoFormatting = string.Join(", ", actorList);
                     string firstActor = actorList.FirstOrDefault() ?? string.Empty;
                     string sceneURL = searchResult.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty).Split('?')[0];
-                    string curID = Helper.Encode(sceneURL);
                     string releaseDate = DateTime.Parse(searchResult.SelectSingleNode(".//span[@class='scene-date']")?.InnerText.Trim()).ToString("yyyy-MM-dd");
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
+                        ProviderIds = { { Plugin.Instance.Name, Helper.Encode($"{sceneURL}|{releaseDate}") } },
                         Name = $"{titleNoFormatting} [Tonight's Girlfriend] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -80,9 +79,9 @@ namespace PhoenixAdult.Sites
         {
             var result = new MetadataResult<BaseItem>() { Item = new Movie(), People = new List<PersonInfo>() };
 
-            string[] providerIds = sceneID[0].Split('|');
-            string sceneURL = Helper.Decode(providerIds[0]);
-            string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
+            string[] providerIds = Helper.Decode(sceneID[0]).Split('|');
+            string sceneURL = providerIds[0];
+            string sceneDate = providerIds.Length > 1 ? providerIds[1] : null;
 
             if (!sceneURL.StartsWith("http"))
             {
@@ -148,7 +147,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var result = new List<RemoteImageInfo>();
-            string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneURL = Helper.Decode(sceneID[0]).Split('|')[0];
             if (!sceneURL.StartsWith("http"))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;

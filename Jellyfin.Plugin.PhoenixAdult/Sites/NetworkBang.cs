@@ -50,7 +50,10 @@ namespace PhoenixAdult.Sites
                     foreach (var searchResult in searchResultNodes)
                     {
                         var sceneUrlNode = searchResult.SelectSingleNode("./a[contains(@class, 'group')]");
-                        if (sceneUrlNode == null) continue;
+                        if (sceneUrlNode == null)
+                        {
+                            continue;
+                        }
 
                         string sceneURL = sceneUrlNode.GetAttributeValue("href", string.Empty);
                         string titleNoFormatting = sceneURL.Contains("dvd") ?
@@ -78,7 +81,7 @@ namespace PhoenixAdult.Sites
                         {
                             result.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDateStr}" } },
+                                ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDateStr}" } },
                                 Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDateStr}",
                                 SearchProviderName = Plugin.Instance.Name,
                             });
@@ -118,7 +121,7 @@ namespace PhoenixAdult.Sites
 
                 result.Add(new RemoteSearchResult
                 {
-                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDateStr}" } },
+                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDateStr}" } },
                     Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDateStr}",
                     SearchProviderName = Plugin.Instance.Name,
                 });
@@ -137,8 +140,7 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string sceneURL = Helper.Decode(providerIds[0]);
-            int siteNumVal = int.Parse(providerIds[1]);
-            string sceneDate = providerIds[2];
+            string sceneDate = providerIds[1];
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
             if (detailsPageElements == null)
@@ -171,7 +173,7 @@ namespace PhoenixAdult.Sites
             }
 
             string dvdTitle = detailsPageElements.SelectSingleNode("//p[contains(., 'Movie')]/a[contains(@href, 'dvd')]")?.InnerText.Trim();
-            if (!string.IsNullOrEmpty(dvdTitle) && siteNumVal == 1365)
+            if (!string.IsNullOrEmpty(dvdTitle) && siteNum[0] == 1365)
             {
                 movie.AddCollection(dvdTitle);
             }
@@ -187,7 +189,7 @@ namespace PhoenixAdult.Sites
                 movie.ProductionYear = parsedSceneDate.Year;
             }
 
-            string actorXPath = (siteNumVal == 1365) ? "//div[contains(@class, 'clear-both')]//a[contains(@href, 'pornstar')]" : "//div[contains(@class, 'name')]/a[contains(@href, 'pornstar') and not(@aria-label)]";
+            string actorXPath = (siteNum[0] == 1365) ? "//div[contains(@class, 'clear-both')]//a[contains(@href, 'pornstar')]" : "//div[contains(@class, 'name')]/a[contains(@href, 'pornstar') and not(@aria-label)]";
             var actorNodes = detailsPageElements.SelectNodes(actorXPath);
             if (actorNodes != null)
             {
@@ -195,7 +197,7 @@ namespace PhoenixAdult.Sites
                 {
                     string actorName;
                     string actorPhotoURL = string.Empty;
-                    if (siteNumVal == 1365)
+                    if (siteNum[0] == 1365)
                     {
                         actorName = actorLink.InnerText;
                         string modelURL = Helper.GetSearchBaseURL(siteNum) + actorLink.GetAttributeValue("href", string.Empty);

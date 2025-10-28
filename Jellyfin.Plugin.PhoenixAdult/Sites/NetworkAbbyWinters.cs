@@ -99,7 +99,7 @@ namespace PhoenixAdult.Sites
 
                 result.Add(new RemoteSearchResult
                 {
-                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
+                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } },
                     Name = $"{titleNoFormatting} [Abby Winters/{subSite}] {releaseDate}",
                     SearchProviderName = Plugin.Instance.Name,
                 });
@@ -118,7 +118,7 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string sceneURL = Helper.Decode(providerIds[0]);
-            string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
+            string sceneDate = providerIds.Length > 1 ? providerIds[1] : null;
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
             if (detailsPageElements == null)
@@ -132,7 +132,10 @@ namespace PhoenixAdult.Sites
             {
                 movie.Overview = detailsPageElements.SelectSingleNode("//aside/div[contains(@class, 'description')]")?.InnerText.Replace("\n", string.Empty).Trim();
             }
-            catch { }
+            catch
+            {
+            }
+
             movie.AddStudio("Abby Winters");
 
             string tagline = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@id='shoot-featured-image']//h4")?.InnerText.Trim(), siteNum);

@@ -48,7 +48,7 @@ namespace PhoenixAdult.Sites
                     string releaseDate = DateTime.Parse(date).ToString("yyyy-MM-dd");
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|0" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|0" } },
                         Name = $"{titleNoFormatting} [FamilyTherapy] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -65,6 +65,7 @@ namespace PhoenixAdult.Sites
                     string c4sSearchTitle = $"81593 {actress}";
 
                     var c4sProvider = new SiteClips4Sale();
+
                     // Assuming siteNum for Clips4Sale is handled internally or needs to be looked up.
                     // For now, passing a placeholder. This might need adjustment.
                     var c4sResults = await c4sProvider.Search(new[] { 105 }, c4sSearchTitle, searchDate, cancellationToken);
@@ -73,7 +74,7 @@ namespace PhoenixAdult.Sites
                     {
                         match.Name = GetCleanTitle(match.Name);
                         string originalId = match.ProviderIds[Plugin.Instance.Name];
-                        match.ProviderIds[Plugin.Instance.Name] = $"{originalId.Split('|')[0]}|{siteNum[0]}|1";
+                        match.ProviderIds[Plugin.Instance.Name] = $"{originalId}|1";
                         result.Add(match);
                     }
                 }
@@ -87,7 +88,7 @@ namespace PhoenixAdult.Sites
             var result = new MetadataResult<BaseItem> { Item = new Movie(), People = new List<PersonInfo>() };
             string[] providerIds = sceneID[0].Split('|');
             string sceneURL = Helper.Decode(providerIds[0]);
-            int mode = int.Parse(providerIds[2]);
+            int mode = int.Parse(providerIds[1]);
 
             if (mode == 1) // Clips4Sale mode
             {
@@ -133,8 +134,14 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElementsDirect.SelectSingleNode("//h1")?.InnerText.Trim();
 
-            try { movie.Overview = detailsPageElementsDirect.SelectSingleNode("//div[@class='entry-content']/p[1]")?.InnerText.Trim(); }
-            catch { movie.Overview = detailsPageElementsDirect.SelectSingleNode("//div[@class='entry-content']")?.InnerText.Trim(); }
+            try
+            {
+                movie.Overview = detailsPageElementsDirect.SelectSingleNode("//div[@class='entry-content']/p[1]")?.InnerText.Trim();
+            }
+            catch
+            {
+                movie.Overview = detailsPageElementsDirect.SelectSingleNode("//div[@class='entry-content']")?.InnerText.Trim();
+            }
 
             movie.AddStudio("Family Therapy");
             movie.AddTag("Family Therapy");
@@ -171,15 +178,16 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             string[] providerIds = sceneID[0].Split('|');
-            int mode = int.Parse(providerIds[2]);
+            int mode = int.Parse(providerIds[1]);
             if (mode == 1)
             {
-                 var c4sProvider = new SiteClips4Sale();
-                 return await c4sProvider.GetImages(new[] { 105 }, new[] { sceneID[0] }, item, cancellationToken);
+                var c4sProvider = new SiteClips4Sale();
+                return await c4sProvider.GetImages(new[] { 105 }, new[] { sceneID[0] }, item, cancellationToken);
             }
 
             // Direct scrape mode
             var result = new List<RemoteImageInfo>();
+
             // No images on direct page, would need to re-search
             return result;
         }

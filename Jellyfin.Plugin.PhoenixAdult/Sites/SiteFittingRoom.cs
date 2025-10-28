@@ -40,7 +40,7 @@ namespace PhoenixAdult.Sites
 
                 result.Add(new RemoteSearchResult
                 {
-                    ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{sceneId}" } },
+                    ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}|{sceneId}" } },
                     Name = $"{titleNoFormatting} [Fitting-Room]",
                     SearchProviderName = Plugin.Instance.Name,
                 });
@@ -64,7 +64,7 @@ namespace PhoenixAdult.Sites
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
             }
 
-            string sceneDate = providerIds[2];
+            string sceneDate = providerIds[1];
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)
@@ -141,7 +141,7 @@ namespace PhoenixAdult.Sites
         public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string sceneId = sceneID[0].Split('|')[3];
+            string sceneId = sceneID[0].Split('|')[2];
             images.Add(new RemoteImageInfo { Url = $"https://www.fitting-room.com/contents/videos_screenshots/0/{sceneId}/preview.jpg", Type = ImageType.Primary });
             for (int i = 2; i < 6; i++)
             {

@@ -42,7 +42,7 @@ namespace PhoenixAdult.Sites
                 string releaseDate = DateTime.Parse(date).ToString("yyyy-MM-dd");
                 result.Add(new RemoteSearchResult
                 {
-                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                    ProviderIds = { { Plugin.Instance.Name, curID } },
                     Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                     SearchProviderName = Plugin.Instance.Name,
                 });
@@ -86,7 +86,7 @@ namespace PhoenixAdult.Sites
 
                             result.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                                ProviderIds = { { Plugin.Instance.Name, curID } },
                                 Name = $"{sceneName} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                                 ImageUrl = scenePoster,
                                 SearchProviderName = Plugin.Instance.Name,
@@ -107,7 +107,7 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http"))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
@@ -183,7 +183,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var result = new List<RemoteImageInfo>();
-            string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http"))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;

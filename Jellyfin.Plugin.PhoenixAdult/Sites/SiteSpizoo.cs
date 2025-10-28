@@ -38,7 +38,7 @@ namespace PhoenixAdult.Sites
                     var curID = Helper.Encode(sceneURL);
                     var item = new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curID}" } },
+                        ProviderIds = { { Plugin.Instance.Name, curID } },
                         Name = titleNoFormatting,
                         SearchProviderName = Plugin.Instance.Name,
                     };
@@ -61,7 +61,7 @@ namespace PhoenixAdult.Sites
             var http = await HTTP.Request(sceneURL, cancellationToken);
             if (!http.IsOK)
             {
-                 return result;
+                return result;
             }
 
             var doc = new HtmlDocument();
@@ -99,9 +99,9 @@ namespace PhoenixAdult.Sites
                     {
                         var imgUrl = img.GetAttributeValue("src", string.Empty);
                         if (!imgUrl.StartsWith("http"))
-                            {
-                                imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
-                            }
+                        {
+                            imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
+                        }
 
                         images.Add(new RemoteImageInfo { Url = imgUrl });
                     }

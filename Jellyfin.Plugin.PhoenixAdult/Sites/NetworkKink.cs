@@ -50,7 +50,7 @@ namespace PhoenixAdult.Sites
                     string curID = Helper.Encode(sceneURL);
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } },
                         Name = $"[{shootID}] {titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -83,7 +83,7 @@ namespace PhoenixAdult.Sites
 
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDateStr}" } },
+                            ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDateStr}" } },
                             Name = $"[{shootID}] {titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDateStr}",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -104,7 +104,7 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string sceneURL = Helper.Decode(providerIds[0]);
-            string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
+            string sceneDate = providerIds.Length > 1 ? providerIds[1] : null;
 
             if (!sceneURL.StartsWith("http"))
             {
@@ -199,7 +199,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http"))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;

@@ -38,7 +38,7 @@ namespace PhoenixAdult.Sites
                 searchResults.Add(movieUrl);
             }
 
-            var encodedTitle = searchTitle.Replace("'", "").Replace(",", "").Replace("& ", "").Replace("#", "");
+            var encodedTitle = searchTitle.Replace("'", string.Empty).Replace(",", string.Empty).Replace("& ", string.Empty).Replace("#", string.Empty);
             var searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{encodedTitle}&key2={encodedTitle}";
             var searchHttp = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, new Dictionary<string, string> { { "Referer", "https://www.data18.com" } }, new Dictionary<string, string> { { "data_user_captcha", "1" } });
             if (searchHttp.IsOK)
@@ -96,7 +96,7 @@ namespace PhoenixAdult.Sites
                                                 var scene = Helper.Encode(sceneNode.GetAttributeValue("href", string.Empty));
                                                 results.Add(new RemoteSearchResult
                                                 {
-                                                    ProviderIds = { { Plugin.Instance.Name, $"{scene}|{siteNum[0]}|{releaseDate}|{titleNoFormatting}|{j}" } },
+                                                    ProviderIds = { { Plugin.Instance.Name, $"{scene}|{releaseDate}|{titleNoFormatting}|{j}" } },
                                                     Name = $"{titleNoFormatting} [{section}][{studio}] {displayDate}",
                                                     SearchProviderName = Plugin.Instance.Name,
                                                 });
@@ -148,7 +148,7 @@ namespace PhoenixAdult.Sites
                     var studio = studioNode?.InnerText.Trim() ?? string.Empty;
                     results.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [{studio}] {displayDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -162,7 +162,7 @@ namespace PhoenixAdult.Sites
                             var scene = Helper.Encode(sceneNode.GetAttributeValue("href", string.Empty));
                             results.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{scene}|{siteNum[0]}|{releaseDate}|{titleNoFormatting}|{j}" } },
+                                ProviderIds = { { Plugin.Instance.Name, $"{scene}|{releaseDate}|{titleNoFormatting}|{j}" } },
                                 Name = $"{titleNoFormatting} [{section}][{studio}] {displayDate}",
                                 SearchProviderName = Plugin.Instance.Name,
                             });
@@ -178,14 +178,14 @@ namespace PhoenixAdult.Sites
         {
             var result = new MetadataResult<BaseItem> { Item = new Movie(), People = new List<PersonInfo>() };
             var providerIds = sceneID[0].Split('|');
-            if (providerIds.Length > 3)
+            if (providerIds.Length > 2)
             {
                 var sceneProvider = new SiteData18Scenes();
                 return await sceneProvider.Update(siteNum, sceneID, cancellationToken);
             }
 
             var sceneURL = Helper.Decode(providerIds[0]);
-            var sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
+            var sceneDate = providerIds.Length > 1 ? providerIds[1] : null;
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken, new Dictionary<string, string> { { "Referer", "https://www.data18.com" } }, new Dictionary<string, string> { { "data_user_captcha", "1" } });
             if (detailsPageElements == null)
             {
@@ -296,11 +296,12 @@ namespace PhoenixAdult.Sites
                     {
                         foreach (var img in photoNodes)
                         {
-                            result.Add(new RemoteImageInfo { Url = (img.GetAttributeValue(img.Name == "a" ? "data-featherlight" : (img.Name == "img" ? "src" : "data-original"), string.Empty)).Replace("/th8", "").Replace("-th8", "") });
+                            result.Add(new RemoteImageInfo { Url = (img.GetAttributeValue(img.Name == "a" ? "data-featherlight" : (img.Name == "img" ? "src" : "data-original"), string.Empty)).Replace("/th8", string.Empty).Replace("-th8", string.Empty) });
                         }
                     }
                 }
             }
+
             return result;
         }
     }

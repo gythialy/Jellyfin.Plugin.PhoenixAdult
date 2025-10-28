@@ -26,7 +26,9 @@ namespace PhoenixAdult.Sites
     {
         private static readonly Dictionary<string, Dictionary<int, List<string>>> actor_db = new Dictionary<string, Dictionary<int, List<string>>>
         {
-            { "FuckedHard18", new Dictionary<int, List<string>> {
+            {
+                "FuckedHard18", new Dictionary<int, List<string>>
+            {
                 { 434, new List<string> { "Abby Lane" } }, { 435, new List<string> { "Abby Cross" } }, { 445, new List<string> { "Alexa Rydell" } },
                 { 446, new List<string> { "Alexa Nicole" } }, { 469, new List<string> { "Alexis Grace" } }, { 470, new List<string> { "Ashley Abott" } },
                 { 474, new List<string> { "Ashlyn Molloy" } }, { 481, new List<string> { "Ava White" } }, { 482, new List<string> { "Ava Sparxxx" } },
@@ -46,8 +48,11 @@ namespace PhoenixAdult.Sites
                 { 729, new List<string> { "Taylor Whyte" } }, { 749, new List<string> { "Veronica Radke" } }, { 750, new List<string> { "Veronica Rodriguez" } },
                 { 757, new List<string> { "Whitney Stevens" } }, { 825, new List<string> { "Alexa Grace" } }, { 839, new List<string> { "Abby Cross" } },
                 { 947, new List<string> { "Melissa May" } },
-            } },
-            { "MassageGirls18", new Dictionary<int, List<string>> {
+            }
+            },
+            {
+                "MassageGirls18", new Dictionary<int, List<string>>
+            {
                 { 134, new List<string> { "Melissa Mathews" } }, { 135, new List<string> { "Melissa Mathews" } }, { 137, new List<string> { "Abby Paradise" } },
                 { 138, new List<string> { "Abby Cross" } }, { 139, new List<string> { "Abby Lane" } }, { 147, new List<string> { "Alexa Nicole" } },
                 { 148, new List<string> { "Alexa Rydell" } }, { 169, new List<string> { "Ashley Abott" } }, { 170, new List<string> { "Alexis Grace" } },
@@ -64,11 +69,15 @@ namespace PhoenixAdult.Sites
                 { 395, new List<string> { "Sophia Sutra" } }, { 403, new List<string> { "Taylor Whyte" } }, { 404, new List<string> { "Taylor Tilden" } },
                 { 422, new List<string> { "Veronica Radke" } }, { 423, new List<string> { "Veronica Rodriguez" } }, { 768, new List<string> { "Samantha Rone" } },
                 { 828, new List<string> { "Bailey Bae" } },
-            } },
-            { "NewGirlPOV", new Dictionary<int, List<string>> {
+            }
+            },
+            {
+                "NewGirlPOV", new Dictionary<int, List<string>>
+            {
                 { 1159, new List<string> { "Ashley Adams" } }, { 1178, new List<string> { "Lola Hunter" } }, { 1206, new List<string> { "Molly Manson" } },
                 { 1242, new List<string> { "Naomi Woods" } }, { 1280, new List<string> { "Melissa Moore" } },
-            } },
+            }
+            },
         };
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
@@ -99,7 +108,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [FuelVirtual/{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -122,7 +131,7 @@ namespace PhoenixAdult.Sites
             string sceneUrl = Helper.Decode(providerIds[0]);
             string serverPath = siteName == "NewGirlPOV" ? "/tour/newgirlpov/" : "/membersarea/";
             sceneUrl = Helper.GetSearchBaseURL(siteNum) + serverPath + sceneUrl;
-            string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
+            string sceneDate = providerIds.Length > 1 ? providerIds[1] : null;
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)

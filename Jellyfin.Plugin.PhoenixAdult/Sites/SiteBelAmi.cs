@@ -47,7 +47,7 @@ namespace PhoenixAdult.Sites
             {
                 result.Add(new RemoteSearchResult
                 {
-                    ProviderIds = { { Plugin.Instance.Name, $"belamionline|{siteNum[0]}|{sceneId}" } },
+                    ProviderIds = { { Plugin.Instance.Name, sceneId } },
                     Name = $"{sceneInfo.title} [{Helper.GetSearchSiteName(siteNum)}] {sceneInfo.releaseDate}",
                     SearchProviderName = Plugin.Instance.Name,
                 });
@@ -64,8 +64,7 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string[] providerIds = sceneID[0].Split('|');
-            string sceneId = providerIds[2];
+            string sceneId = sceneID[2];
             var sceneInfo = await GetSceneInfo(siteNum, sceneId, cancellationToken);
             if (sceneInfo.detailsPageElements == null)
             {
@@ -127,7 +126,7 @@ namespace PhoenixAdult.Sites
         public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string sceneId = sceneID[0].Split('|')[2];
+            string sceneId = sceneID[0];
             images.Add(new RemoteImageInfo { Url = $"https://freecdn.belamionline.com/Data/Contents/Content_{sceneId}/Thumbnail8.jpg", Type = ImageType.Primary });
             return Task.FromResult<IEnumerable<RemoteImageInfo>>(images);
         }

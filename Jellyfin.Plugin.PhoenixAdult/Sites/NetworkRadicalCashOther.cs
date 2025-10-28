@@ -69,7 +69,7 @@ namespace PhoenixAdult.Sites
 
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                            ProviderIds = { { Plugin.Instance.Name, curId } },
                             Name = $"{releaseDate} [{Helper.GetSearchSiteName(siteNum)}] {Helper.ParseTitle(titleNoFormatting, siteNum)}",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -130,7 +130,7 @@ namespace PhoenixAdult.Sites
 
                                     resultData = new RemoteSearchResult
                                     {
-                                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                                        ProviderIds = { { Plugin.Instance.Name, curId } },
                                         Name = $"{releaseDate} [{Helper.GetSearchSiteName(siteNum)}] {Helper.ParseTitle(titleNoFormatting, siteNum)}",
                                         SearchProviderName = Plugin.Instance.Name,
                                     };
@@ -172,7 +172,7 @@ namespace PhoenixAdult.Sites
 
                             resultData = new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                                ProviderIds = { { Plugin.Instance.Name, curId } },
                                 Name = $"{releaseDate} [{Helper.GetSearchSiteName(siteNum)}] {Helper.ParseTitle(titleNoFormatting, siteNum)}",
                                 SearchProviderName = Plugin.Instance.Name,
                             };
@@ -197,7 +197,7 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             if (siteNum[0] >= 1851 && siteNum[0] <= 1859)
             {
                 sceneUrl = $"{sceneUrl}?_lang=en";
@@ -220,6 +220,7 @@ namespace PhoenixAdult.Sites
             {
                 description += desc.InnerText.Trim() + "\n\n";
             }
+
             movie.Overview = description;
 
             if (siteNum[0] >= 1852 && siteNum[0] <= 1859)
@@ -244,6 +245,7 @@ namespace PhoenixAdult.Sites
             {
                 tagline = Helper.GetSearchSiteName(siteNum);
             }
+
             movie.AddTag(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode(siteXPath["date"]);
@@ -273,10 +275,12 @@ namespace PhoenixAdult.Sites
                 {
                     movie.AddGenre("Threesome");
                 }
+
                 if (actorNodes.Count == 4)
                 {
                     movie.AddGenre("Foursome");
                 }
+
                 if (actorNodes.Count > 4)
                 {
                     movie.AddGenre("Orgy");
@@ -295,6 +299,7 @@ namespace PhoenixAdult.Sites
                             actorPhotoUrl = modelPageElements.SelectSingleNode("//div[@class='model-photo']//@src").GetAttributeValue("src", string.Empty);
                         }
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonKind.Actor });
                 }
             }
@@ -305,7 +310,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             if (siteNum[0] >= 1851 && siteNum[0] <= 1859)
             {
                 sceneUrl = $"{sceneUrl}?_lang=en";

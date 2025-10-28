@@ -205,7 +205,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{Helper.Encode(titleNoFormatting)}|{Helper.Encode(description)}|{releaseDate}|{actor}|{Helper.Encode(poster)}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{Helper.Encode(titleNoFormatting)}|{Helper.Encode(description)}|{releaseDate}|{actor}|{Helper.Encode(poster)}" } },
                         Name = $"{titleNoFormatting} [ATKGirlfriends]",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -231,15 +231,15 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.Decode(providerIds[2]);
-            movie.Overview = Helper.Decode(providerIds[3]);
-            if (DateTime.TryParse(providerIds[4], out var parsedDate))
+            movie.Name = Helper.Decode(providerIds[1]);
+            movie.Overview = Helper.Decode(providerIds[2]);
+            if (DateTime.TryParse(providerIds[3], out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            result.People.Add(new PersonInfo { Name = providerIds[5], Type = PersonKind.Actor });
+            result.People.Add(new PersonInfo { Name = providerIds[4], Type = PersonKind.Actor });
             movie.AddStudio("ATKingdom");
             movie.AddTag(Helper.GetSearchSiteName(siteNum));
             movie.AddGenre("Girlfriend Experience");
@@ -250,7 +250,7 @@ namespace PhoenixAdult.Sites
         public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string scenePoster = Helper.Decode(sceneID[0].Split('|')[6]);
+            string scenePoster = Helper.Decode(sceneID[0].Split('|')[5]);
             string posterUrl = scenePoster.Replace("sm_", string.Empty).Split(new[] { "1.jpg" }, StringSplitOptions.None)[0];
             for (int i = 1; i < 8; i++)
             {

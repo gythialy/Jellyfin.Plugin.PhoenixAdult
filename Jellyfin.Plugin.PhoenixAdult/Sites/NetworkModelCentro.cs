@@ -97,7 +97,7 @@ namespace PhoenixAdult.Sites
                     string artObj = Helper.Encode(searchResult["_resources"]["base"].ToString());
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{Helper.Encode(titleNoFormatting)}|{artObj}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{Helper.Encode(titleNoFormatting)}|{artObj}" } },
                         Name = $"{titleNoFormatting} {releaseDate} [{Helper.GetSearchSiteName(siteNum)}]",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -117,7 +117,7 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string sceneId = providerIds[0];
-            string title = Helper.Decode(providerIds[2]).Trim();
+            string title = Helper.Decode(providerIds[1]).Trim();
 
             string apiUrl = await GetApiUrl(siteNum, $"/scene/{sceneId}/{Uri.EscapeDataString(title)}", cancellationToken);
             if (apiUrl == null)
@@ -172,7 +172,7 @@ namespace PhoenixAdult.Sites
         public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            var artObj = JArray.Parse(Helper.Decode(sceneID[0].Split('|')[3]));
+            var artObj = JArray.Parse(Helper.Decode(sceneID[0].Split('|')[2]));
             foreach (var img in artObj)
             {
                 images.Add(new RemoteImageInfo { Url = img["url"].ToString() });

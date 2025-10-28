@@ -55,7 +55,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}||{Helper.Encode(titleNoFormatting)}|{actors}|{img}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}||{Helper.Encode(titleNoFormatting)}|{actors}|{img}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -85,7 +85,7 @@ namespace PhoenixAdult.Sites
 
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
+                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -106,7 +106,7 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string sceneUrl = Helper.Decode(providerIds[0]);
-            string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
+            string sceneDate = providerIds.Length > 1 ? providerIds[1] : null;
 
             if (!sceneUrl.StartsWith("http"))
             {
@@ -138,8 +138,8 @@ namespace PhoenixAdult.Sites
 
             if (Regex.IsMatch(title, "Latest.*Videos"))
             {
-                title = Helper.Decode(providerIds[3]);
-                var actors = Helper.Decode(providerIds[4]).Split(',');
+                title = Helper.Decode(providerIds[2]);
+                var actors = Helper.Decode(providerIds[3]).Split(',');
                 foreach (var actor in actors)
                 {
                     result.People.Add(new PersonInfo { Name = actor.Trim(), Type = PersonKind.Actor });
@@ -234,7 +234,8 @@ namespace PhoenixAdult.Sites
                 images.Add(new RemoteImageInfo { Url = match.Groups[1].Value });
             }
 
-            var xpaths = new[] {
+            var xpaths = new[]
+            {
                 "//script[@type]", "//div[contains(@class, 'thumb')]/img", "//div[contains(@class, 'p-image')]/a/img",
                 "//div[contains(@class, 'dl-opts')]/a/img", "//div[contains(@class, 'p-photos')]/div/div/a",
                 "//div[contains(@class, 'gallery')]/div/div/a",

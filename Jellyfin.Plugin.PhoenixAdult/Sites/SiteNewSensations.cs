@@ -61,7 +61,7 @@ namespace PhoenixAdult.Sites
                         string curID = Helper.Encode(sceneURL);
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                            ProviderIds = { { Plugin.Instance.Name, curID } },
                             Name = $"{titleNoFormatting} [New Sensations]",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -75,7 +75,7 @@ namespace PhoenixAdult.Sites
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
             var result = new MetadataResult<BaseItem>() { Item = new Movie(), People = new List<PersonInfo>() };
-            string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http"))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
@@ -133,22 +133,22 @@ namespace PhoenixAdult.Sites
             var actorNodes = detailsPageElements.SelectNodes("//span[@class='tour_update_models']/a");
             if (actorNodes != null)
             {
-                 if (actorNodes.Count == 3 && !isDvd)
+                if (actorNodes.Count == 3 && !isDvd)
                 {
                     movie.AddGenre("Threesome");
                 }
 
-                 if (actorNodes.Count == 4 && !isDvd)
+                if (actorNodes.Count == 4 && !isDvd)
                 {
                     movie.AddGenre("Foursome");
                 }
 
-                 if (actorNodes.Count > 4 && !isDvd)
+                if (actorNodes.Count > 4 && !isDvd)
                 {
                     movie.AddGenre("Orgy");
                 }
 
-                 foreach (var actorLink in actorNodes)
+                foreach (var actorLink in actorNodes)
                 {
                     string actorName = actorLink.InnerText.Trim();
                     string actorPageURL = actorLink.GetAttributeValue("href", string.Empty);
@@ -164,7 +164,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var result = new List<RemoteImageInfo>();
-            string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http"))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;

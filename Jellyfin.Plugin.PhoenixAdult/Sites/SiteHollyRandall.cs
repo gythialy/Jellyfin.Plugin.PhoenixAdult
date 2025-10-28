@@ -56,7 +56,7 @@ namespace PhoenixAdult.Sites
 
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{Helper.Encode(titleNoFormatting)}|{releaseDate}" } },
+                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{Helper.Encode(titleNoFormatting)}|{releaseDate}" } },
                             Name = $"{titleNoFormatting} {releaseDate} [{Helper.GetSearchSiteName(siteNum)}]",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -92,7 +92,7 @@ namespace PhoenixAdult.Sites
 
             var movie = (Movie)result.Item;
             movie.AddStudio("Holly Randall Productions");
-            movie.Name = Helper.Decode(providerIds[2]).Trim();
+            movie.Name = Helper.Decode(providerIds[1]).Trim();
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
@@ -106,7 +106,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            if (DateTime.TryParse(providerIds[3], out var parsedDate))
+            if (DateTime.TryParse(providerIds[2], out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;

@@ -48,7 +48,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -68,7 +68,7 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string sceneUrl = Helper.Decode(providerIds[0]);
-            string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
+            string sceneDate = providerIds.Length > 1 ? providerIds[1] : null;
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)
@@ -113,10 +113,12 @@ namespace PhoenixAdult.Sites
                 {
                     models.AddRange(HTML.ElementFromString(modelHttpResult1.Content).SelectNodes("//div[@class='item']"));
                 }
+
                 if (modelHttpResult2.IsOK)
                 {
                     models.AddRange(HTML.ElementFromString(modelHttpResult2.Content).SelectNodes("//div[@class='item']"));
                 }
+
                 foreach (var actor in actors)
                 {
                     string actorName = Regex.Replace(actor.Trim(), @"\W", " ").Replace("Nurses", string.Empty).Replace("Nurse", string.Empty);
@@ -127,6 +129,7 @@ namespace PhoenixAdult.Sites
                         actorName = (model.InnerText.Contains(":") ? model.InnerText.Split(':')[1] : model.InnerText).Trim();
                         actorPhotoUrl = Helper.GetSearchSearchURL(siteNum) + model.SelectSingleNode(".//@src").GetAttributeValue("src", string.Empty);
                     }
+
                     result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }

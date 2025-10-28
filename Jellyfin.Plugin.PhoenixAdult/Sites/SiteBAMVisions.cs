@@ -45,7 +45,7 @@ namespace PhoenixAdult.Sites
                     string videoBg = Helper.Encode(node.SelectSingleNode(".//img")?.GetAttributeValue("src0_3x", string.Empty));
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{videoBg}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{videoBg}" } },
                         Name = $"{titleNoFormatting} [BAMVisions]",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -130,7 +130,7 @@ namespace PhoenixAdult.Sites
         public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string scenePoster = Helper.Decode(sceneID[0].Split('|')[2]);
+            string scenePoster = Helper.Decode(sceneID[0].Split('|')[1]);
             images.Add(new RemoteImageInfo { Url = Helper.GetSearchBaseURL(siteNum) + scenePoster, Type = ImageType.Primary });
             return Task.FromResult<IEnumerable<RemoteImageInfo>>(images);
         }

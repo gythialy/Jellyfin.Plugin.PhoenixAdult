@@ -59,7 +59,10 @@ namespace PhoenixAdult.Sites
                             string curId = Helper.Encode(movieUrl);
 
                             var detailsPageElements = await HTML.ElementFromURL(movieUrl, cancellationToken);
-                            if (detailsPageElements == null) continue;
+                            if (detailsPageElements == null)
+                            {
+                                continue;
+                            }
 
                             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='release-date' and ./span[contains(., 'Released:')]]/text()");
                             string releaseDate = (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "MMM dd, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate)) ? parsedDate.ToString("yyyy-MM-dd") : string.Empty;
@@ -111,6 +114,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
             }
+
             return result;
         }
 
@@ -186,6 +190,7 @@ namespace PhoenixAdult.Sites
                     actorNodes.AddRange(mainActorNodes);
                 }
             }
+
             if (actorNodes != null)
             {
                 foreach (var actor in actorNodes)

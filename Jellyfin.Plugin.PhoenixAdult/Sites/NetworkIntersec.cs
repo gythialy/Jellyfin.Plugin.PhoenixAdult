@@ -51,7 +51,7 @@ namespace PhoenixAdult.Sites
                     string scenePoster = Helper.Encode(node.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty));
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{scenePoster}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{scenePoster}" } },
                         Name = $"{titleNoFormatting} [Intersec/{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -169,7 +169,7 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string[] providerIds = sceneID[0].Split('|');
             string sceneUrl = $"{Helper.GetSearchBaseURL(siteNum)}/iod/{Helper.Decode(providerIds[0])}";
-            string scenePoster = Helper.Decode(providerIds[2]);
+            string scenePoster = Helper.Decode(providerIds[1]);
             images.Add(new RemoteImageInfo { Url = scenePoster });
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);

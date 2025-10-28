@@ -66,7 +66,7 @@ namespace PhoenixAdult.Sites
 
                     var item = new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDateStr}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDateStr}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
                         SearchProviderName = Plugin.Instance.Name,
                     };
@@ -87,7 +87,7 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string sceneUrl = Helper.Decode(providerIds[0]);
-            string sceneDate = providerIds.Length > 2 ? providerIds[2] : string.Empty;
+            string sceneDate = providerIds.Length > 1 ? providerIds[1] : string.Empty;
 
             var detailsPageElements = await HTML.ElementFromURL(sceneUrl, cancellationToken, _cookies);
             if (detailsPageElements == null)

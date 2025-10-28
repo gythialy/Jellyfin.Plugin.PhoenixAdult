@@ -15,7 +15,6 @@ using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 using MediaBrowser.Model.Entities;
 
-
 #if __EMBY__
 #else
 using Jellyfin.Data.Enums;
@@ -45,10 +44,9 @@ namespace PhoenixAdult.Sites
                     var curId = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(node.SelectSingleNode(".//h2[@class='entry-title']/a").GetAttributeValue("href", string.Empty)));
                     var releaseDate = DateTime.Parse(node.SelectSingleNode(".//span[@class='published']").InnerText.Trim()).ToString("yyyy-MM-dd");
 
-
                     searchResults.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                        ProviderIds = { { Plugin.Instance.Name, curId } },
                         Name = $"{titleNoFormatting} [{SiteName}] {releaseDate}",
                     });
                 }
@@ -59,8 +57,7 @@ namespace PhoenixAdult.Sites
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
-            var metadataId = sceneID[0].Split('|');
-            var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
+            var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(sceneID[0]));
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = $"{BaseUrl}{sceneUrl}";
@@ -217,8 +214,7 @@ namespace PhoenixAdult.Sites
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            var metadataId = sceneID[0].Split('|');
-            var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
+            var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(sceneID[0]));
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = $"{BaseUrl}{sceneUrl}";

@@ -35,7 +35,7 @@ namespace PhoenixAdult.Sites
             {
                 new RemoteSearchResult
                 {
-                    ProviderIds = { { Plugin.Instance.Name, $"{sceneId}|{siteNum[0]}" } },
+                    ProviderIds = { { Plugin.Instance.Name, sceneId } },
                     Name = $"[{SiteName}] {titleNoFormatting} - {releaseDate}",
                 },
             };
@@ -45,7 +45,7 @@ namespace PhoenixAdult.Sites
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
-            var sceneId = sceneID[0].Split('|')[0];
+            var sceneId = sceneID[0];
             var doc = await FetchPageContent(sceneId, cancellationToken);
 
             var metadataResult = new MetadataResult<BaseItem>
@@ -71,7 +71,7 @@ namespace PhoenixAdult.Sites
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            var sceneId = sceneID[0].Split('|')[0];
+            var sceneId = sceneID[0];
             var doc = await FetchPageContent(sceneId, cancellationToken);
             var art = new List<string>();
             ExtractImages(doc, art);

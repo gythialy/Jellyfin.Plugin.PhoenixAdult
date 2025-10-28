@@ -35,7 +35,7 @@ namespace PhoenixAdult.Sites
                 string curId = Helper.Encode(sceneUrl);
                 result.Add(new RemoteSearchResult
                 {
-                    ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{Helper.Encode(titleNoFormatting)}" } },
+                    ProviderIds = { { Plugin.Instance.Name, $"{curId}|{Helper.Encode(titleNoFormatting)}" } },
                     Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
                     SearchProviderName = Plugin.Instance.Name,
                 });
@@ -68,7 +68,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = Helper.Decode(providerIds[2]);
+            movie.Name = Helper.Decode(providerIds[1]);
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='container text-center']//h2")?.InnerText.Trim();
             movie.AddStudio("Cumbizz");
 

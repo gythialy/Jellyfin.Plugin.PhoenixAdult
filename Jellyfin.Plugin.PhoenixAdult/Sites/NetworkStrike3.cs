@@ -127,6 +127,7 @@ namespace PhoenixAdult.Sites
                 Logger.Error("[NetworkStrike3] 'findOneVideo' not found in API response. Aborting update.");
                 return result;
             }
+
             var movie = (Movie)result.Item;
 
             Logger.Info("[NetworkStrike3] Parsing basic info (Name, Overview, Studio).");

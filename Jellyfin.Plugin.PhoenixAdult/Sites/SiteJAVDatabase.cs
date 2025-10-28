@@ -12,7 +12,6 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
 using MediaBrowser.Model.Entities;
 
-
 #if __EMBY__
 #else
 using Jellyfin.Data.Enums;
@@ -83,7 +82,7 @@ namespace PhoenixAdult.Sites
 
                     searchResults.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
+                        ProviderIds = { { Plugin.Instance.Name, curId } },
                         Name = $"[{javId}] {displayDate} {titleNoFormatting}",
                     });
                 }
@@ -94,8 +93,7 @@ namespace PhoenixAdult.Sites
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
-            var metadataId = sceneID[0].Split('|');
-            var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
+            var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(sceneID[0]));
 
             var doc = await HTML.ElementFromURL(sceneUrl, cancellationToken);
 
@@ -193,8 +191,7 @@ namespace PhoenixAdult.Sites
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            var metadataId = sceneID[0].Split('|');
-            var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(metadataId[0]));
+            var sceneUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(sceneID[0]));
 
             var doc = await HTML.ElementFromURL(sceneUrl, cancellationToken);
 

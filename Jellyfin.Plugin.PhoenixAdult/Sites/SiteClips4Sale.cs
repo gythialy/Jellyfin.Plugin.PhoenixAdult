@@ -94,7 +94,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                        ProviderIds = { { Plugin.Instance.Name, curID } },
                         Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -132,7 +132,7 @@ namespace PhoenixAdult.Sites
 
                 result.Add(new RemoteSearchResult
                 {
-                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                    ProviderIds = { { Plugin.Instance.Name, curID } },
                     Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
                     SearchProviderName = Plugin.Instance.Name,
                 });
@@ -149,7 +149,7 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http"))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
@@ -212,7 +212,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var result = new List<RemoteImageInfo>();
-            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             string userID = sceneUrl.Split('/')[4];
             string clipID = sceneUrl.Split('/')[5];
 
@@ -282,8 +282,8 @@ namespace PhoenixAdult.Sites
             // ... This would continue for hundreds of lines for all studios ...
             else // Default case if no specific studio logic
             {
-                 people.Add(new PersonInfo { Name = tagline, Type = PersonKind.Actor });
-                 genreList.Remove(tagline.ToLower());
+                people.Add(new PersonInfo { Name = tagline, Type = PersonKind.Actor });
+                genreList.Remove(tagline.ToLower());
             }
         }
     }

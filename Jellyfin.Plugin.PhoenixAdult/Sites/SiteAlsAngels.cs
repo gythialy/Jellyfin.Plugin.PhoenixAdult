@@ -60,7 +60,7 @@ namespace PhoenixAdult.Sites
                     string sceneId = Regex.Replace(elem.SelectSingleNode(".//td[@class='videothumbnail']/a/img")?.GetAttributeValue("src", string.Empty).Trim() ?? string.Empty, @"graphics/videos/(.+)\.jpg", "$1");
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{sceneId}|{siteNum[0]}|{releaseDate}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{sceneId}|{releaseDate}" } },
                         Name = $"{model} {genre} {releaseDate} [ALSAngels/{sceneId}]",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -85,7 +85,7 @@ namespace PhoenixAdult.Sites
             string sceneNum = match.Groups[2].Value;
 
             string sceneUrl = $"{Helper.GetSearchBaseURL(siteNum)}/profiles/{modelId}.html#videoupdate";
-            string sceneDate = providerIds[2];
+            string sceneDate = providerIds[1];
             DateTime dateObject = DateTime.Parse(sceneDate);
             string dateString = dateObject.ToString("MMMM d, yyyy");
             string searchBaseUrl = Helper.GetSearchBaseURL(siteNum).Trim();
@@ -125,7 +125,7 @@ namespace PhoenixAdult.Sites
             string sceneId = providerIds[0];
             var match = Regex.Match(sceneId, @"([^0-9]+)([0-9-]+)");
             string modelId = match.Groups[1].Value;
-            string sceneDate = providerIds[2];
+            string sceneDate = providerIds[1];
             DateTime dateObject = DateTime.Parse(sceneDate);
             string dateString = dateObject.ToString("MMMM d, yyyy");
             string searchBaseUrl = Helper.GetSearchBaseURL(siteNum).Trim();

@@ -53,7 +53,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                        ProviderIds = { { Plugin.Instance.Name, curId } },
                         Name = $"{titleNoFormatting} [FamilyTherapy] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -71,7 +71,7 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;

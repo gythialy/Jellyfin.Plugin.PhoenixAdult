@@ -110,7 +110,7 @@ namespace PhoenixAdult.Sites
 
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{sceneType.Replace("Content",string.Empty)}" } },
+                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}|{sceneType.Replace("Content", string.Empty)}" } },
                             Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -131,8 +131,8 @@ namespace PhoenixAdult.Sites
 
             string[] providerIds = sceneID[0].Split('|');
             string sceneName = providerIds[0];
-            string sceneDate = providerIds[2];
-            string sceneType = providerIds[3] + "Content";
+            string sceneDate = providerIds[1];
+            string sceneType = providerIds[2] + "Content";
 
             var json = await GetJsonFromPage($"{Helper.GetSearchSearchURL(siteNum)}{sceneName}", cancellationToken);
             var detailsPageElements = json?.SelectToken($"{sceneType}.{sceneName}");
@@ -192,7 +192,7 @@ namespace PhoenixAdult.Sites
         {
             var images = new List<RemoteImageInfo>();
             string sceneName = sceneID[0].Split('|')[0];
-            string sceneType = sceneID[0].Split('|')[3] + "Content";
+            string sceneType = sceneID[0].Split('|')[2] + "Content";
 
             var json = await GetJsonFromPage($"{Helper.GetSearchSearchURL(siteNum)}{sceneName}", cancellationToken);
             var detailsPageElements = json?.SelectToken($"{sceneType}.{sceneName}");

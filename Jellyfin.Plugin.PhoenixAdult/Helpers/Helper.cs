@@ -401,6 +401,7 @@ namespace PhoenixAdult.Helpers
             {
                 firstWord = firstWord.ToUpper();
             }
+
             final.Add(firstWord);
 
             for (int i = 1; i < wordList.Count; i++)

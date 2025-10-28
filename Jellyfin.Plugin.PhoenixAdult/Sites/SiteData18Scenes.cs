@@ -70,7 +70,7 @@ namespace PhoenixAdult.Sites
                             string date = searchResult.SelectSingleNode(".//span[@class='gen11']/text()")?.InnerText.Trim();
                             string releaseDate = !string.IsNullOrEmpty(date) && date != "unknown" ? DateTime.ParseExact(date, "MMMM dd, yyyy", CultureInfo.InvariantCulture).ToString("yyyy-MM-dd") : (searchDate.HasValue ? searchDate.Value.ToString("yyyy-MM-dd") : string.Empty);
 
-                            result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{siteDisplay}] {releaseDate}" });
+                            result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{siteDisplay}] {releaseDate}" });
                         }
                     }
                 }
@@ -110,7 +110,7 @@ namespace PhoenixAdult.Sites
                 string date = detailsPageElements.SelectSingleNode("//@datetime")?.GetAttributeValue("datetime", string.Empty).Trim();
                 string releaseDate = !string.IsNullOrEmpty(date) && date != "unknown" ? DateTime.Parse(date).ToString("yyyy-MM-dd") : (searchDate.HasValue ? searchDate.Value.ToString("yyyy-MM-dd") : string.Empty);
 
-                result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{siteDisplay}] {releaseDate}" });
+                result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{siteDisplay}] {releaseDate}" });
             }
 
             return result;
@@ -121,7 +121,7 @@ namespace PhoenixAdult.Sites
             var result = new MetadataResult<BaseItem> { Item = new Movie(), People = new List<PersonInfo>() };
             string[] providerIds = sceneID[0].Split('|');
             string sceneURL = Helper.Decode(providerIds[0]);
-            string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
+            string sceneDate = providerIds.Length > 1 ? providerIds[1] : null;
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken, new Dictionary<string, string> { { "Referer", "https://www.data18.com" } }, new Dictionary<string, string> { { "data_user_captcha", "1" } });
             if (detailsPageElements == null)

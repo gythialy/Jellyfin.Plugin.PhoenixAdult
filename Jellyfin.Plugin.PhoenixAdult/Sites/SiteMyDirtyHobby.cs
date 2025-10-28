@@ -23,87 +23,85 @@ namespace PhoenixAdult.Sites
     {
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-        // Simplified search logic, may need adjustments
-        var result = new List<RemoteSearchResult>();
-        var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
-        foreach (var sceneURL in googleResults)
-        {
-            var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (doc != null)
+            // Simplified search logic, may need adjustments
+            var result = new List<RemoteSearchResult>();
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            foreach (var sceneURL in googleResults)
             {
-                var titleNode = doc.SelectSingleNode(@"//h1");
-                var titleNoFormatting = titleNode?.InnerText.Trim();
-                var curID = Helper.Encode(sceneURL);
-                var item = new RemoteSearchResult
+                var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
+                if (doc != null)
                 {
-                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
-                    Name = titleNoFormatting,
-                    SearchProviderName = Plugin.Instance.Name,
-                };
-                result.Add(item);
+                    var titleNode = doc.SelectSingleNode(@"//h1");
+                    var titleNoFormatting = titleNode?.InnerText.Trim();
+                    var curID = Helper.Encode(sceneURL);
+                    var item = new RemoteSearchResult
+                    {
+                        ProviderIds = { { Plugin.Instance.Name, curID } },
+                        Name = titleNoFormatting,
+                        SearchProviderName = Plugin.Instance.Name,
+                    };
+                    result.Add(item);
+                }
             }
-        }
 
-        return result;
+            return result;
         }
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
-        var result = new MetadataResult<BaseItem>()
-        {
-            Item = new Movie(),
-            People = new List<PersonInfo>(),
-        };
-        var movie = (Movie)result.Item;
-        var providerIds = sceneID[0].Split('|');
-        var sceneURL = Helper.Decode(providerIds[0]);
-        var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
-        if (doc == null)
+            var result = new MetadataResult<BaseItem>()
+            {
+                Item = new Movie(),
+                People = new List<PersonInfo>(),
+            };
+            var movie = (Movie)result.Item;
+            var sceneURL = Helper.Decode(sceneID[0]);
+            var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
+            if (doc == null)
             {
                 return result;
             }
 
-        movie.Name = doc.SelectSingleNode(@"//h1")?.InnerText.Trim();
-        movie.Overview = doc.SelectSingleNode(@"//p")?.InnerText.Trim();
-        movie.AddStudio("My Dirty Hobby");
+            movie.Name = doc.SelectSingleNode(@"//h1")?.InnerText.Trim();
+            movie.Overview = doc.SelectSingleNode(@"//p")?.InnerText.Trim();
+            movie.AddStudio("My Dirty Hobby");
 
-        var dateNode = doc.SelectSingleNode(@"//*[@class='date']");
-        if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
-        {
-            movie.PremiereDate = parsedDate;
-            movie.ProductionYear = parsedDate.Year;
-        }
+            var dateNode = doc.SelectSingleNode(@"//*[@class='date']");
+            if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+            {
+                movie.PremiereDate = parsedDate;
+                movie.ProductionYear = parsedDate.Year;
+            }
 
-        // Actor and Genre logic needs to be manually added for each site
-        return result;
+            // Actor and Genre logic needs to be manually added for each site
+            return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-        // Simplified image logic, may need adjustments
-        var images = new List<RemoteImageInfo>();
-        var providerIds = sceneID[0].Split('|');
-        var sceneURL = Helper.Decode(providerIds[0]);
-        var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
-        if (doc != null)
-        {
-            var imageNodes = doc.SelectNodes("//img/@src");
-            if (imageNodes != null)
+            // Simplified image logic, may need adjustments
+            var images = new List<RemoteImageInfo>();
+            var sceneURL = Helper.Decode(sceneID[0]);
+            var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
+            if (doc != null)
             {
-                foreach (var img in imageNodes)
+                var imageNodes = doc.SelectNodes("//img/@src");
+                if (imageNodes != null)
                 {
-                    var imgUrl = img.GetAttributeValue("src", string.Empty);
-                    if (!imgUrl.StartsWith("http"))
+                    foreach (var img in imageNodes)
+                    {
+                        var imgUrl = img.GetAttributeValue("src", string.Empty);
+                        if (!imgUrl.StartsWith("http"))
                         {
                             imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
                         }
 
-                    images.Add(new RemoteImageInfo { Url = imgUrl });
+                        images.Add(new RemoteImageInfo { Url = imgUrl });
+                    }
                 }
             }
-        }
 
-        return images;
+            return images;
         }
     }
 }

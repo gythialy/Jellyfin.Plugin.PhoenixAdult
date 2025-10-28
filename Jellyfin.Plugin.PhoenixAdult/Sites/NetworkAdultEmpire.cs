@@ -69,7 +69,7 @@ namespace PhoenixAdult.Sites
 
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                            ProviderIds = { { Plugin.Instance.Name, curID } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -116,7 +116,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                        ProviderIds = { { Plugin.Instance.Name, curID } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -138,7 +138,7 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http"))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
@@ -203,8 +203,8 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actor in actorsWithoutHeadshots)
                 {
-                     string actorName = actor.InnerText.Trim();
-                     if (!result.People.Any(p => p.Name.Equals(actorName, StringComparison.OrdinalIgnoreCase)))
+                    string actorName = actor.InnerText.Trim();
+                    if (!result.People.Any(p => p.Name.Equals(actorName, StringComparison.OrdinalIgnoreCase)))
                     {
                         result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                     }
@@ -228,7 +228,7 @@ namespace PhoenixAdult.Sites
         {
             var images = new List<RemoteImageInfo>();
 
-            string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http"))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;

@@ -53,7 +53,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{Helper.Encode(titleNoFormatting)}|{releaseDate}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{Helper.Encode(titleNoFormatting)}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} {releaseDate} [{Helper.GetSearchSiteName(siteNum)}]",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -88,7 +88,7 @@ namespace PhoenixAdult.Sites
 
             var movie = (Movie)result.Item;
             movie.AddStudio("Angela White");
-            movie.Name = Helper.Decode(providerIds[2]).Trim();
+            movie.Name = Helper.Decode(providerIds[1]).Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='desc']/p")?.InnerText.Trim();
 
             string tagline = Helper.GetSearchSiteName(siteNum);
@@ -103,7 +103,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            if (DateTime.TryParse(Helper.Decode(providerIds[3]), out var parsedDate))
+            if (DateTime.TryParse(Helper.Decode(providerIds[2]), out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;

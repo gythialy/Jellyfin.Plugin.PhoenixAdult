@@ -55,7 +55,7 @@ namespace PhoenixAdult.Sites
 
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}" } },
+                            ProviderIds = { { Plugin.Instance.Name, curID } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -73,7 +73,7 @@ namespace PhoenixAdult.Sites
                     string releaseDate = DateTime.Parse(detailsPageElements.SelectSingleNode("//div[contains(@class, 'content-pane')]//span[@class='date']")?.InnerText.Trim()).ToString("yyyy-MM-dd");
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{sceneNum}|{siteNum[0]}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{sceneNum}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -91,7 +91,7 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string sceneURL = $"{Helper.GetSearchBaseURL(siteNum)}/video/watch/{sceneID[0].Split('|')[0]}";
+            string sceneURL = $"{Helper.GetSearchBaseURL(siteNum)}/video/watch/{sceneID[0]}";
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, null, _cookies);
             if (sceneData == null)
             {
@@ -166,7 +166,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var result = new List<RemoteImageInfo>();
-            string sceneURL = $"{Helper.GetSearchBaseURL(siteNum)}/video/watch/{sceneID[0].Split('|')[0]}";
+            string sceneURL = $"{Helper.GetSearchBaseURL(siteNum)}/video/watch/{sceneID[0]}";
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, null, _cookies);
             if (sceneData == null)
             {
