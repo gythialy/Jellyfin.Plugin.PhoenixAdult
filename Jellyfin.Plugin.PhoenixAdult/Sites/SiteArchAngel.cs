@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
@@ -26,7 +27,7 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
+            string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle).Replace("%20", "+");
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)
             {
@@ -78,26 +79,26 @@ namespace PhoenixAdult.Sites
 
             var movie = (Movie)result.Item;
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
-            movie.Name = detailsPageElements.SelectSingleNode("//h2")?.InnerText.Trim();
-            movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='description']/p")?.InnerText.Trim();
+            movie.Name = detailsPageElements.SelectSingleNode("//h1[contains(@class, 'trailer_title')]")?.InnerText.Trim();
+            movie.Overview = detailsPageElements.SelectSingleNode("//p[@class='description-text']")?.InnerText.Trim();
 
-            var dateNode = detailsPageElements.SelectSingleNode("//div[@class='info']/p");
-            if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Replace("Added:", string.Empty).Trim(), out var parsedDate))
+            var dateNode = detailsPageElements.SelectSingleNode("//p[preceding-sibling::label[text()='Date Added']]");
+            if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            var genreNodes = detailsPageElements.SelectNodes("//ul[@class='tags']//a");
+            var genreNodes = detailsPageElements.SelectNodes("//a[contains(@href, '/porn-categories/')]");
             if (genreNodes != null)
             {
                 foreach (var genre in genreNodes)
                 {
-                    movie.AddGenre(genre.InnerText.Trim());
+                    movie.AddGenre(genre.InnerText.Trim().Replace(",", string.Empty));
                 }
             }
 
-            var actorNodes = detailsPageElements.SelectNodes("//div[@class='info']/p/a");
+            var actorNodes = detailsPageElements.SelectNodes("//span[@class='update_models']/a");
             if (actorNodes != null)
             {
                 foreach (var actor in actorNodes)
@@ -126,7 +127,7 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
-            var imageNodes = detailsPageElements.SelectNodes("//img[contains(@class, 'update_thumb')]");
+            var imageNodes = detailsPageElements.SelectNodes("//div[@class='relative']/img");
             if (imageNodes != null)
             {
                 foreach (var img in imageNodes)
