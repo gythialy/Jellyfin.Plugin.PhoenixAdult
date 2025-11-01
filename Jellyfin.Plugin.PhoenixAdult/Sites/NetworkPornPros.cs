@@ -69,6 +69,9 @@ namespace PhoenixAdult.Sites
                 return await GetDataFromAPI(siteNum, searchType, newSlug, cancellationToken);
             }
 
+            Logger.Info($"[HTTP Request] status code: {req.StatusCode}");
+            Logger.Info($"[HTTP Request] content: {req.Content}");
+
             return req.IsOK ? JObject.Parse(req.Content) : null;
         }
 
