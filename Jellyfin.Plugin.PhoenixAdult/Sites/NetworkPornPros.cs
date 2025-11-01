@@ -49,6 +49,9 @@ namespace PhoenixAdult.Sites
             string url = $"{searchSite}/{searchType}/{slug}";
 
             var req = await HTTP.Request(url, cancellationToken, headers: headers);
+            Logger.Info($"[HTTP Request1] status code: {req.StatusCode}");
+            Logger.Info($"[HTTP Request1] content: {req.Content}");
+
             if (!req.IsOK)
             {
                 string subSite = Helper.GetSearchSiteName(siteNum).Replace(" ", string.Empty).ToLower();
@@ -62,6 +65,9 @@ namespace PhoenixAdult.Sites
                 }
             }
 
+            Logger.Info($"[HTTP Request2] status code: {req.StatusCode}");
+            Logger.Info($"[HTTP Request2] content: {req.Content}");
+
             if (!req.IsOK && slug.Contains('-') && !slug.Contains("--"))
             {
                 int lastIndex = slug.LastIndexOf('-');
@@ -69,8 +75,8 @@ namespace PhoenixAdult.Sites
                 return await GetDataFromAPI(siteNum, searchType, newSlug, cancellationToken);
             }
 
-            Logger.Info($"[HTTP Request] status code: {req.StatusCode}");
-            Logger.Info($"[HTTP Request] content: {req.Content}");
+            Logger.Info($"[HTTP Request3] status code: {req.StatusCode}");
+            Logger.Info($"[HTTP Request3] content: {req.Content}");
 
             return req.IsOK ? JObject.Parse(req.Content) : null;
         }
