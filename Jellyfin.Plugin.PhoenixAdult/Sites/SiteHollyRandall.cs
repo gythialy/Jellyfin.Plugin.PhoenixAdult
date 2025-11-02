@@ -36,7 +36,7 @@ namespace PhoenixAdult.Sites
             }
 
             var searchPageElements = HTML.ElementFromString(httpResult.Content);
-            var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'item-video')]");
+            var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'latestUpdateB')]");
             if (searchNodes != null)
             {
                 foreach (var node in searchNodes)
