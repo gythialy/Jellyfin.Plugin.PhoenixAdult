@@ -23,27 +23,53 @@ namespace PhoenixAdult.Sites
     {
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            // Simplified search logic, may need adjustments
             var result = new List<RemoteSearchResult>();
-            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
-            foreach (var sceneURL in googleResults)
+            var searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Replace(" ", "+")}";
+            var http = await HTTP.Request(searchUrl, cancellationToken);
+            if (!http.IsOK)
             {
-                var http = await HTTP.Request(sceneURL, cancellationToken);
-                if (http.IsOK)
+                return result;
+            }
+
+            var doc = new HtmlDocument();
+            doc.LoadHtml(http.Content);
+
+            var searchResults = doc.DocumentNode.SelectNodes(@"//div[@class='model-update row']");
+            if (searchResults == null)
+            {
+                return result;
+            }
+
+            foreach (var searchResult in searchResults)
+            {
+                var titleNode = searchResult.SelectSingleNode(@".//h3[@class='titular']");
+                var title = titleNode?.InnerText.Trim();
+
+                var urlNode = searchResult.SelectSingleNode(@".//a");
+                var sceneUrl = urlNode?.GetAttributeValue("href", string.Empty);
+
+                if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(sceneUrl))
                 {
-                    var doc = new HtmlDocument();
-                    doc.LoadHtml(http.Content);
-                    var titleNode = doc.DocumentNode.SelectSingleNode(@"//h1");
-                    var titleNoFormatting = titleNode?.InnerText.Trim();
-                    var curID = Helper.Encode(sceneURL);
-                    var item = new RemoteSearchResult
-                    {
-                        ProviderIds = { { Plugin.Instance.Name, curID } },
-                        Name = titleNoFormatting,
-                        SearchProviderName = Plugin.Instance.Name,
-                    };
-                    result.Add(item);
+                    continue;
                 }
+
+                var dateNode = searchResult.SelectSingleNode(@".//div[@class='date-label']");
+                var date = string.Empty;
+                if (dateNode != null)
+                {
+                    var dateText = dateNode.InnerText.Replace("Released date:", string.Empty).Trim();
+                    if (DateTime.TryParse(dateText, out var parsedDate))
+                    {
+                        date = parsedDate.ToString("yyyy-MM-dd");
+                    }
+                }
+
+                result.Add(new RemoteSearchResult
+                {
+                    ProviderIds = { { Plugin.Instance.Name, Helper.Encode(sceneUrl) } },
+                    Name = $"{title} [{date}]",
+                    SearchProviderName = Plugin.Instance.Name,
+                });
             }
 
             return result;
@@ -85,7 +111,7 @@ namespace PhoenixAdult.Sites
                 {
                     result.AddPerson(new PersonInfo
                     {
-                        Name = actorNode.InnerText.Trim().Replace(".", ""),
+                        Name = actorNode.InnerText.Trim().Replace(".", string.Empty),
                         Type = PersonKind.Actor,
                     });
                 }
