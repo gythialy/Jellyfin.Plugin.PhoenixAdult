@@ -78,37 +78,76 @@ namespace PhoenixAdult.Sites
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            // Actor and Genre logic needs to be manually added for each site
+            var actorNodes = doc.DocumentNode.SelectNodes(@"//h3[text()='Pornstars:']/following-sibling::a");
+            if (actorNodes != null)
+            {
+                foreach (var actorNode in actorNodes)
+                {
+                    result.AddPerson(new PersonInfo
+                    {
+                        Name = actorNode.InnerText.Trim().Replace(".", ""),
+                        Type = PersonKind.Actor,
+                    });
+                }
+            }
+
+            var genreNodes = doc.DocumentNode.SelectNodes(@"//div[@class='categories-holder']/a");
+            if (genreNodes != null)
+            {
+                foreach (var genreNode in genreNodes)
+                {
+                    movie.AddGenre(genreNode.GetAttributeValue("title", string.Empty).Trim());
+                }
+            }
+
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            // Simplified image logic, may need adjustments
-            var images = new List<RemoteImageInfo>();
+            var result = new List<RemoteImageInfo>();
             var sceneURL = Helper.Decode(sceneID[0]);
             var http = await HTTP.Request(sceneURL, cancellationToken);
-            if (http.IsOK)
+            if (!http.IsOK)
             {
-                var doc = new HtmlDocument();
-                doc.LoadHtml(http.Content);
-                var imageNodes = doc.DocumentNode.SelectNodes("//img/@src");
-                if (imageNodes != null)
-                {
-                    foreach (var img in imageNodes)
-                    {
-                        var imgUrl = img.GetAttributeValue("src", string.Empty);
-                        if (!imgUrl.StartsWith("http"))
-                        {
-                            imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
-                        }
+                return result;
+            }
 
-                        images.Add(new RemoteImageInfo { Url = imgUrl });
+            var doc = new HtmlDocument();
+            doc.LoadHtml(http.Content);
+
+            var posterNode = doc.DocumentNode.SelectSingleNode(@"//video[@id='the-video']");
+            if (posterNode != null)
+            {
+                var posterUrl = posterNode.GetAttributeValue("poster", string.Empty);
+                if (!string.IsNullOrEmpty(posterUrl))
+                {
+                    result.Add(new RemoteImageInfo
+                    {
+                        Url = posterUrl,
+                        Type = ImageType.Primary,
+                    });
+                }
+            }
+
+            var backdropNodes = doc.DocumentNode.SelectNodes(@"//section[@id='photos-tour']//img");
+            if (backdropNodes != null)
+            {
+                foreach (var backdropNode in backdropNodes)
+                {
+                    var backdropUrl = backdropNode.GetAttributeValue("src", string.Empty);
+                    if (!string.IsNullOrEmpty(backdropUrl))
+                    {
+                        result.Add(new RemoteImageInfo
+                        {
+                            Url = backdropUrl,
+                            Type = ImageType.Backdrop,
+                        });
                     }
                 }
             }
 
-            return images;
+            return result;
         }
     }
 }
