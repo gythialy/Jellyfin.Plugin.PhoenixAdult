@@ -115,7 +115,6 @@ namespace PhoenixAdult.Helpers.Utils
             }
 
             var request = new HttpRequestMessage(method, new Uri(url));
-            request.Version = HttpVersion.Version11;
 
             request.Headers.TryAddWithoutValidation("User-Agent", GetUserAgent());
 
