@@ -41,12 +41,12 @@ namespace PhoenixAdult.Sites
             }
 
             var searchResults = JObject.Parse(httpResult.Content);
-            var data = siteNum[0] == 1677 ? searchResults["playlists"] : searchResults["scenes"];
+            var data = siteNum[1] == 13 ? searchResults["playlists"] : searchResults["scenes"];
             if (data != null)
             {
                 foreach (var searchResult in data)
                 {
-                    if (siteNum[0] == 1835)
+                    if (siteNum[1] == 32)
                     {
                         string titleNoFormatting = $"BTS: {Helper.ParseTitle(searchResult["title"].ToString(), siteNum)}";
                         string releaseDate = string.Empty;
@@ -70,7 +70,7 @@ namespace PhoenixAdult.Sites
                         string videoId = searchResult["id"].ToString();
                         string releaseDate = string.Empty;
                         string sceneUrl;
-                        if (siteNum[0] == 1677)
+                        if (siteNum[1] == 13)
                         {
                             if (DateTime.TryParse(searchResult["created_at"].ToString(), out var parsedDate))
                             {
@@ -119,8 +119,8 @@ namespace PhoenixAdult.Sites
             }
 
             var videoPageElements = JObject.Parse((HTML.ElementFromString(httpResult.Content)).SelectSingleNode("//script[@type='application/json']")?.InnerText);
-            var video = siteNum[0] == 1677 ? videoPageElements["props"]["pageProps"]["playlist"] : videoPageElements["props"]["pageProps"]["content"];
-            var content = siteNum[0] == 1677 ? videoPageElements["props"]["pageProps"]["content"] : video;
+            var video = siteNum[1] == 13 ? videoPageElements["props"]["pageProps"]["playlist"] : videoPageElements["props"]["pageProps"]["content"];
+            var content = siteNum[1] == 13 ? videoPageElements["props"]["pageProps"]["content"] : video;
 
             var movie = (Movie)result.Item;
             movie.Name = Helper.ParseTitle(video["title"].ToString(), siteNum);
@@ -130,11 +130,11 @@ namespace PhoenixAdult.Sites
                 movie.Overview += ".";
             }
 
-            if (siteNum[0] >= 1229 && siteNum[0] <= 1236)
+            if (siteNum[1] >= 3 && siteNum[1] <= 10)
             {
                 movie.AddStudio("Top Web Models");
             }
-            else if (siteNum[0] >= 837 && siteNum[0] <= 839)
+            else if (siteNum[1] >= 0 && siteNum[1] <= 2)
             {
                 movie.AddStudio("TwoWebMedia");
             }
@@ -143,7 +143,7 @@ namespace PhoenixAdult.Sites
                 movie.AddStudio("Radical Cash");
             }
 
-            string tagline = (siteNum[0] == 1677 ? content["site"] : video["site"]).ToString();
+            string tagline = (siteNum[1] == 13 ? content["site"] : video["site"]).ToString();
             if (!movie.Studios.Contains(tagline))
             {
                 movie.AddTag(tagline);
@@ -181,7 +181,7 @@ namespace PhoenixAdult.Sites
             }
 
             var videoPageElements = JObject.Parse((HTML.ElementFromString(httpResult.Content)).SelectSingleNode("//script[@type='application/json']")?.InnerText);
-            var content = siteNum[0] == 1677 ? videoPageElements["props"]["pageProps"]["content"] : videoPageElements["props"]["pageProps"]["content"];
+            var content = siteNum[1] == 13 ? videoPageElements["props"]["pageProps"]["content"] : videoPageElements["props"]["pageProps"]["content"];
 
             if (content["trailer_screencap"] != null)
             {

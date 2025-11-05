@@ -45,7 +45,7 @@ namespace PhoenixAdult.Sites
                     string studio = detailsPageElements.SelectSingleNode("//span[contains(@class, 'type')]")?.InnerText.Split('|')[0].Trim();
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}" } },
                         Name = $"{titleNoFormatting} [{studio}]",
                         SearchProviderName = Plugin.Instance.Name,
                     });

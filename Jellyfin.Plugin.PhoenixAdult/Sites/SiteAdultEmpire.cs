@@ -99,7 +99,7 @@ namespace PhoenixAdult.Sites
                                     var studio = studioNode?.InnerText.Trim() ?? string.Empty;
                                     results.Add(new RemoteSearchResult
                                     {
-                                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
+                                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                                         Name = $"{titleNoFormatting} [{studio}] [{resultType}] {displayDate}",
                                         SearchProviderName = Plugin.Instance.Name,
                                     });
@@ -112,7 +112,7 @@ namespace PhoenixAdult.Sites
                                             var photoIdx = i * 2 - 1;
                                             results.Add(new RemoteSearchResult
                                             {
-                                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{i + 1}|{photoIdx}" } },
+                                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}|{i + 1}|{photoIdx}" } },
                                                 Name = $"{titleNoFormatting}[{resultType}]/#{i + 1}[{actorNames}][{studio}] {displayDate}",
                                                 SearchProviderName = Plugin.Instance.Name,
                                             });
@@ -150,7 +150,7 @@ namespace PhoenixAdult.Sites
                     var studio = studioNode?.InnerText.Trim() ?? string.Empty;
                     results.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
+                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [{studio}] {displayDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
@@ -163,7 +163,7 @@ namespace PhoenixAdult.Sites
                             var photoIdx = i * 2 - 1;
                             results.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{i + 1}|{photoIdx}" } },
+                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}|{i + 1}|{photoIdx}" } },
                                 Name = $"{titleNoFormatting}/#{i + 1}[{actorNames}][{studio}] {displayDate}",
                                 SearchProviderName = Plugin.Instance.Name,
                             });
@@ -181,7 +181,7 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             var providerIds = sceneID[0].Split('|');
             var sceneURL = Helper.Decode(providerIds[0]);
-            var sceneDate = providerIds[2];
+            var sceneDate = providerIds[1];
             var cookies = new Dictionary<string, string> { { "ageConfirmed", "true" } };
             var http = await HTTP.Request(sceneURL, HttpMethod.Get, cancellationToken, null, cookies);
             if (!http.IsOK)
@@ -192,8 +192,8 @@ namespace PhoenixAdult.Sites
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
             var splitScene = providerIds.Length > 3;
-            var sceneNum = splitScene ? int.Parse(providerIds[3]) : 0;
-            var sceneIndex = splitScene ? int.Parse(providerIds[4]) : 0;
+            var sceneNum = splitScene ? int.Parse(providerIds[2]) : 0;
+            var sceneIndex = splitScene ? int.Parse(providerIds[3]) : 0;
             movie.Name = Helper.ParseTitle(doc.DocumentNode.SelectSingleNode("//h1").InnerText.Trim(), siteNum);
             if (splitScene)
             {
@@ -302,7 +302,7 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             var providerIds = sceneID[0].Split('|');
             var sceneURL = Helper.Decode(providerIds[0]);
-            var splitScene = providerIds.Length > 3;
+            var splitScene = providerIds.Length > 2;
 
             var cookies = new Dictionary<string, string>() { { "ageConfirmed", "true" } };
 
@@ -332,7 +332,7 @@ namespace PhoenixAdult.Sites
 
             if (splitScene)
             {
-                var sceneIndex = int.Parse(providerIds[4]);
+                var sceneIndex = int.Parse(providerIds[3]);
                 var splitScenesXpath = $"//div[@class='row'][.//div[@class='row']][.//a[@rel='scenescreenshots']][{sceneIndex + 1}]//a/@href";
                 var sceneImageNodes = doc.DocumentNode.SelectNodes(splitScenesXpath);
                 if (sceneImageNodes != null)

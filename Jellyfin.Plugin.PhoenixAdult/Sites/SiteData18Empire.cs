@@ -67,14 +67,14 @@ namespace PhoenixAdult.Sites
                             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='release-date' and ./span[contains(., 'Released:')]]/text()");
                             string releaseDate = (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "MMM dd, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate)) ? parsedDate.ToString("yyyy-MM-dd") : string.Empty;
                             string studio = detailsPageElements.SelectSingleNode("//div[@class='studio']/a/text()")?.InnerText.Trim();
-                            result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{studio}] {releaseDate}" });
+                            result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{studio}] {releaseDate}" });
 
                             var scenes = detailsPageElements.SelectNodes("//div[@class='item-grid item-grid-scene']/div/a/@href");
                             if (scenes != null)
                             {
                                 for (int i = 0; i < scenes.Count; i++)
                                 {
-                                    result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{i + 1}" } }, Name = $"{titleNoFormatting} [Scene {i + 1}][{studio}] {releaseDate}" });
+                                    result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}|{i + 1}" } }, Name = $"{titleNoFormatting} [Scene {i + 1}][{studio}] {releaseDate}" });
                                 }
                             }
                         }
@@ -102,14 +102,14 @@ namespace PhoenixAdult.Sites
                     var dateNode = detailsPageElements.SelectSingleNode("//div[@class='release-date' and ./span[contains(., 'Released:')]]/text()");
                     string releaseDate = (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "MMM dd, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate)) ? parsedDate.ToString("yyyy-MM-dd") : string.Empty;
                     string studio = detailsPageElements.SelectSingleNode("//div[@class='studio']/a/text()")?.InnerText.Trim();
-                    result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{studio}] {releaseDate}" });
+                    result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } }, Name = $"{titleNoFormatting} [{studio}] {releaseDate}" });
 
                     var scenes = detailsPageElements.SelectNodes("//div[@class='item-grid item-grid-scene']/div/a/@href");
                     if (scenes != null)
                     {
                         for (int i = 0; i < scenes.Count; i++)
                         {
-                            result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{i + 1}" } }, Name = $"{titleNoFormatting} [Scene {i + 1}][{studio}] {releaseDate}" });
+                            result.Add(new RemoteSearchResult { ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}|{i + 1}" } }, Name = $"{titleNoFormatting} [Scene {i + 1}][{studio}] {releaseDate}" });
                         }
                     }
                 }
@@ -123,7 +123,7 @@ namespace PhoenixAdult.Sites
             var result = new MetadataResult<BaseItem> { Item = new Movie(), People = new List<PersonInfo>() };
             string[] providerIds = sceneID[0].Split('|');
             string sceneURL = Helper.Decode(providerIds[0]);
-            string sceneDate = providerIds.Length > 2 ? providerIds[2] : null;
+            string sceneDate = providerIds.Length > 1 ? providerIds[1] : null;
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
             if (detailsPageElements == null)
@@ -134,9 +134,9 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             string title = detailsPageElements.SelectSingleNode("//h1[@class='description']/text()")?.InnerText.Trim();
             movie.Name = title;
-            if (providerIds.Length > 3)
+            if (providerIds.Length > 2)
             {
-                movie.Name = $"{title} [Scene {providerIds[3]}]";
+                movie.Name = $"{title} [Scene {providerIds[2]}]";
             }
 
             movie.Overview = string.Join("\n\n", detailsPageElements.SelectNodes("//div[@class='synopsis']//text()").Select(n => n.InnerText));
@@ -167,9 +167,9 @@ namespace PhoenixAdult.Sites
             }
 
             var actorNodes = new List<HtmlNode>();
-            if (providerIds.Length > 3)
+            if (providerIds.Length > 2)
             {
-                var sceneActorNodes = detailsPageElements.SelectNodes($"//div[@class='item-grid item-grid-scene']/div[@class='grid-item'][{int.Parse(providerIds[3])}]/div/div[@class='scene-cast-list']/a");
+                var sceneActorNodes = detailsPageElements.SelectNodes($"//div[@class='item-grid item-grid-scene']/div[@class='grid-item'][{int.Parse(providerIds[2])}]/div/div[@class='scene-cast-list']/a");
                 if (sceneActorNodes != null)
                 {
                     foreach (var sceneActor in sceneActorNodes)
@@ -249,9 +249,9 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            if (providerIds.Length > 3)
+            if (providerIds.Length > 2)
             {
-                var sceneImage = detailsPageElements.SelectSingleNode($"//div[@class='item-grid item-grid-scene']/div[{providerIds[3]}]/a/img/@src");
+                var sceneImage = detailsPageElements.SelectSingleNode($"//div[@class='item-grid item-grid-scene']/div[{providerIds[2]}]/a/img/@src");
                 if (sceneImage != null)
                 {
                     result.Add(new RemoteImageInfo { Url = sceneImage.GetAttributeValue("src", string.Empty) });

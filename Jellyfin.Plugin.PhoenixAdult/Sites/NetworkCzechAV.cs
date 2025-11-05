@@ -43,7 +43,7 @@ namespace PhoenixAdult.Sites
 
             var searchPageElements = HTML.ElementFromString(httpResult.Content);
             HtmlNodeCollection searchNodes;
-            if (siteNum[0] == 1583)
+            if (siteNum[1] == 33)
             {
                 searchNodes = searchPageElements.SelectNodes("//div[@class='girl']");
             }
@@ -61,7 +61,7 @@ namespace PhoenixAdult.Sites
                     string releaseDate = string.Empty;
                     string subSite = searchPageElements.SelectSingleNode("//head/title")?.InnerText.Trim();
 
-                    if (siteNum[0] == 1583)
+                    if (siteNum[1] == 33)
                     {
                         titleNoFormatting = $"{node.SelectSingleNode(".//span[@class='name']")?.InnerText.Trim()} {node.SelectSingleNode(".//span[@class='age']")?.InnerText.Trim()}";
                         string sceneUrl = node.SelectSingleNode("./div/a")?.GetAttributeValue("href", string.Empty);
@@ -125,7 +125,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            if (siteNum[0] == 1583)
+            if (siteNum[1] == 33)
             {
                 movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//span[@class='name']")?.InnerText.Trim(), siteNum);
             }
@@ -137,7 +137,7 @@ namespace PhoenixAdult.Sites
             var descriptionNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'desc')]//p");
             if (descriptionNode != null)
             {
-                if (siteNum[0] == 1583)
+                if (siteNum[1] == 33)
                 {
                     movie.Overview = detailsPageElements.SelectNodes("//div[contains(@class, 'desc')]//p").LastOrDefault()?.InnerText.Trim();
                 }
@@ -168,7 +168,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            if (siteNum[0] == 1583)
+            if (siteNum[1] == 33)
             {
                 string actorName = $"{movie.Name} {detailsPageElements.SelectSingleNode("//span[@class='age']")?.InnerText.Trim()}";
                 string actorPhotoUrl = detailsPageElements.SelectSingleNode("//div[contains(@class, 'gallery')]//@href")?.GetAttributeValue("href", string.Empty);

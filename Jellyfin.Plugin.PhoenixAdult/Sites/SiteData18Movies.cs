@@ -82,7 +82,7 @@ namespace PhoenixAdult.Sites
                                         studio = studioNode?.InnerText.Trim() ?? studio;
                                         results.Add(new RemoteSearchResult
                                         {
-                                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}" } },
+                                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                                             Name = $"{titleNoFormatting} [{studio}] {displayDate}",
                                             SearchProviderName = Plugin.Instance.Name,
                                         });
@@ -178,7 +178,7 @@ namespace PhoenixAdult.Sites
         {
             var result = new MetadataResult<BaseItem> { Item = new Movie(), People = new List<PersonInfo>() };
             var providerIds = sceneID[0].Split('|');
-            if (providerIds.Length > 2)
+            if (providerIds.Length > 1)
             {
                 var sceneProvider = new SiteData18Scenes();
                 return await sceneProvider.Update(siteNum, sceneID, cancellationToken);

@@ -65,7 +65,7 @@ namespace PhoenixAdult.Sites
 
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}|{releaseDate}|{Helper.Encode(string.Join("|", cleanActorName))}|{summaryId}" } },
+                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}|{Helper.Encode(string.Join("|", cleanActorName))}|{summaryId}" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -89,9 +89,9 @@ namespace PhoenixAdult.Sites
             };
 
             string[] providerIds = sceneID[0].Split('|');
-            string sceneDate = providerIds[2];
-            string[] actors = Helper.Decode(providerIds[3]).Split('|');
-            string summary = Helper.Decode(providerIds[4]);
+            string sceneDate = providerIds[1];
+            string[] actors = Helper.Decode(providerIds[2]).Split('|');
+            string summary = Helper.Decode(providerIds[3]);
 
             var movie = (Movie)result.Item;
             movie.Name = $"{string.Join(" and ", actors)} from JesseLoadsMonsterFacials.com";

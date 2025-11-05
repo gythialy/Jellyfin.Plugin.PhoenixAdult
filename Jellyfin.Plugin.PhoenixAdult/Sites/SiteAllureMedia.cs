@@ -54,7 +54,7 @@ namespace PhoenixAdult.Sites
                     string releaseDate = string.Empty;
                     string curId = string.Empty;
 
-                    if (siteNum[0] == 564) // Amateur Allure
+                    if (siteNum[1] == 0) // Amateur Allure
                     {
                         titleNoFormatting = node.SelectSingleNode(".//div[@class='update_title']/a")?.InnerText.Trim();
                         var dateNode = node.SelectSingleNode(".//div[@class='update_date']");
@@ -65,7 +65,7 @@ namespace PhoenixAdult.Sites
 
                         curId = Helper.Encode(node.SelectSingleNode(".//a[1]")?.GetAttributeValue("href", string.Empty));
                     }
-                    else if (siteNum[0] == 565) // Swallow Salon
+                    else if (siteNum[1] == 1) // Swallow Salon
                     {
                         titleNoFormatting = node.SelectSingleNode("./a[2]")?.InnerText.Trim();
                         var dateNode = node.SelectSingleNode(".//div[@class='cell update_date']");

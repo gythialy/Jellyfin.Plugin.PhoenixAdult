@@ -34,7 +34,7 @@ namespace PhoenixAdult.Sites
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
 
-            this.ParseSearchResults(doc, result);
+            this.ParseSearchResults(siteNum, doc, result);
 
             var pager = doc.DocumentNode.SelectSingleNode(@"//ul[@class='pager']");
             if (pager != null)
@@ -60,7 +60,7 @@ namespace PhoenixAdult.Sites
                     {
                         var nextPageDoc = new HtmlDocument();
                         nextPageDoc.LoadHtml(nextPageHttp.Content);
-                        this.ParseSearchResults(nextPageDoc, result);
+                        this.ParseSearchResults(siteNum, nextPageDoc, result);
                     }
                 }
             }
@@ -68,9 +68,18 @@ namespace PhoenixAdult.Sites
             return result;
         }
 
-        private void ParseSearchResults(HtmlDocument doc, List<RemoteSearchResult> result)
+        private void ParseSearchResults(int[] siteNum, HtmlDocument doc, List<RemoteSearchResult> result)
         {
-            var searchResults = doc.DocumentNode.SelectNodes(@"//div[@class='model-update row']");
+            HtmlNodeCollection searchResults;
+            if (siteNum[1] == 1 || siteNum[1] == 12 || siteNum[1] == 13 || siteNum[1] == 14)
+            {
+                searchResults = doc.DocumentNode.SelectNodes(@"//div[@class='result-content row']");
+            }
+            else
+            {
+                searchResults = doc.DocumentNode.SelectNodes(@"//div[@class='model-update row']");
+            }
+
             if (searchResults == null)
             {
                 return;
@@ -78,7 +87,20 @@ namespace PhoenixAdult.Sites
 
             foreach (var searchResult in searchResults)
             {
-                var titleNode = searchResult.SelectSingleNode(@".//h3[@class='titular']");
+                HtmlNode titleNode;
+                if (siteNum[1] == 7 || siteNum[1] == 10)
+                {
+                    titleNode = searchResult.SelectSingleNode(@".//h3[@class='title-video']");
+                }
+                else if (siteNum[1] == 1 || siteNum[1] == 12 || siteNum[1] == 13 || siteNum[1] == 14)
+                {
+                    titleNode = searchResult.SelectSingleNode(@".//h3[@class='title']");
+                }
+                else
+                {
+                    titleNode = searchResult.SelectSingleNode(@".//h3[@class='titular']");
+                }
+
                 var title = titleNode?.InnerText.Trim();
 
                 var urlNode = searchResult.SelectSingleNode(@".//a");

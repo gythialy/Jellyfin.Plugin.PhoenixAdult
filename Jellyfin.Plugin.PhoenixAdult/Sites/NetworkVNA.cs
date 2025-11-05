@@ -105,7 +105,6 @@ namespace PhoenixAdult.Sites
             };
             var movie = (Movie)result.Item;
             var sceneURL = Helper.Decode(sceneID[0]);
-            var siteNumVal = siteNum[0];
 
             var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
             if (doc == null)
@@ -116,13 +115,13 @@ namespace PhoenixAdult.Sites
             movie.Name = doc.SelectSingleNode("//h1[@class='customhcolor']")?.InnerText.Trim();
             movie.Overview = doc.SelectSingleNode("//*[@class='customhcolor2']")?.InnerText.Trim();
 
-            if (siteNumVal == 1287 && !string.IsNullOrEmpty(movie.Overview))
+            if (siteNum[1] == 1 && !string.IsNullOrEmpty(movie.Overview))
             {
                 movie.Overview = movie.Overview.Split(new[] { "Don't forget to join me" }, StringSplitOptions.None)[0];
             }
 
             movie.AddStudio("VNA Network");
-            var tagline = Helper.GetSearchSiteName(new[] { siteNumVal });
+            var tagline = Helper.GetSearchSiteName(siteNum);
             movie.Tagline = tagline;
             movie.AddTag(tagline);
 
@@ -146,7 +145,7 @@ namespace PhoenixAdult.Sites
             if (actorsNode != null)
             {
                 var actors = actorsNode.InnerText.Trim();
-                if (siteNumVal == 1288)
+                if (siteNum[1] == 2)
                 {
                     movie.Overview = movie.Overview.Replace(actors, string.Empty).Trim();
                     if (genresNode != null)
@@ -170,7 +169,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            if (siteNumVal == 1314)
+            if (siteNum[1] == 28)
             {
                 result.People.Add(new PersonInfo { Name = "Siri", Type = PersonKind.Actor });
             }

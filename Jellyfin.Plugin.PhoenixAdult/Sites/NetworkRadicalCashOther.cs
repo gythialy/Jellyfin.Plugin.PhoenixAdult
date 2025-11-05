@@ -32,7 +32,7 @@ namespace PhoenixAdult.Sites
             var siteXPath = GetXPathMap(siteNum);
 
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + searchTitle.ToLower();
-            if (siteNum[0] >= 1851 && siteNum[0] <= 1859)
+            if (siteNum[1] >= 1 && siteNum[1] <= 9)
             {
                 searchUrl = $"{searchUrl}?_lang=en";
             }
@@ -91,7 +91,7 @@ namespace PhoenixAdult.Sites
             {
                 RemoteSearchResult resultData = null;
                 var url = sceneURL;
-                if (siteNum[0] >= 1851 && siteNum[0] <= 1859)
+                if (siteNum[1] >= 1 && siteNum[1] <= 9)
                 {
                     url = $"{sceneURL}?_lang=en";
                 }
@@ -198,7 +198,7 @@ namespace PhoenixAdult.Sites
             };
 
             string sceneUrl = Helper.Decode(sceneID[0]);
-            if (siteNum[0] >= 1851 && siteNum[0] <= 1859)
+            if (siteNum[1] >= 1 && siteNum[1] <= 9)
             {
                 sceneUrl = $"{sceneUrl}?_lang=en";
             }
@@ -223,11 +223,11 @@ namespace PhoenixAdult.Sites
 
             movie.Overview = description;
 
-            if (siteNum[0] >= 1852 && siteNum[0] <= 1859)
+            if (siteNum[1] >= 2 && siteNum[1] <= 9)
             {
                 movie.AddStudio("Hitzefrei");
             }
-            else if (siteNum[0] >= 1861 && siteNum[0] <= 1862)
+            else if (siteNum[1] >= 11 && siteNum[1] <= 12)
             {
                 movie.AddStudio("Gonzo Living");
             }
@@ -237,7 +237,7 @@ namespace PhoenixAdult.Sites
             }
 
             string tagline;
-            if (siteNum[0] == 1066)
+            if (siteNum[1] == 0)
             {
                 tagline = $"{Helper.GetSearchSiteName(siteNum)}: {detailsPageElements.SelectSingleNode("//p[@class='series']").InnerText.Trim()}";
             }
@@ -290,7 +290,7 @@ namespace PhoenixAdult.Sites
                 {
                     string actorName = actor.SelectSingleNode(siteXPath["actor"]).InnerText.Trim();
                     string actorPhotoUrl = actor.SelectSingleNode(siteXPath["actorPhoto"]).GetAttributeValue("src", string.Empty);
-                    if (siteNum[0] >= 1860 && siteNum[0] <= 1862)
+                    if (siteNum[1] >= 10 && siteNum[1] <= 12)
                     {
                         var actorHttp = await HTTP.Request(actorPhotoUrl, cancellationToken);
                         if (actorHttp.IsOK)
@@ -311,7 +311,7 @@ namespace PhoenixAdult.Sites
         {
             var images = new List<RemoteImageInfo>();
             string sceneUrl = Helper.Decode(sceneID[0]);
-            if (siteNum[0] >= 1851 && siteNum[0] <= 1859)
+            if (siteNum[1] >= 1 && siteNum[1] <= 9)
             {
                 sceneUrl = $"{sceneUrl}?_lang=en";
             }
@@ -351,7 +351,7 @@ namespace PhoenixAdult.Sites
 
         private Dictionary<string, string> GetXPathMap(int[] siteNum)
         {
-            if (siteNum[0] == 1066)
+            if (siteNum[1] == 0)
             {
                 return new Dictionary<string, string>
                 {
@@ -371,7 +371,7 @@ namespace PhoenixAdult.Sites
                     { "dateFormat", "dddd MMMM dd, yyyy" },
                 };
             }
-            else if (siteNum[0] >= 1851 && siteNum[0] <= 1859)
+            else if (siteNum[1] >= 1 && siteNum[1] <= 9)
             {
                 return new Dictionary<string, string>
                 {
@@ -391,7 +391,7 @@ namespace PhoenixAdult.Sites
                     { "dateFormat", "dd/MM/yyyy" },
                 };
             }
-            else if (siteNum[0] == 1860)
+            else if (siteNum[1] == 10)
             {
                 return new Dictionary<string, string>
                 {
@@ -411,7 +411,7 @@ namespace PhoenixAdult.Sites
                     { "dateFormat", "dd MMM yyyy" },
                 };
             }
-            else if (siteNum[0] >= 1861 && siteNum[0] <= 1862)
+            else if (siteNum[1] >= 11 && siteNum[1] <= 12)
             {
                 return new Dictionary<string, string>
                 {

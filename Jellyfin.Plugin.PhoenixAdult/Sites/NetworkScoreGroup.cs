@@ -201,7 +201,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            if (siteNum[0] == 1344)
+            if (siteNum[1] == 10)
             {
                 result.People.Add(new PersonInfo { Name = "Christy Marks", Type = PersonKind.Actor });
             }

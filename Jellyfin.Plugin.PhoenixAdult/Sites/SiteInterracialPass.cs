@@ -95,7 +95,7 @@ namespace PhoenixAdult.Sites
             movie.Overview = detailsPageElements.SelectNodes("//div[@class='update-info-block']")?.LastOrDefault()?.InnerText.Replace("Description:", string.Empty).Trim();
 
             string studio = Helper.GetSearchSiteName(siteNum);
-            if ((siteNum[0] >= 976 && siteNum[0] <= 978) || siteNum[0] == 1564)
+            if ((siteNum[1] >= 1 && siteNum[1] <= 3) || siteNum[1] == 6)
             {
                 studio = "ExploitedX";
             }
@@ -133,7 +133,7 @@ namespace PhoenixAdult.Sites
                         actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actorPhotoUrl;
                     }
 
-                    if (siteNum[0] == 977 && actorName == "Twins")
+                    if (siteNum[1] == 2 && actorName == "Twins")
                     {
                         result.People.Add(new PersonInfo { Name = "Joey White", Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                         result.People.Add(new PersonInfo { Name = "Sami White", Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });

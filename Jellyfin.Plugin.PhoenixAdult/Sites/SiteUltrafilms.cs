@@ -56,7 +56,7 @@ namespace PhoenixAdult.Sites
 
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{image}" } },
+                            ProviderIds = { { Plugin.Instance.Name, $"{curID}|{image}" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -95,7 +95,7 @@ namespace PhoenixAdult.Sites
 
                                 result.Add(new RemoteSearchResult
                                 {
-                                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}|{image}|{releaseDate}" } },
+                                    ProviderIds = { { Plugin.Instance.Name, $"{curID}|{image}|{releaseDate}" } },
                                     Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
                                     SearchProviderName = Plugin.Instance.Name,
                                 });
@@ -175,9 +175,9 @@ namespace PhoenixAdult.Sites
                     movie.ProductionYear = releaseDate.Year;
                 }
             }
-            else if (providerIds.Length > 3 && !string.IsNullOrEmpty(providerIds[3]))
+            else if (providerIds.Length > 2 && !string.IsNullOrEmpty(providerIds[2]))
             {
-                if (DateTime.TryParse(providerIds[3], out var releaseDate))
+                if (DateTime.TryParse(providerIds[2], out var releaseDate))
                 {
                     movie.PremiereDate = releaseDate;
                     movie.ProductionYear = releaseDate.Year;
@@ -218,9 +218,9 @@ namespace PhoenixAdult.Sites
             var result = new List<RemoteImageInfo>();
 
             string[] providerIds = sceneID[0].Split('|');
-            if (providerIds.Length > 2)
+            if (providerIds.Length > 1)
             {
-                string imageUrl = Helper.Decode(providerIds[2]);
+                string imageUrl = Helper.Decode(providerIds[1]);
                 if (!string.IsNullOrEmpty(imageUrl))
                 {
                     result.Add(new RemoteImageInfo

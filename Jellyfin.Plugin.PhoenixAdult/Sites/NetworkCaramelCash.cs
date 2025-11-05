@@ -114,7 +114,7 @@ namespace PhoenixAdult.Sites
             if (dateNode != null)
             {
                 string dateText = dateNode.InnerText.Trim();
-                if ((siteNum[0] >= 1041 && siteNum[0] <= 1042))
+                if (siteNum[0] >= 1041 && siteNum[0] <= 1042)
                 {
                     dateText = Regex.Replace(dateText.Split(':').Last().Trim(), @"(\d)(st|nd|rd|th)", "$1");
                     if (DateTime.TryParseExact(dateText, "d MMM yyyy", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsedDate))

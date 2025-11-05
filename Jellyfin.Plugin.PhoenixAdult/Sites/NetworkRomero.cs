@@ -100,7 +100,7 @@ namespace PhoenixAdult.Sites
             movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//meta[@itemprop='name']/@content|//h1/text()")?.GetAttributeValue("content", string.Empty).Split('|')[0].Split(new[] { "- Free Video" }, StringSplitOptions.None)[0].Trim(), siteNum);
 
             string summary = string.Empty;
-            var summaryNodes = (siteNum[0] >= 1797 && siteNum[0] <= 1798)
+            var summaryNodes = (siteNum[1] >= 5 && siteNum[1] <= 6)
                 ? detailsPageElements.SelectNodes("//div[@id='fullstory']/p")
                 : detailsPageElements.SelectNodes("//div[@class='cont']/p|//div[@class='cont']//div[@id='fullstory']/p|//div[@class='zapdesc']//div[not(contains(., 'Including'))][.//br]");
 
@@ -144,7 +144,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            string actorXPath = (siteNum[0] == 896)
+            string actorXPath = (siteNum[1] == 1)
                 ? "//div[contains(@class, 'tagsmodels')]//a"
                 : "//div[contains(@class, 'tagsmodels')][./img[@alt='model icon']]//a";
             var actorNodes = detailsPageElements.SelectNodes(actorXPath);

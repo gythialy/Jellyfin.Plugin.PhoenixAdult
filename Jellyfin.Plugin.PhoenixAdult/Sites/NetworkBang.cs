@@ -173,7 +173,7 @@ namespace PhoenixAdult.Sites
             }
 
             string dvdTitle = detailsPageElements.SelectSingleNode("//p[contains(., 'Movie')]/a[contains(@href, 'dvd')]")?.InnerText.Trim();
-            if (!string.IsNullOrEmpty(dvdTitle) && siteNum[0] == 1365)
+            if (!string.IsNullOrEmpty(dvdTitle) && siteNum[1] == 1)
             {
                 movie.AddCollection(dvdTitle);
             }
@@ -189,7 +189,7 @@ namespace PhoenixAdult.Sites
                 movie.ProductionYear = parsedSceneDate.Year;
             }
 
-            string actorXPath = (siteNum[0] == 1365) ? "//div[contains(@class, 'clear-both')]//a[contains(@href, 'pornstar')]" : "//div[contains(@class, 'name')]/a[contains(@href, 'pornstar') and not(@aria-label)]";
+            string actorXPath = (siteNum[1] == 1) ? "//div[contains(@class, 'clear-both')]//a[contains(@href, 'pornstar')]" : "//div[contains(@class, 'name')]/a[contains(@href, 'pornstar') and not(@aria-label)]";
             var actorNodes = detailsPageElements.SelectNodes(actorXPath);
             if (actorNodes != null)
             {
@@ -197,7 +197,7 @@ namespace PhoenixAdult.Sites
                 {
                     string actorName;
                     string actorPhotoURL = string.Empty;
-                    if (siteNum[0] == 1365)
+                    if (siteNum[1] == 1)
                     {
                         actorName = actorLink.InnerText;
                         string modelURL = Helper.GetSearchBaseURL(siteNum) + actorLink.GetAttributeValue("href", string.Empty);

@@ -104,13 +104,13 @@ namespace PhoenixAdult.Sites
                 {
                     string titleNoFormatting = string.Empty;
                     string curId = string.Empty;
-                    var siteNumVal = siteNum[0];
-                    if (siteNumVal == 815 || siteNumVal == 1337 || siteNumVal == 1776 || siteNumVal == 1800)
+                    var siteNumVal = siteNum[1];
+                    if (siteNumVal == 0 || siteNumVal == 1 || siteNumVal == 14 || siteNumVal == 33)
                     {
                         titleNoFormatting = Helper.ParseTitle(searchResultNode.SelectSingleNode(".//img[contains(@class, 'img-full-fluid')]")?.GetAttributeValue("title", string.Empty).Trim(), siteNum);
                         curId = Helper.Encode(searchResultNode.SelectSingleNode(".//article[contains(@class, 'scene-update')]/a")?.GetAttributeValue("href", string.Empty));
                     }
-                    else if (siteNumVal == 1766 || siteNumVal == 1779 || siteNumVal == 1790 || siteNumVal == 1792)
+                    else if (siteNumVal == 4 || siteNumVal == 17 || siteNumVal == 26 || siteNumVal == 28)
                     {
                         titleNoFormatting = Helper.ParseTitle(searchResultNode.SelectSingleNode(".//a[@class='scene-title']/p")?.InnerText.Split(new[] { " | " }, StringSplitOptions.None)[0].Trim(), siteNum);
                         curId = Helper.Encode(searchResultNode.SelectSingleNode(".//a[@class='scene-title']")?.GetAttributeValue("href", string.Empty));

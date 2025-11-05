@@ -77,7 +77,7 @@ namespace PhoenixAdult.Sites
             {
                 string searchUrl = Helper.GetSearchSearchURL(siteNum) + Slugify(searchTitle);
                 var siteName = Helper.GetSearchSiteName(siteNum).ToLower();
-                if (siteNum[0] >= 1867 && siteNum[0] <= 1882)
+                if (siteNum[1] >= 1 && siteNum[1] <= 16)
                 {
                     searchUrl = $"{searchUrl}&channel={channelIdDB.FirstOrDefault(kvp => kvp.Value.Contains(siteName)).Key}";
                 }
@@ -96,7 +96,7 @@ namespace PhoenixAdult.Sites
                             string subSite = node.SelectSingleNode(".//a[@class='post_channel']")?.InnerText.Split(':').Last().Trim();
                             result.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{siteNum[0]}" } },
+                                ProviderIds = { { Plugin.Instance.Name, $"{curId}" } },
                                 Name = $"{titleNoFormatting} [{subSite}]",
                                 SearchProviderName = Plugin.Instance.Name,
                             });

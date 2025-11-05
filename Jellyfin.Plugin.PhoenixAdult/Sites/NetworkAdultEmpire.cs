@@ -97,13 +97,13 @@ namespace PhoenixAdult.Sites
                     string titleNoFormatting;
                     string curID;
 
-                    int currentSiteNum = siteNum[0];
-                    if (currentSiteNum == 815 || currentSiteNum == 1337 || currentSiteNum == 1776 || currentSiteNum == 1800)
+                    int currentSiteNum = siteNum[1];
+                    if (currentSiteNum == 0 || currentSiteNum == 1 || currentSiteNum == 14 || currentSiteNum == 33)
                     {
                         titleNoFormatting = searchResult.SelectSingleNode(".//img[contains(@class, 'img-full-fluid')]").GetAttributeValue("title", string.Empty).Trim();
                         curID = Helper.Encode(searchResult.SelectSingleNode(".//article[contains(@class, 'scene-update')]/a").GetAttributeValue("href", string.Empty));
                     }
-                    else if (currentSiteNum == 1766 || currentSiteNum == 1779 || currentSiteNum == 1790 || currentSiteNum == 1792)
+                    else if (currentSiteNum == 4 || currentSiteNum == 17 || currentSiteNum == 26 || currentSiteNum == 28)
                     {
                         titleNoFormatting = searchResult.SelectSingleNode(".//a[@class='scene-title']/p").InnerText.Split(new[] { " | " }, StringSplitOptions.None)[0].Trim();
                         curID = Helper.Encode(searchResult.SelectSingleNode(".//a[@class='scene-title']").GetAttributeValue("href", string.Empty));
