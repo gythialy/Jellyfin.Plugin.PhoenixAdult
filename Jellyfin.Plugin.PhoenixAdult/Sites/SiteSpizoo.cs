@@ -34,10 +34,46 @@ namespace PhoenixAdult.Sites
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
 
+            this.ParseSearchResults(doc, result);
+
+            var pager = doc.DocumentNode.SelectSingleNode(@"//ul[@class='pager']");
+            if (pager != null)
+            {
+                var pageUrls = new List<string>();
+                var pageNodes = pager.SelectNodes(@".//a");
+                if (pageNodes != null)
+                {
+                    foreach (var pageNode in pageNodes)
+                    {
+                        var pageUrl = pageNode.GetAttributeValue("href", string.Empty);
+                        if (!string.IsNullOrEmpty(pageUrl) && !pageUrls.Contains(pageUrl) && pageUrl != "#")
+                        {
+                            pageUrls.Add(pageUrl);
+                        }
+                    }
+                }
+
+                foreach (var pageUrl in pageUrls)
+                {
+                    var nextPageHttp = await HTTP.Request($"{Helper.GetSearchBaseURL(siteNum)}/{pageUrl}", cancellationToken);
+                    if (nextPageHttp.IsOK)
+                    {
+                        var nextPageDoc = new HtmlDocument();
+                        nextPageDoc.LoadHtml(nextPageHttp.Content);
+                        this.ParseSearchResults(nextPageDoc, result);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private void ParseSearchResults(HtmlDocument doc, List<RemoteSearchResult> result)
+        {
             var searchResults = doc.DocumentNode.SelectNodes(@"//div[@class='model-update row']");
             if (searchResults == null)
             {
-                return result;
+                return;
             }
 
             foreach (var searchResult in searchResults)
@@ -71,8 +107,6 @@ namespace PhoenixAdult.Sites
                     SearchProviderName = Plugin.Instance.Name,
                 });
             }
-
-            return result;
         }
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
@@ -104,7 +138,20 @@ namespace PhoenixAdult.Sites
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            var actorNodes = doc.DocumentNode.SelectNodes(@"//h3[text()='Pornstars:']/following-sibling::a");
+            HtmlNodeCollection actorNodes;
+            if ((siteNum[1] >= 0 && siteNum[1] < 7) || siteNum[1] == 10 || siteNum[1] == 12 || siteNum[1] == 14)
+            {
+                actorNodes = doc.DocumentNode.SelectNodes(@"//h3[text()='Pornstars:']/following-sibling::a");
+            }
+            else if (siteNum[1] == 7)
+            {
+                actorNodes = doc.DocumentNode.SelectNodes(@"//h3[text()='playmates:']/following-sibling::a");
+            }
+            else
+            {
+                actorNodes = doc.DocumentNode.SelectNodes(@"//h3[text()='Girls:']/following-sibling::a");
+            }
+
             if (actorNodes != null)
             {
                 foreach (var actorNode in actorNodes)
