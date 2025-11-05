@@ -161,13 +161,17 @@ namespace PhoenixAdult.Sites
             }
 
             HtmlNodeCollection actorNodes;
-            if ((siteNum[1] >= 0 && siteNum[1] < 7) || siteNum[1] == 10 || siteNum[1] == 12 || siteNum[1] == 14)
+            if (siteNum[1] == 0 || (siteNum[1] >= 2 && siteNum[1] < 7) || siteNum[1] == 10 || siteNum[1] == 12 || siteNum[1] == 14)
             {
                 actorNodes = doc.DocumentNode.SelectNodes(@"//h3[text()='Pornstars:']/following-sibling::a");
             }
             else if (siteNum[1] == 7)
             {
                 actorNodes = doc.DocumentNode.SelectNodes(@"//h3[text()='playmates:']/following-sibling::a");
+            }
+            else if (siteNum[1] == 1)
+            {
+                actorNodes = doc.DocumentNode.SelectNodes(@"//a[@class='model-name']");
             }
             else
             {
