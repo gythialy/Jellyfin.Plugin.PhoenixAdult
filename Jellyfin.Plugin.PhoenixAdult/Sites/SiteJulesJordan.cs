@@ -36,17 +36,33 @@ namespace PhoenixAdult.Sites
             var req = await HTTP.Request(url, cancellationToken);
             if (req.IsOK)
             {
+                var doc = new HtmlDocument();
+                doc.LoadHtml(req.Content);
+
+                string title;
+                string dateNode;
+                if (siteNum[0] == 50)
+                {
+                    title = doc.DocumentNode.SelectSingleNode("//span[@class='title_bar_hilite']")?.InnerText.Trim();
+                    dateNode = doc.DocumentNode.SelectSingleNode("//div[@class='backgroundcolor_info']/div[@class='table']/div[@class='row']/div[contains(@class, 'update_date')]")?.InnerText.Trim();
+                }
+                else
+                {
+                    title = doc.DocumentNode.SelectSingleNode("//div[@class='movie_title']")?.InnerText.Trim();
+                    dateNode = doc.DocumentNode.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Date:')]")?.ParentNode.InnerText.Replace("Date:", string.Empty).Trim();
+                }
+
                 string curID = Helper.Encode(url);
-                string releaseDate = searchDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+                string releaseDate = DateTime.TryParse(dateNode, out var parsedDate) ? parsedDate.ToString("yyyy-MM-dd") : string.Empty;
                 result.Add(new RemoteSearchResult
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } },
-                    Name = $"{url} [{Helper.GetSearchSiteName(siteNum)}]",
+                    Name = $"{title} ({dateNode}) [{Helper.GetSearchSiteName(siteNum)}]",
                     SearchProviderName = Plugin.Instance.Name,
                 });
             }
 
-            var searchPage = await HTML.ElementFromURL($"{Helper.GetSearchSearchURL(siteNum)}{Uri.EscapeDataString(searchTitle)}", cancellationToken);
+            /*var searchPage = await HTML.ElementFromURL($"{Helper.GetSearchSearchURL(siteNum)}{Uri.EscapeDataString(searchTitle)}", cancellationToken);
             if (searchPage != null)
             {
                 var searchResults = searchPage.SelectNodes("//div[@class='grid-item']");
@@ -66,7 +82,7 @@ namespace PhoenixAdult.Sites
                         });
                     }
                 }
-            }
+            }*/
 
             return result;
         }
@@ -94,12 +110,20 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements.SelectSingleNode("//div[@class='movie_title']")?.InnerText.Trim();
-            movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']/span[contains(text(), 'Description:')]")?.ParentNode.InnerText.Replace("Description:", string.Empty).Trim();
-            movie.AddStudio("Jules Jordan");
-            movie.AddCollection("Jules Jordan");
+            string dvdName = null;
+            if (siteNum[0] == 50)
+            {
+                movie.Name = detailsPageElements.SelectSingleNode("//span[@class='title_bar_hilite']")?.InnerText.Trim();
+                movie.Overview = detailsPageElements.SelectSingleNode("//span[@class='update_description']")?.InnerText.Trim();
+                dvdName = detailsPageElements.SelectSingleNode("//span[@class='update_dvds']")?.InnerText.Replace("Movie:", string.Empty).Replace("Feature: ", string.Empty).Trim();
+           }
+            else
+            {
+                movie.Name = detailsPageElements.SelectSingleNode("//div[@class='movie_title']")?.InnerText.Trim();
+                movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']/span[contains(text(), 'Description:')]")?.ParentNode.InnerText.Replace("Description:", string.Empty).Trim();
+                dvdName = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Movie:')]")?.ParentNode.InnerText.Replace("Movie:", string.Empty).Replace("Feature: ", string.Empty).Trim();
+            }
 
-            var dvdName = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Movie:')]")?.ParentNode.InnerText.Replace("Movie:", string.Empty).Replace("Feature: ", string.Empty).Trim();
             if (!string.IsNullOrEmpty(dvdName))
             {
                 movie.AddTag(dvdName);
@@ -112,7 +136,16 @@ namespace PhoenixAdult.Sites
             }
             else
             {
-                var dateNode = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Date:')]")?.ParentNode.InnerText.Replace("Date:", string.Empty).Trim();
+                string dateNode;
+                if (siteNum[0] == 50)
+                {
+                    dateNode = detailsPageElements.SelectSingleNode("//div[@class='backgroundcolor_info']/div[@class='table']/div[@class='row']/div[contains(@class, 'update_date')]")?.InnerText.Trim();
+                }
+                else
+                {
+                    dateNode = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Date:')]")?.ParentNode.InnerText.Replace("Date:", string.Empty).Trim();
+                }
+
                 if (DateTime.TryParse(dateNode, out parsedDate))
                 {
                     movie.PremiereDate = parsedDate;
@@ -120,7 +153,16 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var genreNodes = detailsPageElements.SelectNodes("//span[contains(text(), 'Categories')]/a");
+            HtmlNodeCollection genreNodes;
+            if (siteNum[0] == 50)
+            {
+                genreNodes = detailsPageElements.SelectNodes("//span[contains(text(), 'Tags')]/a");
+            }
+            else
+            {
+                genreNodes = detailsPageElements.SelectNodes("//span[contains(text(), 'Categories')]/a");
+            }
+
             if (genreNodes != null)
             {
                 foreach (var genre in genreNodes)
@@ -129,9 +171,15 @@ namespace PhoenixAdult.Sites
                 }
             }
 
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
+
             var actorNodes = Helper.GetSearchSiteName(siteNum) == "GirlGirl"
                 ? detailsPageElements.SelectNodes("//div[@class='item']/span/div/a")
-                : detailsPageElements.SelectNodes("//div[@class='player-scene-description']/span[contains(text(), 'Starring:')]/..//a");
+                : (
+                    siteNum[0] == 50
+                    ? detailsPageElements.SelectNodes("//div[@class='backgroundcolor_info']/span[@class, 'update_models')]/..//a")
+                    : detailsPageElements.SelectNodes("//div[@class='player-scene-description']/span[contains(text(), 'Starring:')]/..//a")
+                );
 
             if (actorNodes != null)
             {
@@ -168,7 +216,9 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var videoPoster = detailsPageElements.SelectSingleNode("//video[@id='video-player']")?.GetAttributeValue("poster", string.Empty);
+            var videoPoster = siteNum[0] == 50
+                ? detailsPageElements.SelectSingleNode("//img[contains(@id,'set-target')]")?.GetAttributeValue("src0_3x", string.Empty)
+                : detailsPageElements.SelectSingleNode("//video[@id='video-player']")?.GetAttributeValue("poster", string.Empty);
             if (!string.IsNullOrEmpty(videoPoster))
             {
                 result.Add(new RemoteImageInfo { Url = videoPoster, Type = ImageType.Primary });

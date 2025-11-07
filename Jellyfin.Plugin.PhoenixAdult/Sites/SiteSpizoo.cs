@@ -216,7 +216,8 @@ namespace PhoenixAdult.Sites
             doc.LoadHtml(http.Content);
 
             HtmlNode posterNode;
-            if (siteNum[1] == 1 || siteNum[1] == 12) {
+            if (siteNum[1] == 1 || siteNum[1] == 12)
+            {
                 posterNode = doc.DocumentNode.SelectSingleNode(@"//video[@id='video']");
             }
             else
@@ -238,13 +239,15 @@ namespace PhoenixAdult.Sites
             }
 
             HtmlNodeCollection backdropNodes;
-            if (siteNum[1] == 1 || siteNum[1] == 12) {
+            if (siteNum[1] == 1 || siteNum[1] == 12)
+            {
                 backdropNodes = doc.DocumentNode.SelectNodes(@"//section[@id='trailer-photos']//img");
             }
             else
             {
                 backdropNodes = doc.DocumentNode.SelectNodes(@"//section[@id='photos-tour']//img");
             }
+
             if (backdropNodes != null)
             {
                 foreach (var backdropNode in backdropNodes)
