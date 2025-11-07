@@ -237,7 +237,14 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var backdropNodes = doc.DocumentNode.SelectNodes(@"//section[@id='photos-tour']//img");
+            HtmlNodeCollection backdropNodes;
+            if (siteNum[1] == 1 || siteNum[1] == 12) {
+                backdropNodes = doc.DocumentNode.SelectNodes(@"//section[@id='trailer-photos']//img");
+            }
+            else
+            {
+                backdropNodes = doc.DocumentNode.SelectNodes(@"//section[@id='photos-tour']//img");
+            }
             if (backdropNodes != null)
             {
                 foreach (var backdropNode in backdropNodes)
