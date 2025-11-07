@@ -8,6 +8,14 @@
     "overview": "Manage Your Adult Videos in Jellyfin/Emby",
     "versions": [
       {
+        "checksum": "b39b3bacc00d4015397333c63142364a",
+        "changelog": "Auto Released by Actions",
+        "targetAbi": "10.9.0.0",
+        "sourceUrl": "https://github.com/Andrer757/Jellyfin.Plugin.PhoenixAdult/releases/download/v2025.1107.1549.0/Jellyfin.plugin.PhoenixAdult@v2025.1107.1549.0.zip",
+        "timestamp": "2025-11-07T15:50:43Z",
+        "version": "2025.1107.1549.0"
+      },
+      {
         "checksum": "15566e62450a2bdca6631b6e6812d50f",
         "changelog": "Auto Released by Actions",
         "targetAbi": "10.9.0.0",
