@@ -215,7 +215,15 @@ namespace PhoenixAdult.Sites
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
 
-            var posterNode = doc.DocumentNode.SelectSingleNode(@"//video[@id='the-video']");
+            HtmlNode posterNode;
+            if (siteNum[1] == 1 || siteNum[1] == 12) {
+                posterNode = doc.DocumentNode.SelectSingleNode(@"//video[@id='video']");
+            }
+            else
+            {
+                posterNode = doc.DocumentNode.SelectSingleNode(@"//video[@id='the-video']");
+            }
+
             if (posterNode != null)
             {
                 var posterUrl = posterNode.GetAttributeValue("poster", string.Empty);
