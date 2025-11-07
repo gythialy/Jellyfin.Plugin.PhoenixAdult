@@ -177,7 +177,7 @@ namespace PhoenixAdult.Sites
                 ? detailsPageElements.SelectNodes("//div[@class='item']/span/div/a")
                 : (
                     siteNum[0] == 50
-                    ? detailsPageElements.SelectNodes("//div[@class='backgroundcolor_info']/span[@class='update_models')]/a")
+                    ? detailsPageElements.SelectNodes("//div[@class='backgroundcolor_info']//span[@class='update_models']/a")
                     : detailsPageElements.SelectNodes("//div[@class='player-scene-description']/span[contains(text(), 'Starring:')]/..//a")
                 );
 
