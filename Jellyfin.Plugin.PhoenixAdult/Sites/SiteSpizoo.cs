@@ -171,7 +171,7 @@ namespace PhoenixAdult.Sites
             }
             else if (siteNum[1] == 1 || siteNum[1] == 12)
             {
-                actorNodes = doc.DocumentNode.SelectNodes(@"//a[contains(@class, 'model-name')]");
+                actorNodes = doc.DocumentNode.SelectNodes(@"//h2[text()='Pornstars:']/following-sibling::span[1]//a");
             }
             else
             {
