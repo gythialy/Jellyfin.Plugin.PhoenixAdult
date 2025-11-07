@@ -161,7 +161,7 @@ namespace PhoenixAdult.Sites
             }
 
             HtmlNodeCollection actorNodes;
-            if (siteNum[1] == 0 || (siteNum[1] >= 2 && siteNum[1] < 7) || siteNum[1] == 10 || siteNum[1] == 12 || siteNum[1] == 14)
+            if (siteNum[1] == 0 || (siteNum[1] >= 2 && siteNum[1] < 7) || siteNum[1] == 10 || siteNum[1] == 14)
             {
                 actorNodes = doc.DocumentNode.SelectNodes(@"//h3[text()='Pornstars:']/following-sibling::a");
             }
@@ -169,9 +169,9 @@ namespace PhoenixAdult.Sites
             {
                 actorNodes = doc.DocumentNode.SelectNodes(@"//h3[text()='playmates:']/following-sibling::a");
             }
-            else if (siteNum[1] == 1)
+            else if (siteNum[1] == 1 || siteNum[1] == 12)
             {
-                actorNodes = doc.DocumentNode.SelectNodes(@"//a[@class='model-name']");
+                actorNodes = doc.DocumentNode.SelectNodes(@"//a[contains(@class, 'model-name')]");
             }
             else
             {
