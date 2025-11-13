@@ -53,7 +53,7 @@ namespace PhoenixAdult.Sites
                 }
 
                 string curID = Helper.Encode(url);
-                string releaseDate = DateTime.TryParse(dateNode, out var parsedDate) ? parsedDate.ToString("yyyy-MM-dd") : string.Empty;
+                string releaseDate = DateTime.TryParseExact(dateNode, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate) ? parsedDate.ToString("yyyy-MM-dd") : string.Empty;
                 result.Add(new RemoteSearchResult
                 {
                     ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } },
@@ -146,7 +146,7 @@ namespace PhoenixAdult.Sites
                     dateNode = detailsPageElements.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Date:')]")?.ParentNode.InnerText.Replace("Date:", string.Empty).Trim();
                 }
 
-                if (DateTime.TryParse(dateNode, out parsedDate))
+                if (DateTime.TryParseExact(dateNode, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
                 {
                     movie.PremiereDate = parsedDate;
                     movie.ProductionYear = parsedDate.Year;

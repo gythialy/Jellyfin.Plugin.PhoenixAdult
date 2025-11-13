@@ -100,7 +100,7 @@ namespace PhoenixAdult.Sites
                 var dateNode = detailsPageElements.SelectSingleNode("//div[@class='datePhotos']")?.InnerText.Replace("RELEASED:", string.Empty).Trim();
                 if (!string.IsNullOrEmpty(dateNode))
                 {
-                    if (DateTime.TryParse(dateNode, out var parsedDate))
+                if (DateTime.TryParseExact(dateNode, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                     {
                         movie.PremiereDate = parsedDate;
                         movie.ProductionYear = parsedDate.Year;
@@ -123,14 +123,14 @@ namespace PhoenixAdult.Sites
                 movie.AddTag(Helper.GetSearchSiteName(siteNum));
 
                 var dateNode = detailsPageElements.SelectSingleNode("//div[@class='sceneDateP']/span")?.InnerText.Split(',')[0].Trim();
-                if (DateTime.TryParse(dateNode, out var parsedDate))
+                if (DateTime.TryParseExact(dateNode, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                 {
                     movie.PremiereDate = parsedDate;
                     movie.ProductionYear = parsedDate.Year;
                 }
             }
 
-            var actorNodes = detailsPageElements.SelectNodes("//span[@class='tour_update_models']/a");
+            var actorNodes = detailsPageElements.SelectNodes("//div[@class='sceneTextLink']//p//span[@class='tour_update_models']/a");
             if (actorNodes != null)
             {
                 if (actorNodes.Count == 3 && !isDvd)
