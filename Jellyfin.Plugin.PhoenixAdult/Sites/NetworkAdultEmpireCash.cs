@@ -95,9 +95,11 @@ namespace PhoenixAdult.Sites
             var searchResultNodes = HTML.ElementFromString(httpResult.Content).SelectNodes("//div[contains(@class, 'item-grid')]/div[@class='grid-item']");
             if (searchResultNodes == null)
             {
+                Logger.Info($"[NetworkAdultEmpireCash] results: null");
                 return result;
             }
 
+            Logger.Info($"[NetworkAdultEmpireCash] results: {searchResultNodes.Count}");
             foreach (var searchResultNode in searchResultNodes)
             {
                 try
