@@ -138,13 +138,18 @@ namespace PhoenixAdult.Helpers.Utils
 
             if (cookies != null)
             {
+                var jsonString = JsonSerializer.Serialize(CookieContainer, new JsonSerializerOptions { WriteIndented = true });
+                Logger.Info($"[HTTP Request] before cookies: {jsonString}");
+                jsonString = JsonSerializer.Serialize(cookies, new JsonSerializerOptions { WriteIndented = true });
+                Logger.Info($"[HTTP Request] input cookies: {jsonString}");
+
                 foreach (var cookie in cookies)
                 {
                     CookieContainer.Add(request.RequestUri, new Cookie(cookie.Key, cookie.Value));
                 }
 
-                string jsonString = JsonSerializer.Serialize(CookieContainer, new JsonSerializerOptions { WriteIndented = true });
-                Logger.Info($"[HTTP Request] cookies: {jsonString}");
+                jsonString = JsonSerializer.Serialize(CookieContainer, new JsonSerializerOptions { WriteIndented = true });
+                Logger.Info($"[HTTP Request] after cookies: {jsonString}");
             }
 
             if (CacheHandler != null && request.RequestUri.AbsoluteUri == Consts.DatabaseUpdateURL)

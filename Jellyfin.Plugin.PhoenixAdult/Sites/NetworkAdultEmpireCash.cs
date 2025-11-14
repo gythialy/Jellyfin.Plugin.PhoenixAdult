@@ -57,7 +57,7 @@ namespace PhoenixAdult.Sites
             if (sceneId != null)
             {
                 string directUrl = $"{Helper.GetSearchBaseURL(siteNum)}/{sceneId}/{this.Slugify(searchTitle)}.html";
-                var directHttp = await HTTP.Request(directUrl, HttpMethod.Get, cancellationToken, null, cookies: this.cookies);
+                var directHttp = await HTTP.Request(directUrl, HttpMethod.Get, cancellationToken, headers: null, cookies: cookies);
                 if (directHttp.IsOK)
                 {
                     var detailsPageElements = HTML.ElementFromString(directHttp.Content);
@@ -86,7 +86,7 @@ namespace PhoenixAdult.Sites
             }
 
             var searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
-            var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, null, cookies: this.cookies);
+            var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, headers: null, cookies: cookies);
             if (!httpResult.IsOK)
             {
                 return result;
@@ -168,7 +168,7 @@ namespace PhoenixAdult.Sites
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
             }
 
-            var detailsPageElements = await HTML.ElementFromURL(sceneUrl, cancellationToken, cookies: this.cookies);
+            var detailsPageElements = await HTML.ElementFromURL(sceneUrl, cancellationToken, headers: null, cookies: cookies);
             if (detailsPageElements == null)
             {
                 return result;
