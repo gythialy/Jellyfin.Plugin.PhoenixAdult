@@ -115,6 +115,11 @@ namespace PhoenixAdult.Sites
                         titleNoFormatting = Helper.ParseTitle(searchResultNode.SelectSingleNode(".//a[@class='scene-title']/p")?.InnerText.Split(new[] { " | " }, StringSplitOptions.None)[0].Trim(), siteNum);
                         curId = Helper.Encode(searchResultNode.SelectSingleNode(".//a[@class='scene-title']")?.GetAttributeValue("href", string.Empty));
                     }
+                    else if (siteNumVal == 10)
+                    {
+                        titleNoFormatting = Helper.ParseTitle(searchResultNode.SelectSingleNode(".//a[contains(@class, 'scene-title')]/h6")?.InnerText.Trim(), siteNum);
+                        curId = Helper.Encode(searchResultNode.SelectSingleNode(".//a[contains(@class, 'scene-title')]")?.GetAttributeValue("href", string.Empty));
+                    }
                     else
                     {
                         titleNoFormatting = Helper.ParseTitle(searchResultNode.SelectSingleNode(".//a[@class='scene-title']/h6")?.InnerText.Trim(), siteNum);
