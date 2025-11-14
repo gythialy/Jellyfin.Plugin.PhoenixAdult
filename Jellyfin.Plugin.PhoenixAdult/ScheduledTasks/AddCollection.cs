@@ -8,6 +8,7 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Tasks;
+using PhoenixAdult.Helpers;
 
 namespace PhoenixAdult.ScheduledTasks
 {
@@ -43,7 +44,7 @@ namespace PhoenixAdult.ScheduledTasks
             var items = this.libraryManager.GetItemList(new InternalItemsQuery()).Where(o => o.ProviderIds.ContainsKey(Plugin.Instance.Name));
 
             var studios = items.SelectMany(o => o.Studios).Distinct().ToList();
-
+            Logger.Info($"[AddCollection] studios: {studios}");
             foreach (var (idx, studio) in studios.WithIndex())
             {
                 progress?.Report((double)idx / studios.Count * 100);

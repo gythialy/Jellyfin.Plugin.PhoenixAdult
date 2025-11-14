@@ -92,7 +92,16 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var searchResultNodes = HTML.ElementFromString(httpResult.Content).SelectNodes("//div[contains(@class, 'item-grid')]/div[@class='grid-item']");
+            HtmlNodeCollection searchResultNodes;
+            if (siteNum[1] == 10)
+            {
+                searchResultNodes = HTML.ElementFromString(httpResult.Content).SelectNodes("//article[contains(@class, 'scene-widget')]");
+            }
+            else
+            {
+                searchResultNodes = HTML.ElementFromString(httpResult.Content).SelectNodes("//div[contains(@class, 'item-grid')]/div[@class='grid-item']");
+            }
+
             if (searchResultNodes == null)
             {
                 Logger.Info($"[NetworkAdultEmpireCash] results: null");
