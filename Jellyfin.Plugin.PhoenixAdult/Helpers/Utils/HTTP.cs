@@ -138,18 +138,26 @@ namespace PhoenixAdult.Helpers.Utils
 
             if (cookies != null)
             {
-                var jsonString = JsonSerializer.Serialize(CookieContainer, new JsonSerializerOptions { WriteIndented = true });
-                Logger.Info($"[HTTP Request] before cookies: {jsonString}");
-                jsonString = JsonSerializer.Serialize(cookies, new JsonSerializerOptions { WriteIndented = true });
-                Logger.Info($"[HTTP Request] input cookies: {jsonString}");
+                Logger.Info($"[HTTP Request] Input cookies: {JsonSerializer.Serialize(cookies)}");
 
                 foreach (var cookie in cookies)
                 {
                     CookieContainer.Add(request.RequestUri, new Cookie(cookie.Key, cookie.Value));
                 }
 
-                jsonString = JsonSerializer.Serialize(CookieContainer, new JsonSerializerOptions { WriteIndented = true });
-                Logger.Info($"[HTTP Request] after cookies: {jsonString}");
+                var cookieCollection = CookieContainer.GetCookies(request.RequestUri);
+                if (cookieCollection.Count > 0)
+                {
+                    Logger.Info($"[HTTP Request] Cookies being sent for {request.RequestUri}:");
+                    foreach (Cookie cookie in cookieCollection)
+                    {
+                        Logger.Info($"[HTTP Request]  - Name: {cookie.Name}, Value: {cookie.Value}, Domain: {cookie.Domain}");
+                    }
+                }
+                else
+                {
+                    Logger.Info($"[HTTP Request] No cookies found for {request.RequestUri}.");
+                }
             }
 
             if (CacheHandler != null && request.RequestUri.AbsoluteUri == Consts.DatabaseUpdateURL)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Collections;
@@ -44,7 +45,7 @@ namespace PhoenixAdult.ScheduledTasks
             var items = this.libraryManager.GetItemList(new InternalItemsQuery()).Where(o => o.ProviderIds.ContainsKey(Plugin.Instance.Name));
 
             var studios = items.SelectMany(o => o.Studios).Distinct().ToList();
-            Logger.Info($"[AddCollection] studios: {studios}");
+            Logger.Info($"[AddCollection] studios: {JsonSerializer.Serialize(studios)}");
             foreach (var (idx, studio) in studios.WithIndex())
             {
                 progress?.Report((double)idx / studios.Count * 100);
