@@ -92,6 +92,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
+            Logger.Info($"[NetworkAdultEmpireCash] Raw HTML: {httpResult.Content}");
             HtmlNodeCollection searchResultNodes;
             if (siteNum[1] == 10)
             {
