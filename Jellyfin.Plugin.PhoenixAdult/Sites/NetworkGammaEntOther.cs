@@ -174,6 +174,8 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
+            Logger.Info($"[NetworkGammaEntOther] content: {detailsPageElements.ToString()}");
+
             var movie = (Movie)result.Item;
             movie.Name = Helper.ParseTitle(detailsPageElements["title"].ToString(), siteNum);
             movie.Overview = detailsPageElements["description"].ToString().Replace("</br>", "\n").Replace("<br>", "\n");
