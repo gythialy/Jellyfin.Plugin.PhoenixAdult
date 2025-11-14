@@ -177,7 +177,7 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             movie.Name = Helper.ParseTitle(detailsPageElements["title"].ToString(), siteNum);
             movie.Overview = detailsPageElements["description"].ToString().Replace("</br>", "\n").Replace("<br>", "\n");
-            movie.AddStudio(detailsPageElements["network_name"]?.ToString() ?? detailsPageElements["studio_name"]?.ToString());
+            movie.AddStudio(detailsPageElements["network_name"]?.ToString() ?? detailsPageElements["studio_name"]?.ToString() ?? Helper.GetSearchSiteName(siteNum));
 
             if (DateTime.TryParse(sceneDate, out var parsedDate))
             {
