@@ -85,6 +85,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
+            await HTTP.Request(Helper.GetSearchBaseURL(siteNum), HttpMethod.Get, cancellationToken, null, _cookies);
             var searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, null, _cookies);
             if (!httpResult.IsOK)
