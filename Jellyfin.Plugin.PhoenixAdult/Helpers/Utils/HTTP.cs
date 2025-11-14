@@ -142,6 +142,9 @@ namespace PhoenixAdult.Helpers.Utils
                 {
                     CookieContainer.Add(request.RequestUri, new Cookie(cookie.Key, cookie.Value));
                 }
+
+                string jsonString = JsonSerializer.Serialize(CookieContainer, new JsonSerializerOptions { WriteIndented = true });
+                Logger.Info($"[HTTP Request] cookies: {jsonString}");
             }
 
             if (CacheHandler != null && request.RequestUri.AbsoluteUri == Consts.DatabaseUpdateURL)

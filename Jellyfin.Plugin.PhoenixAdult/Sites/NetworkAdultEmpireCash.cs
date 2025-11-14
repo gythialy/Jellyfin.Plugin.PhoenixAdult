@@ -25,7 +25,7 @@ namespace PhoenixAdult.Sites
 {
     public class NetworkAdultEmpireCash : IProviderBase
     {
-        private readonly Dictionary<string, string> _cookies = new Dictionary<string, string> { { "ageConfirmed", "true" } };
+        private readonly Dictionary<string, string> cookies = new Dictionary<string, string> { { "ageConfirmed", "true" } };
 
         private string Slugify(string phrase)
         {
@@ -56,8 +56,8 @@ namespace PhoenixAdult.Sites
 
             if (sceneId != null)
             {
-                string directUrl = $"{Helper.GetSearchBaseURL(siteNum)}/{sceneId}/{Slugify(searchTitle)}.html";
-                var directHttp = await HTTP.Request(directUrl, HttpMethod.Get, cancellationToken, null, _cookies);
+                string directUrl = $"{Helper.GetSearchBaseURL(siteNum)}/{sceneId}/{this.Slugify(searchTitle)}.html";
+                var directHttp = await HTTP.Request(directUrl, HttpMethod.Get, cancellationToken, null, cookies: this.cookies);
                 if (directHttp.IsOK)
                 {
                     var detailsPageElements = HTML.ElementFromString(directHttp.Content);
@@ -85,9 +85,8 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            await HTTP.Request(Helper.GetSearchBaseURL(siteNum), HttpMethod.Get, cancellationToken, null, _cookies);
             var searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
-            var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, null, _cookies);
+            var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, null, cookies: this.cookies);
             if (!httpResult.IsOK)
             {
                 return result;
@@ -169,7 +168,7 @@ namespace PhoenixAdult.Sites
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
             }
 
-            var detailsPageElements = await HTML.ElementFromURL(sceneUrl, cancellationToken, _cookies);
+            var detailsPageElements = await HTML.ElementFromURL(sceneUrl, cancellationToken, cookies: this.cookies);
             if (detailsPageElements == null)
             {
                 return result;
@@ -186,6 +185,7 @@ namespace PhoenixAdult.Sites
             }
 
             movie.AddStudio("Adult Empire Cash");
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             var taglineNode = detailsPageElements.SelectSingleNode("//div[@class='studio']//span/text()[2]");
             if (taglineNode != null)
@@ -251,7 +251,7 @@ namespace PhoenixAdult.Sites
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
             }
 
-            var detailsPageElements = await HTML.ElementFromURL(sceneUrl, cancellationToken, _cookies);
+            var detailsPageElements = await HTML.ElementFromURL(sceneUrl, cancellationToken, this.cookies);
             if (detailsPageElements == null)
             {
                 return images;
