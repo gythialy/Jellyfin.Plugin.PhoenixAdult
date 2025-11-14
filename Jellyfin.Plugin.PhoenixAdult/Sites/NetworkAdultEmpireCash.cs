@@ -95,7 +95,7 @@ namespace PhoenixAdult.Sites
             HtmlNodeCollection searchResultNodes;
             if (siteNum[1] == 10)
             {
-                searchResultNodes = HTML.ElementFromString(httpResult.Content).SelectNodes("//article[contains(@class, 'scene-widget')]");
+                searchResultNodes = HTML.ElementFromString(httpResult.Content).SelectNodes("//div[starts-with(@id, 'ascene_')]");
             }
             else
             {
