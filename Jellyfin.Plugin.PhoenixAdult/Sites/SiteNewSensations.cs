@@ -34,6 +34,7 @@ namespace PhoenixAdult.Sites
             var searchResultsURLs = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 $"{Helper.GetSearchSearchURL(siteNum)}updates/{searchTitle.Replace(" ", "-")}.html",
+                $"{Helper.GetSearchSearchURL(siteNum)}updates/New-Sensations-{searchTitle.Replace(" ", "-")}.html",
                 $"{Helper.GetSearchSearchURL(siteNum)}updates/{searchTitle.Replace(" ", "-")}-.html",
                 $"{Helper.GetSearchSearchURL(siteNum)}updates/{searchTitle.Replace(" ", "-")}-4k.html",
                 $"{Helper.GetSearchSearchURL(siteNum)}dvds/{searchTitle.Replace(" ", "-")}.html",
