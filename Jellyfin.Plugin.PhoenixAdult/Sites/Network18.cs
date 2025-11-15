@@ -30,13 +30,13 @@ namespace PhoenixAdult.Sites
         private static readonly string findVideoQuery = "query FindVideo($videoId: ID!) { video { find(input: {videoId: $videoId}) { result { videoId title duration galleryCount description { short long } talent { type talent { talentId name } } } } } }";
         private static readonly string assetQuery = "query BatchFindAssetQuery($paths: [String!]!) { asset { batch(input: {paths: $paths}) { result { path mime size serve { type uri } } } } }";
 
-        private static readonly Dictionary<string, List<string>> apiKeyDB = new Dictionary<string, List<string>>
+        private static readonly Dictionary<string, List<string>> apiKeyDB = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
         {
             { "fit18", new List<string> { "77cd9282-9d81-4ba8-8868-ca9125c76991" } },
             { "thicc18", new List<string> { "0e36c7e9-8cb7-4fa1-9454-adbc2bad15f0" } },
         };
 
-        private static readonly Dictionary<string, List<string>> genresDB = new Dictionary<string, List<string>>
+        private static readonly Dictionary<string, List<string>> genresDB = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
         {
             { "fit18", new List<string> { "Young", "Gym" } },
             { "thicc18", new List<string> { "Thicc" } },
