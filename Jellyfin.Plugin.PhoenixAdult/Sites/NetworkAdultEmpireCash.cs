@@ -196,10 +196,14 @@ namespace PhoenixAdult.Sites
             }
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='release-date']");
-            if (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "MMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+            if (dateNode != null)
             {
-                movie.PremiereDate = parsedDate;
-                movie.ProductionYear = parsedDate.Year;
+                var dateText = dateNode.InnerText.Replace("Released:", string.Empty).Trim();
+                if (DateTime.TryParseExact(dateText, "MMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                {
+                    movie.PremiereDate = parsedDate;
+                    movie.ProductionYear = parsedDate.Year;
+                }
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//div[@class='tags']//a");
