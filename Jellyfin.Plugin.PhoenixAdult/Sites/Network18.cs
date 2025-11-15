@@ -64,8 +64,18 @@ namespace PhoenixAdult.Sites
                 { "Referer", searchUrl },
             };
 
-            var http = await HTTP.Request(searchUrl, HttpMethod.Get, param, cancellationToken, headers).ConfigureAwait(false);
-            return http.IsOK ? JObject.Parse(http.Content) : null;
+            Logger.Info($"[Network18] GetDataFromAPI Request Body: {paramsJson}");
+            var http = await HTTP.Request(searchUrl, HttpMethod.Post, param, cancellationToken, headers).ConfigureAwait(false);
+            if (http.IsOK)
+            {
+                Logger.Info($"[Network18] GetDataFromAPI Response: {http.Content}");
+                return JObject.Parse(http.Content);
+            }
+            else
+            {
+                Logger.Error($"[Network18] GetDataFromAPI failed. Status code: {http.StatusCode}");
+                return null;
+            }
         }
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
@@ -76,13 +86,16 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
+            Logger.Info($"[Network18] Searching for title: '{searchTitle}'");
             var searchResults = await GetDataFromAPI(searchQuery, "query", searchTitle, siteNum, cancellationToken);
             var resultToken = searchResults?.SelectToken("data.search.search.result");
             if (resultToken == null || resultToken.Type == JTokenType.Null)
             {
+                Logger.Info("[Network18] No search results found.");
                 return result;
             }
 
+            Logger.Info($"[Network18] Found {resultToken.Count()} search results.");
             foreach (var searchResult in resultToken)
             {
                 if (searchResult["type"].ToString() == "VIDEO")
