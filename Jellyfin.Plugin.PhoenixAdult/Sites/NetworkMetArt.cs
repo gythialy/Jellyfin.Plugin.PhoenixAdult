@@ -41,7 +41,7 @@ namespace PhoenixAdult.Sites
                     string subSite = Helper.GetSearchSiteName(siteNum);
                     string titleNoFormatting = searchResult["item"]["name"].ToString();
                     var sceneUrlParts = searchResult["item"]["path"].ToString().Split('/').Skip(1).ToArray();
-                    string sceneUrl = $"{Helper.GetSearchSearchURL(siteNum)}/movie?name={sceneUrlParts[1]}&date={sceneUrlParts[0]}";
+                    string sceneUrl = $"{Helper.GetSearchSearchURL(siteNum)}/movie?name={sceneUrlParts[4]}&date={sceneUrlParts[3]}";
                     string curId = Helper.Encode(sceneUrl);
                     string releaseDate = string.Empty;
                     if (DateTime.TryParse(searchResult["item"]["publishedAt"].ToString(), out var parsedDate))
