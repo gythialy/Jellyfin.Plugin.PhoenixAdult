@@ -59,7 +59,7 @@ namespace PhoenixAdult.Sites
                         Logger.Info($"[SiteHollyRandall] image: {image}");
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{Helper.Encode(titleNoFormatting)}|{releaseDate}" } },
+                            ProviderIds = { { Plugin.Instance.Name, curId } },
                             Name = $"{titleNoFormatting} {releaseDate} [{Helper.GetSearchSiteName(siteNum)}]",
                             SearchProviderName = Plugin.Instance.Name,
                             ImageUrl = image,
@@ -79,8 +79,7 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string[] providerIds = sceneID[0].Split('|');
-            string sceneUrl = Helper.Decode(providerIds[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
@@ -96,12 +95,17 @@ namespace PhoenixAdult.Sites
 
             var movie = (Movie)result.Item;
             movie.AddStudio("Holly Randall Productions");
-            movie.Name = Helper.Decode(providerIds[1]).Trim();
+
+            var titleNode = detailsPageElements.SelectSingleNode("//h2");
+            if (titleNode != null)
+            {
+                movie.Name = titleNode.InnerText.Trim();
+            }
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddTag(tagline);
 
-            var genreNodes = detailsPageElements.SelectNodes("//ul[@class='tags']/li/a");
+            var genreNodes = detailsPageElements.SelectNodes("//div[@class='blogTags']//a");
             if (genreNodes != null)
             {
                 foreach (var genre in genreNodes)
@@ -110,18 +114,19 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            if (DateTime.TryParse(providerIds[2], out var parsedDate))
+            var dateNode = detailsPageElements.SelectSingleNode("//li[@class='text_med']");
+            if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            var actorNodes = detailsPageElements.SelectSingleNode("//div[@class='info']/p")?.InnerText.Split('\n')[3].Replace("Featuring:", string.Empty).Split(',');
+            var actorNodes = detailsPageElements.SelectNodes("//p[@class='link_light']/a");
             if (actorNodes != null)
             {
                 foreach (var actor in actorNodes)
                 {
-                    result.People.Add(new PersonInfo { Name = actor.Trim(), Type = PersonKind.Actor });
+                    result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
             }
 
@@ -131,7 +136,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
