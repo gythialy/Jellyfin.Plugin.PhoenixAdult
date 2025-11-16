@@ -55,7 +55,7 @@ namespace PhoenixAdult.Sites
                             releaseDate = parsedDate.ToString("yyyy-MM-dd");
                         }
 
-                        var image = node.SelectSingleNode(".//img")?.GetAttributeValue("src0_1x", string.Empty);
+                        var image = Helper.GetSearchBaseURL(siteNum) + node.SelectSingleNode(".//img")?.GetAttributeValue("src0_2x", string.Empty);
                         Logger.Info($"[SiteHollyRandall] image: {image}");
                         result.Add(new RemoteSearchResult
                         {
