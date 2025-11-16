@@ -13,6 +13,7 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
+using System.Text.RegularExpressions;
 
 #if __EMBY__
 #else
@@ -23,6 +24,8 @@ namespace PhoenixAdult.Sites
 {
     public class NetworkCouplesCinema : IProviderBase
     {
+        private readonly Dictionary<string, string> _cookies = new Dictionary<string, string> { { "cookiesAccepted", "true" } };
+
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
@@ -36,13 +39,13 @@ namespace PhoenixAdult.Sites
             if (sceneId != null)
             {
                 string sceneUrl = $"{Helper.GetSearchBaseURL(siteNum)}/post/details/{sceneId}";
-                var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
+                var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken, cookies: _cookies);
                 if (httpResult.IsOK)
                 {
                     var detailsPageElements = HTML.ElementFromString(httpResult.Content);
                     string curId = Helper.Encode(sceneUrl);
-                    string titleNoFormatting = detailsPageElements.SelectSingleNode("//div[contains(@class, 'mediaHeader')]//span[contains(@class, 'title')]")?.InnerText.Trim();
-                    string studio = detailsPageElements.SelectSingleNode("//span[contains(@class, 'type')]")?.InnerText.Split('|')[0].Trim();
+                    string titleNoFormatting = detailsPageElements.SelectSingleNode("//span[contains(@class, 'gqTitle')]")?.InnerText.Trim();
+                    string studio = detailsPageElements.SelectSingleNode("//div[contains(@class, 'gqProducer')]//a")?.InnerText.Trim();
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}" } },
@@ -54,34 +57,57 @@ namespace PhoenixAdult.Sites
             else
             {
                 string searchUrl = Helper.GetSearchSearchURL(siteNum) + searchTitle.Replace(" ", "+");
-                var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
-                if (httpResult.IsOK)
-                {
-                    var searchPageElements = HTML.ElementFromString(httpResult.Content);
-                    var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'post')]");
-                    if (searchNodes != null)
-                    {
-                        foreach (var node in searchNodes)
-                        {
-                            string titleNoFormatting = node.SelectSingleNode(".//span[contains(@class, 'title')]")?.InnerText.Trim();
-                            string sceneUrl = node.SelectSingleNode(".//a[contains(@class, 'media')]")?.GetAttributeValue("href", string.Empty);
-                            string studio = node.SelectSingleNode(".//span[contains(@class, 'source')]")?.InnerText.Trim();
-                            string sceneCover = Helper.Encode(node.SelectSingleNode(".//a[contains(@class, 'media')]//img[contains(@class, 'image')]")?.GetAttributeValue("src", string.Empty));
-                            string releaseDate = searchDate?.ToString("yyyy-MM-dd") ?? string.Empty;
-                            string curId = Helper.Encode(sceneUrl);
-
-                            result.Add(new RemoteSearchResult
-                            {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}|{sceneCover}" } },
-                                Name = $"{titleNoFormatting} [{studio}]",
-                                SearchProviderName = Plugin.Instance.Name,
-                            });
-                        }
-                    }
-                }
+                await GetPageResults(searchUrl, result, cancellationToken);
             }
 
             return result;
+        }
+
+        private async Task GetPageResults(string searchUrl, List<RemoteSearchResult> result, CancellationToken cancellationToken)
+        {
+            var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, cookies: _cookies);
+            if (!httpResult.IsOK)
+            {
+                return;
+            }
+
+            var searchPageElements = HTML.ElementFromString(httpResult.Content);
+            var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'gqPostContainer')]");
+            if (searchNodes != null)
+            {
+                foreach (var node in searchNodes)
+                {
+                    string sceneUrl = node.SelectSingleNode(".//a[contains(@class, 'gqPost')]")?.GetAttributeValue("href", string.Empty);
+                    if (string.IsNullOrEmpty(sceneUrl))
+                    {
+                        continue;
+                    }
+
+                    string curId = Helper.Encode(sceneUrl);
+                    string coverImage = node.GetAttributeValue("data-img", string.Empty);
+                    var idRegex = new Regex(@"/(\d+)$");
+                    var match = idRegex.Match(sceneUrl);
+                    string id = match.Success ? match.Groups[1].Value : "0";
+
+                    result.Add(new RemoteSearchResult
+                    {
+                        ProviderIds = { { Plugin.Instance.Name, curId } },
+                        Name = $"Scene {id}",
+                        ImageUrl = coverImage,
+                        SearchProviderName = Plugin.Instance.Name,
+                    });
+                }
+            }
+
+            var nextPageNode = searchPageElements.SelectSingleNode("//a[@class='pageBtn gqPage' and text()='>']");
+            if (nextPageNode != null)
+            {
+                string nextPageLink = nextPageNode.GetAttributeValue("href", string.Empty);
+                if (!string.IsNullOrEmpty(nextPageLink) && nextPageLink != searchUrl)
+                {
+                    await GetPageResults(nextPageLink, result, cancellationToken);
+                }
+            }
         }
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
@@ -92,16 +118,13 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string[] providerIds = sceneID[0].Split('|');
-            string sceneUrl = Helper.Decode(providerIds[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
             }
 
-            string searchDate = providerIds.Length > 1 ? providerIds[1] : string.Empty;
-
-            var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
+            var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken, cookies: _cookies);
             if (!httpResult.IsOK)
             {
                 return result;
@@ -110,29 +133,15 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements.SelectSingleNode("//div[contains(@class, 'mediaHeader')]//span[contains(@class, 'title')]")?.InnerText.Trim();
-            movie.Overview = detailsPageElements.SelectSingleNode("//span[contains(@class, 'description')]")?.InnerText.Trim();
+            movie.Name = detailsPageElements.SelectSingleNode("//span[contains(@class, 'gqTitle')]")?.InnerText.Trim();
+            movie.Overview = detailsPageElements.SelectSingleNode("//span[contains(@class, 'gqDescription')]")?.InnerText.Trim();
             movie.AddStudio("Couples Cinema");
 
-            string tagline = detailsPageElements.SelectSingleNode("//span[contains(@class, 'type')]")?.InnerText.Split('|')[0].Trim();
+            string tagline = detailsPageElements.SelectSingleNode("//div[contains(@class, 'gqProducer')]//a")?.InnerText.Trim();
             movie.AddTag(tagline);
             movie.AddCollection(tagline);
 
-            if (!string.IsNullOrEmpty(searchDate) && DateTime.TryParse(searchDate, out var parsedDate))
-            {
-                movie.PremiereDate = parsedDate;
-                movie.ProductionYear = parsedDate.Year;
-            }
-            else
-            {
-                string year = detailsPageElements.SelectSingleNode("//span[contains(@class, 'type')]")?.InnerText.Split('|')[1].Trim();
-                if (int.TryParse(year, out var parsedYear))
-                {
-                    movie.ProductionYear = parsedYear;
-                }
-            }
-
-            var actorNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'cast')]/a");
+            var actorNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'gqModels')]//a");
             if (actorNodes != null)
             {
                 foreach (var actor in actorNodes)
@@ -147,21 +156,13 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string[] providerIds = sceneID[0].Split('|');
-            string sceneUrl = Helper.Decode(providerIds[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
             }
 
-            string sceneCover = providerIds.Length > 2 ? Helper.Decode(providerIds[2]) : string.Empty;
-
-            if (!string.IsNullOrEmpty(sceneCover))
-            {
-                images.Add(new RemoteImageInfo { Url = sceneCover });
-            }
-
-            var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
+            var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken, cookies: _cookies);
             if (!httpResult.IsOK)
             {
                 return images;
@@ -169,21 +170,15 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
-            var posterNode = detailsPageElements.SelectSingleNode("//video");
-            if (posterNode != null)
+            var style = detailsPageElements.SelectSingleNode("//div[contains(@class, 'gqTop')]")?.GetAttributeValue("style", string.Empty);
+            if (!string.IsNullOrEmpty(style))
             {
-                string imageUrl = posterNode.GetAttributeValue("poster", string.Empty);
-                if (!imageUrl.StartsWith("http"))
+                var urlRegex = new Regex(@"url\(([^)]+)\)");
+                var match = urlRegex.Match(style);
+                if (match.Success)
                 {
-                    imageUrl = Helper.GetSearchBaseURL(siteNum) + imageUrl;
+                    images.Add(new RemoteImageInfo { Url = match.Groups[1].Value, Type = ImageType.Primary });
                 }
-
-                images.Add(new RemoteImageInfo { Url = imageUrl });
-            }
-
-            if (images.Any())
-            {
-                images.First().Type = ImageType.Primary;
             }
 
             return images;
