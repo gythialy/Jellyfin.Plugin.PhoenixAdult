@@ -36,20 +36,20 @@ namespace PhoenixAdult.Sites
             }
 
             var searchPageElements = HTML.ElementFromString(httpResult.Content);
-            var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'latestUpdateB')]");
+            var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'latest-k-b-item')]");
             if (searchNodes != null)
             {
                 foreach (var node in searchNodes)
                 {
-                    var titleNode = node.SelectSingleNode("./div[@class='item-thumb']/a");
+                    var titleNode = node.SelectSingleNode("./a");
                     string titleNoFormatting = titleNode?.GetAttributeValue("title", string.Empty);
                     string sceneUrl = titleNode?.GetAttributeValue("href", string.Empty);
                     if (sceneUrl?.StartsWith(JoinStr) == false)
                     {
                         string curId = Helper.Encode(sceneUrl);
                         string releaseDate = string.Empty;
-                        var dateNode = node.SelectSingleNode("./div[@class='timeDate']");
-                        if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Split('|')[1].Trim(), out var parsedDate))
+                        var dateNode = node.SelectSingleNode(".//div[@class='item-date']");
+                        if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
                         {
                             releaseDate = parsedDate.ToString("yyyy-MM-dd");
                         }
@@ -59,6 +59,7 @@ namespace PhoenixAdult.Sites
                             ProviderIds = { { Plugin.Instance.Name, $"{curId}|{Helper.Encode(titleNoFormatting)}|{releaseDate}" } },
                             Name = $"{titleNoFormatting} {releaseDate} [{Helper.GetSearchSiteName(siteNum)}]",
                             SearchProviderName = Plugin.Instance.Name,
+                            ImageUrl = titleNode.SelectSingleNode("./img")?.GetAttributeValue("src", string.Empty),
                         });
                     }
                 }
