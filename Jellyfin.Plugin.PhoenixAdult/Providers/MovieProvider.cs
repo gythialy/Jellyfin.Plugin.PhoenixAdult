@@ -13,7 +13,6 @@ using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 using System.Text.Json;
 
-
 #if __EMBY__
 using MediaBrowser.Common.Net;
 #else

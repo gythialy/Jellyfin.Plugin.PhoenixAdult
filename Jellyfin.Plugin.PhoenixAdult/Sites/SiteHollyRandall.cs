@@ -97,12 +97,9 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             movie.AddStudio("Holly Randall Productions");
 
-            var titleNode = detailsPageElements.SelectSingleNode("//h2");
-            Logger.Info($"[SiteHollyRandall] Update titleNode: {titleNode?.InnerText.Trim()}");
-            if (titleNode != null)
-            {
-                movie.Name = titleNode.InnerText.Trim();
-            }
+            var title = detailsPageElements.SelectSingleNode("//div[@class='vidImgTitle']/h4").InnerText.Trim();
+            Logger.Info($"[SiteHollyRandall] Update title: {title}");
+            movie.Name = title;
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             Logger.Info($"[SiteHollyRandall] Update tagline: {tagline}");
