@@ -86,6 +86,7 @@ namespace PhoenixAdult.Sites
             }
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
+            Logger.Info($"[SiteHollyRandall] Update isOK: {httpResult.IsOK}");
             if (!httpResult.IsOK)
             {
                 return result;
@@ -97,24 +98,29 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("Holly Randall Productions");
 
             var titleNode = detailsPageElements.SelectSingleNode("//h2");
+            Logger.Info($"[SiteHollyRandall] Update titleNode: {titleNode?.InnerText.Trim()}");
             if (titleNode != null)
             {
                 movie.Name = titleNode.InnerText.Trim();
             }
 
             string tagline = Helper.GetSearchSiteName(siteNum);
+            Logger.Info($"[SiteHollyRandall] Update tagline: {tagline}");
             movie.AddTag(tagline);
 
             var genreNodes = detailsPageElements.SelectNodes("//div[@class='blogTags']//a");
             if (genreNodes != null)
             {
+                Logger.Info($"[SiteHollyRandall] Update genreNodes: {genreNodes.Count}");
                 foreach (var genre in genreNodes)
                 {
+                    Logger.Info($"[SiteHollyRandall] Update genre: {genre.InnerText.Trim()}");
                     movie.AddGenre(genre.InnerText.Trim());
                 }
             }
 
             var dateNode = detailsPageElements.SelectSingleNode("//li[@class='text_med']");
+            Logger.Info($"[SiteHollyRandall] Update dateNode: {dateNode}");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
@@ -124,8 +130,10 @@ namespace PhoenixAdult.Sites
             var actorNodes = detailsPageElements.SelectNodes("//p[@class='link_light']/a");
             if (actorNodes != null)
             {
+                Logger.Info($"[SiteHollyRandall] Update actorNodes: {actorNodes.Count}");
                 foreach (var actor in actorNodes)
                 {
+                    Logger.Info($"[SiteHollyRandall] Update actor: {actor.InnerText.Trim()}");
                     result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
             }
