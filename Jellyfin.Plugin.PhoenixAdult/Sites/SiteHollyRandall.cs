@@ -35,15 +35,14 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            Logger.Info($"[SiteHollyRandall] Search HTML: {httpResult.Content}");
             var searchPageElements = HTML.ElementFromString(httpResult.Content);
             var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'latestUpdateB')]");
             if (searchNodes != null)
             {
                 foreach (var node in searchNodes)
                 {
-                    var titleNode = node.SelectSingleNode("./div[@class='item-thumb']/a");
-                    string titleNoFormatting = titleNode?.GetAttributeValue("title", string.Empty);
+                    var titleNode = node.SelectSingleNode(".//h4[@class='link_bright']/a");
+                    string titleNoFormatting = titleNode?.InnerText.Trim();
                     string sceneUrl = titleNode?.GetAttributeValue("href", string.Empty);
                     Logger.Info($"[SiteHollyRandall] sceneUrl: {sceneUrl}");
                     if (sceneUrl?.StartsWith(JoinStr) == false)
