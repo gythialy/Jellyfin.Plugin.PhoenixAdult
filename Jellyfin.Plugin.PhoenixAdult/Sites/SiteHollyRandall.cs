@@ -120,7 +120,7 @@ namespace PhoenixAdult.Sites
             }
 
             var dateNode = detailsPageElements.SelectSingleNode("//li[@class='text_med']");
-            Logger.Info($"[SiteHollyRandall] Update dateNode: {dateNode}");
+            Logger.Info($"[SiteHollyRandall] Update dateNode: {dateNode.InnerText.Trim()}");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;

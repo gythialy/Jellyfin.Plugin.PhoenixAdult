@@ -11,6 +11,8 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
+using System.Text.Json;
+
 
 #if __EMBY__
 using MediaBrowser.Common.Net;
@@ -337,6 +339,7 @@ namespace PhoenixAdult.Providers
 
                 if (res != null)
                 {
+                    Logger.Info($"PhoenixAdult res: {JsonSerializer.Serialize(res)}");
                     result.HasMetadata = true;
                     result.Item = (Movie)res.Item;
                     result.People = res.People;
