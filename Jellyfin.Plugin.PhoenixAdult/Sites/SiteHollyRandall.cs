@@ -55,12 +55,14 @@ namespace PhoenixAdult.Sites
                             releaseDate = parsedDate.ToString("yyyy-MM-dd");
                         }
 
+                        var image = node.SelectSingleNode(".//img")?.GetAttributeValue("src0_1x", string.Empty);
+                        Logger.Info($"[SiteHollyRandall] image: {image}");
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curId}|{Helper.Encode(titleNoFormatting)}|{releaseDate}" } },
                             Name = $"{titleNoFormatting} {releaseDate} [{Helper.GetSearchSiteName(siteNum)}]",
                             SearchProviderName = Plugin.Instance.Name,
-                            ImageUrl = node.SelectSingleNode(".//img")?.GetAttributeValue("src0_1x", string.Empty),
+                            ImageUrl = image,
                         });
                     }
                 }
