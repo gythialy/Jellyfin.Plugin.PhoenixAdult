@@ -60,7 +60,7 @@ namespace PhoenixAdult.Sites
                             ProviderIds = { { Plugin.Instance.Name, $"{curId}|{Helper.Encode(titleNoFormatting)}|{releaseDate}" } },
                             Name = $"{titleNoFormatting} {releaseDate} [{Helper.GetSearchSiteName(siteNum)}]",
                             SearchProviderName = Plugin.Instance.Name,
-                            ImageUrl = titleNode.SelectSingleNode("./img")?.GetAttributeValue("src0_1x", string.Empty),
+                            ImageUrl = node.SelectSingleNode(".//img")?.GetAttributeValue("src0_1x", string.Empty),
                         });
                     }
                 }
