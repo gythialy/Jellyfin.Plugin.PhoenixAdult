@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -13,7 +14,6 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-using System.Text.RegularExpressions;
 
 #if __EMBY__
 #else
@@ -24,7 +24,7 @@ namespace PhoenixAdult.Sites
 {
     public class NetworkCouplesCinema : IProviderBase
     {
-        private readonly Dictionary<string, string> _cookies = new Dictionary<string, string> { { "cookiesAccepted", "true" } };
+        private readonly Dictionary<string, string> _cookies = new Dictionary<string, string> { { "WarningModal", "true" } };
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
@@ -57,13 +57,13 @@ namespace PhoenixAdult.Sites
             else
             {
                 string searchUrl = Helper.GetSearchSearchURL(siteNum) + searchTitle.Replace(" ", "+");
-                await GetPageResults(searchUrl, result, cancellationToken);
+                await GetPageResults(siteNum, searchUrl, result, cancellationToken);
             }
 
             return result;
         }
 
-        private async Task GetPageResults(string searchUrl, List<RemoteSearchResult> result, CancellationToken cancellationToken)
+        private async Task GetPageResults(int[] siteNum, string searchUrl, List<RemoteSearchResult> result, CancellationToken cancellationToken)
         {
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, cookies: _cookies);
             Logger.Info($"[NetworkCouplesCinema] GetPageResults isOK: {httpResult.IsOK}");
@@ -105,9 +105,14 @@ namespace PhoenixAdult.Sites
             if (nextPageNode != null)
             {
                 string nextPageLink = nextPageNode.GetAttributeValue("href", string.Empty);
+                if (!string.IsNullOrEmpty(nextPageLink) && !nextPageLink.StartsWith("http"))
+                {
+                    nextPageLink = $"{Helper.GetSearchBaseURL(siteNum)}{nextPageLink}";
+                }
+
                 if (!string.IsNullOrEmpty(nextPageLink) && nextPageLink != searchUrl)
                 {
-                    await GetPageResults(nextPageLink, result, cancellationToken);
+                    await GetPageResults(siteNum, nextPageLink, result, cancellationToken);
                 }
             }
         }
@@ -120,7 +125,8 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string sceneUrl = Helper.Decode(sceneID[0]);
+            string[] providerIds = sceneID[0].Split('|');
+            string sceneUrl = Helper.Decode(providerIds[0]);
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
@@ -158,7 +164,8 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string sceneUrl = Helper.Decode(sceneID[0]);
+            string[] providerIds = sceneID[0].Split('|');
+            string sceneUrl = Helper.Decode(providerIds[0]);
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
