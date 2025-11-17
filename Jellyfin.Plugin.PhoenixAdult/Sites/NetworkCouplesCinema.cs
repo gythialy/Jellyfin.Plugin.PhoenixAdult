@@ -57,72 +57,66 @@ namespace PhoenixAdult.Sites
             else
             {
                 string searchUrl = Helper.GetSearchSearchURL(siteNum) + searchTitle.Replace(" ", "+");
-                await GetPageResults(siteNum, searchUrl, result, cancellationToken);
+                bool hasNextPage = true;
+                while (hasNextPage)
+                {
+                    hasNextPage = false;
+                    var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, cookies: _cookies);
+                    if (!httpResult.IsOK)
+                    {
+                        break;
+                    }
+
+                    var searchPageElements = HTML.ElementFromString(httpResult.Content);
+                    var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'gqPostContainer')]");
+                    if (searchNodes != null)
+                    {
+                        foreach (var node in searchNodes)
+                        {
+                            string sceneUrl = node.SelectSingleNode(".//a[contains(@class, 'gqPost')]")?.GetAttributeValue("href", string.Empty);
+                            if (string.IsNullOrEmpty(sceneUrl))
+                            {
+                                continue;
+                            }
+
+                            string curId = Helper.Encode(sceneUrl);
+                            string coverImage = node.GetAttributeValue("data-img", string.Empty);
+                            var idRegex = new Regex(@"/(\d+)$");
+                            var match = idRegex.Match(sceneUrl);
+                            string id = match.Success ? match.Groups[1].Value : "0";
+
+                            result.Add(new RemoteSearchResult
+                            {
+                                ProviderIds = { { Plugin.Instance.Name, curId } },
+                                Name = $"Scene {id}",
+                                ImageUrl = coverImage,
+                                SearchProviderName = Plugin.Instance.Name,
+                            });
+                        }
+                    }
+
+                    var nextPageNode = searchPageElements.SelectSingleNode("//a[@class='pageBtn gqPage' and text()='>']");
+                    if (nextPageNode != null)
+                    {
+                        string nextPageLink = nextPageNode.GetAttributeValue("href", string.Empty);
+                        if (!string.IsNullOrEmpty(nextPageLink))
+                        {
+                            if (!nextPageLink.StartsWith("http"))
+                            {
+                                nextPageLink = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), nextPageLink).ToString();
+                            }
+
+                            if (nextPageLink != searchUrl)
+                            {
+                                searchUrl = nextPageLink;
+                                hasNextPage = true;
+                            }
+                        }
+                    }
+                }
             }
 
             return result;
-        }
-
-        private async Task GetPageResults(int[] siteNum, string searchUrl, List<RemoteSearchResult> result, CancellationToken cancellationToken)
-        {
-            bool hasNextPage = true;
-            while (hasNextPage)
-            {
-                hasNextPage = false;
-                var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, cookies: _cookies);
-                Logger.Info($"[NetworkCouplesCinema] GetPageResults isOK: {httpResult.IsOK}");
-                if (!httpResult.IsOK)
-                {
-                    return;
-                }
-
-                var searchPageElements = HTML.ElementFromString(httpResult.Content);
-                var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'gqPostContainer')]");
-                if (searchNodes != null)
-                {
-                    foreach (var node in searchNodes)
-                    {
-                        string sceneUrl = node.SelectSingleNode(".//a[contains(@class, 'gqPost')]")?.GetAttributeValue("href", string.Empty);
-                        if (string.IsNullOrEmpty(sceneUrl))
-                        {
-                            continue;
-                        }
-
-                        string curId = Helper.Encode(sceneUrl);
-                        string coverImage = node.GetAttributeValue("data-img", string.Empty);
-                        var idRegex = new Regex(@"/(\d+)$");
-                        var match = idRegex.Match(sceneUrl);
-                        string id = match.Success ? match.Groups[1].Value : "0";
-
-                        result.Add(new RemoteSearchResult
-                        {
-                            ProviderIds = { { Plugin.Instance.Name, curId } },
-                            Name = $"Scene {id}",
-                            ImageUrl = coverImage,
-                            SearchProviderName = Plugin.Instance.Name,
-                        });
-                    }
-                }
-
-                var nextPageNode = searchPageElements.SelectSingleNode("//a[@class='pageBtn gqPage' and text()='>']");
-                if (nextPageNode != null)
-                {
-                    string nextPageLink = nextPageNode.GetAttributeValue("href", string.Empty);
-                    if (!string.IsNullOrEmpty(nextPageLink))
-                    {
-                        if (!nextPageLink.StartsWith("http"))
-                        {
-                            nextPageLink = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), nextPageLink).ToString();
-                        }
-
-                        if (nextPageLink != searchUrl)
-                        {
-                            searchUrl = nextPageLink;
-                            hasNextPage = true;
-                        }
-                    }
-                }
-            }
         }
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
