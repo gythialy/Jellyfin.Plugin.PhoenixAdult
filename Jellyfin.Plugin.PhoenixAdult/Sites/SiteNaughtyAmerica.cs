@@ -45,17 +45,37 @@ namespace PhoenixAdult.Sites
 
         private async Task<NaughtyAmericaScene> GetNaughtyAmerica(string sceneId, CancellationToken cancellationToken)
         {
-            var scenePageElements = await HTML.ElementFromURL($"https://www.naughtyamerica.com/scene/0{sceneId}", cancellationToken);
-            if (scenePageElements == null)
-            {
-                return null;
-            }
+           var url = $"https://www.naughtyamerica.com/scene/0{sceneId}";
+           Logger.Info($"[NaughtyAmerica] Requesting URL: {url}");
+           var scenePageElements = await HTML.ElementFromURL(url, cancellationToken);
+           if (scenePageElements == null)
+           {
+               Logger.Error("[NaughtyAmerica] scenePageElements is null.");
+               return null;
+           }
 
-            var photoElements = scenePageElements.SelectNodes("//div[contains(@class, 'contain-scene-images') and contains(@class, 'desktop-only')]/a/@href");
-            var photos = photoElements?.Select(photo => "https:" + new Regex(@"images\d+").Replace(photo.GetAttributeValue("href", string.Empty), "images1", 1)).ToList() ?? new List<string>();
+           Logger.Info($"[NaughtyAmerica] scenePageElements content: {scenePageElements.OuterHtml}");
 
-            return new NaughtyAmericaScene
-            {
+           var photoElements = scenePageElements.SelectNodes("//div[contains(@class, 'contain-scene-images') and contains(@class, 'desktop-only')]/a/@href");
+           if (photoElements == null)
+           {
+               Logger.Error("[NaughtyAmerica] photoElements is null.");
+           }
+
+           var photos = photoElements?.Select(photo =>
+           {
+               var href = photo.GetAttributeValue("href", string.Empty);
+               Logger.Info($"[NaughtyAmerica] Photo href: {href}");
+               if (href == null)
+               {
+                   Logger.Error("[NaughtyAmerica] href is null!");
+               }
+
+               return "https:" + new Regex(@"images\d+").Replace(href ?? string.Empty, "images1", 1);
+           }).ToList() ?? new List<string>();
+
+           return new NaughtyAmericaScene
+           {
                 Id = sceneId,
                 Title = scenePageElements.SelectSingleNode("//div[contains(@class, 'scene-info')]//h1")?.InnerText,
                 Site = scenePageElements.SelectSingleNode("//a[@class='site-title grey-text link']")?.InnerText,
@@ -64,7 +84,7 @@ namespace PhoenixAdult.Sites
                 Performers = scenePageElements.SelectNodes("//div[contains(@class, 'performer-list')]/a")?.Select(n => n.InnerText).ToList() ?? new List<string>(),
                 Synopsis = scenePageElements.SelectSingleNode("//div[contains(@class, 'synopsis') and contains(@class, 'grey-text')]//h2")?.NextSibling.InnerText.Trim(),
                 Photos = photos,
-            };
+           };
         }
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)

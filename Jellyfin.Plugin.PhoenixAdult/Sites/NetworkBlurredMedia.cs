@@ -83,8 +83,8 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements.SelectSingleNode("//h1[@class='title']")?.InnerText.Trim();
-            movie.Overview = detailsPageElements.SelectSingleNode("//section[@name='descriptionIntro']/p")?.InnerText.Trim();
+            movie.Name = detailsPageElements.SelectSingleNode("//h1[contains(@class, 'chakra-heading')]")?.InnerText.Trim();
+            movie.Overview = detailsPageElements.SelectSingleNode("//p[contains(@class, 'chakra-text')]")?.InnerText.Trim();
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
             movie.AddCollection(Helper.GetSearchSiteName(siteNum));
 
@@ -95,12 +95,12 @@ namespace PhoenixAdult.Sites
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            var genreNodes = detailsPageElements.SelectNodes("//a[@class='video__tag']");
+            var genreNodes = detailsPageElements.SelectNodes("//div[@class='css-5y0xkg']");
             if (genreNodes != null)
             {
                 foreach (var genre in genreNodes)
                 {
-                    movie.AddGenre(genre.InnerText.Trim());
+                    movie.AddGenre(genre.InnerText.Replace("#", string.Empty).Trim());
                 }
             }
 
