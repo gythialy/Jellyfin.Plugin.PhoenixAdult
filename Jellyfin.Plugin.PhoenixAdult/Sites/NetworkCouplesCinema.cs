@@ -66,12 +66,14 @@ namespace PhoenixAdult.Sites
         private async Task GetPageResults(string searchUrl, List<RemoteSearchResult> result, CancellationToken cancellationToken)
         {
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, cookies: _cookies);
+            Logger.Info($"[NetworkCouplesCinema] GetPageResults isOK: {httpResult.IsOK}");
             if (!httpResult.IsOK)
             {
                 return;
             }
 
             var searchPageElements = HTML.ElementFromString(httpResult.Content);
+            Logger.Info($"[NetworkCouplesCinema] GetPageResults content: {httpResult.Content}");
             var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'gqPostContainer')]");
             if (searchNodes != null)
             {
