@@ -105,6 +105,7 @@ namespace PhoenixAdult.Sites
                                 ProviderIds = { { Plugin.Instance.Name, curId } },
                                 Name = titleNoFormatting,
                                 SearchProviderName = Plugin.Instance.Name,
+                                ImageUrl = (string)(searchResult["poster_picture"] ?? string.Empty),
                             });
                         }
                     }
