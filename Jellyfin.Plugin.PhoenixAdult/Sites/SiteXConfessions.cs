@@ -67,6 +67,7 @@ namespace PhoenixAdult.Sites
                 var httpResult = await HTTP.Request(searchUrl, HttpMethod.Post, content, cancellationToken, headers: headers);
                 if (httpResult.IsOK)
                 {
+                    Logger.Info($"[SiteXConfessions] json content {httpResult.Content}");
                     return JObject.Parse(httpResult.Content);
                 }
             }
@@ -76,6 +77,7 @@ namespace PhoenixAdult.Sites
                 var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken, headers: headers);
                 if (httpResult.IsOK)
                 {
+                    Logger.Info($"[SiteXConfessions] json content {httpResult.Content}");
                     var data = JObject.Parse(httpResult.Content);
                     return data["data"];
                 }
