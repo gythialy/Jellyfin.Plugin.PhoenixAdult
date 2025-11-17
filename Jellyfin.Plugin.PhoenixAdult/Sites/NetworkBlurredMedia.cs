@@ -82,42 +82,41 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
+            var jsonNode = detailsPageElements.SelectSingleNode("//script[@id='__NEXT_DATA__']");
+            if (jsonNode == null)
+            {
+                return result;
+            }
+
+            var json = Newtonsoft.Json.Linq.JObject.Parse(jsonNode.InnerText);
+            var videoData = json["props"]?["pageProps"]?["data"]?["video"];
+            if (videoData == null)
+            {
+                return result;
+            }
+
             var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements.SelectSingleNode("//h1[contains(@class, 'chakra-heading')]")?.InnerText.Trim();
-            movie.Overview = detailsPageElements.SelectSingleNode("//p[contains(@class, 'chakra-text')]")?.InnerText.Trim();
+            movie.Name = videoData["title"]?.ToString();
+            movie.Overview = videoData["description"]?.ToString();
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
             movie.AddCollection(Helper.GetSearchSiteName(siteNum));
 
-            var dateNode = detailsPageElements.SelectSingleNode("//time[@class='video__date']");
-            if (dateNode != null && DateTime.TryParse(dateNode.GetAttributeValue("datetime", string.Empty), out var parsedDate))
+            if (DateTime.TryParse(videoData["release_date"]?.ToString(), out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            var genreNodes = detailsPageElements.SelectNodes("//div[@class='css-5y0xkg']");
-            if (genreNodes != null)
+            var genres = videoData["tags"]?.Select(g => g["name"]?.ToString()).ToList() ?? new List<string>();
+            foreach (var genre in genres)
             {
-                foreach (var genre in genreNodes)
-                {
-                    movie.AddGenre(genre.InnerText.Replace("#", string.Empty).Trim());
-                }
+                movie.AddGenre(genre);
             }
 
-            var actorNodes = detailsPageElements.SelectNodes("//section[@name='modelsBio']/article/figure");
-            if (actorNodes != null)
+            var actors = videoData["models"]?.Select(a => a["name"]?.ToString()).ToList() ?? new List<string>();
+            foreach (var actor in actors)
             {
-                foreach (var actorNode in actorNodes)
-                {
-                    string actorName = actorNode.SelectSingleNode(".//p/a")?.InnerText.Trim();
-                    string actorPhotoUrl = actorNode.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty);
-                    if (!string.IsNullOrEmpty(actorPhotoUrl) && !actorPhotoUrl.StartsWith("http"))
-                    {
-                        actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actorPhotoUrl;
-                    }
-
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
-                }
+                result.People.Add(new PersonInfo { Name = actor, Type = PersonKind.Actor });
             }
 
             return result;
@@ -140,24 +139,29 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
-            var imageNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'loading-video')]/img | //ul[contains(@class, 'thumbnails__gallery')]/li/a");
-            if (imageNodes != null)
+            var jsonNode = detailsPageElements.SelectSingleNode("//script[@id='__NEXT_DATA__']");
+            if (jsonNode == null)
             {
-                foreach (var img in imageNodes)
-                {
-                    string imageUrl = img.GetAttributeValue("src", string.Empty) ?? img.GetAttributeValue("href", string.Empty);
-                    if (!imageUrl.StartsWith("http"))
-                    {
-                        imageUrl = Helper.GetSearchBaseURL(siteNum) + imageUrl;
-                    }
-
-                    images.Add(new RemoteImageInfo { Url = imageUrl });
-                }
+                return images;
             }
 
-            if (images.Any())
+            var json = Newtonsoft.Json.Linq.JObject.Parse(jsonNode.InnerText);
+            var videoData = json["props"]?["pageProps"]?["data"]?["video"];
+            if (videoData == null)
             {
-                images.First().Type = ImageType.Primary;
+                return images;
+            }
+
+            var posterUrl = videoData["images"]?["poster"]?.ToString();
+            if (!string.IsNullOrEmpty(posterUrl))
+            {
+                images.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
+            }
+
+            var backgroundUrl = videoData["images"]?["gallery"]?.ToString();
+            if (!string.IsNullOrEmpty(backgroundUrl))
+            {
+                images.Add(new RemoteImageInfo { Url = backgroundUrl, Type = ImageType.Backdrop });
             }
 
             return images;
