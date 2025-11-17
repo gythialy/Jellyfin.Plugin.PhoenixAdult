@@ -101,18 +101,19 @@ namespace PhoenixAdult.Helpers.Utils
         public static string GetUserAgent()
             => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36";
 
-        public static async Task<HTTPResponse> Request(string url, HttpMethod method, HttpContent param, IDictionary<string, string> headers, IDictionary<string, string> cookies, CancellationToken cancellationToken, params HttpStatusCode[] additionalSuccessStatusCodes)
+        public static async Task<HTTPResponse> Request(string url, HttpMethod method, HttpContent param, IDictionary<string, string> headers, IDictionary<string, string> cookies, CancellationToken cancellationToken, bool freshSession = false, params HttpStatusCode[] additionalSuccessStatusCodes)
         {
             var result = new HTTPResponse()
             {
                 IsOK = false,
             };
 
-            //url = Uri.EscapeDataString(Uri.UnescapeDataString(url));
             if (method == null)
             {
                 method = HttpMethod.Get;
             }
+
+            var cookieContainer = freshSession ? new CookieContainer() : CookieContainer;
 
             var request = new HttpRequestMessage(method, new Uri(url));
 
@@ -142,10 +143,10 @@ namespace PhoenixAdult.Helpers.Utils
 
                 foreach (var cookie in cookies)
                 {
-                    CookieContainer.Add(request.RequestUri, new Cookie(cookie.Key, cookie.Value));
+                    cookieContainer.Add(request.RequestUri, new Cookie(cookie.Key, cookie.Value));
                 }
 
-                var cookieCollection = CookieContainer.GetCookies(request.RequestUri);
+                var cookieCollection = cookieContainer.GetCookies(request.RequestUri);
                 if (cookieCollection.Count > 0)
                 {
                     Logger.Info($"[HTTP Request] Cookies being sent for {request.RequestUri}:");
@@ -170,7 +171,18 @@ namespace PhoenixAdult.Helpers.Utils
             HttpResponseMessage response = null;
             try
             {
-                response = await Http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+                if (freshSession)
+                {
+                    using (var freshHandler = new HttpClientHandler { CookieContainer = cookieContainer, Proxy = Proxy })
+                    using (var freshClient = new HttpClient(freshHandler) { Timeout = TimeSpan.FromSeconds(DefaultTimeoutSeconds) })
+                    {
+                        response = await freshClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                else
+                {
+                    response = await Http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+                }
             }
             catch (Exception e)
             {
@@ -197,20 +209,20 @@ namespace PhoenixAdult.Helpers.Utils
                 result.ContentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
 #endif
                 result.Headers = response.Headers;
-                result.Cookies = CookieContainer.GetCookies(request.RequestUri).Cast<Cookie>();
+                result.Cookies = cookieContainer.GetCookies(request.RequestUri).Cast<Cookie>();
             }
 
             return result;
         }
 
-        public static async Task<HTTPResponse> Request(string url, HttpMethod method, HttpContent param, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, params HttpStatusCode[] additionalSuccessStatusCodes)
-            => await Request(url, method, param, headers, cookies, cancellationToken, additionalSuccessStatusCodes).ConfigureAwait(false);
+        public static async Task<HTTPResponse> Request(string url, HttpMethod method, HttpContent param, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, bool freshSession = false, params HttpStatusCode[] additionalSuccessStatusCodes)
+            => await Request(url, method, param, headers, cookies, cancellationToken, freshSession, additionalSuccessStatusCodes).ConfigureAwait(false);
 
-        public static async Task<HTTPResponse> Request(string url, HttpMethod method, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, params HttpStatusCode[] additionalSuccessStatusCodes)
-            => await Request(url, method, null, headers, cookies, cancellationToken, additionalSuccessStatusCodes).ConfigureAwait(false);
+        public static async Task<HTTPResponse> Request(string url, HttpMethod method, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, bool freshSession = false, params HttpStatusCode[] additionalSuccessStatusCodes)
+            => await Request(url, method, null, headers, cookies, cancellationToken, freshSession, additionalSuccessStatusCodes).ConfigureAwait(false);
 
-        public static async Task<HTTPResponse> Request(string url, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, params HttpStatusCode[] additionalSuccessStatusCodes)
-            => await Request(url, null, null, headers, cookies, cancellationToken, additionalSuccessStatusCodes).ConfigureAwait(false);
+        public static async Task<HTTPResponse> Request(string url, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, bool freshSession = false, params HttpStatusCode[] additionalSuccessStatusCodes)
+            => await Request(url, null, null, headers, cookies, cancellationToken, freshSession, additionalSuccessStatusCodes).ConfigureAwait(false);
 
         internal struct HTTPResponse
         {

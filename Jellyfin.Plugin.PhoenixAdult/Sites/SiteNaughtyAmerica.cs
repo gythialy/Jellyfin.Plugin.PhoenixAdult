@@ -45,38 +45,14 @@ namespace PhoenixAdult.Sites
 
         private async Task<NaughtyAmericaScene> GetNaughtyAmerica(string sceneId, CancellationToken cancellationToken)
         {
-            var headers = new Dictionary<string, string>()
-            {
-                { "Cache-Control", "no-cache" },
-            };
-            var url = $"https://www.naughtyamerica.com/scene/0{sceneId}";
-            Logger.Info($"[NaughtyAmerica] Requesting URL: {url}");
-            var scenePageElements = await HTML.ElementFromURL(url, cancellationToken, headers);
+            var scenePageElements = await HTML.ElementFromURL($"https://www.naughtyamerica.com/scene/0{sceneId}", cancellationToken, freshSession: true);
             if (scenePageElements == null)
             {
-                Logger.Error("[NaughtyAmerica] scenePageElements is null.");
                 return null;
             }
 
-            Logger.Info($"[NaughtyAmerica] scenePageElements content: {scenePageElements.OuterHtml}");
-
             var photoElements = scenePageElements.SelectNodes("//div[contains(@class, 'contain-scene-images') and contains(@class, 'desktop-only')]/a/@href");
-            if (photoElements == null)
-            {
-                Logger.Error("[NaughtyAmerica] photoElements is null.");
-            }
-
-            var photos = photoElements?.Select(photo =>
-            {
-                var href = photo.GetAttributeValue("href", string.Empty);
-                Logger.Info($"[NaughtyAmerica] Photo href: {href}");
-                if (href == null)
-                {
-                    Logger.Error("[NaughtyAmerica] href is null!");
-                }
-
-                return "https:" + new Regex(@"images\d+").Replace(href ?? string.Empty, "images1", 1);
-            }).ToList() ?? new List<string>();
+            var photos = photoElements?.Select(photo => "https:" + new Regex(@"images\d+").Replace(photo.GetAttributeValue("href", string.Empty), "images1", 1)).ToList() ?? new List<string>();
 
             return new NaughtyAmericaScene
             {
@@ -121,12 +97,8 @@ namespace PhoenixAdult.Sites
             }
             else
             {
-                var headers = new Dictionary<string, string>()
-                {
-                    { "Cache-Control", "no-cache" },
-                };
                 string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Slugify()}&_gl=1";
-                var searchResultsNode = await HTML.ElementFromURL(searchUrl, cancellationToken, headers);
+                var searchResultsNode = await HTML.ElementFromURL(searchUrl, cancellationToken, freshSession: true);
                 if (searchResultsNode == null)
                 {
                     return result;
@@ -160,7 +132,7 @@ namespace PhoenixAdult.Sites
                     if (pagination > 1 && pagination != i + 1)
                     {
                         string nextUrl = searchUrl.Contains("pornstar") ? $"{Helper.GetSearchBaseURL(siteNum)}/pornstar/{searchTitle.Slugify()}?related_page={i}" : $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Slugify()}&page={i}";
-                        searchResultsNode = await HTML.ElementFromURL(nextUrl, cancellationToken, headers);
+                        searchResultsNode = await HTML.ElementFromURL(nextUrl, cancellationToken, freshSession: true);
                     }
                 }
             }
@@ -198,11 +170,7 @@ namespace PhoenixAdult.Sites
             foreach (var actor in details.Performers)
             {
                 string actorPageURL = $"https://www.naughtyamerica.com/pornstar/{actor.ToLower().Replace(' ', '-').Replace("'", string.Empty)}";
-                var headers = new Dictionary<string, string>()
-                {
-                    { "Cache-Control", "no-cache" },
-                };
-                var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken, headers);
+                var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken, freshSession: true);
                 string actorPhotoURL = actorPage?.SelectSingleNode("//img[contains(@class, 'performer-pic')]")?.GetAttributeValue("data-src", string.Empty);
                 if (!string.IsNullOrEmpty(actorPhotoURL))
                 {

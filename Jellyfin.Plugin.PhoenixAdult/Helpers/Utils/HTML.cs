@@ -10,10 +10,10 @@ namespace PhoenixAdult.Helpers.Utils
 {
     internal static class HTML
     {
-        public static async Task<HtmlNode> ElementFromURL(string url, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, params HttpStatusCode[] additionalSuccessStatusCodes)
+        public static async Task<HtmlNode> ElementFromURL(string url, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, bool freshSession = false, params HttpStatusCode[] additionalSuccessStatusCodes)
         {
             var html = new HtmlDocument().DocumentNode;
-            var http = await HTTP.Request(url, cancellationToken, headers, cookies, additionalSuccessStatusCodes).ConfigureAwait(false);
+            var http = await HTTP.Request(url, cancellationToken, headers, cookies, freshSession, additionalSuccessStatusCodes).ConfigureAwait(false);
             if (http.IsOK)
             {
                 html = ElementFromStream(http.ContentStream);
