@@ -65,54 +65,62 @@ namespace PhoenixAdult.Sites
 
         private async Task GetPageResults(int[] siteNum, string searchUrl, List<RemoteSearchResult> result, CancellationToken cancellationToken)
         {
-            var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, cookies: _cookies);
-            Logger.Info($"[NetworkCouplesCinema] GetPageResults isOK: {httpResult.IsOK}");
-            if (!httpResult.IsOK)
+            bool hasNextPage = true;
+            while (hasNextPage)
             {
-                return;
-            }
-
-            var searchPageElements = HTML.ElementFromString(httpResult.Content);
-            Logger.Info($"[NetworkCouplesCinema] GetPageResults content: {httpResult.Content}");
-            var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'gqPostContainer')]");
-            if (searchNodes != null)
-            {
-                foreach (var node in searchNodes)
+                hasNextPage = false;
+                var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, cookies: _cookies);
+                Logger.Info($"[NetworkCouplesCinema] GetPageResults isOK: {httpResult.IsOK}");
+                if (!httpResult.IsOK)
                 {
-                    string sceneUrl = node.SelectSingleNode(".//a[contains(@class, 'gqPost')]")?.GetAttributeValue("href", string.Empty);
-                    if (string.IsNullOrEmpty(sceneUrl))
+                    return;
+                }
+
+                var searchPageElements = HTML.ElementFromString(httpResult.Content);
+                var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'gqPostContainer')]");
+                if (searchNodes != null)
+                {
+                    foreach (var node in searchNodes)
                     {
-                        continue;
+                        string sceneUrl = node.SelectSingleNode(".//a[contains(@class, 'gqPost')]")?.GetAttributeValue("href", string.Empty);
+                        if (string.IsNullOrEmpty(sceneUrl))
+                        {
+                            continue;
+                        }
+
+                        string curId = Helper.Encode(sceneUrl);
+                        string coverImage = node.GetAttributeValue("data-img", string.Empty);
+                        var idRegex = new Regex(@"/(\d+)$");
+                        var match = idRegex.Match(sceneUrl);
+                        string id = match.Success ? match.Groups[1].Value : "0";
+
+                        result.Add(new RemoteSearchResult
+                        {
+                            ProviderIds = { { Plugin.Instance.Name, curId } },
+                            Name = $"Scene {id}",
+                            ImageUrl = coverImage,
+                            SearchProviderName = Plugin.Instance.Name,
+                        });
                     }
+                }
 
-                    string curId = Helper.Encode(sceneUrl);
-                    string coverImage = node.GetAttributeValue("data-img", string.Empty);
-                    var idRegex = new Regex(@"/(\d+)$");
-                    var match = idRegex.Match(sceneUrl);
-                    string id = match.Success ? match.Groups[1].Value : "0";
-
-                    result.Add(new RemoteSearchResult
+                var nextPageNode = searchPageElements.SelectSingleNode("//a[@class='pageBtn gqPage' and text()='>']");
+                if (nextPageNode != null)
+                {
+                    string nextPageLink = nextPageNode.GetAttributeValue("href", string.Empty);
+                    if (!string.IsNullOrEmpty(nextPageLink))
                     {
-                        ProviderIds = { { Plugin.Instance.Name, curId } },
-                        Name = $"Scene {id}",
-                        ImageUrl = coverImage,
-                        SearchProviderName = Plugin.Instance.Name,
-                    });
-                }
-            }
+                        if (!nextPageLink.StartsWith("http"))
+                        {
+                            nextPageLink = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), nextPageLink).ToString();
+                        }
 
-            var nextPageNode = searchPageElements.SelectSingleNode("//a[@class='pageBtn gqPage' and text()='>']");
-            if (nextPageNode != null)
-            {
-                string nextPageLink = nextPageNode.GetAttributeValue("href", string.Empty);
-                if (!string.IsNullOrEmpty(nextPageLink) && !nextPageLink.StartsWith("http"))
-                {
-                    nextPageLink = $"{Helper.GetSearchBaseURL(siteNum)}{nextPageLink}";
-                }
-
-                if (!string.IsNullOrEmpty(nextPageLink) && nextPageLink != searchUrl)
-                {
-                    await GetPageResults(siteNum, nextPageLink, result, cancellationToken);
+                        if (nextPageLink != searchUrl)
+                        {
+                            searchUrl = nextPageLink;
+                            hasNextPage = true;
+                        }
+                    }
                 }
             }
         }
