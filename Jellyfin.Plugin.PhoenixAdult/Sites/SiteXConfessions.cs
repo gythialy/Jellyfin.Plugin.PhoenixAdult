@@ -68,7 +68,7 @@ namespace PhoenixAdult.Sites
                 if (httpResult.IsOK)
                 {
                     Logger.Info($"[SiteXConfessions] json content {httpResult.Content}");
-                    return JObject.Parse(httpResult.Content);
+                    return JArray.Parse(httpResult.Content);
                 }
             }
             else
@@ -107,7 +107,7 @@ namespace PhoenixAdult.Sites
                                 ProviderIds = { { Plugin.Instance.Name, curId } },
                                 Name = titleNoFormatting,
                                 SearchProviderName = Plugin.Instance.Name,
-                                ImageUrl = (string)(searchResult["poster_picture"] ?? string.Empty),
+                                ImageUrl = (string)(searchResult["cover_picture"] ?? string.Empty),
                             });
                         }
                     }
