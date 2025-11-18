@@ -27,7 +27,7 @@ namespace PhoenixAdult.Sites
     {
         private async Task<string> GetApiKey(int[] siteNum, CancellationToken cancellationToken)
         {
-            string url = $"{Helper.GetSearchBaseURL(siteNum)}/en/login";
+            string url = $"{Helper.GetSearchBaseURL(siteNum)}{((siteNum[0] == 131) ? "/login" : "/en/login")}";
             var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
             if (httpResult.IsOK)
             {
@@ -40,7 +40,15 @@ namespace PhoenixAdult.Sites
             }
 
             // Fallback if login page doesn't work
-            url = $"{Helper.GetSearchBaseURL(siteNum)}/en";
+            if (siteNum[0] == 131)
+            {
+                url = Helper.GetSearchBaseURL(siteNum);
+            }
+            else
+            {
+                url = $"{Helper.GetSearchBaseURL(siteNum)}/en";
+            }
+
             httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
             if (httpResult.IsOK)
             {

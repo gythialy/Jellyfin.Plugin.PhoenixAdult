@@ -96,13 +96,13 @@ namespace PhoenixAdult.Sites
                     }
 
                     string artObj = Helper.Encode(searchResult["_resources"]["base"].ToString());
-                    Logger.Info($"[NetworkModelCentro] resources {searchResult["_resources"]["primary"].ToString()}");
+                    var primaryImage = searchResult["_resources"]["primary"] as JArray;
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{Helper.Encode(titleNoFormatting)}|{artObj}" } },
                         Name = $"{titleNoFormatting} {releaseDate} [{Helper.GetSearchSiteName(siteNum)}]",
                         SearchProviderName = Plugin.Instance.Name,
-                        ImageUrl = searchResult["_resources"]["primary"]["url"].ToString(),
+                        ImageUrl = primaryImage?.Any() == true ? primaryImage[0]["url"].ToString() : string.Empty,
                     });
                 }
             }
