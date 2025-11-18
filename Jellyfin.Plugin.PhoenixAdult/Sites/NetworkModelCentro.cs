@@ -42,7 +42,7 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken);
             if (httpResult.IsOK)
             {
-                var ahMatch = Regex.Match(httpResult.Content, "\"ah\".?:.?\"([0-9a-zA-Z\\(\\)\\[\\]\\@\\:\\,\\/\\!\\+\\-\\.\\$\\_\\[\\]=\\\\'']*)\"");
+                var ahMatch = Regex.Match(httpResult.Content, "\"ah\".?:.?\"([0-9a-zA-Z\\(\\)\\[\\]\\@\\:\\,\\/\\!\\+\\-\\.\\$_\\[\\]=\\\\'']*)\"");
                 var aetMatch = Regex.Match(httpResult.Content, "\"aet\".?:([0-9]*)");
                 if (ahMatch.Success && aetMatch.Success)
                 {
@@ -84,6 +84,7 @@ namespace PhoenixAdult.Sites
             var searchResults = await GetJsonFromApi($"{Helper.GetSearchSearchURL(siteNum)}{Uri.EscapeDataString(apiUrl)}{Query}", cancellationToken);
             if (searchResults != null)
             {
+                //Logger.Info($"[NetworkModelCentro] results: {searchResults.ToString()}");
                 foreach (var searchResult in searchResults)
                 {
                     string titleNoFormatting = Helper.ParseTitle(searchResult["title"].ToString(), siteNum);
@@ -95,11 +96,13 @@ namespace PhoenixAdult.Sites
                     }
 
                     string artObj = Helper.Encode(searchResult["_resources"]["base"].ToString());
+                    Logger.Info($"[NetworkModelCentro] resources {searchResult["_resources"]["primary"].ToString()}");
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{Helper.Encode(titleNoFormatting)}|{artObj}" } },
                         Name = $"{titleNoFormatting} {releaseDate} [{Helper.GetSearchSiteName(siteNum)}]",
                         SearchProviderName = Plugin.Instance.Name,
+                        ImageUrl = searchResult["_resources"]["primary"]["url"].ToString(),
                     });
                 }
             }
@@ -131,6 +134,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
+            Logger.Info($"[NetworkModelCentro] details: {detailsPageElements.ToString()}");
             var movie = (Movie)result.Item;
             movie.Name = Helper.ParseTitle(detailsPageElements["title"].ToString().Capitalize(), siteNum);
             movie.Overview = detailsPageElements["description"].ToString();
@@ -147,7 +151,11 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var genre in genres)
                 {
-                    movie.AddGenre(genre.Value["alias"].ToString());
+                    var genreName = genre.Value["alias"].ToString();
+                    if (!string.IsNullOrEmpty(genreName))
+                    {
+                        movie.AddGenre(genreName);
+                    }
                 }
             }
 

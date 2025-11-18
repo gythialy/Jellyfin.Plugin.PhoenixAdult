@@ -82,17 +82,14 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
-            Logger.Info($"[NetworkBlurredMedia] detailsPageElements: {httpResult.Content}");
             var jsonNode = detailsPageElements.SelectSingleNode("//script[@id='__NEXT_DATA__']");
             if (jsonNode == null)
             {
-                Logger.Info("[NetworkBlurredMedia] jsonNode: null");
                 return result;
             }
 
-            Logger.Info($"[NetworkBlurredMedia] jsonNode: {jsonNode.InnerText}");
             var json = Newtonsoft.Json.Linq.JObject.Parse(jsonNode.InnerText);
-            var videoData = json["props"]?["pageProps"]?["data"]?["video"];
+            var videoData = json["props"]?["pageProps"]?["dehydratedState"]?["queries"]?[0]?["state"]?["data"]?["video"];
             if (videoData == null)
             {
                 return result;
@@ -149,22 +146,25 @@ namespace PhoenixAdult.Sites
             }
 
             var json = Newtonsoft.Json.Linq.JObject.Parse(jsonNode.InnerText);
-            var videoData = json["props"]?["pageProps"]?["data"]?["video"];
+            var videoData = json["props"]?["pageProps"]?["dehydratedState"]?["queries"]?[0]?["state"]?["data"]?["video"];
             if (videoData == null)
             {
                 return images;
             }
 
-            var posterUrl = videoData["images"]?["poster"]?.ToString();
+            var posterUrl = videoData["mainPhoto"]?.ToString();
             if (!string.IsNullOrEmpty(posterUrl))
             {
                 images.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
             }
 
-            var backgroundUrl = videoData["images"]?["gallery"]?.ToString();
-            if (!string.IsNullOrEmpty(backgroundUrl))
+            var backgroundUrls = videoData["previewSprites"]?.Select(s => s["sprite"]?.ToString()).ToList() ?? new List<string>();
+            foreach (var backgroundUrl in backgroundUrls)
             {
-                images.Add(new RemoteImageInfo { Url = backgroundUrl, Type = ImageType.Backdrop });
+                if (!string.IsNullOrEmpty(backgroundUrl))
+                {
+                    images.Add(new RemoteImageInfo { Url = backgroundUrl, Type = ImageType.Backdrop });
+                }
             }
 
             return images;
