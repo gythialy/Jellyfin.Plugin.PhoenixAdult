@@ -81,6 +81,7 @@ namespace PhoenixAdult.Sites
             }
 
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
+            Logger.Info($"[NetworkBlurredMedia] content: {httpResult.Content}");
 
             var jsonNode = detailsPageElements.SelectSingleNode("//script[@id='__NEXT_DATA__']");
             if (jsonNode == null)
