@@ -82,10 +82,11 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
+            Logger.Info($"[NetworkBlurredMedia] detailsPageElements: {httpResult.Content}");
             var jsonNode = detailsPageElements.SelectSingleNode("//script[@id='__NEXT_DATA__']");
             if (jsonNode == null)
             {
-                Logger.Info($"[NetworkBlurredMedia] jsonNode: null");
+                Logger.Info("[NetworkBlurredMedia] jsonNode: null");
                 return result;
             }
 
