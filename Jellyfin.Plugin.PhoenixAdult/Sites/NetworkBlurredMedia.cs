@@ -81,14 +81,15 @@ namespace PhoenixAdult.Sites
             }
 
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
-            Logger.Info($"[NetworkBlurredMedia] content: {httpResult.Content}");
 
             var jsonNode = detailsPageElements.SelectSingleNode("//script[@id='__NEXT_DATA__']");
             if (jsonNode == null)
             {
+                Logger.Info($"[NetworkBlurredMedia] jsonNode: null");
                 return result;
             }
 
+            Logger.Info($"[NetworkBlurredMedia] jsonNode: {jsonNode.InnerText}");
             var json = Newtonsoft.Json.Linq.JObject.Parse(jsonNode.InnerText);
             var videoData = json["props"]?["pageProps"]?["data"]?["video"];
             if (videoData == null)
