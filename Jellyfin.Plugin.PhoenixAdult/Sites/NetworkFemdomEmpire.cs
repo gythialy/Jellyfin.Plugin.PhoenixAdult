@@ -140,13 +140,13 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actorLink in actorsNode)
                 {
-                    result.People.Add(new PersonInfo { Name = actorLink.InnerText.Trim(), Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorLink.InnerText.Trim(), Type = PersonKind.Actor });
                 }
             }
 
             if (movie.Name.Equals("Owned by Alexis", StringComparison.OrdinalIgnoreCase))
             {
-                result.People.Add(new PersonInfo { Name = "Alexis Monroe", Type = PersonKind.Actor });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = "Alexis Monroe", Type = PersonKind.Actor });
             }
 
             return result;

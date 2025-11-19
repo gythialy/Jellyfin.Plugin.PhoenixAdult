@@ -138,7 +138,7 @@ namespace PhoenixAdult.Sites
                         actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='model-box']/img")?.GetAttributeValue("src", string.Empty);
                     }
 
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
 

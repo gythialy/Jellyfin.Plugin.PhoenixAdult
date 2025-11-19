@@ -163,7 +163,7 @@ namespace PhoenixAdult.Sites
             var director = detailsPageElements.SelectSingleNode("//td[contains(text(), 'Director:')]/following-sibling::td/span/a")?.InnerText.Trim();
             if (!string.IsNullOrEmpty(director))
             {
-                result.People.Add(new PersonInfo { Name = director, Type = PersonKind.Director });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = director, Type = PersonKind.Director });
             }
 
             var dateNode = detailsPageElements.SelectSingleNode("//td[contains(text(), 'Release Date:')]/following-sibling::td");
@@ -177,7 +177,7 @@ namespace PhoenixAdult.Sites
             {
                 if (actor.Value.Contains(javID, StringComparer.OrdinalIgnoreCase))
                 {
-                    result.People.Add(new PersonInfo { Name = actor.Key, Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actor.Key, Type = PersonKind.Actor });
                 }
             }
 
@@ -192,7 +192,7 @@ namespace PhoenixAdult.Sites
                         actorName = string.Join(" ", actorName.Split().Reverse());
                     }
 
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                 }
             }
 

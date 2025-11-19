@@ -239,7 +239,7 @@ namespace PhoenixAdult.Sites
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            result.People.Add(new PersonInfo { Name = providerIds[4], Type = PersonKind.Actor });
+            ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = providerIds[4], Type = PersonKind.Actor });
             movie.AddStudio("ATKingdom");
             movie.AddTag(Helper.GetSearchSiteName(siteNum));
             movie.AddGenre("Girlfriend Experience");

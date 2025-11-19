@@ -172,7 +172,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actor in actorNodes)
                 {
-                    result.People.Add(new PersonInfo { Name = actor.GetAttributeValue("alt", actor.InnerText).Trim(), ImageUrl = actor.GetAttributeValue("data-src", string.Empty), Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actor.GetAttributeValue("alt", actor.InnerText).Trim(), ImageUrl = actor.GetAttributeValue("data-src", string.Empty), Type = PersonKind.Actor });
                 }
             }
 

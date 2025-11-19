@@ -131,7 +131,7 @@ namespace PhoenixAdult.Sites
                 foreach (var actor in actorNodes)
                 {
                     Logger.Info($"[SiteHollyRandall] Update actor: {actor.InnerText.Trim()}");
-                    result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
             }
 

@@ -113,7 +113,7 @@ namespace PhoenixAdult.Sites
             movie.AddGenre(subject);
 
             string actorPhotoUrl = detailsPageElements.SelectSingleNode(".//div[@id='modelbioheadshot']/img")?.GetAttributeValue("src", string.Empty).Replace("..", searchBaseUrl);
-            result.People.Add(new PersonInfo { Name = model, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+            ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = model, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
 
             return result;
         }

@@ -135,12 +135,12 @@ namespace PhoenixAdult.Sites
 
                     if (siteNum[1] == 2 && actorName == "Twins")
                     {
-                        result.People.Add(new PersonInfo { Name = "Joey White", Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
-                        result.People.Add(new PersonInfo { Name = "Sami White", Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = "Joey White", Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = "Sami White", Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                     }
                     else
                     {
-                        result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                     }
                 }
             }

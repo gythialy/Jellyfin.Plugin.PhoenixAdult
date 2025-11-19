@@ -205,7 +205,7 @@ namespace PhoenixAdult.Sites
 
                 foreach (var actorNode in actorNodes)
                 {
-                    result.People.Add(new PersonInfo { Name = actorNode.InnerText.Trim(), Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorNode.InnerText.Trim(), Type = PersonKind.Actor });
                 }
             }
 

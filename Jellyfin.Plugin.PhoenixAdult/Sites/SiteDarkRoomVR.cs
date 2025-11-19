@@ -118,7 +118,7 @@ namespace PhoenixAdult.Sites
                         actorPhotoUrl = actorPage.SelectSingleNode("//img[contains(@class, 'pornstar-detail__picture')]")?.GetAttributeValue("src", string.Empty);
                     }
 
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
 

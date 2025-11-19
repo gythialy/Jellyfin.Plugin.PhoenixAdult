@@ -197,14 +197,14 @@ namespace PhoenixAdult.Sites
                 {
                     string actorName = actor.SelectSingleNode("./span/span")?.InnerText.Trim() ?? actor.InnerText.Trim();
                     string actorPhotoUrl = actor.SelectSingleNode("./img")?.GetAttributeValue("data-bgsrc", string.Empty);
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
 
             var directorNode = detailsPageElements.SelectSingleNode("//div[@class='director']/a/text()");
             if (directorNode != null && directorNode.InnerText.Split(':').Last().Trim() != "Unknown")
             {
-                result.People.Add(new PersonInfo { Name = directorNode.InnerText.Split(':').Last().Trim(), Type = PersonKind.Director });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = directorNode.InnerText.Split(':').Last().Trim(), Type = PersonKind.Director });
             }
 
             return result;

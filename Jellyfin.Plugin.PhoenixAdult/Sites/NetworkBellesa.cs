@@ -146,7 +146,7 @@ namespace PhoenixAdult.Sites
             {
                 string actorName = actor["name"].ToString();
                 string actorPhotoUrl = actor["image"]?.ToString();
-                result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
             }
 
             return result;

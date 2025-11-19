@@ -155,7 +155,7 @@ namespace PhoenixAdult.Sites
                     string actorPageURL = actorLink.GetAttributeValue("href", string.Empty);
                     var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken);
                     string actorPhotoURL = actorPage?.SelectSingleNode("//div[@class='modelBioPic']/img")?.GetAttributeValue("src0_3x", string.Empty);
-                    result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
                 }
             }
 

@@ -177,7 +177,7 @@ namespace PhoenixAdult.Sites
                     actorPhotoURL = "https:" + actorPhotoURL;
                 }
 
-                result.People.Add(new PersonInfo { Name = actor, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actor, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
             }
 
             return result;

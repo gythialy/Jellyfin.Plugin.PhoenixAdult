@@ -175,7 +175,7 @@ namespace PhoenixAdult.Sites
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
                         string actorPhotoUrl = actorPage.SelectSingleNode("//img[@alt='model']")?.GetAttributeValue("src0_3x", string.Empty);
-                        result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                     }
                 }
             }

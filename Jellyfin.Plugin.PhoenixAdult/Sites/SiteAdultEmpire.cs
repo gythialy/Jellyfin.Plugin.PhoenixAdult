@@ -265,7 +265,7 @@ namespace PhoenixAdult.Sites
                     var actorPhotoURL = actorPhotoNode?.GetAttributeValue("src", string.Empty);
                     if (!string.IsNullOrEmpty(actorName))
                     {
-                        result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
                     }
                 }
             }
@@ -278,7 +278,7 @@ namespace PhoenixAdult.Sites
                     var directorName = directorLink.InnerText.Trim();
                     var directorPhotoNode = doc.DocumentNode.SelectSingleNode($"//div[contains(., 'Starring')]//img[contains(@title, \"{directorName}\")]");
                     var directorPhotoURL = directorPhotoNode?.GetAttributeValue("src", string.Empty);
-                    result.People.Add(new PersonInfo { Name = directorName, ImageUrl = directorPhotoURL, Type = PersonKind.Director });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = directorName, ImageUrl = directorPhotoURL, Type = PersonKind.Director });
                 }
             }
 
@@ -290,7 +290,7 @@ namespace PhoenixAdult.Sites
                     var producerName = producerLink.InnerText.Trim();
                     var producerPhotoNode = doc.DocumentNode.SelectSingleNode($"//div[contains(., 'Starring')]//img[contains(@title, \"{producerName}\")]");
                     var producerPhotoURL = producerPhotoNode?.GetAttributeValue("src", string.Empty);
-                    result.People.Add(new PersonInfo { Name = producerName, ImageUrl = producerPhotoURL, Type = PersonKind.Producer });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = producerName, ImageUrl = producerPhotoURL, Type = PersonKind.Producer });
                 }
             }
 

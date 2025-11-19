@@ -153,7 +153,7 @@ namespace PhoenixAdult.Sites
                     movie.AddStudio($"{(string)producer["name"]} {(string)producer["last_name"]}");
 
                     var producerPhotoUrl = (string)producer["poster_image"] ?? string.Empty;
-                    result.People.Add(new PersonInfo { Name = $"{(string)producer["name"]} {(string)producer["last_name"]}", Type = PersonKind.Producer, ImageUrl = producerPhotoUrl.Split('?')[0] });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = $"{(string)producer["name"]} {(string)producer["last_name"]}", Type = PersonKind.Producer, ImageUrl = producerPhotoUrl.Split('?')[0] });
 
                     var tagline = Helper.GetSearchSiteName(siteNum);
                     movie.AddTag(tagline);
@@ -183,11 +183,11 @@ namespace PhoenixAdult.Sites
                     foreach (var actor in detailsPageElements["performers"])
                     {
                         var actorPhotoUrl = (string)actor["poster_image"] ?? string.Empty;
-                        result.People.Add(new PersonInfo { Name = $"{(string)actor["name"]} {(string)actor["last_name"]}", Type = PersonKind.Actor, ImageUrl = actorPhotoUrl.Split('?')[0] });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = $"{(string)actor["name"]} {(string)actor["last_name"]}", Type = PersonKind.Actor, ImageUrl = actorPhotoUrl.Split('?')[0] });
                     }
 
                     var director = detailsPageElements["director"];
-                    result.People.Add(new PersonInfo { Name = $"{(string)director["name"]} {(string)director["last_name"]}", Type = PersonKind.Director });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = $"{(string)director["name"]} {(string)director["last_name"]}", Type = PersonKind.Director });
                 }
             }
 

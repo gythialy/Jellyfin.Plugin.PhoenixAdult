@@ -436,7 +436,7 @@ namespace PhoenixAdult.Sites
             var actors = sceneActorsDB.Where(kvp => kvp.Value.Contains(sceneId)).Select(kvp => kvp.Key);
             foreach (var actor in actors)
             {
-                result.People.Add(new PersonInfo { Name = actor, Type = PersonKind.Actor });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actor, Type = PersonKind.Actor });
             }
 
             return result;

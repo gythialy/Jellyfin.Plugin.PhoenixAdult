@@ -110,7 +110,7 @@ namespace PhoenixAdult.Sites
             {
                 if (actor != "Compilation")
                 {
-                    result.People.Add(new PersonInfo { Name = actor, Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actor, Type = PersonKind.Actor });
                 }
             }
 

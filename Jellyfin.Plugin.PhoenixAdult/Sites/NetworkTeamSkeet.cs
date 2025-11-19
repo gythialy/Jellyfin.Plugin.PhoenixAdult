@@ -182,7 +182,7 @@ namespace PhoenixAdult.Sites
                     actorPhotoUrl = actorData["modelsContent"][actorId]["img"].ToString();
                 }
 
-                result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
             }
 
             return result;

@@ -144,7 +144,7 @@ namespace PhoenixAdult.Sites
                             var actorDoc = new HtmlDocument();
                             actorDoc.LoadHtml(actorHttp.Content);
                             var actorPhotoUrl = actorDoc.DocumentNode.SelectSingleNode("//img[@class='actorPicture']")?.GetAttributeValue("src", string.Empty);
-                            result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonKind.Actor });
+                            ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonKind.Actor });
                         }
                     }
                 }
@@ -164,7 +164,7 @@ namespace PhoenixAdult.Sites
                     {
                         foreach (var director in directorNodes)
                         {
-                            result.People.Add(new PersonInfo { Name = director.InnerText.Trim(), Type = PersonKind.Director });
+                            ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = director.InnerText.Trim(), Type = PersonKind.Director });
                         }
                     }
                 }
@@ -187,7 +187,7 @@ namespace PhoenixAdult.Sites
                     {
                         var actorName = actor.SelectSingleNode(".//span").InnerText.Trim();
                         var actorPhotoUrl = actor.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty);
-                        result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonKind.Actor });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonKind.Actor });
                     }
                 }
 
@@ -199,7 +199,7 @@ namespace PhoenixAdult.Sites
                 {
                     foreach (var director in directorNodes)
                     {
-                        result.People.Add(new PersonInfo { Name = director.InnerText.Trim(), Type = PersonKind.Director });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = director.InnerText.Trim(), Type = PersonKind.Director });
                     }
                 }
             }

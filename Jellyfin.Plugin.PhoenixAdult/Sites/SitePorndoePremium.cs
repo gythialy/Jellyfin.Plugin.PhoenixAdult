@@ -132,7 +132,7 @@ namespace PhoenixAdult.Sites
                             actorPhotoURL = Helper.GetSearchBaseURL(siteNum) + actorPhotoURL;
                         }
 
-                        result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
                     }
                 }
             }

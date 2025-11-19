@@ -192,7 +192,7 @@ namespace PhoenixAdult.Sites
 
                     foreach (var name in actorName.Split('&'))
                     {
-                        result.People.Add(new PersonInfo { Name = name.Trim(), Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = name.Trim(), Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
                     }
                 }
             }
@@ -201,7 +201,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actor in ActorsDB[movie.Name])
                 {
-                    result.People.Add(new PersonInfo { Name = actor, Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actor, Type = PersonKind.Actor });
                 }
             }
 

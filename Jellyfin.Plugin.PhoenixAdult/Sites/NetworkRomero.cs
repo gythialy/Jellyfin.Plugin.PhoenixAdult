@@ -152,14 +152,14 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actor in actorNodes)
                 {
-                    result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
             }
 
             var directorNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'director')]//a/text()");
             if (directorNode != null)
             {
-                result.People.Add(new PersonInfo { Name = directorNode.InnerText.Trim(), Type = PersonKind.Director });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = directorNode.InnerText.Trim(), Type = PersonKind.Director });
             }
 
             return result;

@@ -356,7 +356,7 @@ namespace PhoenixAdult.Providers
                         result.Item.Overview = HttpUtility.HtmlDecode(result.Item.Overview).Trim();
                     }
 
-                    result.Item.AddStudio(Helper.GetSearchSiteName(siteNum));
+                    //result.Item.AddStudio(Helper.GetSearchSiteName(siteNum));
                     var newStudios = new List<string>();
                     foreach (var studio in result.Item.Studios)
                     {
@@ -392,7 +392,7 @@ namespace PhoenixAdult.Providers
 
                     if (result.Item.Genres != null && result.Item.Genres.Any())
                     {
-                        result.Item.Genres = Genres.Cleanup(result.Item.Genres, result.Item.Name, result.People);
+                        result.Item.Genres = Genres.Cleanup(result.Item.Genres, result.Item.Name, (List<PersonInfo>)result.People);
                     }
 
                     if (!string.IsNullOrEmpty(result.Item.ExternalId))

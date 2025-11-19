@@ -169,7 +169,7 @@ namespace PhoenixAdult.Sites
                         actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='col-md-8 bigmodelpic']/img")?.GetAttributeValue("src", string.Empty);
                     }
 
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
 

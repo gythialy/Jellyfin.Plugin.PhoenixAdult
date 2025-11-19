@@ -159,7 +159,7 @@ namespace PhoenixAdult.Sites
                         }
                     }
 
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
 
@@ -169,7 +169,7 @@ namespace PhoenixAdult.Sites
                 {
                     if (!result.People.Any(p => p.Name.Equals(actorName, StringComparison.OrdinalIgnoreCase)))
                     {
-                        result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                     }
                 }
             }

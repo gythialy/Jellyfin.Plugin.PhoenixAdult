@@ -152,13 +152,13 @@ namespace PhoenixAdult.Sites
                         actorPhotoUrl = actorPage.SelectSingleNode("//div[contains(@class,'model')]//img")?.GetAttributeValue("src", string.Empty);
                     }
 
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
 
             if (tagline == "Giorgio Grandi" || tagline == "Giorgio's Lab")
             {
-                result.People.Add(new PersonInfo { Name = "Giorgio Grandi", Type = PersonKind.Director });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = "Giorgio Grandi", Type = PersonKind.Director });
             }
 
             return result;

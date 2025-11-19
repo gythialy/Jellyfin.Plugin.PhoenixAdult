@@ -97,7 +97,7 @@ namespace PhoenixAdult.Sites
 
                 foreach (var actorName in actorNames)
                 {
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                 }
             }
 

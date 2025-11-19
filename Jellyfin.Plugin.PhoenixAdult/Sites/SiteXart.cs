@@ -219,7 +219,7 @@ namespace PhoenixAdult.Sites
                         actorPhotoUrl = actorDoc.DocumentNode.SelectSingleNode("//img[@class='info-img']")?.GetAttributeValue("src", string.Empty);
                     }
 
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
 

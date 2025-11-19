@@ -167,7 +167,7 @@ namespace PhoenixAdult.Sites
                         }
                     }
 
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
             else
@@ -180,7 +180,7 @@ namespace PhoenixAdult.Sites
                     {
                         foreach (var actorName in actorsDB[key])
                         {
-                            result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                            ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                         }
                     }
                 }

@@ -166,7 +166,7 @@ namespace PhoenixAdult.Sites
 
                 foreach (var actorLink in actorsNode)
                 {
-                    result.People.Add(new PersonInfo
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo
                     {
                         Name = actorLink.GetAttributeValue("title", string.Empty).Trim(),
                         ImageUrl = actorLink.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty).Replace("240x", "480x"),
@@ -175,7 +175,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            result.People.Add(new PersonInfo { Name = "Petter Hegre", ImageUrl = "https://img.discogs.com/TafxhnwJE2nhLodoB6UktY6m0xM=/fit-in/180x264/filters:strip_icc():format(jpeg):mode_rgb():quality(90)/discogs-images/A-2236724-1305622884.jpeg.jpg", Type = PersonKind.Director });
+            ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = "Petter Hegre", ImageUrl = "https://img.discogs.com/TafxhnwJE2nhLodoB6UktY6m0xM=/fit-in/180x264/filters:strip_icc():format(jpeg):mode_rgb():quality(90)/discogs-images/A-2236724-1305622884.jpeg.jpg", Type = PersonKind.Director });
 
             return result;
         }

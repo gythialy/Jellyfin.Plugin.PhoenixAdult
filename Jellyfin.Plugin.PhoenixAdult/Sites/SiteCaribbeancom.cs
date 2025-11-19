@@ -86,7 +86,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actorName in actorSection.InnerText.Split(','))
                 {
-                    result.People.Add(new PersonInfo { Name = actorName.Trim(), Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName.Trim(), Type = PersonKind.Actor });
                 }
             }
 

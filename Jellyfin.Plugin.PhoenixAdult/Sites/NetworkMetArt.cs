@@ -108,12 +108,12 @@ namespace PhoenixAdult.Sites
             {
                 string actorName = actor["name"].ToString();
                 string actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actor["headshotImagePath"];
-                result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
             }
 
             foreach (var director in detailsPageElements["photographers"])
             {
-                result.People.Add(new PersonInfo { Name = director["name"].ToString(), Type = PersonKind.Director });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = director["name"].ToString(), Type = PersonKind.Director });
             }
 
             return result;

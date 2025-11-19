@@ -137,7 +137,7 @@ namespace PhoenixAdult.Sites
                 {
                     string actorName = actor.SelectSingleNode(".//div[@class='vidpage-mobilePad']//a//strong")?.InnerText.Trim();
                     string actorPhotoUrl = actor.SelectSingleNode(".//img[@class='img-responsive imgHover']")?.GetAttributeValue("src", string.Empty);
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
 

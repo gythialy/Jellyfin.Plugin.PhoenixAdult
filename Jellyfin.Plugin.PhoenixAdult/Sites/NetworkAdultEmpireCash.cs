@@ -222,7 +222,7 @@ namespace PhoenixAdult.Sites
                 {
                     string actorName = actorNode.GetAttributeValue("title", string.Empty);
                     string actorPhotoUrl = actorNode.GetAttributeValue("data-bgsrc", string.Empty);
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
 
@@ -232,7 +232,7 @@ namespace PhoenixAdult.Sites
                 foreach (var actorNode in actorNodes2)
                 {
                     string actorName = actorNode.InnerText.Trim();
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                 }
             }
 
@@ -240,7 +240,7 @@ namespace PhoenixAdult.Sites
             if (directorNode != null)
             {
                 string directorName = directorNode.InnerText.Trim();
-                result.People.Add(new PersonInfo { Name = directorName, Type = PersonKind.Director });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = directorName, Type = PersonKind.Director });
             }
 
             return result;

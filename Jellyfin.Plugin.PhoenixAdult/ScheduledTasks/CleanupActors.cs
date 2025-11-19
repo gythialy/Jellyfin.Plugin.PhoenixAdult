@@ -47,7 +47,7 @@ namespace PhoenixAdult.ScheduledTasks
 #if __EMBY__
                 peoples = this.libraryManager.GetItemPeople(item);
 #else
-                peoples = this.libraryManager.GetPeople(item);
+                peoples = (List<PersonInfo>)this.libraryManager.GetPeople(item);
 #endif
 
                 if (peoples != null && peoples.Any())
@@ -73,7 +73,7 @@ namespace PhoenixAdult.ScheduledTasks
 
         public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
         {
-            yield return new TaskTriggerInfo { Type = TaskTriggerInfo.TriggerWeekly, DayOfWeek = DayOfWeek.Sunday, TimeOfDayTicks = TimeSpan.FromHours(12).Ticks };
+            yield return new TaskTriggerInfo { Type = TaskTriggerInfoType.WeeklyTrigger, DayOfWeek = DayOfWeek.Sunday, TimeOfDayTicks = TimeSpan.FromHours(12).Ticks };
         }
     }
 }

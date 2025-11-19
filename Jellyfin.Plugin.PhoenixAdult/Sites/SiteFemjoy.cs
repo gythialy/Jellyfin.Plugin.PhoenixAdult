@@ -126,7 +126,7 @@ namespace PhoenixAdult.Sites
                 {
                     string actorName = actor["name"].ToString();
                     string actorPhotoUrl = actor["thumb"]["image"].ToString();
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
 
@@ -134,7 +134,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var director in detailsPageElements["directors"])
                 {
-                    result.People.Add(new PersonInfo { Name = director["name"].ToString(), Type = PersonKind.Director });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = director["name"].ToString(), Type = PersonKind.Director });
                 }
             }
 

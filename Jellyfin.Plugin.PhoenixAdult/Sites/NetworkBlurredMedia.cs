@@ -116,7 +116,7 @@ namespace PhoenixAdult.Sites
             var actors = videoData["models"]?.Select(a => a["name"]?.ToString()).ToList() ?? new List<string>();
             foreach (var actor in actors)
             {
-                result.People.Add(new PersonInfo { Name = actor, Type = PersonKind.Actor });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actor, Type = PersonKind.Actor });
             }
 
             return result;

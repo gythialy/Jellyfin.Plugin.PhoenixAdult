@@ -199,7 +199,7 @@ namespace PhoenixAdult.Sites
             }
 
             string userID = sceneURL.Split('/')[4];
-            ApplyStudioSpecificLogic(userID, movie, result.People, genreList, summary, tagline);
+            ApplyStudioSpecificLogic(userID, movie, (List<PersonInfo>)result.People, genreList, summary, tagline);
 
             foreach (var genre in genreList.Where(g => !string.IsNullOrEmpty(g)))
             {

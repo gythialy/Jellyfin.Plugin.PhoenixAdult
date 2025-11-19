@@ -113,7 +113,7 @@ namespace PhoenixAdult.Sites
             var actors = actorStr.Split(new[] { " X " }, StringSplitOptions.None);
             foreach (var actor in actors)
             {
-                result.People.Add(new PersonInfo { Name = actor.Trim(), Type = PersonKind.Actor });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actor.Trim(), Type = PersonKind.Actor });
             }
 
             return result;

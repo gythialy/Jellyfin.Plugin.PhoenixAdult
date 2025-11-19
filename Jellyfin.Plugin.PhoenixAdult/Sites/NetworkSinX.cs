@@ -127,7 +127,7 @@ namespace PhoenixAdult.Sites
                         actorPhotoUrl = detailsPageElements.SelectSingleNode("//div[2]/div[2]/div[1]/div[2]/div[1]/div[2]/div/figure/div/img")?.GetAttributeValue("src", string.Empty);
                     }
 
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
 

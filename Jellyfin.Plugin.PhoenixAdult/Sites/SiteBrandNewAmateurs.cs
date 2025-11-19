@@ -114,7 +114,7 @@ namespace PhoenixAdult.Sites
 
                 if (!string.IsNullOrEmpty(actorName))
                 {
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
                 }
             }
 

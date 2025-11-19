@@ -164,14 +164,14 @@ namespace PhoenixAdult.Sites
 
                     if (!string.IsNullOrEmpty(actorName))
                     {
-                        result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                     }
                 }
             }
 
             if (siteNum[1] == 28)
             {
-                result.People.Add(new PersonInfo { Name = "Siri", Type = PersonKind.Actor });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = "Siri", Type = PersonKind.Actor });
             }
 
             return result;

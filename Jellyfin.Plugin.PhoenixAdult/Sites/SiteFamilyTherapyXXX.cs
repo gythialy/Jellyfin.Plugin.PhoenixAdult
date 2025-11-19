@@ -112,7 +112,7 @@ namespace PhoenixAdult.Sites
 
                 if (!string.IsNullOrEmpty(actorName))
                 {
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                 }
 
                 result.Item.AddStudio("Family Therapy");
@@ -168,7 +168,7 @@ namespace PhoenixAdult.Sites
                 string actorText = new Regex(@"(?<=[Ss]tarring\s)\w*\s\w*(\s&\s\w*\s\w*)*").Match(actorNode.InnerText).Value;
                 foreach (var actorName in actorText.Split('&'))
                 {
-                    result.People.Add(new PersonInfo { Name = actorName.Trim(), Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName.Trim(), Type = PersonKind.Actor });
                 }
             }
 

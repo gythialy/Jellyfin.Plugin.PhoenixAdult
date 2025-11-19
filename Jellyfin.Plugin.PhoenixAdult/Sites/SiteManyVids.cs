@@ -124,7 +124,7 @@ namespace PhoenixAdult.Sites
             }
 
             var actor = videoPageElements["model"];
-            result.People.Add(new PersonInfo
+            ((List<PersonInfo>)result.People).Add(new PersonInfo
             {
                 Name = (string)actor["displayName"],
                 ImageUrl = (string)actor["avatar"],

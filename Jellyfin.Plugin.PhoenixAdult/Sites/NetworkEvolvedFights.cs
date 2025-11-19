@@ -116,7 +116,7 @@ namespace PhoenixAdult.Sites
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
                         string actorPhotoUrl = Helper.GetSearchBaseURL(siteNum) + actorPage.SelectSingleNode("//img[(contains(@class, 'model_bio_thumb stdimage thumbs target'))]")?.GetAttributeValue("src0_3x", string.Empty);
-                        result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                     }
                 }
             }

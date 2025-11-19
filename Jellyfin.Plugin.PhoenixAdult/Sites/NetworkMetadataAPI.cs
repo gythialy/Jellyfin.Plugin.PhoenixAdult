@@ -145,7 +145,7 @@ namespace PhoenixAdult.Sites
                         actorName = (string)parent["name"] ?? actorName;
                     }
 
-                    result.People.Add(new PersonInfo
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo
                     {
                         Name = actorName,
                         ImageUrl = (string)actorLink["image"],

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">net8.0</TargetFramework>
+    <TargetFramework Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">net9.0</TargetFramework>
     <TargetFramework
       Condition="'$(Configuration)'=='Debug.Emby' or '$(Configuration)'=='Release.Emby'">net6.0</TargetFramework>
     <RootNamespace>PhoenixAdult</RootNamespace>
@@ -109,14 +109,17 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">
-    <PackageReference Include="Jellyfin.Controller" Version="10.10.7" />
+    <PackageReference Include="Jellyfin.Data" Version="10.11.3" />
+    <PackageReference Include="Jellyfin.Common" Version="10.11.3" />
+    <PackageReference Include="Jellyfin.Model" Version="10.11.3" />
+    <PackageReference Include="Jellyfin.Controller" Version="10.11.3" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-    <PackageReference Include="SkiaSharp" Version="2.88.3" />
+    <PackageReference Include="SkiaSharp" Version="2.88.6" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug.Emby' or '$(Configuration)'=='Release.Emby'">
     <PackageReference Include="MediaBrowser.Server.Core" Version="4.8.10" />
-    <PackageReference Include="SkiaSharp" Version="2.88.3" />
+    <PackageReference Include="SkiaSharp" Version="2.88.6" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Debug.Emby'">

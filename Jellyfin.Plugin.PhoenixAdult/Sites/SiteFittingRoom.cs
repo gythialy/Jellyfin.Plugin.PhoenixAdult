@@ -121,7 +121,7 @@ namespace PhoenixAdult.Sites
             {
                 string actorName = actorLink.GetAttributeValue("alt", string.Empty).Trim();
                 string actorPhotoUrl = actorLink.GetAttributeValue("src", string.Empty).Trim();
-                result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//meta[@property='article:tag']");

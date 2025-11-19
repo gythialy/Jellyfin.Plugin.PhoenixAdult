@@ -108,7 +108,7 @@ namespace PhoenixAdult.Sites
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            result.People.Add(new PersonInfo { Name = "Aletta Ocean", Type = PersonKind.Actor });
+            ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = "Aletta Ocean", Type = PersonKind.Actor });
 
             return result;
         }

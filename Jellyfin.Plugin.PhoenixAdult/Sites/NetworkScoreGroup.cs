@@ -142,7 +142,7 @@ namespace PhoenixAdult.Sites
                 var actors = Helper.Decode(providerIds[3]).Split(',');
                 foreach (var actor in actors)
                 {
-                    result.People.Add(new PersonInfo { Name = actor.Trim(), Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actor.Trim(), Type = PersonKind.Actor });
                 }
             }
 
@@ -196,14 +196,14 @@ namespace PhoenixAdult.Sites
                     string actorName = actor.InnerText.Trim();
                     if (actorName.ToLower() != "extra")
                     {
-                        result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                     }
                 }
             }
 
             if (siteNum[1] == 10)
             {
-                result.People.Add(new PersonInfo { Name = "Christy Marks", Type = PersonKind.Actor });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = "Christy Marks", Type = PersonKind.Actor });
             }
 
             return result;

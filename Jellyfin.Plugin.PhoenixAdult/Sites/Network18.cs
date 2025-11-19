@@ -180,7 +180,7 @@ namespace PhoenixAdult.Sites
                 var actorPhotoData = await GetDataFromAPI(assetQuery, "paths", actorPhotoPaths, siteNum, cancellationToken);
                 string actorPhotoURL = actorPhotoData?.SelectToken("data.asset.batch.result[0].serve.uri")?.ToString() ?? string.Empty;
 
-                result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
             }
 
             return result;

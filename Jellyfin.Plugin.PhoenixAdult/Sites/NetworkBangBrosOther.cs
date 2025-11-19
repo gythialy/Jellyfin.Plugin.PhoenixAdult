@@ -130,7 +130,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actor in actorNodes)
                 {
-                    result.People.Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actor.InnerText.Trim(), Type = PersonKind.Actor });
                 }
             }
 
@@ -138,7 +138,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actorName in sceneActorsDB[sceneId])
                 {
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                 }
             }
 

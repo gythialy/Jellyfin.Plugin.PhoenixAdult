@@ -182,14 +182,14 @@ namespace PhoenixAdult.Sites
                         actorPhotoURL = string.Empty;
                     }
 
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
                 }
             }
 
             var directorLink = detailsPageElements.SelectSingleNode("//p/a[contains(@href, '/director/')]");
             if (directorLink != null)
             {
-                result.People.Add(new PersonInfo { Name = directorLink.InnerText.Trim(), Type = PersonKind.Director });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = directorLink.InnerText.Trim(), Type = PersonKind.Director });
             }
 
             return result;

@@ -102,7 +102,7 @@ namespace PhoenixAdult.Sites
             {
                 string actorName = actorData["name"].ToString();
                 actors.Add(actorName);
-                result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
             }
 
             if (movie.Name.ToLower().StartsWith("bic_"))

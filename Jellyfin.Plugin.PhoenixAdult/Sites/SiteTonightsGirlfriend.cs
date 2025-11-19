@@ -109,7 +109,7 @@ namespace PhoenixAdult.Sites
                 string actorPageURL = actorLink.GetAttributeValue("href", string.Empty).Split('?')[0];
                 var actorPageElements = await HTML.ElementFromURL(actorPageURL, cancellationToken);
                 string actorPhotoURL = "https:" + actorPageElements?.SelectSingleNode("//div[contains(@class, 'performer-details')]//img")?.GetAttributeValue("src", string.Empty);
-                result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
             }
 
             movie.Name = string.Join(", ", actorList);
@@ -126,7 +126,7 @@ namespace PhoenixAdult.Sites
             var maleActors = sceneInfo.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var maleActor in maleActors)
             {
-                result.People.Add(new PersonInfo { Name = maleActor.Trim(), Type = PersonKind.Actor });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = maleActor.Trim(), Type = PersonKind.Actor });
             }
 
             var genres = new List<string> { "Girlfriend Experience", "Pornstar", "Hotel", "Pornstar Experience" };

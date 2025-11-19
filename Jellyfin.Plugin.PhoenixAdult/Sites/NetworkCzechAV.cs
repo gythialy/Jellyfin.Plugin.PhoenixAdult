@@ -172,7 +172,7 @@ namespace PhoenixAdult.Sites
             {
                 string actorName = $"{movie.Name} {detailsPageElements.SelectSingleNode("//span[@class='age']")?.InnerText.Trim()}";
                 string actorPhotoUrl = detailsPageElements.SelectSingleNode("//div[contains(@class, 'gallery')]//@href")?.GetAttributeValue("href", string.Empty);
-                result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
             }
 
             return result;

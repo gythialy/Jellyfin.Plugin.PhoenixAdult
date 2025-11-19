@@ -130,7 +130,7 @@ namespace PhoenixAdult.Sites
                         actorPhotoUrl = Helper.GetSearchSearchURL(siteNum) + model.SelectSingleNode(".//@src").GetAttributeValue("src", string.Empty);
                     }
 
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
 

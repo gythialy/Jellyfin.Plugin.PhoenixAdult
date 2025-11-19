@@ -243,7 +243,7 @@ namespace PhoenixAdult.Sites
                 {
                     var actorName = actor.GetAttributeValue("alt", string.Empty).Trim();
                     var actorPhotoUrl = actor.GetAttributeValue("data-src", string.Empty);
-                    result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonKind.Actor });
                 }
             }
 
@@ -253,7 +253,7 @@ namespace PhoenixAdult.Sites
                 var directorName = directorNode.InnerText.Split(':').Last().Split('-')[0].Trim();
                 if (!directorName.Equals("Unknown", StringComparison.OrdinalIgnoreCase))
                 {
-                    result.People.Add(new PersonInfo { Name = directorName, Type = PersonKind.Director });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = directorName, Type = PersonKind.Director });
                 }
             }
 

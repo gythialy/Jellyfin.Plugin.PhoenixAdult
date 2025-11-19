@@ -189,7 +189,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actor in actorsWithHeadshots)
                 {
-                    result.People.Add(new PersonInfo
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo
                     {
                         Name = actor.GetAttributeValue("title", string.Empty).Trim(),
                         Type = PersonKind.Actor,
@@ -206,7 +206,7 @@ namespace PhoenixAdult.Sites
                     string actorName = actor.InnerText.Trim();
                     if (!result.People.Any(p => p.Name.Equals(actorName, StringComparison.OrdinalIgnoreCase)))
                     {
-                        result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                     }
                 }
             }
@@ -217,7 +217,7 @@ namespace PhoenixAdult.Sites
                 string directorName = directorNode.InnerText.Trim();
                 if (!result.People.Any(p => p.Name.Equals(directorName, StringComparison.OrdinalIgnoreCase)))
                 {
-                    result.People.Add(new PersonInfo { Name = directorName, Type = PersonKind.Director });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = directorName, Type = PersonKind.Director });
                 }
             }
 

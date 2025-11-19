@@ -267,7 +267,7 @@ namespace PhoenixAdult.Sites
                     }
 
                     string actorPhotoUrl = actorDetails.SelectToken("images.profile.0.xs.url")?.ToString() ?? string.Empty;
-                    result.People.Add(new PersonInfo { Name = actorDetails["name"].ToString(), Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorDetails["name"].ToString(), Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                 }
             }
 

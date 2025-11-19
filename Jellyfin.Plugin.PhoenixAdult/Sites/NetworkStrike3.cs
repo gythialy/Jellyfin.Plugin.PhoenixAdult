@@ -179,7 +179,7 @@ namespace PhoenixAdult.Sites
                         imageUrl = imagesToken.SelectToken("listing")?.FirstOrDefault()?.SelectToken("highdpi.double")?.ToString();
                     }
 
-                    result.People.Add(new PersonInfo
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo
                     {
                         Name = (string)actorLink["name"],
                         ImageUrl = imageUrl,
@@ -198,7 +198,7 @@ namespace PhoenixAdult.Sites
             if (video["directors"]?.Any() == true)
             {
                 Logger.Info($"[NetworkStrike3] Found {((JArray)video["directors"]).Count} directors. Processing the first one.");
-                result.People.Add(new PersonInfo { Name = (string)video["directors"][0]["name"], Type = PersonKind.Director });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = (string)video["directors"][0]["name"], Type = PersonKind.Director });
                 Logger.Info("[NetworkStrike3] Finished processing 'directors'.");
             }
             else

@@ -165,13 +165,13 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actor in actorCollection)
                 {
-                    result.People.Add(new PersonInfo { Name = actor.Value["stageName"].ToString(), Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actor.Value["stageName"].ToString(), Type = PersonKind.Actor });
                 }
             }
 
             if (actorDb.ContainsKey(siteNum[0]))
             {
-                result.People.Add(new PersonInfo { Name = actorDb[siteNum[0]], Type = PersonKind.Actor });
+                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorDb[siteNum[0]], Type = PersonKind.Actor });
             }
 
             return result;

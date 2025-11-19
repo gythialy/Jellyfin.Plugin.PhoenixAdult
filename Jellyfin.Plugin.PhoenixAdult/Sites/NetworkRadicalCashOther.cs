@@ -300,7 +300,7 @@ namespace PhoenixAdult.Sites
                         }
                     }
 
-                    result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoUrl, Type = PersonKind.Actor });
                 }
             }
 

@@ -120,7 +120,7 @@ namespace PhoenixAdult.Sites
                             {
                                 string actorName = actor.InnerText.Trim();
                                 string actorPhotoUrl = actor.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty);
-                                result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
                             }
                         }
                     }

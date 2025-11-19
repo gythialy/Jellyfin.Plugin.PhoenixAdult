@@ -166,7 +166,7 @@ namespace PhoenixAdult.Sites
                     string modelURL = actor.GetAttributeValue("href", string.Empty);
                     var actorPageElements = await HTML.ElementFromURL(modelURL, cancellationToken);
                     string actorPhotoURL = actorPageElements?.SelectSingleNode("//img[@class='img-responsive']")?.GetAttributeValue("src", string.Empty);
-                    result.People.Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
                 }
             }
 

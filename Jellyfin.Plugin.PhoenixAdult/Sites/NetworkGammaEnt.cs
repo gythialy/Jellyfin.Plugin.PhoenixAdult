@@ -297,7 +297,7 @@ namespace PhoenixAdult.Sites
                     string actorPageURL = actorLink.GetAttributeValue("href", string.Empty);
                     var actorPage = await HTML.ElementFromURL(Helper.GetSearchBaseURL(new[] { sNum }) + actorPageURL, cancellationToken);
                     string actorPhotoURL = actorPage?.SelectSingleNode("//img[@class='actorPicture'] | //span[@class='removeAvatarParent']/img")?.GetAttributeValue("src", string.Empty);
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
                 }
             }
 
@@ -307,7 +307,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var director in directorNodes)
                 {
-                    result.People.Add(new PersonInfo { Name = director.InnerText.Trim(), Type = PersonKind.Director });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = director.InnerText.Trim(), Type = PersonKind.Director });
                 }
             }
 
