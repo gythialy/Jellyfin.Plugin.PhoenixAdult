@@ -136,7 +136,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("PornPros");
 
             string tagline = detailsPageElements["sponsor"]?["name"]?.ToString() ?? string.Empty;
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
             movie.AddCollection(tagline);
 
             if (DateTime.TryParse(detailsPageElements["releasedAt"]?.ToString(), out var parsedDate))
