@@ -234,12 +234,12 @@ namespace PhoenixAdult.Sites
             string mainSiteName = Helper.GetSearchSiteName(siteNum);
             if (!seriesNames.Contains(mainSiteName))
             {
-                movie.AddTag(mainSiteName);
+                movie.AddStudio(mainSiteName);
             }
 
             foreach (var seriesName in seriesNames)
             {
-                movie.AddTag(seriesName);
+                movie.AddStudio(seriesName);
             }
 
             DateTime dateObject = (DateTime)details["dateReleased"];

@@ -117,7 +117,7 @@ namespace PhoenixAdult.Sites
                 movie.AddStudio(studioName);
                 foreach (var collection in collections)
                 {
-                    movie.AddTag(collection);
+                    movie.AddStudio(collection);
                 }
             }
 

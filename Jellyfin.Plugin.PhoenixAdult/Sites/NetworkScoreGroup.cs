@@ -161,7 +161,7 @@ namespace PhoenixAdult.Sites
 
             movie.AddStudio("Score Group");
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div/span[@class='value'][2]");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
