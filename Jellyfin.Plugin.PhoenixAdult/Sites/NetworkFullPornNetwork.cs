@@ -140,7 +140,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("Full Porn Network");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='video-info']//p");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
