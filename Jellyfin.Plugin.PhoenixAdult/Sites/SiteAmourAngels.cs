@@ -75,11 +75,12 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//td[@class='blox-bg']//td[2]//b")?.InnerText.Replace("Video", string.Empty).Trim();
             movie.AddStudio("AmourAngels");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
             movie.AddGenre("Softcore");
             movie.AddGenre("European Girls");
 

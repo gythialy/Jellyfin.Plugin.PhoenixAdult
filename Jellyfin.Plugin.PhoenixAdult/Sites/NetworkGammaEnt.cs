@@ -243,9 +243,11 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneURL;
 
             // Title
-            movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[@class='sceneTitle']")?.InnerText.Trim()
+            movie.Name = Helper.ParseTitle(
+                detailsPageElements.SelectSingleNode("//h1[@class='sceneTitle']")?.InnerText.Trim()
                 ?? detailsPageElements.SelectSingleNode("//meta[@name='twitter:title']")?.GetAttributeValue("content", string.Empty).Trim()
                 ?? detailsPageElements.SelectSingleNode("//h3[@class='dvdTitle']")?.InnerText.Trim()
                 ?? detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim(), siteNum);
@@ -257,10 +259,10 @@ namespace PhoenixAdult.Sites
                ?? detailsPageElements.SelectSingleNode("//p[@class='descriptionText']")?.InnerText.Trim();
 
             // Studio and Collections
-            string studio = GetStudio(sNum);
+            string studio = this.GetStudio(sNum);
             movie.AddStudio(studio);
             string tagline = detailsPageElements.SelectSingleNode("//div[@class='studioLink']")?.InnerText.Trim() ?? Helper.GetSearchSiteName(new[] { sNum });
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dvdTitleNode = detailsPageElements.SelectSingleNode("//a[contains(@class, 'dvdLink')][1]");
             if (dvdTitleNode != null)

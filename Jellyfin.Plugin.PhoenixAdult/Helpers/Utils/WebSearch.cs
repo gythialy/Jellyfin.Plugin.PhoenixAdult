@@ -11,7 +11,7 @@ namespace PhoenixAdult.Helpers.Utils
 {
     internal static class WebSearch
     {
-        public static async Task<List<string>> GetSearchResults(string text, int[] siteNum, CancellationToken cancellationToken)
+        public static async Task<List<string>> GetSearchResults(string text, int[] siteNum, CancellationToken cancellationToken, string lang = "en")
         {
             var results = new List<string>();
             string searchTerm;

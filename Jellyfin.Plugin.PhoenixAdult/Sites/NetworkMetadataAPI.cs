@@ -90,7 +90,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-
+            movie.ExternalId = (string)details["url"];
             movie.Name = (string)details["title"];
             movie.Overview = (string)details["description"];
 

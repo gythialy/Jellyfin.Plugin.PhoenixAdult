@@ -185,7 +185,7 @@ namespace PhoenixAdult.Providers
                 {
                     if (Plugin.Instance.Configuration.UseMetadataAPI && !string.IsNullOrEmpty(Plugin.Instance.Configuration.MetadataAPIToken))
                     {
-                        searchTitle = $"MetadataAPI {searchTitle}";
+                        searchTitle = $"MetadataAPI - {searchInfo.Name}";
                         site = Helper.GetSiteFromTitle(searchTitle);
                         Logger.Info($"META site: {site.siteNum[0]}:{site.siteNum[1]} ({site.siteName})");
                         provider = Helper.GetProviderBySiteID(site.siteNum[0]);
@@ -347,16 +347,22 @@ namespace PhoenixAdult.Providers
                 if (result.HasMetadata)
                 {
                     result.Item.OfficialRating = "XXX";
+                    result.Item.CustomRating = "XXX";
                     result.Item.ProviderIds.Update(this.Name, sceneID[this.Name]);
 
-                    result.Item.Name = HttpUtility.HtmlDecode(result.Item.Name).Trim();
+                    if (result.Item.Name != null)
+                    {
+                        var name = HttpUtility.HtmlDecode(result.Item.Name).Trim();
+                        result.Item.Name = name;
+                        result.Item.SortName = name;
+                        result.Item.OriginalTitle = name;
+                    }
 
                     if (!string.IsNullOrEmpty(result.Item.Overview))
                     {
                         result.Item.Overview = HttpUtility.HtmlDecode(result.Item.Overview).Trim();
                     }
 
-                    //result.Item.AddStudio(Helper.GetSearchSiteName(siteNum));
                     var newStudios = new List<string>();
                     foreach (var studio in result.Item.Studios)
                     {

@@ -213,6 +213,7 @@ namespace PhoenixAdult.Sites
             var siteXPath = GetXPathMap(siteNum);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode(siteXPath["title"]).InnerText.Trim(), siteNum);
 
             string description = string.Empty;
@@ -246,7 +247,7 @@ namespace PhoenixAdult.Sites
                 tagline = Helper.GetSearchSiteName(siteNum);
             }
 
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode(siteXPath["date"]);
             if (dateNode != null)

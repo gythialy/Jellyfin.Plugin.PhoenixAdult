@@ -146,7 +146,7 @@ namespace PhoenixAdult.Sites
 
             movie.AddStudio("NVG Network");
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

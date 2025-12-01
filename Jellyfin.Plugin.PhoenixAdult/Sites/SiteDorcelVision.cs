@@ -80,6 +80,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
             movie.Overview = (detailsPageElements.SelectSingleNode("//meta[@name='twitter:description']")?.GetAttributeValue("content", string.Empty).Trim() ??
                               detailsPageElements.SelectSingleNode("//div[@id='summaryList']")?.InnerText.Trim())
@@ -92,7 +93,6 @@ namespace PhoenixAdult.Sites
                 tagline = studioNode.InnerText.Trim();
             }
 
-            movie.AddTag(tagline);
             movie.AddStudio(tagline);
 
             if (!string.IsNullOrEmpty(releaseDate) && DateTime.TryParse(releaseDate, out var parsedDate))

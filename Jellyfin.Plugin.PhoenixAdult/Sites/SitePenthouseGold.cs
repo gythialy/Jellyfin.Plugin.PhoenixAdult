@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -23,24 +25,39 @@ namespace PhoenixAdult.Sites
     {
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            // Simplified search logic, may need adjustments
             var result = new List<RemoteSearchResult>();
-            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
-            foreach (var sceneURL in googleResults)
+            var searchURL = Helper.GetSearchSearchURL(siteNum) + searchTitle.Replace(" ", "+");
+            var http = await HTTP.Request(searchURL, cancellationToken);
+            if (http.IsOK)
             {
-                var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
-                if (doc != null)
+                var doc = new HtmlDocument();
+                doc.LoadHtml(http.Content);
+                foreach (var searchResult in doc.DocumentNode.SelectNodes("//div[@class='scene']"))
                 {
-                    var titleNode = doc.SelectSingleNode(@"//div[@class=""content-desc content-new-scene""]//h1");
-                    var titleNoFormatting = titleNode?.InnerText.Trim();
-                    var curID = Helper.Encode(sceneURL);
-                    var item = new RemoteSearchResult
+                    var url = searchResult.SelectSingleNode(".//a[@data-track='TITLE_LINK']").GetAttributeValue("href", string.Empty);
+                    if (!url.Contains("/scenes/"))
+                    {
+                        continue;
+                    }
+
+                    var curID = Helper.Encode(url);
+                    var titleNoFormatting = searchResult.SelectSingleNode(".//a[@data-track='TITLE_LINK']").InnerText;
+                    var releaseDate = string.Empty;
+                    var dateNode = searchResult.SelectSingleNode("./span[@class='scene-date']");
+                    if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+                    {
+                        releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    }
+
+                    var image = searchResult.SelectSingleNode(".//img").GetAttributeValue("src", string.Empty);
+
+                    result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, curID } },
-                        Name = titleNoFormatting,
+                        Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
-                    };
-                    result.Add(item);
+                        ImageUrl = image,
+                    });
                 }
             }
 
@@ -56,47 +73,64 @@ namespace PhoenixAdult.Sites
             };
             var movie = (Movie)result.Item;
             var sceneURL = Helper.Decode(sceneID[0]);
-            var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (doc == null)
+            var http = await HTTP.Request(sceneURL, cancellationToken);
+            if (!http.IsOK)
             {
                 return result;
             }
 
-            movie.Name = doc.SelectSingleNode(@"//div[@class=""content-desc content-new-scene""]//h1")?.InnerText.Trim();
-            movie.Overview = doc.SelectSingleNode(@"//div[@class=""content-desc content-new-scene""]//p")?.InnerText.Trim();
-            movie.AddStudio("Unknown");
+            var doc = new HtmlDocument();
+            doc.LoadHtml(http.Content);
+            movie.ExternalId = sceneURL;
+            movie.Name = doc.DocumentNode.SelectSingleNode("//div[@class='content-desc content-new-scene']//h1").InnerText.Replace("Video -", string.Empty).Replace("Movie -", string.Empty).Trim();
+            var overviewNode = doc.DocumentNode.SelectSingleNode("//div[@class='content-desc content-new-scene']//p");
+            if (overviewNode != null)
+            {
+                movie.Overview = overviewNode.InnerText.Trim();
+            }
 
-            var dateNode = doc.SelectSingleNode(@"//meta[@itemprop=""uploadDate""]");
-            if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
+            movie.AddCollection(Helper.GetSearchSiteName(siteNum));
+
+            var dateNode = doc.DocumentNode.SelectSingleNode("//meta[@itemprop='uploadDate']");
+            if (dateNode != null && DateTime.TryParseExact(dateNode.GetAttributeValue("content", string.Empty), "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            // Actor and Genre logic needs to be manually added for each site
+            foreach (var genreLink in doc.DocumentNode.SelectNodes("//ul[contains(@class, 'scene-tags')]/li/a"))
+            {
+                var genreName = genreLink.InnerText.ToLower();
+                movie.AddGenre(genreName);
+            }
+
+            foreach (var actorPage in doc.DocumentNode.SelectNodes("//ul[@id='featured_pornstars']//div[@class='model']"))
+            {
+                var actorName = actorPage.SelectSingleNode(".//h3").InnerText.Trim();
+                var actorPhotoURL = actorPage.SelectSingleNode(".//img").GetAttributeValue("src", string.Empty);
+                result.AddPerson(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
+            }
+
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            // Simplified image logic, may need adjustments
             var images = new List<RemoteImageInfo>();
             var sceneURL = Helper.Decode(sceneID[0]);
-            var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (doc != null)
+            var http = await HTTP.Request(sceneURL, cancellationToken);
+            if (http.IsOK)
             {
-                var imageNodes = doc.SelectNodes("//img/@src");
-                if (imageNodes != null)
+                var doc = new HtmlDocument();
+                doc.LoadHtml(http.Content);
+                var posterNode = doc.DocumentNode.SelectSingleNode("//div[@id='trailer_player_finished']//img");
+                if (posterNode != null)
                 {
-                    foreach (var img in imageNodes)
+                    var posterUrl = posterNode.GetAttributeValue("src", string.Empty);
+                    if (!string.IsNullOrEmpty(posterUrl))
                     {
-                        var imgUrl = img.GetAttributeValue("src", string.Empty);
-                        if (!imgUrl.StartsWith("http"))
-                        {
-                            imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
-                        }
-
-                        images.Add(new RemoteImageInfo { Url = imgUrl });
+                        images.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
                     }
                 }
             }

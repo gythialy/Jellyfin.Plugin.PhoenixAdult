@@ -171,6 +171,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1")?.InnerText.Split(':').Last().Split(new[] { "Full video by" }, StringSplitOptions.None)[0].Trim(), siteNum);
 
             string summary = detailsPageElements.SelectSingleNode("//p[contains(@class, 'description')]")?.InnerText.Trim();

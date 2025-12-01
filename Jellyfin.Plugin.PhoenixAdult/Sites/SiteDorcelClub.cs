@@ -94,12 +94,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("///span[@class='full']")?.InnerText.Trim();
             movie.AddStudio("Marc Dorcel");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//span[@class='publish_date']") ?? detailsPageElements.SelectSingleNode("//span[@class='out_date']");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Replace("Year :", string.Empty).Trim(), out var parsedDate))

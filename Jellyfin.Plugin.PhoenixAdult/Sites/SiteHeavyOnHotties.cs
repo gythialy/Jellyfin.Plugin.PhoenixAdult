@@ -106,6 +106,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Split(':').Last().Split(new[] { " - " }, StringSplitOptions.None).Last().Trim().Trim('"');
 
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='video_text']");

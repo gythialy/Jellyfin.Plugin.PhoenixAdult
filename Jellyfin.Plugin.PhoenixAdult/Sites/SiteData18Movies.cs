@@ -193,6 +193,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneURL;
             movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1").InnerText, siteNum);
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='gen12']//div[contains(., 'Description')]");
             var summary = summaryNode?.InnerText.Split(new[] { "---", "Description -" }, StringSplitOptions.RemoveEmptyEntries).Last().Trim();
@@ -211,7 +212,7 @@ namespace PhoenixAdult.Sites
             var taglineNode = detailsPageElements.SelectSingleNode("//p[contains(., 'Movie Series')]//a[@title]");
             if (taglineNode != null)
             {
-                movie.AddTag(taglineNode.InnerText.Trim());
+                movie.AddStudio(taglineNode.InnerText.Trim());
                 movie.AddCollection(taglineNode.InnerText.Trim());
             }
 

@@ -69,12 +69,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='infoBox clear']/p")?.InnerText.Trim();
             movie.AddStudio("PervCity");
 
             string tagline = detailsPageElements.SelectSingleNode("//div[@class='about']//h3")?.InnerText.Replace("About", string.Empty).Trim();
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var actorNodes = detailsPageElements.SelectNodes("//h3/span/a");
             if (actorNodes != null)

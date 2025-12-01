@@ -85,12 +85,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='more text-justify']")?.InnerText.Trim();
             movie.AddStudio("FuckingAwesome");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='videodate']/strong");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))

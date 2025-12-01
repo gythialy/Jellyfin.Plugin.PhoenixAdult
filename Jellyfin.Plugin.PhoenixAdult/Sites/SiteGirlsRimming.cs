@@ -80,12 +80,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h2[@class='title']")?.InnerText;
             movie.Overview = detailsPageElements.SelectSingleNode("//meta[@name='description']")?.GetAttributeValue("content", string.Empty);
             movie.AddStudio("Girls Rimming");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

@@ -103,11 +103,12 @@ namespace PhoenixAdult.Sites
             string subject = Regex.Replace(parentElement.SelectSingleNode(".//span[@class='videotype']")?.InnerText.Trim() ?? string.Empty, @"Video Type: (.+)", "$1", RegexOptions.IgnoreCase);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = $"{model} #{int.Parse(sceneNum)}: {subject}";
             movie.Overview = parentElement.SelectSingleNode(".//span[@class='videodescription']")?.InnerText.Trim();
             movie.AddStudio("ALSAngels");
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
             movie.PremiereDate = dateObject;
             movie.ProductionYear = dateObject.Year;
             movie.AddGenre(subject);

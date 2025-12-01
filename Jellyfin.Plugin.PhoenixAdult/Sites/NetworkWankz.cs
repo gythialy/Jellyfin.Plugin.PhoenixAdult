@@ -78,9 +78,11 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//div[@class='title']//h1")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='description']//p")?.InnerText;
             movie.AddStudio("Wankz");
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='views']//span");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Replace("Added", string.Empty).Trim(), out var parsedDate))

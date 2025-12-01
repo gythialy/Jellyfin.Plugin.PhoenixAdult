@@ -114,6 +114,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
+            metadataResult.Item.ExternalId = sceneUrl;
             if (title.Length > 80)
             {
                 metadataResult.Item.Name = $"[{javId.ToUpper()}] {title}";

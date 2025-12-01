@@ -132,6 +132,7 @@ namespace PhoenixAdult.Sites
 
             var doc = new HtmlDocument();
             doc.LoadHtml(httpResult.Content);
+            movie.ExternalId = sceneURL;
 
             // Title
             var titleNode = doc.DocumentNode.SelectSingleNode("//h1[@class='entry-title']");
@@ -149,7 +150,6 @@ namespace PhoenixAdult.Sites
 
             // Studio
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
-            movie.AddTag(Helper.GetSearchSiteName(siteNum));
 
             // Genres
             var genreNodes = doc.DocumentNode.SelectNodes("//div[@class='tags-list']/a[.//i[@class='fa fa-folder-open']]");

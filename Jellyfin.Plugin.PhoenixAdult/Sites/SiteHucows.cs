@@ -91,6 +91,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//head/title")?.InnerText.Trim().Replace(" - HuCows.com", string.Empty).Capitalize();
             movie.AddStudio("HuCows");
 

@@ -110,12 +110,13 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneURL;
             movie.Name = sceneData.SelectSingleNode("//div[contains(@class, 'videoDetails')]//h3")?.InnerText.Trim();
             movie.Overview = sceneData.SelectSingleNode("//div[contains(@class, 'videoDetails')]//p")?.InnerText.Trim();
             movie.AddStudio("Femdom Empire");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = sceneData.SelectSingleNode("//div[@class='videoInfo clear']//p")?.InnerText.Replace("Date Added:", string.Empty).Trim();
             if (DateTime.TryParseExact(dateNode, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))

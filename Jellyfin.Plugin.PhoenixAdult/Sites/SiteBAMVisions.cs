@@ -79,6 +79,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//div[@class='item-info']/h4/a")?.InnerText.Trim();
 
             var description = detailsPageElements.SelectSingleNode("//p[@class='description']");
@@ -89,7 +90,7 @@ namespace PhoenixAdult.Sites
 
             movie.AddStudio("BAMVisions");
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//ul[@class='item-meta']/li[1]");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Split(new[] { "Release Date:" }, StringSplitOptions.None).Last().Trim(), out var parsedDate))

@@ -172,6 +172,8 @@ namespace PhoenixAdult.Sites
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
 
+            movie.ExternalId = sceneURL;
+
             var titleNode = doc.DocumentNode.SelectSingleNode("//title");
             if (titleNode != null)
             {
@@ -191,7 +193,7 @@ namespace PhoenixAdult.Sites
             {
                 var tagline = taglineNode.InnerText.Trim();
                 movie.Tagline = tagline;
-                movie.AddTag(tagline);
+                movie.AddStudio(tagline);
             }
 
             var dateNode = doc.DocumentNode.SelectSingleNode("//span[@class='player-additional__text']");

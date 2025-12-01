@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
 using MediaBrowser.Model.Entities;
+using PhoenixAdult.Helpers;
 
 #if __EMBY__
 #else
@@ -89,10 +90,12 @@ namespace PhoenixAdult.Sites
                 HasMetadata = true,
             };
 
+            metadataResult.Item.ExternalId = sceneUrl;
             metadataResult.Item.Name = doc.SelectSingleNode("//h1[@class='content-detail__title']").InnerText.Trim();
             metadataResult.Item.Overview = doc.SelectSingleNode("//div[@class='content-detail__description']").InnerText.Trim();
             metadataResult.Item.OfficialRating = "XXX";
             metadataResult.Item.SetProviderId(Plugin.Instance.Name, sceneUrl);
+            metadataResult.Item.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             var date = doc.SelectNodes("//div[@class='content-detail__infos__row']//p[@class='content-detail__description content-detail__description--link']")[1].InnerText.Trim();
             metadataResult.Item.PremiereDate = DateTime.Parse(date);

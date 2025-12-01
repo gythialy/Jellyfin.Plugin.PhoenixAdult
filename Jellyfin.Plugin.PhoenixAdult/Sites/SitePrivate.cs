@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -23,26 +25,32 @@ namespace PhoenixAdult.Sites
     {
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            // Simplified search logic, may need adjustments
             var result = new List<RemoteSearchResult>();
-            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
-            foreach (var sceneURL in googleResults)
+            var searchURL = Helper.GetSearchSearchURL(siteNum) + searchTitle.Replace(" ", "+");
+            var http = await HTTP.Request(searchURL, cancellationToken, new Dictionary<string, string> { { "Accept-Language", "en" } });
+            if (http.IsOK)
             {
-                var http = await HTTP.Request(sceneURL, cancellationToken);
-                if (http.IsOK)
+                var doc = new HtmlDocument();
+                doc.LoadHtml(http.Content);
+                foreach (var searchResult in doc.DocumentNode.SelectNodes("//ul[@id='search_results']//li[@class='card']"))
                 {
-                    var doc = new HtmlDocument();
-                    doc.LoadHtml(http.Content);
-                    var titleNode = doc.DocumentNode.SelectSingleNode(@"//h1");
-                    var titleNoFormatting = titleNode?.InnerText.Trim();
+                    var titleNoFormatting = Helper.ParseTitle(searchResult.SelectSingleNode(".//h3/a").InnerText.Trim(), siteNum);
+                    var sceneURL = searchResult.SelectSingleNode(".//h3/a").GetAttributeValue("href", string.Empty);
                     var curID = Helper.Encode(sceneURL);
-                    var item = new RemoteSearchResult
+
+                    var date = searchResult.SelectSingleNode(".//span[@class='scene-date']");
+                    var releaseDate = string.Empty;
+                    if (date != null && DateTime.TryParse(date.InnerText.Trim(), out var parsedDate))
+                    {
+                        releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    }
+
+                    result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, curID } },
-                        Name = titleNoFormatting,
+                        Name = $"{titleNoFormatting} [Private] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
-                    };
-                    result.Add(item);
+                    });
                 }
             }
 
@@ -58,7 +66,7 @@ namespace PhoenixAdult.Sites
             };
             var movie = (Movie)result.Item;
             var sceneURL = Helper.Decode(sceneID[0]);
-            var http = await HTTP.Request(sceneURL, cancellationToken);
+            var http = await HTTP.Request(sceneURL, cancellationToken, new Dictionary<string, string> { { "Accept-Language", "en" } });
             if (!http.IsOK)
             {
                 return result;
@@ -66,44 +74,66 @@ namespace PhoenixAdult.Sites
 
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
-
-            movie.Name = doc.DocumentNode.SelectSingleNode(@"//h1")?.InnerText.Trim();
-            movie.Overview = doc.DocumentNode.SelectSingleNode(@"//meta[@itemprop=""description""]/@content")?.InnerText.Trim();
+            movie.ExternalId = sceneURL;
+            movie.Name = Helper.ParseTitle(doc.DocumentNode.SelectSingleNode("//h1").InnerText, siteNum);
+            movie.Overview = doc.DocumentNode.SelectSingleNode("//meta[@itemprop='description']").GetAttributeValue("content", string.Empty);
             movie.AddStudio("Private");
 
-            var dateNode = doc.DocumentNode.SelectSingleNode(@"//meta[@itemprop=""uploadDate""]/@content");
-            if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+            var tagline = doc.DocumentNode.SelectSingleNode("//li[@class='tag-sites']//a")?.InnerText.Trim() ?? "Private";
+            movie.AddCollection(tagline);
+
+            foreach (var genreLink in doc.DocumentNode.SelectNodes("//li[@class='tag-tags']//a"))
+            {
+                var genreName = genreLink.InnerText.ToLower();
+                movie.AddGenre(genreName);
+            }
+
+            var date = doc.DocumentNode.SelectSingleNode("//meta[@itemprop='uploadDate']").GetAttributeValue("content", string.Empty);
+            if (DateTime.TryParse(date, out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            // Actor and Genre logic needs to be manually added for each site
+            foreach (var actorPage in doc.DocumentNode.SelectNodes("//li[@class='tag-models']//a"))
+            {
+                var actorName = actorPage.InnerText;
+                var modelURL = actorPage.GetAttributeValue("href", string.Empty);
+                var actorHttp = await HTTP.Request(modelURL, cancellationToken);
+                if (actorHttp.IsOK)
+                {
+                    var modelDoc = new HtmlDocument();
+                    modelDoc.LoadHtml(actorHttp.Content);
+                    var actorPhotoURL = modelDoc.DocumentNode.SelectSingleNode("//img/@srcset").GetAttributeValue("srcset", string.Empty).Split(',').Last().Split(' ').First().Trim();
+                    result.AddPerson(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
+                }
+            }
+
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            // Simplified image logic, may need adjustments
             var images = new List<RemoteImageInfo>();
             var sceneURL = Helper.Decode(sceneID[0]);
-            var http = await HTTP.Request(sceneURL, cancellationToken);
+            var http = await HTTP.Request(sceneURL, cancellationToken, new Dictionary<string, string> { { "Accept-Language", "en" } });
             if (http.IsOK)
             {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(http.Content);
-                var imageNodes = doc.DocumentNode.SelectNodes("//img/@src");
-                if (imageNodes != null)
-                {
-                    foreach (var img in imageNodes)
-                    {
-                        var imgUrl = img.GetAttributeValue("src", string.Empty);
-                        if (!imgUrl.StartsWith("http"))
-                        {
-                            imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
-                        }
+                var poster = doc.DocumentNode.SelectSingleNode("//meta[@itemprop='thumbnailUrl']").GetAttributeValue("content", string.Empty);
+                images.Add(new RemoteImageInfo { Url = poster, Type = ImageType.Primary });
 
-                        images.Add(new RemoteImageInfo { Url = imgUrl });
+                var sceneId = sceneURL.Split('/').Last();
+                var galleryPageUrl = $"https://www.private.com/gallery.php?type=highres&id={sceneId}&langx=en";
+                var galleryHttp = await HTTP.Request(galleryPageUrl, cancellationToken, new Dictionary<string, string> { { "Accept-Language", "en" } });
+                if (galleryHttp.IsOK)
+                {
+                    var galleryDoc = new HtmlDocument();
+                    galleryDoc.LoadHtml(galleryHttp.Content);
+                    foreach (var image in galleryDoc.DocumentNode.SelectNodes("//a/@href"))
+                    {
+                        images.Add(new RemoteImageInfo { Url = image.GetAttributeValue("href", string.Empty), Type = ImageType.Backdrop });
                     }
                 }
             }

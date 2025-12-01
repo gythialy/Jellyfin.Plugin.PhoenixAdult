@@ -84,6 +84,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             var titleNode = detailsPageElements.SelectSingleNode("//*[@class='video-player']//h3[@class='section-title']") ??
                             detailsPageElements.SelectSingleNode("//*[@class='video-player']//h1[@class='section-title']") ??
                             detailsPageElements.SelectSingleNode("//*[@class='video-player']//h2[@class='section-title']");
@@ -103,7 +104,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio(studio);
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='update-info-row']");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Replace("Released:", string.Empty).Trim(), out var parsedDate))

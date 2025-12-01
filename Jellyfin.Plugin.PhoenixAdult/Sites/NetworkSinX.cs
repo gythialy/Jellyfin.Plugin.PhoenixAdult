@@ -77,12 +77,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h1[@class='title--3']")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//div[2]/div[2]/div[1]/div[2]/div[1]/div[1]/p")?.InnerText.Trim();
             movie.AddStudio("SinX");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[2]/div[1]/div[3]/div[1]/ul/li[1]");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))

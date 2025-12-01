@@ -91,12 +91,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//*[@class='trailer-block_title'] | //h1")?.InnerText.Trim(), siteNum);
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='info-block']//p[@class='text'] | //div[@class='update-info-block']//p")?.InnerText.Trim();
             movie.AddStudio("Cherry Pimps");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
             movie.AddCollection(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='info-block_data']//p[@class='text'] | //div[@class='update-info-row']");

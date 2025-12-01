@@ -134,12 +134,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[@class='post_title']/span")?.InnerText.Trim(), siteNum);
             movie.Overview = detailsPageElements.SelectSingleNode("//h2[@class='post_description']")?.InnerText.Replace("´", "'").Replace("’", "'");
             movie.AddStudio("GASM");
 
             string tagline = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//a[contains(@href, '/studio/profile/')]")?.InnerText.Trim(), siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dvd = detailsPageElements.SelectSingleNode("//div[@class='post_item dvd']/h1");
             if (dvd != null)

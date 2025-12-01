@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using HtmlAgilityPack;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -23,24 +25,56 @@ namespace PhoenixAdult.Sites
     {
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            // Simplified search logic, may need adjustments
             var result = new List<RemoteSearchResult>();
-            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
-            foreach (var sceneURL in googleResults)
+            var sourceID = searchTitle.Split(' ').First();
+            var searchData = searchTitle;
+
+            if (int.TryParse(sourceID, out _))
             {
-                var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
-                if (doc != null)
+                searchData = searchTitle.Replace(sourceID, string.Empty).Trim();
+                var sceneURL = $"{Helper.GetSearchBaseURL(siteNum)}/contents/{sourceID}";
+                var http = await HTTP.Request(sceneURL, cancellationToken);
+                if (http.IsOK)
                 {
-                    var titleNode = doc.SelectSingleNode(@"//h1");
-                    var titleNoFormatting = titleNode?.InnerText.Trim();
+                    var json = JObject.Parse(http.Content);
+                    var titleNoFormatting = Helper.ParseTitle((string)json["scene_name"], siteNum);
                     var curID = Helper.Encode(sceneURL);
-                    var item = new RemoteSearchResult
+                    var releaseDate = (string)json["publish_date"];
+                    result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, curID } },
-                        Name = titleNoFormatting,
+                        Name = $"{titleNoFormatting} [Pornbox] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
-                    };
-                    result.Add(item);
+                    });
+                }
+            }
+
+            var searchURL = Helper.GetSearchSearchURL(siteNum) + searchData;
+            var searchHttp = await HTTP.Request(searchURL, cancellationToken);
+            if (searchHttp.IsOK)
+            {
+                var json = JObject.Parse(searchHttp.Content);
+                foreach (var searchResult in json["content"]["contents"])
+                {
+                    var titleNoFormatting = Helper.ParseTitle((string)searchResult["scene_name"], siteNum);
+                    var match = Regex.Match(titleNoFormatting, @"\w+\d$");
+                    if (match.Success)
+                    {
+                        var matchID = match.Value;
+                        titleNoFormatting = Regex.Replace(titleNoFormatting, @"\w+\d$", string.Empty).Trim();
+                        titleNoFormatting = $"[{matchID}] {titleNoFormatting}";
+                    }
+
+                    var sceneURL = $"{Helper.GetSearchBaseURL(siteNum)}/contents/{(string)searchResult["content_id"]}";
+                    var curID = Helper.Encode(sceneURL);
+                    var releaseDate = (string)searchResult["publish_date"];
+
+                    result.Add(new RemoteSearchResult
+                    {
+                        ProviderIds = { { Plugin.Instance.Name, curID } },
+                        Name = $"{titleNoFormatting} [Pornbox]",
+                        SearchProviderName = Plugin.Instance.Name,
+                    });
                 }
             }
 
@@ -56,48 +90,79 @@ namespace PhoenixAdult.Sites
             };
             var movie = (Movie)result.Item;
             var sceneURL = Helper.Decode(sceneID[0]);
-            var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (doc == null)
+            var http = await HTTP.Request(sceneURL, cancellationToken);
+            if (!http.IsOK)
             {
                 return result;
             }
 
-            movie.Name = doc.SelectSingleNode(@"//h1")?.InnerText.Trim();
-            movie.Overview = doc.SelectSingleNode(@"//p")?.InnerText.Trim();
+            var json = JObject.Parse(http.Content);
+            movie.ExternalId = sceneURL;
+            movie.Name = Helper.ParseTitle((string)json["scene_name"], siteNum);
+            movie.Overview = (string)json["small_description"];
             movie.AddStudio("Pornbox");
 
-            var dateNode = doc.SelectSingleNode(@"//*[@class='date']");
-            if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+            var tagline = Helper.ParseTitle((string)json["studio"], siteNum);
+            movie.AddStudio(tagline);
+
+            if (DateTime.TryParse((string)json["publish_date"], out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            // Actor and Genre logic needs to be manually added for each site
+            foreach (var genre in json["niches"])
+            {
+                movie.AddGenre((string)genre["niche"]);
+            }
+
+            var actors = new List<JToken>();
+            if (json["models"] != null)
+            {
+                actors.AddRange(json["models"]);
+            }
+
+            if (json["male_models"] != null)
+            {
+                actors.AddRange(json["male_models"]);
+            }
+
+            foreach (var actor in actors)
+            {
+                var actorName = (string)actor["model_name"];
+                var actorPageURL = $"{Helper.GetSearchBaseURL(siteNum)}/model/info/{(string)actor["model_id"]}";
+                var actorHttp = await HTTP.Request(actorPageURL, cancellationToken);
+                if (actorHttp.IsOK)
+                {
+                    var actorJson = JObject.Parse(actorHttp.Content);
+                    var actorPhotoURL = (string)actorJson["headshot"];
+                    result.AddPerson(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
+                }
+            }
+
+            if (tagline == "Giorgio Grandi" || tagline.Contains("Giorgio's Lab"))
+            {
+                result.AddPerson(new PersonInfo { Name = "Giorgio Grandi", Type = PersonKind.Director });
+            }
+
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            // Simplified image logic, may need adjustments
             var images = new List<RemoteImageInfo>();
             var sceneURL = Helper.Decode(sceneID[0]);
-            var doc = await HTML.ElementFromURL(sceneURL, cancellationToken);
-            if (doc != null)
+            var http = await HTTP.Request(sceneURL, cancellationToken);
+            if (http.IsOK)
             {
-                var imageNodes = doc.SelectNodes("//img/@src");
-                if (imageNodes != null)
-                {
-                    foreach (var img in imageNodes)
-                    {
-                        var imgUrl = img.GetAttributeValue("src", string.Empty);
-                        if (!imgUrl.StartsWith("http"))
-                        {
-                            imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
-                        }
+                var json = JObject.Parse(http.Content);
+                images.Add(new RemoteImageInfo { Url = (string)json["player_poster"], Type = ImageType.Primary });
 
-                        images.Add(new RemoteImageInfo { Url = imgUrl });
-                    }
+                var screenshots = json["screenshots"].Children().ToList();
+                var step = screenshots.Count > 50 ? 10 : 1;
+                for (var i = 0; i < screenshots.Count; i += step)
+                {
+                    images.Add(new RemoteImageInfo { Url = (string)screenshots[i]["xga_size"], Type = ImageType.Backdrop });
                 }
             }
 

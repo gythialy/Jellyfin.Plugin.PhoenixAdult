@@ -103,7 +103,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("PureCFNM");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             string subSite = Helper.GetSearchSiteName(siteNum).ToLower();
             if (subSite == "amateurcfnm")

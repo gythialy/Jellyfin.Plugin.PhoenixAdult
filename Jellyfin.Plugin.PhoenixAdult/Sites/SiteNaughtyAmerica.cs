@@ -154,7 +154,7 @@ namespace PhoenixAdult.Sites
             movie.Name = details.Title;
             movie.Overview = details.Synopsis;
             movie.AddStudio("Naughty America");
-            movie.AddTag(details.Site);
+            movie.AddStudio(details.Site);
 
             if (details.PublishedAt != default)
             {

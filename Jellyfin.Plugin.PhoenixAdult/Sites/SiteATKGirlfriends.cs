@@ -231,6 +231,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.Decode(providerIds[1]);
             movie.Overview = Helper.Decode(providerIds[2]);
             if (DateTime.TryParse(providerIds[3], out var parsedDate))
@@ -241,7 +242,7 @@ namespace PhoenixAdult.Sites
 
             ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = providerIds[4], Type = PersonKind.Actor });
             movie.AddStudio("ATKingdom");
-            movie.AddTag(Helper.GetSearchSiteName(siteNum));
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
             movie.AddGenre("Girlfriend Experience");
 
             return Task.FromResult(result);

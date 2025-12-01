@@ -87,12 +87,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.AddStudio("Angela White");
             movie.Name = Helper.Decode(providerIds[1]).Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='desc']/p")?.InnerText.Trim();
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var genreNodes = detailsPageElements.SelectSingleNode("//meta[@name='keywords']")?.GetAttributeValue("content", string.Empty).Replace(".", string.Empty).Split(',');
             if (genreNodes != null)

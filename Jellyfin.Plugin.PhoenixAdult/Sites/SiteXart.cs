@@ -154,7 +154,7 @@ namespace PhoenixAdult.Sites
 
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
-
+            movie.ExternalId = sceneURL;
             movie.Name = doc.DocumentNode.SelectSingleNode("//div[@class='row info']//div[contains(@class, 'columns')]")?.InnerText.Trim();
             var summaryNodes = doc.DocumentNode.SelectNodes("//div[contains(@class, 'info')]//p");
             if (summaryNodes != null)

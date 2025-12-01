@@ -83,12 +83,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//div[@class='updateVideoTitle']")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='updateDescription']/b")?.InnerText.Trim();
             movie.AddStudio("Bound Honeys");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             if (!string.IsNullOrEmpty(releaseDate) && DateTime.TryParse(releaseDate, out var parsedDate))
             {

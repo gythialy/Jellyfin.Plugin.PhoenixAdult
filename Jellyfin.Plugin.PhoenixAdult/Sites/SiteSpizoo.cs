@@ -148,10 +148,11 @@ namespace PhoenixAdult.Sites
 
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
-
+            movie.ExternalId = sceneURL;
             movie.Name = doc.DocumentNode.SelectSingleNode(@"//h1")?.InnerText.Trim();
             movie.Overview = doc.DocumentNode.SelectSingleNode(@"//p[@class=""description""] | //p[@class=""description-scene""] | //h2/following-sibling::p")?.InnerText.Trim();
             movie.AddStudio("Spizoo");
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             var dateNode = doc.DocumentNode.SelectSingleNode(@"//p[@class=""date""]");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))

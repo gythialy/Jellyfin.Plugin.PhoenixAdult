@@ -12,6 +12,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
 using MediaBrowser.Model.Entities;
+using PhoenixAdult.Helpers;
 
 #if __EMBY__
 #else
@@ -90,6 +91,7 @@ namespace PhoenixAdult.Sites
                 HasMetadata = true,
             };
 
+            metadataResult.Item.ExternalId = sceneUrl;
             metadataResult.Item.Name = doc.SelectSingleNode("//h1//span[@class='title']").InnerText.Trim();
             var summaryNode = doc.SelectSingleNode("//div[@class='content-information-description']//p");
             if (summaryNode != null)
@@ -98,6 +100,7 @@ namespace PhoenixAdult.Sites
             }
 
             metadataResult.Item.AddStudio(SiteName);
+            metadataResult.Item.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             var tagline = doc.SelectSingleNode("//h1//span[@class='sup-title']//span").InnerText.Trim();
             metadataResult.Item.Tagline = tagline;

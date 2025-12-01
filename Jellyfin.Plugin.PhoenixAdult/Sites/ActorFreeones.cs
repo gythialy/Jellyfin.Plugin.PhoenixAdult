@@ -57,6 +57,7 @@ namespace PhoenixAdult.Sites
             }
 
             Logger.Info($"actorURL: {actorURL}");
+            result.Item.ExternalId = actorURL;
 
             var actorData = await HTML.ElementFromURL(actorURL, cancellationToken).ConfigureAwait(false);
             Logger.Info($"actorData: {actorData}");

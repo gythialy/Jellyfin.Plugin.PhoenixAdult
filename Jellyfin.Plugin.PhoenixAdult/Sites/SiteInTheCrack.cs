@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
 using MediaBrowser.Model.Entities;
+using PhoenixAdult.Helpers;
 
 #if __EMBY__
 #else
@@ -105,7 +106,7 @@ namespace PhoenixAdult.Sites
                 Item = new Movie(),
                 HasMetadata = true,
             };
-
+            metadataResult.Item.ExternalId = sceneUrl;
             metadataResult.Item.Name = doc.SelectSingleNode("//h2//span").InnerText.Trim();
 
             var summaryNode = doc.SelectSingleNode("//p[@id='CollectionDescription']");
@@ -113,6 +114,8 @@ namespace PhoenixAdult.Sites
             {
                 metadataResult.Item.Overview = summaryNode.InnerText.Trim();
             }
+
+            metadataResult.Item.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             metadataResult.Item.OfficialRating = "XXX";
             metadataResult.Item.SetProviderId(Plugin.Instance.Name, sceneUrl);

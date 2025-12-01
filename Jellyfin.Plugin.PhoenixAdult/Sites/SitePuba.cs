@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -21,28 +23,38 @@ namespace PhoenixAdult.Sites
 {
     public class SitePuba : IProviderBase
     {
+        private readonly Dictionary<string, string> _headers = new Dictionary<string, string> { { "Referer", "https://www.puba.com/pornstarnetwork/index.php" } };
+        private readonly Dictionary<string, string> _cookies = new Dictionary<string, string> { { "PHPSESSID", "rvo9ieo5bhoh81knnmu88c3lf3" } };
+
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            // Simplified search logic, may need adjustments
             var result = new List<RemoteSearchResult>();
-            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
-            foreach (var sceneURL in googleResults)
+            var searchResults = new List<string>();
+            var sceneID = searchTitle.Split(' ').First();
+            if (int.TryParse(sceneID, out _))
             {
-                var http = await HTTP.Request(sceneURL, cancellationToken);
+                var directURL = $"{Helper.GetSearchSearchURL(siteNum)}show_video.php?galid={sceneID}";
+                searchResults.Add(directURL);
+            }
+
+            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            searchResults.AddRange(googleResults.Where(url => url.Contains("show_video") && !url.Contains("index") && !searchResults.Contains(url)));
+
+            foreach (var sceneURL in searchResults)
+            {
+                var http = await HTTP.Request(sceneURL, cancellationToken, _headers, _cookies);
                 if (http.IsOK)
                 {
                     var doc = new HtmlDocument();
                     doc.LoadHtml(http.Content);
-                    var titleNode = doc.DocumentNode.SelectSingleNode(@"//div[@id=""body-player-container""]//div//div[@class=""tour-video-title""]");
-                    var titleNoFormatting = titleNode?.InnerText.Trim();
+                    var titleNoFormatting = doc.DocumentNode.SelectSingleNode("//div[@id='body-player-container']//div//div[@class='tour-video-title']").InnerText.Trim();
                     var curID = Helper.Encode(sceneURL);
-                    var item = new RemoteSearchResult
+                    result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, curID } },
-                        Name = titleNoFormatting,
+                        Name = $"[{Helper.GetSearchSiteName(siteNum)}] {titleNoFormatting}",
                         SearchProviderName = Plugin.Instance.Name,
-                    };
-                    result.Add(item);
+                    });
                 }
             }
 
@@ -58,7 +70,7 @@ namespace PhoenixAdult.Sites
             };
             var movie = (Movie)result.Item;
             var sceneURL = Helper.Decode(sceneID[0]);
-            var http = await HTTP.Request(sceneURL, cancellationToken);
+            var http = await HTTP.Request(sceneURL, cancellationToken, _headers, _cookies);
             if (!http.IsOK)
             {
                 return result;
@@ -66,45 +78,41 @@ namespace PhoenixAdult.Sites
 
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
+            movie.ExternalId = sceneURL;
+            movie.Name = doc.DocumentNode.SelectSingleNode("//div[@id='body-player-container']//div//div[@class='tour-video-title']").InnerText.Trim();
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
+            movie.AddCollection(Helper.GetSearchSiteName(siteNum));
 
-            movie.Name = doc.DocumentNode.SelectSingleNode(@"//div[@id=""body-player-container""]//div//div[@class=""tour-video-title""]")?.InnerText.Trim();
-            movie.Overview = doc.DocumentNode.SelectSingleNode(@"//p")?.InnerText.Trim();
-            movie.AddStudio("Unknown");
-
-            var dateNode = doc.DocumentNode.SelectSingleNode(@"//*[@class='date']");
-            if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+            foreach (var genre in doc.DocumentNode.SelectNodes("//center//div//a[contains(@class, 'btn-outline-secondary')]"))
             {
-                movie.PremiereDate = parsedDate;
-                movie.ProductionYear = parsedDate.Year;
+                var genreName = genre.InnerText.Trim();
+                movie.AddGenre(genreName);
             }
 
-            // Actor and Genre logic needs to be manually added for each site
+            foreach (var actor in doc.DocumentNode.SelectNodes("//center//div//a[contains(@class, 'btn-secondary')]"))
+            {
+                var actorName = actor.InnerText.Trim();
+                result.AddPerson(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+            }
+
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            // Simplified image logic, may need adjustments
             var images = new List<RemoteImageInfo>();
             var sceneURL = Helper.Decode(sceneID[0]);
-            var http = await HTTP.Request(sceneURL, cancellationToken);
+            var http = await HTTP.Request(sceneURL, cancellationToken, _headers, _cookies);
             if (http.IsOK)
             {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(http.Content);
-                var imageNodes = doc.DocumentNode.SelectNodes("//img/@src");
-                if (imageNodes != null)
+                var style = doc.DocumentNode.SelectSingleNode("//div[@id='body-player-container']/div/a/img").GetAttributeValue("style", string.Empty);
+                var match = Regex.Match(style, @"url\((.*?)\)");
+                if (match.Success)
                 {
-                    foreach (var img in imageNodes)
-                    {
-                        var imgUrl = img.GetAttributeValue("src", string.Empty);
-                        if (!imgUrl.StartsWith("http"))
-                        {
-                            imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
-                        }
-
-                        images.Add(new RemoteImageInfo { Url = imgUrl });
-                    }
+                    var posterUrl = Helper.GetSearchBaseURL(siteNum) + match.Groups[1].Value;
+                    images.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
                 }
             }
 

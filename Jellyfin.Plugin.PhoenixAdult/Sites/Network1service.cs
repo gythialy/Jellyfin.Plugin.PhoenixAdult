@@ -157,6 +157,12 @@ namespace PhoenixAdult.Sites
                     string siteName = searchResult["brand"].ToString();
                     string subSite = searchResult.SelectToken("collections")?.FirstOrDefault()?.SelectToken("name")?.ToString().Trim() ?? string.Empty;
                     string siteDisplay = !string.IsNullOrEmpty(subSite) ? $"{siteName}/{subSite}" : siteName;
+                    string imageUrl = string.Empty;
+                    var imageToken = searchResult.SelectToken($"images.poster.0");
+                    if (imageToken != null && imageToken.Type != JTokenType.Null)
+                    {
+                        imageUrl = imageToken.SelectToken("xx.url")?.ToString();
+                    }
 
                     if (sceneType == "trailer")
                     {
@@ -168,6 +174,7 @@ namespace PhoenixAdult.Sites
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{sceneType}" } },
                         Name = $"{titleNoFormatting} [{siteDisplay}] {releaseDate:yyyy-MM-dd}",
                         SearchProviderName = Plugin.Instance.Name,
+                        ImageUrl = imageUrl,
                     });
                 }
             }
@@ -204,6 +211,24 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+
+            string domain = new Uri(Helper.GetSearchBaseURL(siteNum)).Host;
+
+            switch (domain)
+            {
+                case "www.brazzers.com":
+                    if (sceneType.Equals("serie", StringComparison.OrdinalIgnoreCase) || sceneType.Equals("scene", StringComparison.OrdinalIgnoreCase))
+                    {
+                        sceneType = "video";
+                    }
+
+                    break;
+            }
+
+            var sceneURL = Helper.GetSearchBaseURL(siteNum) + $"/{sceneType}/{sceneID[0]}/0";
+
+            result.Item.ExternalId = sceneURL;
+
             movie.Name = details["title"].ToString().Replace("ï¿½", "'");
 
             string description = details["description"]?.ToString();

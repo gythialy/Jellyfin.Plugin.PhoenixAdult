@@ -86,6 +86,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
 
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='entry-content']/p[1]") ?? detailsPageElements.SelectSingleNode("//div[@class='entry-content']");
@@ -95,7 +96,6 @@ namespace PhoenixAdult.Sites
             }
 
             movie.AddStudio("Family Therapy");
-            movie.AddTag("Family Therapy");
 
             var genreNodes = detailsPageElements.SelectNodes("//a[@rel='category tag']");
             if (genreNodes != null)

@@ -99,6 +99,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneURL;
             var titleParts = sceneData.SelectSingleNode("//div[contains(@class, 'content-pane-title')]//h2")?.InnerText.Split('-');
             movie.Name = titleParts.Length > 1 ? $"{titleParts[0].Trim()} - {titleParts[1].Trim()}" : titleParts[0].Trim();
 
@@ -116,7 +117,7 @@ namespace PhoenixAdult.Sites
             movie.Overview = description?.Trim();
 
             movie.AddStudio("Nubiles");
-            movie.AddTag(Helper.GetSearchSiteName(siteNum));
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             var sceneDate = sceneData.SelectSingleNode("//div[contains(@class, 'content-pane')]//span[@class='date']")?.InnerText.Trim();
             if (DateTime.TryParse(sceneDate, out var sceneDateObj))

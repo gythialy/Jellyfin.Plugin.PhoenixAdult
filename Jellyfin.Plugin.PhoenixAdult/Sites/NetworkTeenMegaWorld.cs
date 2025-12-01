@@ -88,12 +88,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h1[@id='video-title']")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//p[@class='video-description-text']")?.InnerText.Trim();
             movie.AddStudio("Teen Mega World");
 
             string tagline = detailsPageElements.SelectSingleNode("//a[@class='video-site-link btn btn-ghost btn--rounded']")?.InnerText.Trim();
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//span[@title='Video release date']");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))

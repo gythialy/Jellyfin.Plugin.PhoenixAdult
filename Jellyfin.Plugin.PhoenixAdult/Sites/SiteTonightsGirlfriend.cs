@@ -95,7 +95,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-
+            movie.ExternalId = sceneURL;
             var actorList = new List<string>();
             var actors = detailsPageElements.SelectNodes("//p[@class='grey-performers']//a");
             string sceneInfo = detailsPageElements.SelectSingleNode("//p[@class='grey-performers']")?.InnerText;
@@ -115,7 +115,7 @@ namespace PhoenixAdult.Sites
             movie.Name = string.Join(", ", actorList);
             movie.Overview = detailsPageElements.SelectSingleNode("//p[@class='scene-description']")?.InnerText.Trim();
             movie.AddStudio("Naughty America");
-            movie.AddTag("Tonight's Girlfriend");
+            movie.AddStudio("Tonight's Girlfriend");
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

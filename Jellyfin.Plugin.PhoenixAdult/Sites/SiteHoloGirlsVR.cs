@@ -108,12 +108,10 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//div[@class='col-xs-12 video-title']//h3")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectNodes("//div[@class='col-sm-6 col-md-6 vidpage-info']/text()")?.LastOrDefault()?.InnerText.Trim();
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
-
-            string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

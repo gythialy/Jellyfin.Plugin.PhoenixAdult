@@ -105,6 +105,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneURL;
             movie.Name = (string)videoPageElements["title"]?.ToString().Trim();
             movie.Overview = (string)videoPageElements["description"]?.ToString().Trim();
             movie.AddStudio("ManyVids");

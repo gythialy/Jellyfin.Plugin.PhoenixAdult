@@ -118,7 +118,7 @@ namespace PhoenixAdult.Sites
 
             movie.AddStudio("Puffy Network");
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div/section[2]/dl/dt[2]");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Replace("Released on:", string.Empty), out var parsedDate))

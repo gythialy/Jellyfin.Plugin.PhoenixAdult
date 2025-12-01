@@ -68,6 +68,7 @@ namespace PhoenixAdult.Sites
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [Bellesa/{subSite}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
+                        ImageUrl = scene["image"]?.ToString() ?? string.Empty,
                     });
                 }
             }
@@ -126,7 +127,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("Bellesa");
 
             string tagline = scene["content_provider"][0]["name"].ToString();
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
             movie.AddCollection(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))

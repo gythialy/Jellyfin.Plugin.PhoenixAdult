@@ -145,7 +145,8 @@ namespace PhoenixAdult.Sites
                         var topImageObject = searchResult.SelectToken("pictures.nsfw.top") as JObject;
                         string imageUrl = string.Empty;
 
-                        if (topImageObject != null && topImageObject.Properties().Any()) {
+                        if (topImageObject != null && topImageObject.Properties().Any())
+                        {
                             imageUrl = $"https://images-fame.gammacdn.com/movies/{topImageObject.Properties().First().Value.ToString()}";
                         }
 
@@ -192,21 +193,51 @@ namespace PhoenixAdult.Sites
             Logger.Info($"[NetworkGammaEntOther] content: {detailsPageElements.ToString()}");
 
             var movie = (Movie)result.Item;
+
+            string domain = new Uri(Helper.GetSearchBaseURL(siteNum)).Host,
+                sceneTypeURL = sceneType == "scenes" ? "video" : "movie";
+
+            if (sceneTypeURL.Equals("movie", StringComparison.OrdinalIgnoreCase))
+            {
+                switch (domain)
+                {
+                    case "freetour.adulttime.com":
+                        sceneTypeURL = string.Empty;
+                        break;
+
+                    case "www.burningangel.com":
+                    case "www.devilsfilm.com":
+                    case "www.roccosiffredi.com":
+                    case "www.genderx.com":
+                        sceneTypeURL = "dvd";
+                        break;
+                }
+            }
+
+            var sceneURL = Helper.GetSearchBaseURL(siteNum) + $"/en/{sceneTypeURL}/0/{sceneID[0]}/";
+
+            if (!string.IsNullOrWhiteSpace(sceneTypeURL))
+            {
+                movie.ExternalId = sceneURL;
+            }
+
             movie.Name = Helper.ParseTitle(detailsPageElements["title"].ToString(), siteNum);
             movie.SortName = Helper.ParseTitle(detailsPageElements["title"].ToString(), siteNum);
             movie.OriginalTitle = Helper.ParseTitle(detailsPageElements["title"].ToString(), siteNum);
             movie.Overview = detailsPageElements["description"].ToString().Replace("</br>", "\n").Replace("<br>", "\n");
 
-            var network = string.Empty; 
+            var network = string.Empty;
             if (!string.IsNullOrEmpty(detailsPageElements["network_name"]?.ToString()))
             {
+                Logger.Info($"[NetworkGammaEntOther] network_name: {detailsPageElements["network_name"]?.ToString()}");
                 network = detailsPageElements["network_name"]?.ToString();
                 movie.AddStudio(network);
             }
 
-            var studio = string.Empty; 
+            var studio = string.Empty;
             if (!string.IsNullOrEmpty(detailsPageElements["studio_name"]?.ToString()) && !network.Equals(detailsPageElements["studio_name"]?.ToString()))
             {
+                Logger.Info($"[NetworkGammaEntOther] studio_name: {detailsPageElements["studio_name"]?.ToString()}");
                 studio = detailsPageElements["studio_name"]?.ToString();
                 movie.AddStudio(studio);
             }
@@ -214,15 +245,16 @@ namespace PhoenixAdult.Sites
             var std = Helper.GetSearchSiteName(siteNum);
             if (!std.Equals(network) && !std.Equals(studio))
             {
+                Logger.Info($"[NetworkGammaEntOther] std: {std}");
                 movie.AddStudio(std);
             }
-            
+
             if (DateTime.TryParse(detailsPageElements[sceneType == "scenes" ? "release_date" : "date_created"].ToString(), out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
             }
-            
+
             foreach (var genre in detailsPageElements["categories"])
             {
                 movie.AddGenre(genre["name"]?.ToString());
@@ -252,7 +284,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string[] providerIds = sceneID[0].Split('|');
+            string[] providerIds = Helper.Decode(sceneID[0]).Split('|');
             string sceneId = providerIds[0];
             string sceneType = providerIds[1];
             string apiKey = await GetApiKey(siteNum, cancellationToken);

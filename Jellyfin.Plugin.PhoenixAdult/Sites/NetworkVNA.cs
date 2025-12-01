@@ -112,6 +112,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
+            movie.ExternalId = sceneURL;
             movie.Name = doc.SelectSingleNode("//h1[@class='customhcolor']")?.InnerText.Trim();
             movie.Overview = doc.SelectSingleNode("//*[@class='customhcolor2']")?.InnerText.Trim();
 
@@ -123,7 +124,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("VNA Network");
             var tagline = Helper.GetSearchSiteName(siteNum);
             movie.Tagline = tagline;
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = doc.SelectSingleNode("//*[@class='date']");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))

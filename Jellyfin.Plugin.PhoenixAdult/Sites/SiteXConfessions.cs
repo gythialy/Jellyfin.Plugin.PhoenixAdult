@@ -156,7 +156,7 @@ namespace PhoenixAdult.Sites
                     ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = $"{(string)producer["name"]} {(string)producer["last_name"]}", Type = PersonKind.Producer, ImageUrl = producerPhotoUrl.Split('?')[0] });
 
                     var tagline = Helper.GetSearchSiteName(siteNum);
-                    movie.AddTag(tagline);
+                    movie.AddStudio(tagline);
                     movie.AddCollection(tagline);
 
                     if (DateTime.TryParse((string)detailsPageElements["release_date"], out var releaseDate))

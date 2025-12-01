@@ -97,6 +97,7 @@ namespace PhoenixAdult.Sites
             movie.Name = $"{string.Join(" and ", actors)} from JesseLoadsMonsterFacials.com";
             movie.Overview = summary;
             movie.AddStudio("Jesse Loads Monster Facials");
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

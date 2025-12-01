@@ -99,7 +99,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("Thick Cash");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             string subSite = Helper.GetSearchSiteName(siteNum).ToLower();
             if (subSite == "family lust")

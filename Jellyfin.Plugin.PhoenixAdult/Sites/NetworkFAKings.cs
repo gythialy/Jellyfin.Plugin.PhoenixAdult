@@ -87,12 +87,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim(), siteNum);
             movie.Overview = detailsPageElements.SelectSingleNode("//span[@class='grisoscuro']")?.InnerText.Trim();
             movie.AddStudio("FAKings");
 
             string tagline = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//strong[contains(., 'Serie')]//following-sibling::a")?.InnerText.Trim(), siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

@@ -123,12 +123,13 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneURL;
             movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[contains(@class, 'fs-0')]")?.InnerText.Trim(), siteNum);
             movie.Overview = detailsPageElements.SelectSingleNode("//div[contains(@class, 'description')]/span[contains(@class, 'fw-200')]")?.InnerText.Replace('\n', ' ').Trim();
 
             string channel = detailsPageElements.SelectSingleNode("//div[contains(@class, 'shoot-detail-legend')]//a[contains(@href, '/channel/')]")?.InnerText.Trim().ToLower();
             string tagline = GetTagline(channel) ?? Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
             movie.AddStudio(GetStudio(tagline));
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'shoot-detail-legend')]//span[@class='text-muted ms-2']");

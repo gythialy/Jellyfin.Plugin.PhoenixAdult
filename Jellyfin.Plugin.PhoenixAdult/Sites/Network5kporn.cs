@@ -43,24 +43,33 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var searchResults = JObject.Parse(httpResult.Content)["html"].ToString();
-            if (searchResults == null)
+            var json = JObject.Parse(httpResult.Content);
+            var html = json["html"]?.ToString();
+
+            if (string.IsNullOrEmpty(html))
             {
                 return result;
             }
 
             var doc = new HtmlDocument();
-            doc.LoadHtml(searchResults);
+            doc.LoadHtml(html);
 
-            foreach (var searchResult in doc.DocumentNode.SelectNodes("//div[contains(@class, 'ep-item')]"))
+            var nodes = doc.DocumentNode.SelectNodes("//div[contains(@class, 'epwrap')]");
+            if (nodes == null)
             {
-                var titleNode = searchResult.SelectSingleNode(".//h3[@class='ep-title']");
-                var sceneUrlNode = searchResult.SelectSingleNode(".//a");
+                return result;
+            }
 
+            foreach (var node in nodes)
+            {
+                var titleNode = node.SelectSingleNode(".//h3[contains(@class, 'ep-title')]");
+                var sceneUrlNode = node.SelectSingleNode(".//a");
+                var imageNode = node.SelectSingleNode(".//img[contains(@class, 'stack')]");
                 if (titleNode != null && sceneUrlNode != null)
                 {
                     string titleNoFormatting = titleNode.InnerText.Trim();
                     string sceneUrl = sceneUrlNode.GetAttributeValue("href", string.Empty);
+                    string imageUrl = imageNode?.GetAttributeValue("src", string.Empty);
                     string curId = Helper.Encode(sceneUrl);
                     string releaseDateStr = searchDate?.ToString("yyyy-MM-dd") ?? string.Empty;
 
@@ -69,6 +78,7 @@ namespace PhoenixAdult.Sites
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDateStr}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
                         SearchProviderName = Plugin.Instance.Name,
+                        ImageUrl = imageUrl,
                     };
                     result.Add(item);
                 }
@@ -96,6 +106,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
 
             var titleNode = detailsPageElements.SelectSingleNode("//title");
             if (titleNode != null)
@@ -121,7 +132,7 @@ namespace PhoenixAdult.Sites
                 tagline = Helper.GetSearchSiteName(siteNum);
             }
 
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//h5[contains(., 'Published')]");
             if (dateNode != null)

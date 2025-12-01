@@ -84,12 +84,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = JObject.Parse(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements["name"].ToString();
             movie.Overview = detailsPageElements["description"].ToString();
             movie.AddStudio("MetArt");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             if (DateTime.TryParse(detailsPageElements["publishedAt"].ToString(), out var parsedDate))
             {

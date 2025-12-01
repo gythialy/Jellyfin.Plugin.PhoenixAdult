@@ -75,6 +75,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             string title = detailsPageElements.SelectSingleNode("//title")?.InnerText.Trim();
             if (title?.Contains("|") == true)
             {
@@ -86,7 +87,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("Fitting-Room");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var collectionNode = detailsPageElements.SelectSingleNode("//div[@id='list_videos_related_videos_items']/div[1]/div[2]/a");
             string collection = collectionNode?.InnerText.Trim();

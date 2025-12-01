@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -23,27 +24,24 @@ namespace PhoenixAdult.Sites
     {
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            // Simplified search logic, may need adjustments
             var result = new List<RemoteSearchResult>();
-            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
-            foreach (var sceneURL in googleResults)
+            var sceneID = searchTitle.Split(' ')[0];
+            var sceneURL = Helper.GetSearchSearchURL(siteNum) + sceneID;
+            var http = await HTTP.Request(sceneURL, cancellationToken);
+            if (http.IsOK)
             {
-                var http = await HTTP.Request(sceneURL, cancellationToken);
-                if (http.IsOK)
+                var doc = new HtmlDocument();
+                doc.LoadHtml(http.Content);
+                var titleNode = doc.DocumentNode.SelectSingleNode("//title");
+                var titleNoFormatting = Regex.Replace(titleNode.InnerText.Split(new[] { " - Sex Movies Featuring Melena Maria Rya" }, StringSplitOptions.None)[0], @"[^A-Za-z0-9\s-]+", " ").Trim();
+                var curID = Helper.Encode(sceneURL);
+
+                result.Add(new RemoteSearchResult
                 {
-                    var doc = new HtmlDocument();
-                    doc.LoadHtml(http.Content);
-                    var titleNode = doc.DocumentNode.SelectSingleNode(@"//title");
-                    var titleNoFormatting = titleNode?.InnerText.Trim();
-                    var curID = Helper.Encode(sceneURL);
-                    var item = new RemoteSearchResult
-                    {
-                        ProviderIds = { { Plugin.Instance.Name, curID } },
-                        Name = titleNoFormatting,
-                        SearchProviderName = Plugin.Instance.Name,
-                    };
-                    result.Add(item);
-                }
+                    ProviderIds = { { Plugin.Instance.Name, curID } },
+                    Name = $"{titleNoFormatting} [MelenaMariaRya]",
+                    SearchProviderName = Plugin.Instance.Name,
+                });
             }
 
             return result;
@@ -66,49 +64,30 @@ namespace PhoenixAdult.Sites
 
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
-
-            movie.Name = doc.DocumentNode.SelectSingleNode(@"//title")?.InnerText.Trim();
-            movie.Overview = doc.DocumentNode.SelectSingleNode(@"//meta[@name=""description""]/@content")?.InnerText.Trim();
+            movie.ExternalId = sceneURL;
+            var title = doc.DocumentNode.SelectSingleNode("//title").InnerText.Split(new[] { " - Sex Movies Featuring Melena Maria Rya" }, StringSplitOptions.None)[0];
+            title = Regex.Replace(title, @"[^A-Za-z0-9\s-]", " ").Trim();
+            title = Regex.Replace(title, @"\s+4\s*K(?:\s+Video)?$", string.Empty, RegexOptions.IgnoreCase);
+            movie.Name = title;
+            movie.Overview = doc.DocumentNode.SelectSingleNode("//meta[@name='description']").GetAttributeValue("content", string.Empty).Trim();
             movie.AddStudio("Melena Maria Rya");
+            movie.AddCollection("Melena Maria Rya");
+            movie.AddGenre("European");
+            result.AddPerson(new PersonInfo { Name = "Melena Maria Rya", Type = PersonKind.Actor });
 
-            var dateNode = doc.DocumentNode.SelectSingleNode(@"//*[@class='date']");
-            if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+            var match = Regex.Match(title, @" with ([A-Z][a-z]+ [A-Z][a-z]+)$", RegexOptions.IgnoreCase);
+            if (match.Success)
             {
-                movie.PremiereDate = parsedDate;
-                movie.ProductionYear = parsedDate.Year;
+                result.AddPerson(new PersonInfo { Name = match.Groups[1].Value, Type = PersonKind.Actor });
             }
 
-            // Actor and Genre logic needs to be manually added for each site
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            // Simplified image logic, may need adjustments
-            var images = new List<RemoteImageInfo>();
-            var sceneURL = Helper.Decode(sceneID[0]);
-            var http = await HTTP.Request(sceneURL, cancellationToken);
-            if (http.IsOK)
-            {
-                var doc = new HtmlDocument();
-                doc.LoadHtml(http.Content);
-                var imageNodes = doc.DocumentNode.SelectNodes("//img/@src");
-                if (imageNodes != null)
-                {
-                    foreach (var img in imageNodes)
-                    {
-                        var imgUrl = img.GetAttributeValue("src", string.Empty);
-                        if (!imgUrl.StartsWith("http"))
-                        {
-                            imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
-                        }
-
-                        images.Add(new RemoteImageInfo { Url = imgUrl });
-                    }
-                }
-            }
-
-            return images;
+            // No images available on the site
+            return await Task.FromResult(new List<RemoteImageInfo>());
         }
     }
 }

@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -23,26 +26,67 @@ namespace PhoenixAdult.Sites
     {
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            // Simplified search logic, may need adjustments
             var result = new List<RemoteSearchResult>();
-            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
-            foreach (var sceneURL in googleResults)
+            var sceneID = Regex.Match(searchTitle, @"^\d+").Value;
+            var searchTitleNoID = string.IsNullOrEmpty(sceneID) ? searchTitle : searchTitle.Replace(sceneID, string.Empty).Trim();
+
+            if (!string.IsNullOrEmpty(sceneID) && string.IsNullOrEmpty(searchTitleNoID))
             {
-                var http = await HTTP.Request(sceneURL, cancellationToken);
+                var sceneURL = $"{Helper.GetSearchBaseURL(siteNum)}/{sceneID}";
+                var http = await HTTP.Request(sceneURL, cancellationToken, new Dictionary<string, string> { { "sst", "ulang-en" } });
                 if (http.IsOK)
                 {
                     var doc = new HtmlDocument();
                     doc.LoadHtml(http.Content);
-                    var titleNode = doc.DocumentNode.SelectSingleNode(@"//h1[@class=""detail__title""]");
-                    var titleNoFormatting = titleNode?.InnerText.Trim();
+
+                    var titleNoFormatting = doc.DocumentNode.SelectSingleNode("//h1[@class='detail__title']").InnerText;
                     var curID = Helper.Encode(sceneURL);
-                    var item = new RemoteSearchResult
+
+                    var dateNode = doc.DocumentNode.SelectSingleNode("//span[@class='detail__date']");
+                    var releaseDate = string.Empty;
+                    if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+                    {
+                        releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    }
+
+                    result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, curID } },
-                        Name = titleNoFormatting,
+                        Name = $"[{Helper.GetSearchSiteName(siteNum)}] {titleNoFormatting} {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
-                    };
-                    result.Add(item);
+                    });
+                }
+            }
+            else
+            {
+                var searchURL = Helper.GetSearchSearchURL(siteNum) + searchTitle.Replace(" ", "+");
+                var http = await HTTP.Request(searchURL, cancellationToken, new Dictionary<string, string> { { "sst", "ulang-en" } });
+                if (http.IsOK)
+                {
+                    var doc = new HtmlDocument();
+                    doc.LoadHtml(http.Content);
+                    foreach (var searchResult in doc.DocumentNode.SelectNodes("//ul[@class='cards-list']//li"))
+                    {
+                        var titleNoFormatting = searchResult.SelectSingleNode(".//div[@class='card__footer']//div[@class='card__h']").InnerText;
+                        var sceneURL = searchResult.SelectSingleNode(".//a").GetAttributeValue("href", string.Empty);
+                        var curID = Helper.Encode(sceneURL);
+                        var releaseDate = string.Empty;
+                        var dateNode = searchResult.SelectSingleNode(".//div[@class='card__date']");
+                        if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+                        {
+                            releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                        }
+
+                        var image = searchResult.SelectSingleNode(".//source").GetAttributeValue("srcset", string.Empty).Replace(".webp", ".jpg");
+
+                        result.Add(new RemoteSearchResult
+                        {
+                            ProviderIds = { { Plugin.Instance.Name, curID } },
+                            Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
+                            SearchProviderName = Plugin.Instance.Name,
+                            ImageUrl = image,
+                        });
+                    }
                 }
             }
 
@@ -66,45 +110,84 @@ namespace PhoenixAdult.Sites
 
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
+            movie.ExternalId = sceneURL;
+            movie.Name = doc.DocumentNode.SelectSingleNode("//h1[@class='detail__title']").InnerText;
+            movie.Overview = doc.DocumentNode.SelectSingleNode("//div[contains(@class, 'detail__txt')]").InnerText.Trim();
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
+            movie.AddCollection(Helper.GetSearchSiteName(siteNum));
 
-            movie.Name = doc.DocumentNode.SelectSingleNode(@"//h1[@class=""detail__title""]")?.InnerText.Trim();
-            movie.Overview = doc.DocumentNode.SelectSingleNode(@"//div[contains(@class, ""detail__txt"")]")?.InnerText.Trim();
-            movie.AddStudio("Unknown");
-
-            var dateNode = doc.DocumentNode.SelectSingleNode(@"//span[@class=""detail__date""]");
+            var dateNode = doc.DocumentNode.SelectSingleNode("//span[@class='detail__date']");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            // Actor and Genre logic needs to be manually added for each site
+            foreach (var genreLink in doc.DocumentNode.SelectNodes("//div[contains(@class, 'tag-list')]//a"))
+            {
+                var genreName = genreLink.InnerText.Trim();
+                movie.AddGenre(genreName);
+            }
+
+            foreach (var actorLink in doc.DocumentNode.SelectNodes("//div[@class='detail__models']//a"))
+            {
+                var actorName = actorLink.InnerText.Trim();
+                var actorPageURL = Helper.GetSearchBaseURL(siteNum) + actorLink.GetAttributeValue("href", string.Empty);
+                var actorHttp = await HTTP.Request(actorPageURL, cancellationToken);
+                var actorPhotoURL = string.Empty;
+                if (actorHttp.IsOK)
+                {
+                    var actorDoc = new HtmlDocument();
+                    actorDoc.LoadHtml(actorHttp.Content);
+                    var actorPhotoNodes = actorDoc.DocumentNode.SelectNodes("//div[@class='person__avatar']//source/@srcset");
+                    if (actorPhotoNodes != null && actorPhotoNodes.Count > 1)
+                    {
+                        actorPhotoURL = actorPhotoNodes[1].GetAttributeValue("srcset", string.Empty).Replace(".webp", ".jpg");
+                    }
+                }
+
+                result.AddPerson(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
+            }
+
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            // Simplified image logic, may need adjustments
             var images = new List<RemoteImageInfo>();
-            var providerIds = sceneID[0].Split('|');
-            var sceneURL = Helper.Decode(providerIds[0]);
+            var sceneURL = Helper.Decode(sceneID[0]);
             var http = await HTTP.Request(sceneURL, cancellationToken);
             if (http.IsOK)
             {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(http.Content);
-                var imageNodes = doc.DocumentNode.SelectNodes("//img/@src");
-                if (imageNodes != null)
+                var posterNode = doc.DocumentNode.SelectSingleNode("//meta[@property='og:image']");
+                if (posterNode != null)
                 {
-                    foreach (var img in imageNodes)
+                    var posterUrl = posterNode.GetAttributeValue("content", string.Empty).Replace("cover", "hero").Replace("medium.jpg", "large.jpg");
+                    if (!string.IsNullOrEmpty(posterUrl))
                     {
-                        var imgUrl = img.GetAttributeValue("src", string.Empty);
-                        if (!imgUrl.StartsWith("http"))
-                        {
-                            imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
-                        }
+                        images.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
+                    }
+                }
 
-                        images.Add(new RemoteImageInfo { Url = imgUrl });
+                foreach (var actorLink in doc.DocumentNode.SelectNodes("//div[@class='detail__models']//a"))
+                {
+                    var actorPageURL = Helper.GetSearchBaseURL(siteNum) + actorLink.GetAttributeValue("href", string.Empty);
+                    var actorHttp = await HTTP.Request(actorPageURL, cancellationToken);
+                    if (actorHttp.IsOK)
+                    {
+                        var actorDoc = new HtmlDocument();
+                        actorDoc.LoadHtml(actorHttp.Content);
+                        var actorPhotoNodes = actorDoc.DocumentNode.SelectNodes("//div[@class='person__avatar']//source/@srcset");
+                        if (actorPhotoNodes != null && actorPhotoNodes.Count > 1)
+                        {
+                            var actorPhotoURL = actorPhotoNodes[1].GetAttributeValue("srcset", string.Empty).Replace(".webp", ".jpg");
+                            if (!string.IsNullOrEmpty(actorPhotoURL))
+                            {
+                                images.Add(new RemoteImageInfo { Url = actorPhotoURL, Type = ImageType.Backdrop });
+                            }
+                        }
                     }
                 }
             }

@@ -52,6 +52,10 @@ namespace PhoenixAdult.Sites
                     dateNode = doc.DocumentNode.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Date:')]")?.ParentNode.InnerText.Replace("Date:", string.Empty).Trim();
                 }
 
+                var videoPoster = siteNum[0] == 50
+                    ? doc.DocumentNode.SelectSingleNode("//img[contains(@id,'set-target')]")?.GetAttributeValue("src0_3x", string.Empty)
+                    : doc.DocumentNode.SelectSingleNode("//video[@id='video-player']")?.GetAttributeValue("poster", string.Empty);
+
                 string curID = Helper.Encode(url);
                 string releaseDate = DateTime.TryParseExact(dateNode, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate) ? parsedDate.ToString("yyyy-MM-dd") : string.Empty;
                 result.Add(new RemoteSearchResult
@@ -59,6 +63,7 @@ namespace PhoenixAdult.Sites
                     ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } },
                     Name = $"{title} ({dateNode}) [{Helper.GetSearchSiteName(siteNum)}]",
                     SearchProviderName = Plugin.Instance.Name,
+                    ImageUrl = videoPoster,
                 });
             }
 
@@ -110,6 +115,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneURL;
             string dvdName = null;
             if (siteNum[0] == 50)
             {

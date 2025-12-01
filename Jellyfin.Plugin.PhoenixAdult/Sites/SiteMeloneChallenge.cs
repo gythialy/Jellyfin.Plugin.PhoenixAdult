@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -23,26 +24,27 @@ namespace PhoenixAdult.Sites
     {
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            // Simplified search logic, may need adjustments
             var result = new List<RemoteSearchResult>();
             var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
-            foreach (var sceneURL in googleResults)
+            var searchResults = googleResults.Where(url => url.Contains("/video/")).ToList();
+
+            foreach (var sceneURL in searchResults)
             {
                 var http = await HTTP.Request(sceneURL, cancellationToken);
                 if (http.IsOK)
                 {
                     var doc = new HtmlDocument();
                     doc.LoadHtml(http.Content);
-                    var titleNode = doc.DocumentNode.SelectSingleNode(@".//a[@class=""dark""]");
+                    var titleNode = doc.DocumentNode.SelectSingleNode(".//a[@class='dark']");
                     var titleNoFormatting = titleNode?.InnerText.Trim();
                     var curID = Helper.Encode(sceneURL);
-                    var item = new RemoteSearchResult
+
+                    result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, curID } },
-                        Name = titleNoFormatting,
+                        Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
                         SearchProviderName = Plugin.Instance.Name,
-                    };
-                    result.Add(item);
+                    });
                 }
             }
 
@@ -66,25 +68,16 @@ namespace PhoenixAdult.Sites
 
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
-
-            movie.Name = doc.DocumentNode.SelectSingleNode(@".//a[@class=""dark""]")?.InnerText.Trim();
-            movie.Overview = doc.DocumentNode.SelectSingleNode(@"//p")?.InnerText.Trim();
+            movie.ExternalId = sceneURL;
+            movie.Name = doc.DocumentNode.SelectSingleNode(".//a[@class='dark']").InnerText.Trim();
             movie.AddStudio("Melone Challenge");
+            movie.AddCollection("Melone Challenge");
 
-            var dateNode = doc.DocumentNode.SelectSingleNode(@"//*[@class='date']");
-            if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
-            {
-                movie.PremiereDate = parsedDate;
-                movie.ProductionYear = parsedDate.Year;
-            }
-
-            // Actor and Genre logic needs to be manually added for each site
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            // Simplified image logic, may need adjustments
             var images = new List<RemoteImageInfo>();
             var sceneURL = Helper.Decode(sceneID[0]);
             var http = await HTTP.Request(sceneURL, cancellationToken);
@@ -92,18 +85,13 @@ namespace PhoenixAdult.Sites
             {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(http.Content);
-                var imageNodes = doc.DocumentNode.SelectNodes("//img/@src");
-                if (imageNodes != null)
+                var imageNode = doc.DocumentNode.SelectSingleNode(".//figure/img");
+                if (imageNode != null)
                 {
-                    foreach (var img in imageNodes)
+                    var imgUrl = imageNode.GetAttributeValue("src", string.Empty);
+                    if (!string.IsNullOrEmpty(imgUrl))
                     {
-                        var imgUrl = img.GetAttributeValue("src", string.Empty);
-                        if (!imgUrl.StartsWith("http"))
-                        {
-                            imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
-                        }
-
-                        images.Add(new RemoteImageInfo { Url = imgUrl });
+                        images.Add(new RemoteImageInfo { Url = imgUrl, Type = ImageType.Primary });
                     }
                 }
             }

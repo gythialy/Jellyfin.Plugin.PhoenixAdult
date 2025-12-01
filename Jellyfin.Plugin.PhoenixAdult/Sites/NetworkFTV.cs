@@ -103,13 +103,14 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             var titleDate = detailsPageElements.SelectSingleNode("//title")?.InnerText.Split(new[] { "Released" }, StringSplitOptions.None);
             movie.Name = titleDate[0].Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@id='Bio']")?.InnerText.Trim();
             movie.AddStudio("First Time Videos");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             if (DateTime.TryParse(titleDate.Last().Replace("!", string.Empty).Trim(), out var parsedDate))
             {

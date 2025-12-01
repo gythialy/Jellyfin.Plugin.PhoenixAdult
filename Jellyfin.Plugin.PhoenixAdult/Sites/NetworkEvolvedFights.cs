@@ -84,9 +84,11 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//title")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//span[(contains(@class, 'latest_update_description'))]")?.InnerText.Trim();
             movie.AddStudio("Evolved Fights Network");
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             var dateNode = detailsPageElements.SelectSingleNode("//span[@class='update_date']");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))

@@ -123,6 +123,7 @@ namespace PhoenixAdult.Sites
             var content = siteNum[1] == 13 ? videoPageElements["props"]["pageProps"]["content"] : video;
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.ParseTitle(video["title"].ToString(), siteNum);
             movie.Overview = video["description"].ToString();
             if (!movie.Overview.EndsWith("."))
@@ -146,7 +147,7 @@ namespace PhoenixAdult.Sites
             string tagline = (siteNum[1] == 13 ? content["site"] : video["site"]).ToString();
             if (!movie.Studios.Contains(tagline))
             {
-                movie.AddTag(tagline);
+                movie.AddStudio(tagline);
             }
 
             if (DateTime.TryParse(video["publish_date"].ToString(), out var parsedDate))

@@ -104,6 +104,7 @@ namespace PhoenixAdult.Sites
             string title = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[contains(@class, 'title')]")?.InnerText.Trim(), siteNum);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             HtmlNodeCollection actorNodes;
             try
             {
@@ -133,7 +134,7 @@ namespace PhoenixAdult.Sites
                 tagline = Helper.GetSearchSiteName(siteNum);
             }
 
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
             movie.AddCollection(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//li[.//i[@class='fas fa-calendar']]");

@@ -132,6 +132,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneURL;
             movie.Name = detailsPageElementsDirect.SelectSingleNode("//h1")?.InnerText.Trim();
 
             try
@@ -144,7 +145,6 @@ namespace PhoenixAdult.Sites
             }
 
             movie.AddStudio("Family Therapy");
-            movie.AddTag("Family Therapy");
 
             var genreNodes = detailsPageElementsDirect.SelectNodes("//a[@rel='category tag']");
             if (genreNodes != null)

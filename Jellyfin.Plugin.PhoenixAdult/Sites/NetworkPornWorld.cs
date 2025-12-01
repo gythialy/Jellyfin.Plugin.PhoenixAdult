@@ -142,6 +142,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = GetTitle(detailsPageElements, siteNum);
 
             var descriptionNode = detailsPageElements.SelectSingleNode("//div[text()='Description:']/following-sibling::div");
@@ -152,7 +153,7 @@ namespace PhoenixAdult.Sites
 
             movie.AddStudio("PornWorld");
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//i[contains(@class, 'bi-calendar')]");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))

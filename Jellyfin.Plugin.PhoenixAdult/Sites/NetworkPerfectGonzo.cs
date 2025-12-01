@@ -131,12 +131,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h2")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='col-sm-8 col-md-8 no-padding-side']/p")?.InnerText.Trim();
             movie.AddStudio("Perfect Gonzo");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='col-sm-6 col-md-6 no-padding-left no-padding-right text-right']/span");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Replace("Added", string.Empty).Trim(), out var parsedDate))

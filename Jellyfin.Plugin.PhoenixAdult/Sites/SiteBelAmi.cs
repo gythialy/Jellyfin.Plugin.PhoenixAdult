@@ -77,7 +77,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("Bel Ami Online");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             if (DateTime.TryParse(sceneInfo.releaseDate, out var parsedDate))
             {

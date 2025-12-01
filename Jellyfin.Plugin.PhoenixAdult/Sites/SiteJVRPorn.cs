@@ -92,9 +92,11 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//pre")?.InnerText.Trim();
             movie.AddStudio("JVR Porn");
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

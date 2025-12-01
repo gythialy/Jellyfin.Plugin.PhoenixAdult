@@ -124,6 +124,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneURL;
             string javStudio = detailsPageElements.SelectSingleNode("//p/a[contains(@href, '/studio/')]")?.InnerText.Trim();
             string javTitle = detailsPageElements.SelectSingleNode("//head/title")?.InnerText.Trim().Replace(" - JavBus", string.Empty);
             movie.Name = javTitle;
@@ -133,16 +134,16 @@ namespace PhoenixAdult.Sites
             string series = detailsPageElements.SelectSingleNode("//p/a[contains(@href, '/series/')]")?.InnerText.Trim();
             if (!string.IsNullOrEmpty(label))
             {
-                movie.AddTag(label);
+                movie.AddStudio(label);
             }
             else
             {
-                movie.AddTag(javStudio);
+                movie.AddStudio(javStudio);
             }
 
             if (!string.IsNullOrEmpty(series))
             {
-                movie.AddTag(series);
+                movie.AddStudio(series);
             }
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='col-md-3 info']/p[2]");

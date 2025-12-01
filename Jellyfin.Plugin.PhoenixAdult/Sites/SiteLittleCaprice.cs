@@ -88,7 +88,9 @@ namespace PhoenixAdult.Sites
                 HasMetadata = true,
             };
 
+            metadataResult.Item.ExternalId = sceneUrl;
             metadataResult.Item.AddStudio(SiteName);
+            metadataResult.Item.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             var summaryNode = detailsDoc.DocumentNode.SelectSingleNode("//div[@class='desc-text']");
             if (summaryNode != null)

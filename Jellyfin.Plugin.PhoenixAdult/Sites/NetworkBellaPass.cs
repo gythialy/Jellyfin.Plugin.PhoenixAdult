@@ -130,6 +130,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             var siteNumVal = int.Parse(providerIds[1]);
             if (siteNumVal == 1246 || siteNumVal == 1553)
             {
@@ -155,7 +156,7 @@ namespace PhoenixAdult.Sites
             else
             {
                 movie.AddStudio("BellaPass");
-                movie.AddTag(siteName);
+                movie.AddStudio(siteName);
                 movie.AddCollection(siteName);
             }
 

@@ -132,6 +132,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             string resultTitleId;
             if (sceneUrl.Contains("webmasters"))
             {

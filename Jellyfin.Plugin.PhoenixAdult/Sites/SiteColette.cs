@@ -98,12 +98,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//div[@class='row info']/div/h1")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectNodes("//div[contains(@class, 'info')]/p").LastOrDefault()?.InnerText.Trim();
             movie.AddStudio("Colette");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

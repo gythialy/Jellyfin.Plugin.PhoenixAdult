@@ -134,6 +134,7 @@ namespace PhoenixAdult.Sites
             var siteXPath = xPathMap[siteName];
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
             var summaryNode = detailsPageElements.SelectSingleNode(siteXPath["summary"]);
             if (summaryNode != null)
@@ -155,7 +156,7 @@ namespace PhoenixAdult.Sites
                     tagline = tagline.Split('-')[0].Trim();
                 }
 
-                movie.AddTag(tagline);
+                movie.AddStudio(tagline);
             }
 
             var dateNode = detailsPageElements.SelectSingleNode(siteXPath["date"]);

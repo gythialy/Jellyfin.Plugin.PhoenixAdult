@@ -102,12 +102,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[contains(@class, 'content-title')]").InnerText.Trim(), siteNum);
             movie.Overview = detailsPageElements.SelectNodes("//div[contains(@class, 'content-desc')]")[1].InnerText.Trim();
             movie.AddStudio("Caramel Cash");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
             movie.AddCollection(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'content-date')]");

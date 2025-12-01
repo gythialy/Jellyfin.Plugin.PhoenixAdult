@@ -110,6 +110,7 @@ namespace PhoenixAdult.Sites
 
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
+            movie.ExternalId = sceneURL;
             movie.Name = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(doc.DocumentNode.SelectSingleNode("//h1//span").InnerText.Trim()).Replace("Xxx", "XXX");
             movie.AddStudio("Wicked Pictures");
             var dateNode = doc.DocumentNode.SelectSingleNode("//li[@class='updatedOn'] | //li[@class='updatedDate']");

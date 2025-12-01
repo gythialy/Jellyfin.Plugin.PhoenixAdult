@@ -92,12 +92,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//span[@itemprop='name']")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//p[@itemprop='description']")?.InnerText.Trim();
             movie.AddStudio("Finishes The Job");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

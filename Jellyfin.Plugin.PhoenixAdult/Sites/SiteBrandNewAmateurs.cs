@@ -64,6 +64,7 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             var providerIds = sceneID[0].Split('|');
             var sceneURL = Helper.Decode(providerIds[0]);
+            movie.ExternalId = sceneURL;
             var actorURL = Helper.Decode(providerIds[2]);
 
             if (!sceneURL.StartsWith("http"))
@@ -88,7 +89,6 @@ namespace PhoenixAdult.Sites
             }
 
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
-            movie.AddTag(Helper.GetSearchSiteName(siteNum));
 
             foreach (var genreLink in doc.DocumentNode.SelectNodes("//ul[./li[contains(., 'Tags:')]]//a"))
             {

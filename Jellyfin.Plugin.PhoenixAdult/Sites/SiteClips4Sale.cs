@@ -162,6 +162,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneURL;
             movie.Name = GetCleanTitle(detailsPageElements["title"]?.ToString());
 
             string summary = HTML.StripHtml(detailsPageElements["description"]?.ToString() ?? string.Empty);
@@ -171,7 +172,7 @@ namespace PhoenixAdult.Sites
 
             movie.AddStudio("Clips4Sale");
             string tagline = detailsPageElements["studioTitle"]?.ToString();
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             string date = detailsPageElements["dateDisplay"]?.ToString();
             if (!string.IsNullOrEmpty(date) && DateTime.TryParseExact(date.Split(' ')[0].Trim(), "MM/dd/yy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))

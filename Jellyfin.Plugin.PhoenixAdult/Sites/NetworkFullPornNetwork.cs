@@ -68,11 +68,23 @@ namespace PhoenixAdult.Sites
                         releaseDate = searchDate.Value.ToString("yyyy-MM-dd");
                     }
 
+                    var imageUrl = string.Empty;
+                    var posterNode = detailsPageElements.SelectSingleNode("//video");
+                    if (posterNode != null)
+                    {
+                        imageUrl = posterNode.GetAttributeValue("poster", string.Empty);
+                        if (!imageUrl.StartsWith("http"))
+                        {
+                            imageUrl = Helper.GetSearchBaseURL(siteNum) + imageUrl;
+                        }
+                    }
+
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [FPN/{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
+                        ImageUrl = imageUrl,
                     });
                 }
             }
@@ -135,6 +147,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[contains(@class, 'title_bar')]")?.InnerText.Split(':').Last().Trim(), siteNum);
             movie.Overview = detailsPageElements.SelectSingleNode("//div[contains(@class, 'video-description')]/p[@class='description-text']")?.InnerText.Trim();
             movie.AddStudio("Full Porn Network");

@@ -68,12 +68,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.Decode(providerIds[1]);
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='container text-center']//h2")?.InnerText.Trim();
             movie.AddStudio("Cumbizz");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var genreNodes = detailsPageElements.SelectNodes("//span[@class='label label-primary']/a");
             if (genreNodes != null)

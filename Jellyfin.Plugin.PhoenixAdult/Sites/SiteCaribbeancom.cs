@@ -70,9 +70,10 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//title").InnerText;
             movie.AddStudio("caribbeancom");
-            movie.AddTag("caribbeancom");
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             var dateNode = detailsPageElements.SelectSingleNode("//span[@itemprop='uploadDate']");
             if (dateNode != null && DateTime.TryParseExact(dateNode.InnerText, "yyyy/MM/dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))

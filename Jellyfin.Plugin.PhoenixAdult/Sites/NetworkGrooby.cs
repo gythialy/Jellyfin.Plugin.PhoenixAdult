@@ -79,12 +79,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//div[@class='trailer_videoinfo']//h3 | //div[@class='trailer_toptitle_left']")?.InnerText.Trim(), siteNum);
             movie.Overview = detailsPageElements.SelectSingleNode("//div[@class='trailer_videoinfo']//p | //div[@class='trailerpage_info']/p[not(@class)]")?.InnerText;
             movie.AddStudio("Grooby");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='setdesc']/*[contains(., 'Added')] | //div[@class='trailer_videoinfo']/*[contains(., 'Added')]");
             if (dateNode != null && DateTime.TryParse(dateNode.NextSibling.InnerText.Split('-').Last().Trim(), out var parsedDate))

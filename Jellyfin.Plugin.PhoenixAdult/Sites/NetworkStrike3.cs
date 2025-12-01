@@ -129,12 +129,11 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-
+            movie.ExternalId = sceneURL;
             Logger.Info("[NetworkStrike3] Parsing basic info (Name, Overview, Studio).");
             movie.Name = (string)video["title"];
             movie.Overview = (string)video["description"];
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
-            movie.AddTag(Helper.GetSearchSiteName(siteNum));
 
             if (DateTime.TryParse((string)video["releaseDate"], out var releaseDate))
             {

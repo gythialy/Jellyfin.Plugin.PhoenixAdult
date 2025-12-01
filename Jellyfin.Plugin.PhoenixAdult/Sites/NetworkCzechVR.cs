@@ -95,6 +95,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//head/title")?.InnerText
                 .Replace("Czech VR Network", string.Empty).Replace(" - Czech VR Fetish Porn Videos", string.Empty).Replace("Czech VR Fetish", string.Empty).Replace("Czech VR Casting", string.Empty).Replace("Czech VR", string.Empty).Trim();
 
@@ -106,7 +107,7 @@ namespace PhoenixAdult.Sites
 
             movie.AddStudio("CzechVR");
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
             movie.AddCollection(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'nazev')]//div[@class='datum']");

@@ -127,6 +127,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h3")?.InnerText.Trim(), siteNum);
             movie.Overview = string.Join(" ", detailsPageElements.SelectNodes("//div[@class='videoDetails clear']//p/span//text()")?.Select(t => t.InnerText) ?? new string[0]).Replace("FULL VIDEO", string.Empty);
 

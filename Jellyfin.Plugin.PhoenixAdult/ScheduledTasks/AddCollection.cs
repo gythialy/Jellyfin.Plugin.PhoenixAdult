@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Collections;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
@@ -42,7 +43,7 @@ namespace PhoenixAdult.ScheduledTasks
             await Task.Yield();
             progress?.Report(0);
 
-            var items = this.libraryManager.GetItemList(new InternalItemsQuery()).Where(o => o.ProviderIds.ContainsKey(Plugin.Instance.Name));
+            var items = this.libraryManager.GetItemList(new InternalItemsQuery() { IncludeItemTypes = new[] { BaseItemKind.Movie } }).Where(o => o.ProviderIds.ContainsKey(Plugin.Instance.Name));
 
             var studios = items.SelectMany(o => o.Studios).Distinct().ToList();
             Logger.Info($"[AddCollection] studios: {JsonSerializer.Serialize(studios)}");

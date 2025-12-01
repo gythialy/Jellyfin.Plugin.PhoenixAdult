@@ -83,10 +83,11 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneURL;
             movie.Name = sceneData.SelectSingleNode("//h1")?.InnerText.Trim();
             movie.Overview = sceneData.SelectSingleNode("//div[@class='heading-detail']/p[2]")?.InnerText.Trim();
             movie.AddStudio("PornCZ");
-            movie.AddTag(Helper.GetSearchSiteName(siteNum));
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             var dateNode = sceneData.SelectSingleNode("//meta[@property='video:release_date']");
             if (dateNode != null && DateTime.TryParseExact(dateNode.GetAttributeValue("content", string.Empty).Trim(), "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))

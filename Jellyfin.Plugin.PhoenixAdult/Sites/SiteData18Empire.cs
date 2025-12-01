@@ -132,6 +132,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneURL;
             string title = detailsPageElements.SelectSingleNode("//h1[@class='description']/text()")?.InnerText.Trim();
             movie.Name = title;
             if (providerIds.Length > 2)
@@ -149,7 +150,7 @@ namespace PhoenixAdult.Sites
 
             var tagline = detailsPageElements.SelectSingleNode("//p[contains(text(), 'A scene from')]/a/text()")?.InnerText.Trim()
                 ?? detailsPageElements.SelectSingleNode("//a[@data-label='Series List']/h2/text()")?.InnerText.Trim().Replace("Series:", string.Empty).Replace($"({studio})", string.Empty).Trim();
-            movie.AddTag(tagline ?? studio);
+            movie.AddStudio(tagline ?? studio);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

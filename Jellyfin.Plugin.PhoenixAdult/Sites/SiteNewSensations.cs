@@ -89,7 +89,9 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneURL;
             movie.AddStudio("New Sensations");
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             bool isDvd = sceneURL.Contains("dvds");
             if (isDvd)

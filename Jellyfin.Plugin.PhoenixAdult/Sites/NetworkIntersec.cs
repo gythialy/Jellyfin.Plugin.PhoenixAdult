@@ -81,6 +81,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//div[contains(@class, 'has-text-weight-bold')]")?.InnerText;
             movie.Overview = detailsPageElements.SelectSingleNode("//div[contains(@class, 'has-text-white-ter')][3]")?.InnerText.Trim();
             movie.AddStudio("Intersec Interactive");
@@ -127,7 +128,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'has-text-white-ter')][1]//span[contains(@class, 'is-dark')][1]");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText, out var parsedDate))

@@ -76,6 +76,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim();
             var descriptionNode = detailsPageElements.SelectSingleNode("//div[@data-id='description' and @class='hidden']");
             if (descriptionNode != null)
@@ -85,7 +86,7 @@ namespace PhoenixAdult.Sites
 
             movie.AddStudio("DarkRoomVR");
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='video-info__time']");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim().Split('•').Last().Trim(), out var parsedDate))

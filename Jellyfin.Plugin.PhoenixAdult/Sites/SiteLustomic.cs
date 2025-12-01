@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -23,26 +24,23 @@ namespace PhoenixAdult.Sites
     {
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            // Simplified search logic, may need adjustments
             var result = new List<RemoteSearchResult>();
-            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
-            foreach (var sceneURL in googleResults)
+            var searchURL = Helper.GetSearchSearchURL(siteNum) + searchTitle.Replace(" ", "+");
+            var http = await HTTP.Request(searchURL, cancellationToken);
+            if (http.IsOK)
             {
-                var http = await HTTP.Request(sceneURL, cancellationToken);
-                if (http.IsOK)
+                var doc = new HtmlDocument();
+                doc.LoadHtml(http.Content);
+                foreach (var searchResult in doc.DocumentNode.SelectNodes("//img[@alt='Video Preview']/following-sibling::p"))
                 {
-                    var doc = new HtmlDocument();
-                    doc.LoadHtml(http.Content);
-                    var titleNode = doc.DocumentNode.SelectSingleNode(@"//img[@alt=""Video Preview""]/following-sibling::p");
-                    var titleNoFormatting = titleNode?.InnerText.Trim();
-                    var curID = Helper.Encode(sceneURL);
-                    var item = new RemoteSearchResult
+                    var titleNoFormatting = searchResult.InnerText.Trim();
+                    var curID = Helper.Encode(searchURL);
+                    result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, curID } },
-                        Name = titleNoFormatting,
+                        Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
                         SearchProviderName = Plugin.Instance.Name,
-                    };
-                    result.Add(item);
+                    });
                 }
             }
 
@@ -66,25 +64,49 @@ namespace PhoenixAdult.Sites
 
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
-
-            movie.Name = doc.DocumentNode.SelectSingleNode(@"//img[@alt=""Video Preview""]/following-sibling::p")?.InnerText.Trim();
-            movie.Overview = doc.DocumentNode.SelectSingleNode(@"//img[@alt=""Video Description""]/following-sibling::div")?.InnerText.Trim();
+            movie.ExternalId = sceneURL;
+            movie.Name = doc.DocumentNode.SelectSingleNode("//img[@alt='Video Preview']/following-sibling::p").InnerText.Trim();
+            movie.Overview = doc.DocumentNode.SelectSingleNode("//img[@alt='Video Description']/following-sibling::div").InnerText.Trim();
             movie.AddStudio("Lustomic");
+            movie.AddCollection("Lustomic");
 
-            var dateNode = doc.DocumentNode.SelectSingleNode(@"//*[@class='date']");
+            var dateNode = doc.DocumentNode.SelectSingleNode("//*[@class='date']");
             if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
             }
 
-            // Actor and Genre logic needs to be manually added for each site
+            var actorsNode = doc.DocumentNode.SelectSingleNode("//p[contains(text(), 'Starring')]/span");
+            if (actorsNode != null)
+            {
+                var actors = actorsNode.InnerText.Split(';').Select(a => a.Trim()).ToList();
+                if (actors.Count == 3)
+                {
+                    movie.AddGenre("Threesome");
+                }
+
+                if (actors.Count == 4)
+                {
+                    movie.AddGenre("Foursome");
+                }
+
+                if (actors.Count > 4)
+                {
+                    movie.AddGenre("Orgy");
+                }
+
+                foreach (var actorName in actors)
+                {
+                    result.AddPerson(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                }
+            }
+
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            // Simplified image logic, may need adjustments
             var images = new List<RemoteImageInfo>();
             var sceneURL = Helper.Decode(sceneID[0]);
             var http = await HTTP.Request(sceneURL, cancellationToken);
@@ -92,17 +114,12 @@ namespace PhoenixAdult.Sites
             {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(http.Content);
-                var imageNodes = doc.DocumentNode.SelectNodes("//img/@src");
+                var imageNodes = doc.DocumentNode.SelectNodes("//a[contains(@href, 'video_preview_images')]");
                 if (imageNodes != null)
                 {
                     foreach (var img in imageNodes)
                     {
-                        var imgUrl = img.GetAttributeValue("src", string.Empty);
-                        if (!imgUrl.StartsWith("http"))
-                        {
-                            imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
-                        }
-
+                        var imgUrl = img.GetAttributeValue("href", string.Empty);
                         images.Add(new RemoteImageInfo { Url = imgUrl });
                     }
                 }

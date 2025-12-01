@@ -90,12 +90,13 @@ namespace PhoenixAdult.Sites
             var video = data["video"];
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = video["title"]["en"].ToString();
             movie.Overview = video["description"]["en"].ToString();
             movie.AddStudio("Teen Core Club");
 
             string tagline = video["labels"][0]["name"].ToString().Replace(".com", string.Empty).Trim();
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             var actors = new List<string>();
             foreach (var actorData in video["actors"])

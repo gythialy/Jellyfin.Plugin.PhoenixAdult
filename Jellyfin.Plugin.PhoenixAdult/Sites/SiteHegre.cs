@@ -120,6 +120,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneURL;
             movie.Name = sceneData.SelectSingleNode("//meta[@property='og:title']")?.GetAttributeValue("content", string.Empty).Trim();
             string summary = sceneData.SelectSingleNode("//div[@class='record-description-content record-box-content']")?.InnerText.Trim();
             if (!string.IsNullOrEmpty(summary))
@@ -128,7 +129,7 @@ namespace PhoenixAdult.Sites
             }
 
             movie.AddStudio("Hegre");
-            movie.AddTag(Helper.GetSearchSiteName(siteNum));
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             var date = sceneData.SelectSingleNode("//span[@class='date']")?.InnerText.Trim();
             if (DateTime.TryParse(date, out var sceneDateObj))

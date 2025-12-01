@@ -181,6 +181,7 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             var providerIds = sceneID[0].Split('|');
             var sceneURL = Helper.Decode(providerIds[0]);
+            movie.ExternalId = sceneURL;
             var sceneDate = providerIds[1];
             var cookies = new Dictionary<string, string> { { "ageConfirmed", "true" } };
             var http = await HTTP.Request(sceneURL, HttpMethod.Get, cancellationToken, null, cookies);
@@ -213,7 +214,7 @@ namespace PhoenixAdult.Sites
             if (taglineNode != null)
             {
                 var tagline = Regex.Replace(taglineNode.InnerText.Trim().Split('"')[1], @"\(.*\)", string.Empty).Trim();
-                movie.AddTag(Helper.ParseTitle(tagline, siteNum));
+                movie.AddStudio(Helper.ParseTitle(tagline, siteNum));
                 movie.AddCollection(Helper.ParseTitle(tagline, siteNum));
             }
             else if (splitScene)

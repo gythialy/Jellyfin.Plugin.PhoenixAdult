@@ -130,6 +130,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             var ogTitle = detailsPageElements.SelectSingleNode("//meta[@property='og:title']")?.GetAttributeValue("content", string.Empty).Trim();
             string javID = ogTitle?.Split(' ')[0];
             string title = ogTitle?.Split(new[] { ' ' }, 2).Last().Replace(" - JAVLibrary", string.Empty).Replace(javID, string.Empty).Trim();
@@ -149,15 +150,15 @@ namespace PhoenixAdult.Sites
             var tagline = detailsPageElements.SelectSingleNode("//td[contains(text(), 'Label:')]/following-sibling::td/span/a")?.InnerText.Trim();
             if (!string.IsNullOrEmpty(tagline))
             {
-                movie.AddTag(tagline);
+                movie.AddStudio(tagline);
             }
             else if (!string.IsNullOrEmpty(studio))
             {
-                movie.AddTag(studio);
+                movie.AddStudio(studio);
             }
             else
             {
-                movie.AddTag("Japan Adult Video");
+                movie.AddStudio("Japan Adult Video");
             }
 
             var director = detailsPageElements.SelectSingleNode("//td[contains(text(), 'Director:')]/following-sibling::td/span/a")?.InnerText.Trim();

@@ -88,6 +88,7 @@ namespace PhoenixAdult.Sites
             string sceneId = detailsPageElements.SelectSingleNode("//article")?.GetAttributeValue("id", string.Empty).Split('-').Last();
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h1")?.InnerText.Split('(')[0].Split('–').Last().Trim();
 
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='video-description']//strong[contains(., 'Description')]");
@@ -101,7 +102,7 @@ namespace PhoenixAdult.Sites
             var tagline = detailsPageElements.SelectSingleNode("//span[@class='fn']")?.InnerText;
             if (tagline != null)
             {
-                movie.AddTag(tagline);
+                movie.AddStudio(tagline);
             }
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='video-description']//strong[contains(., 'Date')]");

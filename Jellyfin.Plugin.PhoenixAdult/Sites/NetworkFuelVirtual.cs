@@ -142,6 +142,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             if (siteName == "NewGirlPOV")
             {
                 movie.Name = detailsPageElements.SelectSingleNode("//title")?.InnerText.Split(' ')[1].Trim();
@@ -152,7 +153,7 @@ namespace PhoenixAdult.Sites
             }
 
             movie.AddStudio("FuelVirtual");
-            movie.AddTag(siteName);
+            movie.AddStudio(siteName);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

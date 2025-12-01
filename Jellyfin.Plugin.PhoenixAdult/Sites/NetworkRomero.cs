@@ -97,6 +97,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//meta[@itemprop='name']/@content|//h1/text()")?.GetAttributeValue("content", string.Empty).Split('|')[0].Split(new[] { "- Free Video" }, StringSplitOptions.None)[0].Trim(), siteNum);
 
             string summary = string.Empty;
@@ -121,7 +122,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("Romero Multimedia");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             string date = detailsPageElements.SelectSingleNode("//meta[@property='article:published_time']/@content")?.GetAttributeValue("content", string.Empty).Split('T')[0].Trim();
             if (string.IsNullOrEmpty(date) && !string.IsNullOrEmpty(sceneDate))

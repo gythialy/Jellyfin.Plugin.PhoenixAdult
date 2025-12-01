@@ -79,6 +79,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[contains(@class, 'brxe-post-title')]")?.InnerText.Trim(), siteNum);
 
             var summaryNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'brxe-post-content')]//span") ?? detailsPageElements.SelectSingleNode("//div[contains(@class, 'brxe-post-content')]/p");
@@ -88,7 +89,7 @@ namespace PhoenixAdult.Sites
             }
 
             movie.AddStudio("PKJ Media");
-            movie.AddTag(Helper.GetSearchSiteName(siteNum));
+            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
 
             string siteName = Helper.GetSearchSiteName(siteNum);
             if (genresDB.ContainsKey(siteName))

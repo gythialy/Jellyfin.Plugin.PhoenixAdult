@@ -109,12 +109,13 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = JObject.Parse(httpResult.Content)["pageProps"]["content"];
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.ParseTitle(detailsPageElements["title"].ToString(), siteNum);
             movie.Overview = detailsPageElements["description"].ToString();
             movie.AddStudio("Stepped Up Media");
 
             string tagline = detailsPageElements["site"].ToString();
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

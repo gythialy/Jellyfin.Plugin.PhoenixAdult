@@ -111,6 +111,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h1[contains(@class,'watch__title')]")?.InnerText.Trim().Split(new[] { "featuring" }, StringSplitOptions.None)[0];
             movie.Overview = detailsPageElements.SelectSingleNode("//div[contains(@class,'text-mob-more')]")?.InnerText;
             movie.AddStudio("AnalVids");
@@ -118,7 +119,7 @@ namespace PhoenixAdult.Sites
             string tagline = detailsPageElements.SelectSingleNode("//div[contains(@class,'genres-list')]/a")?.InnerText.Trim();
             if (tagline != null)
             {
-                movie.AddTag(tagline);
+                movie.AddStudio(tagline);
             }
 
             var dateNode = detailsPageElements.SelectSingleNode("//i[contains(@class,'bi-calendar3')]");

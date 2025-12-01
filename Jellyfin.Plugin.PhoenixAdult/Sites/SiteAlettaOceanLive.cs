@@ -98,9 +98,9 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = detailsPageElements.SelectSingleNode("//h1").InnerText.Trim();
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
-            movie.AddTag(Helper.GetSearchSiteName(siteNum));
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

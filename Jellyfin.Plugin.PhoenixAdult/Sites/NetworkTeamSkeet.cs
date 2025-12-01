@@ -147,7 +147,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("TeamSkeet");
 
             string tagline = detailsPageElements.SelectToken("site.name")?.ToString() ?? Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
             {

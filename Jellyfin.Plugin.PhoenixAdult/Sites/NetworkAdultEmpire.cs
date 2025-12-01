@@ -152,7 +152,7 @@ namespace PhoenixAdult.Sites
 
             var movie = (Movie)result.Item;
             movie.Name = detailsPageElements.SelectSingleNode("//h1[@class='description']").InnerText.Trim();
-
+            movie.ExternalId = sceneURL;
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='synopsis']/p");
             if (summaryNode != null)
             {
@@ -165,7 +165,7 @@ namespace PhoenixAdult.Sites
             if (taglineNode != null)
             {
                 string tagline = taglineNode.InnerText.Trim();
-                movie.AddTag(tagline);
+                movie.AddStudio(tagline);
             }
 
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='release-date']");

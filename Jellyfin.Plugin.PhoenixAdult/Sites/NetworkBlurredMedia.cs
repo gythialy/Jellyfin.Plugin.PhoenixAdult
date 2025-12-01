@@ -96,6 +96,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.Name = videoData["title"]?.ToString();
             movie.Overview = videoData["description"]?.ToString();
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));

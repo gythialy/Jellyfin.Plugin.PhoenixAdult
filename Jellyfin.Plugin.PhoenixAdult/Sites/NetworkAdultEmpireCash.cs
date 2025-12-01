@@ -175,7 +175,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-
+            movie.ExternalId = sceneUrl;
             movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1[@class='description']")?.InnerText.Trim(), siteNum);
 
             var summaryNode = detailsPageElements.SelectSingleNode("//div[@class='synopsis']/p");
@@ -191,7 +191,7 @@ namespace PhoenixAdult.Sites
             if (taglineNode != null)
             {
                 string tagline = taglineNode.InnerText.Trim();
-                movie.AddTag(tagline);
+                movie.AddStudio(tagline);
                 movie.AddCollection(tagline);
             }
 

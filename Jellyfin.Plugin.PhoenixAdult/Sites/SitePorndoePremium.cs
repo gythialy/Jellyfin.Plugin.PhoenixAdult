@@ -93,7 +93,7 @@ namespace PhoenixAdult.Sites
             var tagline = detailsPageElements.SelectSingleNode("//div[@class='-mvd-grid-actors']/span/a")?.InnerText.Trim();
             if (!string.IsNullOrEmpty(tagline))
             {
-                movie.AddTag(tagline);
+                movie.AddStudio(tagline);
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//span[@class='-mvd-list-item']/a");

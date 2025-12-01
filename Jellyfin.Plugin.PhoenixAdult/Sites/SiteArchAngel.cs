@@ -43,7 +43,7 @@ namespace PhoenixAdult.Sites
                     continue;
                 }
 
-                var httpResult = await HTTP.Request(currentUrl, HttpMethod.Get, cancellationToken);
+                var httpResult = await HTTP.Request(currentUrl, HttpMethod.Get, cancellationToken: cancellationToken);
                 if (!httpResult.IsOK)
                 {
                     continue;
@@ -53,14 +53,14 @@ namespace PhoenixAdult.Sites
 
                 var searchPageElements = HTML.ElementFromString(httpResult.Content);
 
-                var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'video_preview_div')]");
+                var searchNodes = searchPageElements.SelectNodes("//div[contains(@class, 'latest-updates')]//div[contains(@class, 'flex-col')]");
                 if (searchNodes != null)
                 {
                     foreach (var node in searchNodes)
                     {
-                        var linkNode = node.SelectSingleNode("./a");
-                        var titleNode = node.SelectSingleNode("./a/p");
-                        var imageNode = node.SelectSingleNode("./a//img");
+                        var linkNode = node.SelectSingleNode(".//div[contains(@class, 'thumbnail')]/a");
+                        var titleNode = node.SelectSingleNode(".//div[contains(@class, 'title')]//a");
+                        var imageNode = node.SelectSingleNode(".//div[contains(@class, 'thumbnail')]//img");
 
                         if (linkNode == null || titleNode == null)
                         {
@@ -78,21 +78,21 @@ namespace PhoenixAdult.Sites
                                 ProviderIds = { { Plugin.Instance.Name, Helper.Encode(sceneUrl) } },
                                 Name = $"{title} [{Helper.GetSearchSiteName(siteNum)}]",
                                 SearchProviderName = Plugin.Instance.Name,
-                                ImageUrl = !string.IsNullOrEmpty(imageUrl) ? baseUrl + imageUrl : string.Empty,
+                                ImageUrl = imageUrl,
                             });
                         }
                     }
                 }
 
-                var paginationNodes = searchPageElements.SelectNodes("//div[contains(@class, 'join')]/a");
+                var paginationNodes = searchPageElements.SelectNodes("//div[@class='pagination']//a");
                 if (paginationNodes != null)
                 {
                     foreach (var pageNode in paginationNodes)
                     {
                         string pageUrl = pageNode.GetAttributeValue("href", string.Empty);
-                        if (!string.IsNullOrEmpty(pageUrl) && !pageUrl.StartsWith("http"))
+                        if (!string.IsNullOrEmpty(pageUrl) && !pagesScraped.Contains(pageUrl) && !pageUrl.StartsWith("http"))
                         {
-                            pagesToScrape.Add(baseUrl + pageUrl);
+                            pagesToScrape.Add(baseUrl + "/" + pageUrl);
                         }
                     }
                 }
@@ -124,6 +124,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
             movie.Name = detailsPageElements.SelectSingleNode("//h1[contains(@class, 'trailer_title')]")?.InnerText.Trim();
             movie.Overview = detailsPageElements.SelectSingleNode("//p[@class='description-text']")?.InnerText.Trim();

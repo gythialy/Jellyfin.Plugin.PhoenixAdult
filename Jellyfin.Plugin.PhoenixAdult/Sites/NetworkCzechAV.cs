@@ -125,6 +125,7 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var movie = (Movie)result.Item;
+            movie.ExternalId = sceneUrl;
             if (siteNum[1] == 33)
             {
                 movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//span[@class='name']")?.InnerText.Trim(), siteNum);
@@ -150,7 +151,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio("Czech Authentic Videos");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
-            movie.AddTag(tagline);
+            movie.AddStudio(tagline);
             movie.AddCollection(tagline);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
