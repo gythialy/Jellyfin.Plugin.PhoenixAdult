@@ -155,7 +155,6 @@ namespace PhoenixAdult.Sites
 
             string studio = Helper.GetSearchSiteName(siteNum);
             movie.AddStudio(studio);
-            movie.AddStudio(studio);
 
             if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var premiereDate))
             {
