@@ -16,6 +16,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteScrewMeToo : IProviderBase
@@ -44,10 +49,10 @@ namespace PhoenixAdult.Sites
                         if (titleNode != null && linkNode != null)
                         {
                             var title = titleNode.InnerText.Trim();
-                            var sceneUrl = linkNode.GetAttributeValue("href", "");
+                            var sceneUrl = linkNode.GetAttributeValue("href", string.Empty);
                             var curID = Helper.Encode(sceneUrl);
                             DateTime? releaseDateObj = null;
-                            string dateStr = "";
+                            string dateStr = string.Empty;
 
                             if (dateNode != null)
                             {
@@ -111,7 +116,7 @@ namespace PhoenixAdult.Sites
             var summaryNode = doc.DocumentNode.SelectSingleNode("//div[h2]");
             if (summaryNode != null)
             {
-                movie.Overview = summaryNode.InnerText.Replace("Read More ...Read Less", "").Trim();
+                movie.Overview = summaryNode.InnerText.Replace("Read More ...Read Less", string.Empty).Trim();
             }
 
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
@@ -120,16 +125,27 @@ namespace PhoenixAdult.Sites
             var actors = doc.DocumentNode.SelectNodes("//a[contains(@title, 'Model Bio')]");
             if (actors != null)
             {
-                if (actors.Count == 2) movie.AddGenre("Threesome");
-                if (actors.Count == 3) movie.AddGenre("Foursome");
-                if (actors.Count > 4) movie.AddGenre("Orgy");
+                if (actors.Count == 2)
+                {
+                    movie.AddGenre("Threesome");
+                }
+
+                if (actors.Count == 3)
+                {
+                    movie.AddGenre("Foursome");
+                }
+
+                if (actors.Count > 4)
+                {
+                    movie.AddGenre("Orgy");
+                }
 
                 foreach (var actorLink in actors)
                 {
                     var actorName = actorLink.InnerText.Trim();
                     var actorInfo = new PersonInfo { Name = actorName, Type = PersonKind.Actor };
 
-                    var modelUrl = actorLink.GetAttributeValue("href", "");
+                    var modelUrl = actorLink.GetAttributeValue("href", string.Empty);
                     if (!string.IsNullOrEmpty(modelUrl))
                     {
                         var actorHttp = await HTTP.Request(modelUrl, cancellationToken);
@@ -140,20 +156,18 @@ namespace PhoenixAdult.Sites
                             var imgNode = actorDoc.DocumentNode.SelectSingleNode("//div[@class='model-contr-colone']//img");
                             if (imgNode != null)
                             {
-                                var imgUrl = imgNode.GetAttributeValue("src", "");
+                                var imgUrl = imgNode.GetAttributeValue("src", string.Empty);
                                 if (!string.IsNullOrEmpty(imgUrl))
                                 {
                                     if (!imgUrl.StartsWith("http"))
                                     {
                                         imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
                                     }
+
                                     actorInfo.ImageUrl = imgUrl;
                                 }
                             }
 
-                            // Try to find date on actor page if not already found (Logic from Python)
-                            // This logic is very specific and maybe fragile, but replicating:
-                            // It looks for a link with 'fullTitle' and inside it a date.
                             if (movie.PremiereDate == null)
                             {
                                 var fullTitleMatch = Regex.Match(sceneURL, @"(?<=content\/).*(?=\/)");
@@ -170,7 +184,8 @@ namespace PhoenixAdult.Sites
                             }
                         }
                     }
-                    result.People.Add(actorInfo);
+
+                    ((List<PersonInfo>)result.People).Add(actorInfo);
                 }
             }
 
@@ -217,13 +232,14 @@ namespace PhoenixAdult.Sites
                 {
                     foreach (var img in imgNodes)
                     {
-                        var imgUrl = img.GetAttributeValue("src", "");
+                        var imgUrl = img.GetAttributeValue("src", string.Empty);
                         if (!string.IsNullOrEmpty(imgUrl))
                         {
                             if (!imgUrl.StartsWith("http"))
                             {
                                 imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
                             }
+
                             images.Add(new RemoteImageInfo { Url = imgUrl });
                         }
                     }

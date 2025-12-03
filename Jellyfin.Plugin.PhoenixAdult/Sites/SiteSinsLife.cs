@@ -15,6 +15,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteSinsLife : IProviderBase
@@ -42,9 +47,12 @@ namespace PhoenixAdult.Sites
                         var linkNode = node.SelectSingleNode(".//a");
                         if (linkNode != null)
                         {
-                            var title = linkNode.GetAttributeValue("title", "").Trim();
-                            var href = linkNode.GetAttributeValue("href", "");
-                            if (string.IsNullOrEmpty(title)) title = linkNode.InnerText.Trim();
+                            var title = linkNode.GetAttributeValue("title", string.Empty).Trim();
+                            var href = linkNode.GetAttributeValue("href", string.Empty);
+                            if (string.IsNullOrEmpty(title))
+                            {
+                                title = linkNode.InnerText.Trim();
+                            }
 
                             var curID = Helper.Encode(href);
 
@@ -100,7 +108,7 @@ namespace PhoenixAdult.Sites
             var dateNode = doc.DocumentNode.SelectSingleNode("//div[4]/div/div[2]/div/div/div[2]/div[1]/div/div[1]");
             if (dateNode != null)
             {
-                var dateText = dateNode.InnerText.Replace("Release Date:", "").Trim();
+                var dateText = dateNode.InnerText.Replace("Release Date:", string.Empty).Trim();
                 // Format: %B %d, %Y => "December 31, 2020"
                 if (DateTime.TryParseExact(dateText, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
                 {
@@ -117,14 +125,25 @@ namespace PhoenixAdult.Sites
             var actorNodes = doc.DocumentNode.SelectNodes("//div[4]/div/div[2]/div/div/div[2]/div[3]/ul/li/a");
             if (actorNodes != null)
             {
-                if (actorNodes.Count == 3) movie.AddGenre("Threesome");
-                if (actorNodes.Count == 4) movie.AddGenre("Foursome");
-                if (actorNodes.Count > 4) movie.AddGenre("Orgy");
+                if (actorNodes.Count == 3)
+                {
+                    movie.AddGenre("Threesome");
+                }
+
+                if (actorNodes.Count == 4)
+                {
+                    movie.AddGenre("Foursome");
+                }
+
+                if (actorNodes.Count > 4)
+                {
+                    movie.AddGenre("Orgy");
+                }
 
                 foreach (var actorLink in actorNodes)
                 {
                     var actorName = actorLink.InnerText.Trim();
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                 }
             }
 
@@ -148,10 +167,14 @@ namespace PhoenixAdult.Sites
                 var imgNode = doc.DocumentNode.SelectSingleNode("//div[4]/div/div[2]/div/div/div[1]/div[2]/div/div[1]/img");
                 if (imgNode != null)
                 {
-                    var imgUrl = imgNode.GetAttributeValue("src", "");
+                    var imgUrl = imgNode.GetAttributeValue("src", string.Empty);
                     if (!string.IsNullOrEmpty(imgUrl))
                     {
-                        if (imgUrl.StartsWith("//")) imgUrl = "http:" + imgUrl;
+                        if (imgUrl.StartsWith("//"))
+                        {
+                            imgUrl = "http:" + imgUrl;
+                        }
+
                         images.Add(new RemoteImageInfo { Url = imgUrl });
                     }
                 }

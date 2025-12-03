@@ -15,6 +15,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteReidMyLips : IProviderBase
@@ -103,7 +108,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            result.People.Add(new PersonInfo { Name = "Riley Reid", Type = PersonKind.Actor });
+            ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = "Riley Reid", Type = PersonKind.Actor });
 
             return result;
         }
@@ -127,10 +132,10 @@ namespace PhoenixAdult.Sites
                 {
                     foreach (var poster in posterNodes)
                     {
-                        var imgUrl = poster.GetAttributeValue("src0_2x", "");
+                        var imgUrl = poster.GetAttributeValue("src0_2x", string.Empty);
                         if (string.IsNullOrEmpty(imgUrl))
                         {
-                            imgUrl = poster.GetAttributeValue("src", "");
+                            imgUrl = poster.GetAttributeValue("src", string.Empty);
                         }
 
                         if (!string.IsNullOrEmpty(imgUrl))
@@ -139,6 +144,7 @@ namespace PhoenixAdult.Sites
                             {
                                 imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
                             }
+
                             images.Add(new RemoteImageInfo { Url = imgUrl });
                         }
                     }

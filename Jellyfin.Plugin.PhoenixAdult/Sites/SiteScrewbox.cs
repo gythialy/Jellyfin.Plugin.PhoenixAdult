@@ -15,6 +15,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteScrewbox : IProviderBase
@@ -42,15 +47,21 @@ namespace PhoenixAdult.Sites
                         if (titleNode != null && linkNode != null)
                         {
                             var title = titleNode.InnerText.Trim();
-                            var href = linkNode.GetAttributeValue("href", "");
-                            if (href.StartsWith("//")) href = "https:" + href;
-                            else if (href.StartsWith("/")) href = Helper.GetSearchBaseURL(siteNum) + href;
+                            var href = linkNode.GetAttributeValue("href", string.Empty);
+                            if (href.StartsWith("//"))
+                            {
+                                href = "https:" + href;
+                            }
+                            else if (href.StartsWith("/"))
+                            {
+                                href = Helper.GetSearchBaseURL(siteNum) + href;
+                            }
 
                             var curID = Helper.Encode(href);
 
                             // Try to get actors for display
                             var actorNodes = node.SelectNodes(".//div[@class='item-featured']//a");
-                            var actorDisplay = "";
+                            var actorDisplay = string.Empty;
                             if (actorNodes != null && actorNodes.Count > 0)
                             {
                                 actorDisplay = actorNodes[0].InnerText.Trim();
@@ -114,7 +125,7 @@ namespace PhoenixAdult.Sites
             var dateNode = doc.DocumentNode.SelectSingleNode("//ul[@class='more-info']//li[2]");
             if (dateNode != null)
             {
-                var dateText = dateNode.InnerText.Replace("RELEASE DATE:", "").Trim();
+                var dateText = dateNode.InnerText.Replace("RELEASE DATE:", string.Empty).Trim();
                 if (DateTime.TryParse(dateText, out var date))
                 {
                     movie.PremiereDate = date;
@@ -139,8 +150,11 @@ namespace PhoenixAdult.Sites
                     var actorName = actorLink.InnerText.Trim();
                     var actorInfo = new PersonInfo { Name = actorName, Type = PersonKind.Actor };
 
-                    var actorHref = actorLink.GetAttributeValue("href", "");
-                    if (actorHref.StartsWith("//")) actorHref = "http:" + actorHref;
+                    var actorHref = actorLink.GetAttributeValue("href", string.Empty);
+                    if (actorHref.StartsWith("//"))
+                    {
+                        actorHref = "http:" + actorHref;
+                    }
 
                     if (!string.IsNullOrEmpty(actorHref))
                     {
@@ -152,17 +166,21 @@ namespace PhoenixAdult.Sites
                             var imgNode = actorDoc.DocumentNode.SelectSingleNode("//img[contains(@class, 'model_bio_thumb')]");
                             if (imgNode != null)
                             {
-                                var imgUrl = imgNode.GetAttributeValue("src0_1x", "");
+                                var imgUrl = imgNode.GetAttributeValue("src0_1x", string.Empty);
                                 if (!string.IsNullOrEmpty(imgUrl))
                                 {
-                                    if (imgUrl.StartsWith("//")) imgUrl = "http:" + imgUrl;
+                                    if (imgUrl.StartsWith("//"))
+                                    {
+                                        imgUrl = "http:" + imgUrl;
+                                    }
+
                                     actorInfo.ImageUrl = imgUrl;
                                 }
                             }
                         }
                     }
 
-                    result.People.Add(actorInfo);
+                    ((List<PersonInfo>)result.People).Add(actorInfo);
                 }
             }
 
@@ -186,10 +204,14 @@ namespace PhoenixAdult.Sites
                 var imgNode = doc.DocumentNode.SelectSingleNode("//div[@class='fakeplayer']//img");
                 if (imgNode != null)
                 {
-                    var imgUrl = imgNode.GetAttributeValue("src0_1x", "");
+                    var imgUrl = imgNode.GetAttributeValue("src0_1x", string.Empty);
                     if (!string.IsNullOrEmpty(imgUrl))
                     {
-                        if (imgUrl.StartsWith("//")) imgUrl = "http:" + imgUrl;
+                        if (imgUrl.StartsWith("//"))
+                        {
+                            imgUrl = "http:" + imgUrl;
+                        }
+
                         images.Add(new RemoteImageInfo { Url = imgUrl });
                     }
                 }

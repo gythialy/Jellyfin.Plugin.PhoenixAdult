@@ -15,6 +15,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteStraponCum : IProviderBase
@@ -141,16 +146,27 @@ namespace PhoenixAdult.Sites
             var actorNodes = doc.DocumentNode.SelectNodes("//div[@class='card']//span[contains(text(), 'Featuring:')]/following-sibling::a");
             if (actorNodes != null)
             {
-                if (actorNodes.Count == 3) movie.AddGenre("Threesome");
-                if (actorNodes.Count == 4) movie.AddGenre("Foursome");
-                if (actorNodes.Count > 4) movie.AddGenre("Orgy");
+                if (actorNodes.Count == 3)
+                {
+                    movie.AddGenre("Threesome");
+                }
+
+                if (actorNodes.Count == 4)
+                {
+                    movie.AddGenre("Foursome");
+                }
+
+                if (actorNodes.Count > 4)
+                {
+                    movie.AddGenre("Orgy");
+                }
 
                 foreach (var actorLink in actorNodes)
                 {
                     var actorName = actorLink.InnerText.Trim();
                     var actorInfo = new PersonInfo { Name = actorName, Type = PersonKind.Actor };
 
-                    var actorHref = actorLink.GetAttributeValue("href", "");
+                    var actorHref = actorLink.GetAttributeValue("href", string.Empty);
                     if (!string.IsNullOrEmpty(actorHref))
                     {
                         var actorHttp = await HTTP.Request(actorHref, cancellationToken);
@@ -161,16 +177,21 @@ namespace PhoenixAdult.Sites
                             var imgNode = actorDoc.DocumentNode.SelectSingleNode("//img[starts-with(@id, 'set-target')]");
                             if (imgNode != null)
                             {
-                                var imgUrl = imgNode.GetAttributeValue("data-src0_1x", "");
+                                var imgUrl = imgNode.GetAttributeValue("data-src0_1x", string.Empty);
                                 if (!string.IsNullOrEmpty(imgUrl))
                                 {
-                                    if (!imgUrl.StartsWith("http")) imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
+                                    if (!imgUrl.StartsWith("http"))
+                                    {
+                                        imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
+                                    }
+
                                     actorInfo.ImageUrl = imgUrl;
                                 }
                             }
                         }
                     }
-                    result.People.Add(actorInfo);
+
+                    ((List<PersonInfo>)result.People).Add(actorInfo);
                 }
             }
 
@@ -194,7 +215,7 @@ namespace PhoenixAdult.Sites
                 var imgNode = doc.DocumentNode.SelectSingleNode("//div[@class='trailer']//img");
                 if (imgNode != null)
                 {
-                    var alt = imgNode.GetAttributeValue("alt", "");
+                    var alt = imgNode.GetAttributeValue("alt", string.Empty);
                     if (!string.IsNullOrEmpty(alt))
                     {
                         for (int i = 0; i < 4; i++)
