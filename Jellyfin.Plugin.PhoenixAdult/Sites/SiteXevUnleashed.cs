@@ -174,7 +174,11 @@ namespace PhoenixAdult.Sites
                                     var imgUrl = match.Groups[1].Value.Replace("'", string.Empty).Replace("\"", string.Empty);
                                     if (!string.IsNullOrEmpty(imgUrl))
                                     {
-                                        if (!imgUrl.StartsWith("http")) imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
+                                        if (!imgUrl.StartsWith("http"))
+                                        {
+                                            imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
+                                        }
+
                                         actorInfo.ImageUrl = imgUrl;
                                     }
                                 }

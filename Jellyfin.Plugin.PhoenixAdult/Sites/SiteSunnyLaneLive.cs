@@ -136,6 +136,7 @@ namespace PhoenixAdult.Sites
                     else if (text.Contains("Models:"))
                     {
                         var modelsText = text.Replace("Models:", string.Empty).Trim();
+
                         // Models might be links? Python uses text content replace.
                         // Check for links
                         var links = row.SelectNodes(".//a");

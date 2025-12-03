@@ -109,6 +109,7 @@ namespace PhoenixAdult.Sites
             if (dateNode != null)
             {
                 var dateText = dateNode.InnerText.Replace("Release Date:", string.Empty).Trim();
+
                 // Format: %B %d, %Y => "December 31, 2020"
                 if (DateTime.TryParseExact(dateText, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
                 {
