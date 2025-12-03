@@ -16,6 +16,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteVivid : IProviderBase
@@ -100,8 +105,8 @@ namespace PhoenixAdult.Sites
 
             var idParts = sceneID[0].Split('|');
             var sceneURL = Helper.Decode(idParts[0]);
-            var tagline = idParts.Length > 1 ? idParts[1] : "";
-            var scenePoster = idParts.Length > 2 ? Helper.Decode(idParts[2]) : "";
+            var tagline = idParts.Length > 1 ? idParts[1] : string.Empty;
+            var scenePoster = idParts.Length > 2 ? Helper.Decode(idParts[2]) : string.Empty;
 
             if (!sceneURL.StartsWith("http"))
             {
@@ -128,12 +133,15 @@ namespace PhoenixAdult.Sites
 
             movie.AddStudio("Vivid Entertainment");
             movie.AddCollection(tagline); // From ID (SubSite)
-            if (!string.IsNullOrEmpty(tagline)) movie.Tagline = tagline;
+            if (!string.IsNullOrEmpty(tagline))
+            {
+                movie.Tagline = tagline;
+            }
 
             var dateNode = doc.DocumentNode.SelectSingleNode("//h5[contains(text(), 'Released:')]");
             if (dateNode != null)
             {
-                var dateText = dateNode.InnerText.Replace("Released:", "").Trim();
+                var dateText = dateNode.InnerText.Replace("Released:", string.Empty).Trim();
                 if (DateTime.TryParse(dateText, out var date))
                 {
                     movie.PremiereDate = date;
@@ -156,7 +164,7 @@ namespace PhoenixAdult.Sites
                 foreach (var actorLink in actorNodes)
                 {
                     var actorName = actorLink.InnerText.Trim();
-                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                 }
             }
 
@@ -168,11 +176,11 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
 
             var idParts = sceneID[0].Split('|');
-            var scenePoster = idParts.Length > 2 ? Helper.Decode(idParts[2]) : "";
+            var scenePoster = idParts.Length > 2 ? Helper.Decode(idParts[2]) : string.Empty;
 
             if (!string.IsNullOrEmpty(scenePoster))
             {
-                 images.Add(new RemoteImageInfo { Url = scenePoster });
+                images.Add(new RemoteImageInfo { Url = scenePoster });
             }
 
             return images;

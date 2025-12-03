@@ -15,6 +15,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteWeAreHairy : IProviderBase
@@ -42,10 +47,10 @@ namespace PhoenixAdult.Sites
                         if (titleNode != null)
                         {
                             var title = titleNode.InnerText.Trim();
-                            var href = titleNode.GetAttributeValue("href", "");
+                            var href = titleNode.GetAttributeValue("href", string.Empty);
                             var curID = Helper.Encode(href);
                             DateTime? releaseDateObj = null;
-                            string dateStr = "";
+                            string dateStr = string.Empty;
 
                             if (dateNode != null)
                             {
@@ -125,11 +130,11 @@ namespace PhoenixAdult.Sites
             }
             else if (!string.IsNullOrEmpty(dateFromId))
             {
-                 if (DateTime.TryParse(dateFromId, out var date))
-                 {
-                     movie.PremiereDate = date;
-                     movie.ProductionYear = date.Year;
-                 }
+                if (DateTime.TryParse(dateFromId, out var date))
+                {
+                    movie.PremiereDate = date;
+                    movie.ProductionYear = date.Year;
+                }
             }
 
             var genreNodes = doc.DocumentNode.SelectNodes("//div[@class='tags']//a") ?? doc.DocumentNode.SelectNodes("//p[@class='tags']//a");
@@ -149,7 +154,7 @@ namespace PhoenixAdult.Sites
                     var actorName = actorLink.InnerText.Trim();
                     var actorInfo = new PersonInfo { Name = actorName, Type = PersonKind.Actor };
 
-                    var actorHref = actorLink.GetAttributeValue("href", "");
+                    var actorHref = actorLink.GetAttributeValue("href", string.Empty);
                     if (!string.IsNullOrEmpty(actorHref))
                     {
                         var actorHttp = await HTTP.Request(actorHref, cancellationToken);
@@ -160,16 +165,21 @@ namespace PhoenixAdult.Sites
                             var imgNode = actorDoc.DocumentNode.SelectSingleNode("//div[@class='model_image']//img");
                             if (imgNode != null)
                             {
-                                var imgUrl = imgNode.GetAttributeValue("src", "");
+                                var imgUrl = imgNode.GetAttributeValue("src", string.Empty);
                                 if (!string.IsNullOrEmpty(imgUrl))
                                 {
-                                    if (!imgUrl.StartsWith("http")) imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
+                                    if (!imgUrl.StartsWith("http"))
+                                    {
+                                        imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
+                                    }
+
                                     actorInfo.ImageUrl = imgUrl;
                                 }
                             }
                         }
                     }
-                    result.People.Add(actorInfo);
+
+                    ((List<PersonInfo>)result.People).Add(actorInfo);
                 }
             }
 
@@ -193,13 +203,14 @@ namespace PhoenixAdult.Sites
                 var imgNode = doc.DocumentNode.SelectSingleNode("//div[@class='update_image']//img");
                 if (imgNode != null)
                 {
-                    var imgUrl = imgNode.GetAttributeValue("src", "");
+                    var imgUrl = imgNode.GetAttributeValue("src", string.Empty);
                     if (!string.IsNullOrEmpty(imgUrl))
                     {
                         if (!imgUrl.StartsWith("http"))
                         {
                             imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
                         }
+
                         images.Add(new RemoteImageInfo { Url = imgUrl });
                     }
                 }

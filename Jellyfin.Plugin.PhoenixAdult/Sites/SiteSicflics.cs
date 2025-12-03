@@ -16,6 +16,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteSicflics : IProviderBase
@@ -46,10 +51,10 @@ namespace PhoenixAdult.Sites
                         if (titleNode != null && idNode != null)
                         {
                             var title = titleNode.InnerText.Trim();
-                            var sceneID = idNode.GetAttributeValue("data-movie", "");
-                            var imgUrl = imgNode?.GetAttributeValue("src", "");
+                            var sceneID = idNode.GetAttributeValue("data-movie", string.Empty);
+                            var imgUrl = imgNode?.GetAttributeValue("src", string.Empty);
 
-                            var description = "";
+                            var description = string.Empty;
                             if (descNode != null)
                             {
                                 var descText = descNode.InnerText;
@@ -66,11 +71,23 @@ namespace PhoenixAdult.Sites
 
                             // Encode extra data in ID
                             var curID = sceneID;
-                            if (!string.IsNullOrEmpty(description)) curID += "|" + Helper.Encode(description);
-                            else curID += "|";
+                            if (!string.IsNullOrEmpty(description))
+                            {
+                                curID += "|" + Helper.Encode(description);
+                            }
+                            else
+                            {
+                                curID += "|";
+                            }
 
-                            if (!string.IsNullOrEmpty(imgUrl)) curID += "|" + Helper.Encode(imgUrl);
-                            else curID += "|";
+                            if (!string.IsNullOrEmpty(imgUrl))
+                            {
+                                curID += "|" + Helper.Encode(imgUrl);
+                            }
+                            else
+                            {
+                                curID += "|";
+                            }
 
                             DateTime? releaseDateObj = null;
                             if (dateNode != null)
@@ -91,7 +108,11 @@ namespace PhoenixAdult.Sites
 
                             if (!string.IsNullOrEmpty(imgUrl))
                             {
-                                if (!imgUrl.StartsWith("http")) imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
+                                if (!imgUrl.StartsWith("http"))
+                                {
+                                    imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
+                                }
+
                                 res.ImageUrl = imgUrl;
                             }
 
@@ -115,8 +136,8 @@ namespace PhoenixAdult.Sites
 
             var idParts = sceneID[0].Split('|');
             var realSceneID = idParts[0];
-            var encodedDesc = idParts.Length > 1 ? idParts[1] : "";
-            var encodedImg = idParts.Length > 2 ? idParts[2] : "";
+            var encodedDesc = idParts.Length > 1 ? idParts[1] : string.Empty;
+            var encodedImg = idParts.Length > 2 ? idParts[2] : string.Empty;
 
             var pageURL = Helper.GetSearchBaseURL(siteNum) + "v6/v6.pop.php?id=" + realSceneID;
 
@@ -132,11 +153,11 @@ namespace PhoenixAdult.Sites
             movie.ExternalId = pageURL; // Not exact scene URL but closest thing
             movie.Name = doc.DocumentNode.SelectSingleNode("//h4[@class='red']")?.InnerText.Trim();
 
-            var description = "";
+            var description = string.Empty;
             if (!string.IsNullOrEmpty(encodedDesc))
             {
                 description = Helper.Decode(encodedDesc);
-                movie.Overview = description.Replace("\n", "").Trim();
+                movie.Overview = description.Replace("\n", string.Empty).Trim();
             }
 
             movie.AddStudio("Sicflics");
@@ -158,7 +179,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var genre in genreNodes)
                 {
-                    movie.AddGenre(genre.InnerText.Replace("#", "").Trim());
+                    movie.AddGenre(genre.InnerText.Replace("#", string.Empty).Trim());
                 }
             }
 
@@ -173,7 +194,7 @@ namespace PhoenixAdult.Sites
                     var actorName = split[1].Trim();
                     if (!string.IsNullOrEmpty(actorName))
                     {
-                        result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                        ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                     }
                 }
             }
@@ -185,18 +206,19 @@ namespace PhoenixAdult.Sites
         {
             var images = new List<RemoteImageInfo>();
             var idParts = sceneID[0].Split('|');
-            var encodedImg = idParts.Length > 2 ? idParts[2] : "";
+            var encodedImg = idParts.Length > 2 ? idParts[2] : string.Empty;
 
             if (!string.IsNullOrEmpty(encodedImg))
             {
                 var imgUrl = Helper.Decode(encodedImg);
                 if (!string.IsNullOrEmpty(imgUrl))
                 {
-                     if (!imgUrl.StartsWith("http"))
-                     {
-                         imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
-                     }
-                     images.Add(new RemoteImageInfo { Url = imgUrl });
+                    if (!imgUrl.StartsWith("http"))
+                    {
+                        imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
+                    }
+
+                    images.Add(new RemoteImageInfo { Url = imgUrl });
                 }
             }
 

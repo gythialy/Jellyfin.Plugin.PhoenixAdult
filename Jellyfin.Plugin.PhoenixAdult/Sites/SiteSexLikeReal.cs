@@ -15,6 +15,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteSexLikeReal : IProviderBase
@@ -54,7 +59,7 @@ namespace PhoenixAdult.Sites
                         var dateNode = doc.DocumentNode.SelectSingleNode("//time");
                         if (dateNode != null)
                         {
-                            var dateVal = dateNode.GetAttributeValue("datetime", "");
+                            var dateVal = dateNode.GetAttributeValue("datetime", string.Empty);
                             if (DateTime.TryParse(dateVal, out var date))
                             {
                                 releaseDateObj = date;
@@ -120,7 +125,7 @@ namespace PhoenixAdult.Sites
 
             if (dateNode != null)
             {
-                var dateVal = dateNode.GetAttributeValue("datetime", "");
+                var dateVal = dateNode.GetAttributeValue("datetime", string.Empty);
                 if (DateTime.TryParse(dateVal, out var date))
                 {
                     movie.PremiereDate = date;
@@ -133,7 +138,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var meta in genreNodes)
                 {
-                    var genre = meta.GetAttributeValue("content", "");
+                    var genre = meta.GetAttributeValue("content", string.Empty);
                     if (!string.IsNullOrEmpty(genre))
                     {
                         movie.AddGenre(genre);
@@ -146,7 +151,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var meta in actorNodes)
                 {
-                    var actorName = meta.GetAttributeValue("content", "");
+                    var actorName = meta.GetAttributeValue("content", string.Empty);
                     if (!string.IsNullOrEmpty(actorName))
                     {
                         var actorInfo = new PersonInfo { Name = actorName, Type = PersonKind.Actor };
@@ -162,18 +167,20 @@ namespace PhoenixAdult.Sites
                             var imgNode = actorDoc.DocumentNode.SelectSingleNode("//div[contains(@class, 'u-ratio--model')]//img");
                             if (imgNode != null)
                             {
-                                var imgUrl = imgNode.GetAttributeValue("src", "");
+                                var imgUrl = imgNode.GetAttributeValue("src", string.Empty);
                                 if (!string.IsNullOrEmpty(imgUrl))
                                 {
                                     if (!imgUrl.StartsWith("http"))
                                     {
                                         imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
                                     }
+
                                     actorInfo.ImageUrl = imgUrl;
                                 }
                             }
                         }
-                        result.People.Add(actorInfo);
+
+                        ((List<PersonInfo>)result.People).Add(actorInfo);
                     }
                 }
             }
@@ -199,8 +206,11 @@ namespace PhoenixAdult.Sites
                 var ogImage = doc.DocumentNode.SelectSingleNode("//meta[@property='og:image']");
                 if (ogImage != null)
                 {
-                    var url = ogImage.GetAttributeValue("content", "");
-                    if (!string.IsNullOrEmpty(url)) images.Add(new RemoteImageInfo { Url = url });
+                    var url = ogImage.GetAttributeValue("content", string.Empty);
+                    if (!string.IsNullOrEmpty(url))
+                    {
+                        images.Add(new RemoteImageInfo { Url = url });
+                    }
                 }
 
                 var lightboxImages = doc.DocumentNode.SelectNodes("//a[contains(@class, 'u-ratio--lightbox')]");
@@ -208,8 +218,11 @@ namespace PhoenixAdult.Sites
                 {
                     foreach (var link in lightboxImages)
                     {
-                        var url = link.GetAttributeValue("href", "");
-                        if (!string.IsNullOrEmpty(url)) images.Add(new RemoteImageInfo { Url = url });
+                        var url = link.GetAttributeValue("href", string.Empty);
+                        if (!string.IsNullOrEmpty(url))
+                        {
+                            images.Add(new RemoteImageInfo { Url = url });
+                        }
                     }
                 }
             }

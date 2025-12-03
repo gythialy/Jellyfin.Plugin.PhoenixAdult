@@ -17,6 +17,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteRealityLovers : IProviderBase
@@ -76,6 +81,7 @@ namespace PhoenixAdult.Sites
                                 {
                                     imgUrl = imgUrl.Replace("https", "http");
                                 }
+
                                 res.ImageUrl = imgUrl;
                             }
                         }
@@ -117,7 +123,7 @@ namespace PhoenixAdult.Sites
             var summaryNode = doc.DocumentNode.SelectSingleNode("//p[@itemprop='description']");
             if (summaryNode != null)
             {
-                var summary = summaryNode.InnerText.Replace("…", "").Replace("Read more", "").Trim();
+                var summary = summaryNode.InnerText.Replace("…", string.Empty).Replace("Read more", string.Empty).Trim();
                 movie.Overview = summary;
             }
 
@@ -151,7 +157,7 @@ namespace PhoenixAdult.Sites
                     var actorName = actorLink.InnerText.Trim();
                     var actorInfo = new PersonInfo { Name = actorName, Type = PersonKind.Actor };
 
-                    var actorPageURL = actorLink.GetAttributeValue("href", "");
+                    var actorPageURL = actorLink.GetAttributeValue("href", string.Empty);
                     if (!string.IsNullOrEmpty(actorPageURL))
                     {
                         if (!actorPageURL.StartsWith("http"))
@@ -167,7 +173,7 @@ namespace PhoenixAdult.Sites
                             var actorPhotoNode = actorDoc.DocumentNode.SelectSingleNode("//img[@class='girlDetails-posterImage']");
                             if (actorPhotoNode != null)
                             {
-                                var srcset = actorPhotoNode.GetAttributeValue("srcset", "");
+                                var srcset = actorPhotoNode.GetAttributeValue("srcset", string.Empty);
                                 if (!string.IsNullOrEmpty(srcset))
                                 {
                                     var parts = srcset.Split(',');
@@ -178,6 +184,7 @@ namespace PhoenixAdult.Sites
                                         {
                                             imgUrl = imgUrl.Replace("https", "http");
                                         }
+
                                         actorInfo.ImageUrl = imgUrl;
                                     }
                                 }
@@ -185,7 +192,7 @@ namespace PhoenixAdult.Sites
                         }
                     }
 
-                    result.People.Add(actorInfo);
+                    ((List<PersonInfo>)result.People).Add(actorInfo);
                 }
             }
 
@@ -211,7 +218,7 @@ namespace PhoenixAdult.Sites
                 {
                     foreach (var photo in photoNodes)
                     {
-                        var photoUrl = photo.GetAttributeValue("data-big", "");
+                        var photoUrl = photo.GetAttributeValue("data-big", string.Empty);
                         if (!string.IsNullOrEmpty(photoUrl))
                         {
                             var parts = photoUrl.Split(',');
@@ -222,6 +229,7 @@ namespace PhoenixAdult.Sites
                                 {
                                     imgUrl = imgUrl.Replace("https", "http");
                                 }
+
                                 images.Add(new RemoteImageInfo { Url = imgUrl });
                             }
                         }

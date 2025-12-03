@@ -15,6 +15,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteSexMex : IProviderBase
@@ -43,10 +48,10 @@ namespace PhoenixAdult.Sites
                         if (titleNode != null && linkNode != null)
                         {
                             var title = Helper.ParseTitle(titleNode.InnerText.Trim(), siteNum);
-                            var href = linkNode.GetAttributeValue("href", "");
+                            var href = linkNode.GetAttributeValue("href", string.Empty);
                             var curID = Helper.Encode(href);
                             DateTime? releaseDateObj = null;
-                            string dateStr = "";
+                            string dateStr = string.Empty;
 
                             if (dateNode != null)
                             {
@@ -128,7 +133,7 @@ namespace PhoenixAdult.Sites
             var keywords = doc.DocumentNode.SelectSingleNode("//meta[@name='keywords']");
             if (keywords != null)
             {
-                var content = keywords.GetAttributeValue("content", "");
+                var content = keywords.GetAttributeValue("content", string.Empty);
                 foreach (var genre in content.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                 {
                     movie.AddGenre(genre.Trim());
@@ -143,7 +148,7 @@ namespace PhoenixAdult.Sites
                     var actorName = actorLink.InnerText.Trim();
                     var actorInfo = new PersonInfo { Name = actorName, Type = PersonKind.Actor };
 
-                    var href = actorLink.GetAttributeValue("href", "");
+                    var href = actorLink.GetAttributeValue("href", string.Empty);
                     var modelUrl = $"{Helper.GetSearchBaseURL(siteNum)}/tour/{href}";
 
                     var actorHttp = await HTTP.Request(modelUrl, cancellationToken);
@@ -154,19 +159,20 @@ namespace PhoenixAdult.Sites
                         var imgNode = actorDoc.DocumentNode.SelectSingleNode("//img");
                         if (imgNode != null)
                         {
-                            var imgUrl = imgNode.GetAttributeValue("src", "");
+                            var imgUrl = imgNode.GetAttributeValue("src", string.Empty);
                             if (!string.IsNullOrEmpty(imgUrl))
                             {
                                 if (!imgUrl.StartsWith("http"))
                                 {
                                     imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
                                 }
+
                                 actorInfo.ImageUrl = imgUrl;
                             }
                         }
                     }
 
-                    result.People.Add(actorInfo);
+                    ((List<PersonInfo>)result.People).Add(actorInfo);
                 }
             }
 
@@ -193,13 +199,14 @@ namespace PhoenixAdult.Sites
                 {
                     foreach (var img in imgNodes)
                     {
-                        var imgUrl = img.GetAttributeValue("src", "");
+                        var imgUrl = img.GetAttributeValue("src", string.Empty);
                         if (!string.IsNullOrEmpty(imgUrl))
                         {
                             if (!imgUrl.StartsWith("http"))
                             {
                                 imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
                             }
+
                             imgUrl = imgUrl.Split('?')[0];
                             images.Add(new RemoteImageInfo { Url = imgUrl });
                         }
@@ -209,16 +216,17 @@ namespace PhoenixAdult.Sites
                 var poster = doc.DocumentNode.SelectSingleNode("//video");
                 if (poster != null)
                 {
-                     var posterUrl = poster.GetAttributeValue("poster", "");
-                     if (!string.IsNullOrEmpty(posterUrl))
-                     {
+                    var posterUrl = poster.GetAttributeValue("poster", string.Empty);
+                    if (!string.IsNullOrEmpty(posterUrl))
+                    {
                         if (!posterUrl.StartsWith("http"))
                         {
-                             posterUrl = Helper.GetSearchBaseURL(siteNum) + posterUrl;
+                            posterUrl = Helper.GetSearchBaseURL(siteNum) + posterUrl;
                         }
+
                         posterUrl = posterUrl.Split('?')[0];
                         images.Add(new RemoteImageInfo { Url = posterUrl });
-                     }
+                    }
                 }
             }
 

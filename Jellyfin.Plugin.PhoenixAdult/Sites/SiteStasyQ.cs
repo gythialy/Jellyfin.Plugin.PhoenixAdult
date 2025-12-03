@@ -16,6 +16,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteStasyQ : IProviderBase
@@ -43,7 +48,7 @@ namespace PhoenixAdult.Sites
                         if (linkNode != null)
                         {
                             var title = titleNode?.InnerText.Trim() ?? linkNode.InnerText.Trim();
-                            var href = linkNode.GetAttributeValue("href", "");
+                            var href = linkNode.GetAttributeValue("href", string.Empty);
                             var curID = Helper.Encode(href);
 
                             result.Add(new RemoteSearchResult
@@ -98,7 +103,7 @@ namespace PhoenixAdult.Sites
             var dateNode = doc.DocumentNode.SelectSingleNode("//div[contains(@class, 'row')]//div[contains(@class, 'col-12') and contains(@class, 'col-md-6') and contains(@class, 'text-right')]/p");
             if (dateNode != null)
             {
-                var dateText = dateNode.InnerText.Replace("Release date:", "").Trim();
+                var dateText = dateNode.InnerText.Replace("Release date:", string.Empty).Trim();
                 if (DateTime.TryParse(dateText, out var date))
                 {
                     movie.PremiereDate = date;
@@ -133,7 +138,7 @@ namespace PhoenixAdult.Sites
                         var actorName = actorLink.InnerText.Trim();
                         var actorInfo = new PersonInfo { Name = actorName, Type = PersonKind.Actor };
 
-                        var actorHref = actorLink.GetAttributeValue("href", "");
+                        var actorHref = actorLink.GetAttributeValue("href", string.Empty);
                         if (!string.IsNullOrEmpty(actorHref))
                         {
                             var actorHttp = await HTTP.Request(actorHref, cancellationToken);
@@ -144,21 +149,26 @@ namespace PhoenixAdult.Sites
                                 var styleNode = actorDoc.DocumentNode.SelectSingleNode("//div[@class='model-img']");
                                 if (styleNode != null)
                                 {
-                                    var style = styleNode.GetAttributeValue("style", "");
+                                    var style = styleNode.GetAttributeValue("style", string.Empty);
                                     var match = Regex.Match(style, @"url\((.*?)\)");
                                     if (match.Success)
                                     {
-                                        var imgUrl = match.Groups[1].Value.Replace("'", "").Replace("\"", "");
+                                        var imgUrl = match.Groups[1].Value.Replace("'", string.Empty).Replace("\"", string.Empty);
                                         if (!string.IsNullOrEmpty(imgUrl))
                                         {
-                                            if (!imgUrl.StartsWith("http")) imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
+                                            if (!imgUrl.StartsWith("http"))
+                                            {
+                                                imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
+                                            }
+
                                             actorInfo.ImageUrl = imgUrl;
                                         }
                                     }
                                 }
                             }
                         }
-                        result.People.Add(actorInfo);
+
+                        ((List<PersonInfo>)result.People).Add(actorInfo);
                     }
                 }
             }
@@ -185,13 +195,14 @@ namespace PhoenixAdult.Sites
                 {
                     foreach (var img in imgNodes)
                     {
-                        var imgUrl = img.GetAttributeValue("src", "");
+                        var imgUrl = img.GetAttributeValue("src", string.Empty);
                         if (!string.IsNullOrEmpty(imgUrl))
                         {
                             if (!imgUrl.StartsWith("http"))
                             {
                                 imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
                             }
+
                             images.Add(new RemoteImageInfo { Url = imgUrl });
                         }
                     }

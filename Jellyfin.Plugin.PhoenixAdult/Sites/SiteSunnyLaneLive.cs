@@ -15,6 +15,11 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
+#if __EMBY__
+#else
+using Jellyfin.Data.Enums;
+#endif
+
 namespace PhoenixAdult.Sites
 {
     public class SiteSunnyLaneLive : IProviderBase
@@ -42,13 +47,13 @@ namespace PhoenixAdult.Sites
                         if (linkNode != null)
                         {
                             var title = linkNode.InnerText.Trim();
-                            var href = linkNode.GetAttributeValue("href", "");
+                            var href = linkNode.GetAttributeValue("href", string.Empty);
                             var curID = Helper.Encode(href);
                             DateTime? releaseDateObj = null;
 
                             if (dateNode != null)
                             {
-                                var dateText = dateNode.InnerText.Replace("Added:", "").Trim();
+                                var dateText = dateNode.InnerText.Replace("Added:", string.Empty).Trim();
                                 if (DateTime.TryParse(dateText, out var date))
                                 {
                                     releaseDateObj = date;
@@ -113,7 +118,7 @@ namespace PhoenixAdult.Sites
                     var text = row.InnerText.Trim();
                     if (text.Contains("Added:"))
                     {
-                        var dateText = text.Replace("Added:", "").Trim();
+                        var dateText = text.Replace("Added:", string.Empty).Trim();
                         if (DateTime.TryParse(dateText, out var date))
                         {
                             movie.PremiereDate = date;
@@ -122,7 +127,7 @@ namespace PhoenixAdult.Sites
                     }
                     else if (text.Contains("Tags:"))
                     {
-                        var tagsText = text.Replace("Tags:", "").Trim();
+                        var tagsText = text.Replace("Tags:", string.Empty).Trim();
                         foreach (var tag in tagsText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                         {
                             movie.AddGenre(tag.Trim());
@@ -130,25 +135,25 @@ namespace PhoenixAdult.Sites
                     }
                     else if (text.Contains("Models:"))
                     {
-                        var modelsText = text.Replace("Models:", "").Trim();
-                         // Models might be links? Python uses text content replace.
-                         // Check for links
+                        var modelsText = text.Replace("Models:", string.Empty).Trim();
+                        // Models might be links? Python uses text content replace.
+                        // Check for links
                         var links = row.SelectNodes(".//a");
                         if (links != null)
                         {
                             foreach (var link in links)
                             {
-                                result.People.Add(new PersonInfo { Name = link.InnerText.Trim(), Type = PersonKind.Actor });
+                                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = link.InnerText.Trim(), Type = PersonKind.Actor });
                             }
                         }
                         else
                         {
-                             // If no links, just split by comma? Python assumes links usually or specific parsing.
-                             // Let's assume comma separated text if no links.
-                             foreach (var name in modelsText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-                             {
-                                 result.People.Add(new PersonInfo { Name = name.Trim(), Type = PersonKind.Actor });
-                             }
+                            // If no links, just split by comma? Python assumes links usually or specific parsing.
+                            // Let's assume comma separated text if no links.
+                            foreach (var name in modelsText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                            {
+                                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = name.Trim(), Type = PersonKind.Actor });
+                            }
                         }
                     }
                 }
@@ -174,15 +179,30 @@ namespace PhoenixAdult.Sites
                 var imgNode = doc.DocumentNode.SelectSingleNode("//div[@class='update_image']//img");
                 if (imgNode != null)
                 {
-                    var imgUrl = imgNode.GetAttributeValue("src0_3x", "");
-                    if (string.IsNullOrEmpty(imgUrl)) imgUrl = imgNode.GetAttributeValue("src0_2x", "");
-                    if (string.IsNullOrEmpty(imgUrl)) imgUrl = imgNode.GetAttributeValue("src0_1x", "");
-                    if (string.IsNullOrEmpty(imgUrl)) imgUrl = imgNode.GetAttributeValue("src", "");
+                    var imgUrl = imgNode.GetAttributeValue("src0_3x", string.Empty);
+                    if (string.IsNullOrEmpty(imgUrl))
+                    {
+                        imgUrl = imgNode.GetAttributeValue("src0_2x", string.Empty);
+                    }
+
+                    if (string.IsNullOrEmpty(imgUrl))
+                    {
+                        imgUrl = imgNode.GetAttributeValue("src0_1x", string.Empty);
+                    }
+
+                    if (string.IsNullOrEmpty(imgUrl))
+                    {
+                        imgUrl = imgNode.GetAttributeValue("src", string.Empty);
+                    }
 
                     if (!string.IsNullOrEmpty(imgUrl))
                     {
-                         if (!imgUrl.StartsWith("http")) imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
-                         images.Add(new RemoteImageInfo { Url = imgUrl });
+                        if (!imgUrl.StartsWith("http"))
+                        {
+                            imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
+                        }
+
+                        images.Add(new RemoteImageInfo { Url = imgUrl });
                     }
                 }
             }
