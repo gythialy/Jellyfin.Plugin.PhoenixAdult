@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -12,37 +15,47 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
-#if __EMBY__
-#else
-using Jellyfin.Data.Enums;
-#endif
-
 namespace PhoenixAdult.Sites
 {
     public class SiteSinsLife : IProviderBase
     {
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            // Simplified search logic, may need adjustments
             var result = new List<RemoteSearchResult>();
-            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
-            foreach (var sceneURL in googleResults)
+            var encodedTitle = searchTitle.Replace(" ", "+").ToLower();
+            var url = Helper.GetSearchSearchURL(siteNum) + encodedTitle;
+
+            var http = await HTTP.Request(url, cancellationToken);
+            if (http.IsOK)
             {
-                var http = await HTTP.Request(sceneURL, cancellationToken);
-                if (http.IsOK)
+                var doc = new HtmlDocument();
+                doc.LoadHtml(http.Content);
+
+                // Python xpath: //div[4]/div/div[3]/div/div
+                // This is very fragile. We will try to map it, but check for nulls.
+                // It seems to be targeting grid items.
+                var nodes = doc.DocumentNode.SelectNodes("//div[4]/div/div[3]/div/div");
+                if (nodes != null)
                 {
-                    var doc = new HtmlDocument();
-                    doc.LoadHtml(http.Content);
-                    var titleNode = doc.DocumentNode.SelectSingleNode(@"//div[@class=""section""]//h1");
-                    var titleNoFormatting = titleNode?.InnerText.Trim();
-                    var curID = Helper.Encode(sceneURL);
-                    var item = new RemoteSearchResult
+                    foreach (var node in nodes)
                     {
-                        ProviderIds = { { Plugin.Instance.Name, curID } },
-                        Name = titleNoFormatting,
-                        SearchProviderName = Plugin.Instance.Name,
-                    };
-                    result.Add(item);
+                        var linkNode = node.SelectSingleNode(".//a");
+                        if (linkNode != null)
+                        {
+                            var title = linkNode.GetAttributeValue("title", "").Trim();
+                            var href = linkNode.GetAttributeValue("href", "");
+                            if (string.IsNullOrEmpty(title)) title = linkNode.InnerText.Trim();
+
+                            var curID = Helper.Encode(href);
+
+                            result.Add(new RemoteSearchResult
+                            {
+                                ProviderIds = { { Plugin.Instance.Name, curID } },
+                                Name = title,
+                                SearchProviderName = Plugin.Instance.Name,
+                            });
+                        }
+                    }
                 }
             }
 
@@ -58,6 +71,11 @@ namespace PhoenixAdult.Sites
             };
             var movie = (Movie)result.Item;
             var sceneURL = Helper.Decode(sceneID[0]);
+            if (!sceneURL.StartsWith("http"))
+            {
+                sceneURL = "http:" + sceneURL;
+            }
+
             var http = await HTTP.Request(sceneURL, cancellationToken);
             if (!http.IsOK)
             {
@@ -67,42 +85,73 @@ namespace PhoenixAdult.Sites
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
 
-            movie.Name = doc.DocumentNode.SelectSingleNode(@"//div[@class=""section""]//h1")?.InnerText.Trim();
-            movie.Overview = doc.DocumentNode.SelectSingleNode(@"//div[4]/div/div[2]/div/div/div[2]/div[2]/p")?.InnerText.Trim();
-            movie.AddStudio("SinsLife");
+            movie.ExternalId = sceneURL;
+            movie.Name = doc.DocumentNode.SelectSingleNode("//div[@class='section']//h1")?.InnerText.Trim();
 
-            var dateNode = doc.DocumentNode.SelectSingleNode(@"//div[4]/div/div[2]/div/div/div[2]/div[1]/div/div[1]");
-            if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate))
+            var summaryNode = doc.DocumentNode.SelectSingleNode("//div[4]/div/div[2]/div/div/div[2]/div[2]/p");
+            if (summaryNode != null)
             {
-                movie.PremiereDate = parsedDate;
-                movie.ProductionYear = parsedDate.Year;
+                movie.Overview = summaryNode.InnerText.Trim();
             }
 
-            // Actor and Genre logic needs to be manually added for each site
+            movie.AddStudio("SinsLife");
+            movie.AddCollection(Helper.GetSearchSiteName(siteNum));
+
+            var dateNode = doc.DocumentNode.SelectSingleNode("//div[4]/div/div[2]/div/div/div[2]/div[1]/div/div[1]");
+            if (dateNode != null)
+            {
+                var dateText = dateNode.InnerText.Replace("Release Date:", "").Trim();
+                // Format: %B %d, %Y => "December 31, 2020"
+                if (DateTime.TryParseExact(dateText, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+                {
+                    movie.PremiereDate = date;
+                    movie.ProductionYear = date.Year;
+                }
+                else if (DateTime.TryParse(dateText, out var date2))
+                {
+                    movie.PremiereDate = date2;
+                    movie.ProductionYear = date2.Year;
+                }
+            }
+
+            var actorNodes = doc.DocumentNode.SelectNodes("//div[4]/div/div[2]/div/div/div[2]/div[3]/ul/li/a");
+            if (actorNodes != null)
+            {
+                if (actorNodes.Count == 3) movie.AddGenre("Threesome");
+                if (actorNodes.Count == 4) movie.AddGenre("Foursome");
+                if (actorNodes.Count > 4) movie.AddGenre("Orgy");
+
+                foreach (var actorLink in actorNodes)
+                {
+                    var actorName = actorLink.InnerText.Trim();
+                    result.People.Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                }
+            }
+
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            // Simplified image logic, may need adjustments
             var images = new List<RemoteImageInfo>();
             var sceneURL = Helper.Decode(sceneID[0]);
+            if (!sceneURL.StartsWith("http"))
+            {
+                sceneURL = "http:" + sceneURL;
+            }
+
             var http = await HTTP.Request(sceneURL, cancellationToken);
             if (http.IsOK)
             {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(http.Content);
-                var imageNodes = doc.DocumentNode.SelectNodes("//img/@src");
-                if (imageNodes != null)
+                var imgNode = doc.DocumentNode.SelectSingleNode("//div[4]/div/div[2]/div/div/div[1]/div[2]/div/div[1]/img");
+                if (imgNode != null)
                 {
-                    foreach (var img in imageNodes)
+                    var imgUrl = imgNode.GetAttributeValue("src", "");
+                    if (!string.IsNullOrEmpty(imgUrl))
                     {
-                        var imgUrl = img.GetAttributeValue("src", string.Empty);
-                        if (!imgUrl.StartsWith("http"))
-                        {
-                            imgUrl = new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), imgUrl).ToString();
-                        }
-
+                        if (imgUrl.StartsWith("//")) imgUrl = "http:" + imgUrl;
                         images.Add(new RemoteImageInfo { Url = imgUrl });
                     }
                 }
