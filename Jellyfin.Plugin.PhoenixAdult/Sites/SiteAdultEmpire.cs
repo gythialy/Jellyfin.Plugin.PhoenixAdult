@@ -18,11 +18,7 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 using System.Net.Http;
-
-#if __EMBY__
-#else
 using Jellyfin.Data.Enums;
-#endif
 
 namespace PhoenixAdult.Sites
 {

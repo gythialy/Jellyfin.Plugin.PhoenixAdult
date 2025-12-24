@@ -11,12 +11,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-
-#if __EMBY__
-using MediaBrowser.Common.Net;
-#else
 using System.Net.Http;
-#endif
 
 namespace PhoenixAdult.Providers
 {
@@ -46,11 +41,7 @@ namespace PhoenixAdult.Providers
                 DateTime? searchDateObj = null;
                 if (searchInfo.PremiereDate.HasValue)
                 {
-#if __EMBY__
-                    searchDateObj = searchInfo.PremiereDate.Value.DateTime;
-#else
                     searchDateObj = searchInfo.PremiereDate.Value;
-#endif
                 }
 
                 var provider = Helper.GetProviderBySiteID(site.siteNum[0]);
@@ -225,11 +216,7 @@ namespace PhoenixAdult.Providers
             return result;
         }
 
-#if __EMBY__
-        public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
-#else
         public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
-#endif
         {
             return Helper.GetImageResponse(url, cancellationToken);
         }

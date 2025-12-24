@@ -18,18 +18,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{376B22B9-B
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug.Emby|Any CPU = Debug.Emby|Any CPU
 		Debug|Any CPU = Debug|Any CPU
-		Release.Emby|Any CPU = Release.Emby|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D921B930-CF91-406F-ACBC-08914DCD0D34}.Debug.Emby|Any CPU.ActiveCfg = Debug.Emby|Any CPU
-		{D921B930-CF91-406F-ACBC-08914DCD0D34}.Debug.Emby|Any CPU.Build.0 = Debug.Emby|Any CPU
 		{D921B930-CF91-406F-ACBC-08914DCD0D34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D921B930-CF91-406F-ACBC-08914DCD0D34}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D921B930-CF91-406F-ACBC-08914DCD0D34}.Release.Emby|Any CPU.ActiveCfg = Release.Emby|Any CPU
-		{D921B930-CF91-406F-ACBC-08914DCD0D34}.Release.Emby|Any CPU.Build.0 = Release.Emby|Any CPU
 		{D921B930-CF91-406F-ACBC-08914DCD0D34}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D921B930-CF91-406F-ACBC-08914DCD0D34}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection

@@ -201,13 +201,8 @@ namespace PhoenixAdult.Helpers.Utils
                 result.ResponseUrl = response.RequestMessage.RequestUri;
                 result.IsOK = response.IsSuccessStatusCode || additionalSuccessStatusCodes.Contains(response.StatusCode);
                 result.StatusCode = response.StatusCode;
-#if __EMBY__
-                result.Content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                result.ContentStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-#else
                 result.Content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 result.ContentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-#endif
                 result.Headers = response.Headers;
                 result.Cookies = cookieContainer.GetCookies(request.RequestUri).Cast<Cookie>();
             }

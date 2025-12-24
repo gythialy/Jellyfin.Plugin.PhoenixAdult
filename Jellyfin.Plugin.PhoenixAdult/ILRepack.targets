@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Target Name="ILRepacker" AfterTargets="Build" Condition="'$(Configuration)'=='Release' or '$(Configuration)'=='Release.Emby'">
+  <Target Name="ILRepacker" AfterTargets="Build" Condition="'$(Configuration)'=='Release'">
     <ItemGroup>
       <InputAssemblies Include="$(OutputPath)$(AssemblyName).dll" />
       <InputAssemblies Include="$(OutputPath)FlareSolverrSharp.dll" />
@@ -11,10 +11,6 @@
 
     <ItemGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">
         <!--<InputAssemblies Include="$(OutputPath)Sentry.dll" />-->
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(Configuration)'=='Debug.Emby' or '$(Configuration)'=='Release.Emby'">
-      <InputAssemblies Include="$(OutputPath)Newtonsoft.Json.dll" />
     </ItemGroup>
 
     <ILRepack

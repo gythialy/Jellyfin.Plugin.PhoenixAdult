@@ -15,11 +15,7 @@ using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-
-#if __EMBY__
-#else
 using Jellyfin.Data.Enums;
-#endif
 
 namespace PhoenixAdult.Sites
 {
@@ -63,6 +59,7 @@ namespace PhoenixAdult.Sites
                 var match = Regex.Match(httpResult.Content, @"window\.__INITIAL_STATE__ = (.*);");
                 if (match.Success)
                 {
+                    Logger.Info($"[NetworkTeamSkeet] json: {match.Groups[1].Value}");
                     return JObject.Parse(match.Groups[1].Value)["content"];
                 }
             }
@@ -108,11 +105,15 @@ namespace PhoenixAdult.Sites
                             releaseDate = parsedDate.ToString("yyyy-MM-dd");
                         }
 
+                        var movieToken = detailsPageElements.SelectToken($"{sceneType}.{curId}");
+                        var img = movieToken?.SelectToken("img")?.ToString();
+
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}|{sceneType.Replace("Content", string.Empty)}" } },
                             Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
+                            ImageUrl = img ?? string.Empty,
                         });
                     }
                 }

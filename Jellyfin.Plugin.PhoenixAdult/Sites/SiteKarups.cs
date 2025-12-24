@@ -13,11 +13,7 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
 using MediaBrowser.Model.Entities;
 using PhoenixAdult.Helpers;
-
-#if __EMBY__
-#else
 using Jellyfin.Data.Enums;
-#endif
 
 namespace PhoenixAdult.Sites
 {

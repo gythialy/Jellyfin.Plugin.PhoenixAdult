@@ -14,11 +14,7 @@ using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-
-#if __EMBY__
-#else
 using Jellyfin.Data.Enums;
-#endif
 
 namespace PhoenixAdult.Sites
 {
@@ -95,11 +91,13 @@ namespace PhoenixAdult.Sites
                 releaseDate = parsedDate.ToString("yyyy-MM-dd");
             }
 
+            string posterUrl = searchResult["posterUrl"]?.ToString().Split('?')[0];
             result.Add(new RemoteSearchResult
             {
                 ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } },
                 Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
                 SearchProviderName = Plugin.Instance.Name,
+                ImageUrl = posterUrl,
             });
 
             return result;
@@ -134,11 +132,8 @@ namespace PhoenixAdult.Sites
             }
 
             movie.AddStudio("PornPros");
-            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
-
             string tagline = detailsPageElements["sponsor"]?["name"]?.ToString() ?? string.Empty;
             movie.AddStudio(tagline);
-            movie.AddCollection(tagline);
 
             if (DateTime.TryParse(detailsPageElements["releasedAt"]?.ToString(), out var parsedDate))
             {

@@ -34,11 +34,7 @@ namespace PhoenixAdult.ScheduledTasks
 
         public string Category => Plugin.Instance.Name;
 
-#if __EMBY__
-        public async Task Execute(CancellationToken cancellationToken, IProgress<double> progress)
-#else
         public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
-#endif
         {
             await Task.Yield();
             progress?.Report(0);
@@ -55,18 +51,10 @@ namespace PhoenixAdult.ScheduledTasks
                 var option = new CollectionCreationOptions
                 {
                     Name = studio,
-#if __EMBY__
-                    ItemIdList = movies.Select(o => o.InternalId).ToArray(),
-#else
                     ItemIdList = movies.Select(o => o.Id.ToString()).ToArray(),
-#endif
                 };
 
-#if __EMBY__
-                var collection = await this.collectionManager.CreateCollection(option).ConfigureAwait(false);
-#else
                 var collection = await this.collectionManager.CreateCollectionAsync(option).ConfigureAwait(false);
-#endif
 
                 var moviesImages = movies.Where(o => o.HasImage(ImageType.Primary));
                 if (moviesImages.Any())

@@ -14,11 +14,7 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-
-#if __EMBY__
-#else
 using Jellyfin.Data.Enums;
-#endif
 
 namespace PhoenixAdult.Sites
 {
@@ -86,7 +82,8 @@ namespace PhoenixAdult.Sites
             var searchUrl = Helper.GetSearchSearchURL(siteNum);
             var values = new Dictionary<string, string>
             {
-                { "input_search_sm", searchTitle },
+                { "search_input", searchTitle },
+                { "form_check_1", "uQFJJEZHsjfw" },
             };
             var httpContent = new FormUrlEncodedContent(values);
             var http = await HTTP.Request(searchUrl, HttpMethod.Post, httpContent, cancellationToken);

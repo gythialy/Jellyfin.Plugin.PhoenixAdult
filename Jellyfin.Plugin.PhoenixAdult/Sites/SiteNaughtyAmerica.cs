@@ -14,11 +14,7 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-
-#if __EMBY__
-#else
 using Jellyfin.Data.Enums;
-#endif
 
 namespace PhoenixAdult.Sites
 {
@@ -90,7 +86,7 @@ namespace PhoenixAdult.Sites
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{scenePageElements.Id}" } },
-                        Name = $"{scenePageElements.Title} [{scenePageElements.Site}] {releaseDate}",
+                        Name = $"{scenePageElements.Title} [{scenePageElements.Site.Replace("&#039;", "'", StringComparison.OrdinalIgnoreCase)}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
                 }
@@ -154,7 +150,7 @@ namespace PhoenixAdult.Sites
             movie.Name = details.Title;
             movie.Overview = details.Synopsis;
             movie.AddStudio("Naughty America");
-            movie.AddStudio(details.Site);
+            movie.AddStudio(details.Site.Replace("&#039;", "'", StringComparison.OrdinalIgnoreCase));
 
             if (details.PublishedAt != default)
             {

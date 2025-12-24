@@ -12,11 +12,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
-
-#if __EMBY__
-#else
 using Jellyfin.Data.Enums;
-#endif
 
 namespace PhoenixAdult.Sites
 {
@@ -26,10 +22,11 @@ namespace PhoenixAdult.Sites
 
         public Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            Logger.Info($"OF searchTitle: {searchTitle}");
+            Logger.Info($"[OnlyFans] Searching for: '{searchTitle}'");
             var result = new List<RemoteSearchResult>();
             if (string.IsNullOrEmpty(searchTitle))
             {
+                Logger.Info("[OnlyFans] Search title is empty.");
                 return Task.FromResult(result);
             }
 
@@ -41,9 +38,7 @@ namespace PhoenixAdult.Sites
                 string date = match.Groups[2].Value.Trim();
                 string sceneName = match.Groups[3].Value.Trim();
 
-                Logger.Info($"OF actorName: {actorName}");
-                Logger.Info($"OF date: {date}");
-                Logger.Info($"OF sceneName: {sceneName}");
+                Logger.Info($"[OnlyFans] Match success. Actor: {actorName}, Date: {date}, Scene: {sceneName}");
 
                 var res = new RemoteSearchResult
                 {
@@ -59,6 +54,10 @@ namespace PhoenixAdult.Sites
 
                 result.Add(res);
             }
+            else
+            {
+                Logger.Info($"[OnlyFans] Filename regex failed for title: '{searchTitle}'. Expected format: 'OnlyFans (Actor) - YYYY-MM-DD - Title'");
+            }
 
             return Task.FromResult(result);
         }
@@ -73,10 +72,12 @@ namespace PhoenixAdult.Sites
 
             if (sceneID == null || sceneID.Length == 0)
             {
+                Logger.Info("[OnlyFans] Update called with empty sceneID.");
                 return Task.FromResult(result);
             }
 
             string filename = Helper.Decode(sceneID[0]);
+            Logger.Info($"[OnlyFans] Updating metadata for: {filename}");
             var match = Regex.Match(filename, FilenameRegex);
 
             if (match.Success)
@@ -99,6 +100,10 @@ namespace PhoenixAdult.Sites
                 {
                     ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
                 }
+            }
+            else
+            {
+                Logger.Error($"[OnlyFans] Update regex failed for filename: {filename}");
             }
 
             result.HasMetadata = true;

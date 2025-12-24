@@ -3,9 +3,9 @@
     "category": "Metadata",
     "guid": "8f97371f-8617-463c-9859-a33072182494",
     "name": "PhoenixAdult",
-    "description": "This metadata provider helps fill Jellyfin/Emby with information for your adult videos by pulling from the original site.",
+    "description": "This metadata provider helps fill Jellyfin with information for your adult videos by pulling from the original site.",
     "owner": "Andrer757",
-    "overview": "Manage Your Adult Videos in Jellyfin/Emby",
+    "overview": "Manage Your Adult Videos in Jellyfin",
     "versions": [
       {
         "checksum": "b610f5524fe81c676d566f05a227de5c",

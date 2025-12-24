@@ -28,11 +28,7 @@ namespace PhoenixAdult.ScheduledTasks
 
         public string Category => Plugin.Instance.Name;
 
-#if __EMBY__
-        public async Task Execute(CancellationToken cancellationToken, IProgress<double> progress)
-#else
         public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
-#endif
         {
             await Task.Yield();
             progress?.Report(0);
@@ -45,11 +41,7 @@ namespace PhoenixAdult.ScheduledTasks
 
                 progress?.Report((double)idx / items.Count * 100);
 
-#if __EMBY__
-                peoples = this.libraryManager.GetItemPeople(item);
-#else
                 peoples = (List<PersonInfo>)this.libraryManager.GetPeople(item);
-#endif
 
                 if (peoples != null && peoples.Any())
                 {

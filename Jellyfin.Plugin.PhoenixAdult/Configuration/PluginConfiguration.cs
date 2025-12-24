@@ -116,8 +116,6 @@ namespace PhoenixAdult.Configuration
 
         public PreferedActorNameSource PreferedActorNameSource { get; set; }
 
-#if __EMBY__
-#else
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Required")]
         public static void ConfigurationChanged(object sender, BasePluginConfiguration e)
         {
@@ -133,6 +131,5 @@ namespace PhoenixAdult.Configuration
 
             Plugin.Instance.SaveConfiguration(configuration);
         }
-#endif
     }
 }

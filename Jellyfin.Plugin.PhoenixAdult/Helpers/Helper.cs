@@ -11,12 +11,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
 using PhoenixAdult.Sites;
-
-#if __EMBY__
-using MediaBrowser.Common.Net;
-#else
 using System.Net.Http;
-#endif
 
 namespace PhoenixAdult.Helpers
 {
@@ -329,18 +324,6 @@ namespace PhoenixAdult.Helpers
             }
         }
 
-#if __EMBY__
-        public static Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
-        {
-            return Plugin.Http.GetResponse(new HttpRequestOptions
-            {
-                CancellationToken = cancellationToken,
-                Url = url,
-                EnableDefaultUserAgent = false,
-                UserAgent = HTTP.GetUserAgent(),
-            });
-        }
-#else
         public static Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -348,7 +331,6 @@ namespace PhoenixAdult.Helpers
 
             return Plugin.Http.CreateClient().SendAsync(request, cancellationToken);
         }
-#endif
 
         public static DateTime GetLinkerTime(Assembly assembly)
         {

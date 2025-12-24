@@ -14,11 +14,7 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-
-#if __EMBY__
-#else
 using Jellyfin.Data.Enums;
-#endif
 
 namespace PhoenixAdult.Sites
 {
@@ -52,12 +48,14 @@ namespace PhoenixAdult.Sites
                         string titleNoFormatting = titleParts.Length > 1 ? $"{titleParts[0].Trim()} - {titleParts[1].Trim()}" : titleParts[0].Trim();
                         string curID = searchResult.SelectSingleNode(".//span[@class='title']/a")?.GetAttributeValue("href", string.Empty).Split('/')[3];
                         string releaseDate = DateTime.Parse(searchResult.SelectSingleNode(".//span[@class='date']")?.InnerText.Trim()).ToString("yyyy-MM-dd");
+                        var poster = searchResult.SelectSingleNode("//picture//img")?.GetAttributeValue("src", string.Empty);
 
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, curID } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
+                            ImageUrl = poster,
                         });
                     }
                 }
@@ -71,11 +69,13 @@ namespace PhoenixAdult.Sites
                     var titleNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'content-pane-title')]//h2");
                     string titleNoFormatting = titleNode?.InnerText.Trim();
                     string releaseDate = DateTime.Parse(detailsPageElements.SelectSingleNode("//div[contains(@class, 'content-pane')]//span[@class='date']")?.InnerText.Trim()).ToString("yyyy-MM-dd");
+                    var poster = detailsPageElements.SelectSingleNode("//video")?.GetAttributeValue("poster", string.Empty);
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{sceneNum}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
+                        ImageUrl = poster,
                     });
                 }
             }

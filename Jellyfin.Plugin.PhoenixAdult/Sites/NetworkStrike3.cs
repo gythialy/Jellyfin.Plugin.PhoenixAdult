@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -15,11 +16,7 @@ using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-
-#if __EMBY__
-#else
 using Jellyfin.Data.Enums;
-#endif
 
 namespace PhoenixAdult.Sites
 {
@@ -68,7 +65,12 @@ namespace PhoenixAdult.Sites
                 if (video != null && video.Type != JTokenType.Null)
                 {
                     string titleNoFormatting = (string)video["title"];
-                    string releaseDate = DateTime.Parse((string)video["releaseDate"]).ToString("yyyy-MM-dd");
+                    string releaseDate = string.Empty;
+                    if (DateTime.TryParse((string)video["releaseDate"], CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+                    {
+                        releaseDate = date.ToString("yyyy-MM-dd");
+                    }
+
                     string curID = Helper.Encode((string)video["slug"]);
                     int videoID = (int)video["videoId"];
 
@@ -77,6 +79,7 @@ namespace PhoenixAdult.Sites
                         ProviderIds = { { Plugin.Instance.Name, curID } },
                         Name = $"{titleNoFormatting} {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
+                        ImageUrl = video.SelectToken("images.listing")?.FirstOrDefault()?.SelectToken("src")?.ToString(),
                     });
                 }
             }
@@ -91,7 +94,12 @@ namespace PhoenixAdult.Sites
                     {
                         var node = searchResult["node"];
                         string titleNoFormatting = (string)node["title"];
-                        string releaseDate = DateTime.Parse((string)node["releaseDate"]).ToString("yyyy-MM-dd");
+                        string releaseDate = string.Empty;
+                        if (DateTime.TryParse((string)node["releaseDate"], CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+                        {
+                            releaseDate = date.ToString("yyyy-MM-dd");
+                        }
+
                         string curID = Helper.Encode((string)node["slug"]);
 
                         result.Add(new RemoteSearchResult
@@ -135,7 +143,7 @@ namespace PhoenixAdult.Sites
             movie.Overview = (string)video["description"];
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
 
-            if (DateTime.TryParse((string)video["releaseDate"], out var releaseDate))
+            if (DateTime.TryParse((string)video["releaseDate"], CultureInfo.InvariantCulture, DateTimeStyles.None, out var releaseDate))
             {
                 movie.PremiereDate = releaseDate;
                 movie.ProductionYear = releaseDate.Year;

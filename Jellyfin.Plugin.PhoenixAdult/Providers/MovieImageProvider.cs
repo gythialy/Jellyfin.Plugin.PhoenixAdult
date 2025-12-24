@@ -11,13 +11,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-
-#if __EMBY__
-using MediaBrowser.Common.Net;
-using MediaBrowser.Model.Configuration;
-#else
 using System.Net.Http;
-#endif
 
 namespace PhoenixAdult.Providers
 {
@@ -34,11 +28,7 @@ namespace PhoenixAdult.Providers
                 ImageType.Backdrop,
             };
 
-#if __EMBY__
-        public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, LibraryOptions libraryOptions, CancellationToken cancellationToken)
-#else
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
-#endif
         {
             IEnumerable<RemoteImageInfo> images = new List<RemoteImageInfo>();
             if (item == null)
@@ -85,11 +75,7 @@ namespace PhoenixAdult.Providers
             return images;
         }
 
-#if __EMBY__
-        public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
-#else
         public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
-#endif
         {
             return Helper.GetImageResponse(url, cancellationToken);
         }

@@ -14,11 +14,7 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-
-#if __EMBY__
-#else
 using Jellyfin.Data.Enums;
-#endif
 
 namespace PhoenixAdult.Sites
 {
@@ -160,10 +156,10 @@ namespace PhoenixAdult.Sites
             }
 
             string posterUrl = "https:" + detailsPageElements.SelectSingleNode("//img[@class='playcard']")?.GetAttributeValue("src", string.Empty);
-            result.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
+            result.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Backdrop });
 
             string backdropUrl = posterUrl.Split(new[] { "scene/image", "scene/horizontal" }, StringSplitOptions.None)[0] + "scene/vertical/390x590cdynamic.jpg";
-            result.Add(new RemoteImageInfo { Url = backdropUrl, Type = ImageType.Backdrop });
+            result.Add(new RemoteImageInfo { Url = backdropUrl, Type = ImageType.Primary });
 
             return result;
         }

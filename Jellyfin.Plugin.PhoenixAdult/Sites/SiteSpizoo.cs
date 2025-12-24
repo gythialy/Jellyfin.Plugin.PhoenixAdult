@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -11,11 +12,7 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-
-#if __EMBY__
-#else
 using Jellyfin.Data.Enums;
-#endif
 
 namespace PhoenixAdult.Sites
 {
@@ -36,31 +33,23 @@ namespace PhoenixAdult.Sites
 
             this.ParseSearchResults(siteNum, doc, result);
 
-            var pager = doc.DocumentNode.SelectSingleNode(@"//ul[@class='pager']");
-            if (pager != null)
+            var lastPageNode = doc.DocumentNode.SelectSingleNode("//a[@title='last']");
+            if (lastPageNode != null)
             {
-                var pageUrls = new List<string>();
-                var pageNodes = pager.SelectNodes(@".//a");
-                if (pageNodes != null)
+                var href = lastPageNode.GetAttributeValue("href", string.Empty);
+                var match = Regex.Match(href, @"page=(\d+)");
+                if (match.Success && int.TryParse(match.Groups[1].Value, out var totalPages))
                 {
-                    foreach (var pageNode in pageNodes)
+                    for (int i = 2; i <= totalPages; i++)
                     {
-                        var pageUrl = pageNode.GetAttributeValue("href", string.Empty);
-                        if (!string.IsNullOrEmpty(pageUrl) && !pageUrls.Contains(pageUrl) && pageUrl != "#")
+                        var pageUrl = $"{searchUrl}&page={i}";
+                        var pageHttp = await HTTP.Request(pageUrl, cancellationToken);
+                        if (pageHttp.IsOK)
                         {
-                            pageUrls.Add(pageUrl);
+                            var pageDoc = new HtmlDocument();
+                            pageDoc.LoadHtml(pageHttp.Content);
+                            this.ParseSearchResults(siteNum, pageDoc, result);
                         }
-                    }
-                }
-
-                foreach (var pageUrl in pageUrls)
-                {
-                    var nextPageHttp = await HTTP.Request($"{Helper.GetSearchBaseURL(siteNum)}/{pageUrl}", cancellationToken);
-                    if (nextPageHttp.IsOK)
-                    {
-                        var nextPageDoc = new HtmlDocument();
-                        nextPageDoc.LoadHtml(nextPageHttp.Content);
-                        this.ParseSearchResults(siteNum, nextPageDoc, result);
                     }
                 }
             }
@@ -122,11 +111,14 @@ namespace PhoenixAdult.Sites
                     }
                 }
 
+                var image = searchResult.SelectSingleNode(@".//img").GetAttributeValue("src", string.Empty);
+
                 result.Add(new RemoteSearchResult
                 {
                     ProviderIds = { { Plugin.Instance.Name, Helper.Encode(sceneUrl) } },
                     Name = $"{title} [{date}]",
                     SearchProviderName = Plugin.Instance.Name,
+                    ImageUrl = image,
                 });
             }
         }
@@ -183,7 +175,7 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actorNode in actorNodes)
                 {
-                    result.AddPerson(new PersonInfo
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo
                     {
                         Name = actorNode.InnerText.Trim().Replace(".", string.Empty),
                         Type = PersonKind.Actor,
@@ -246,7 +238,7 @@ namespace PhoenixAdult.Sites
             }
             else
             {
-                backdropNodes = doc.DocumentNode.SelectNodes(@"//section[@id='photos-tour']//img");
+                backdropNodes = doc.DocumentNode.SelectNodes(@"//div[contains(@class, 'photos-holder')]//img");
             }
 
             if (backdropNodes != null)

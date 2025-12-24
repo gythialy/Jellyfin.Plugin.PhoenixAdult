@@ -15,11 +15,7 @@ using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-
-#if __EMBY__
-#else
 using Jellyfin.Data.Enums;
-#endif
 
 namespace PhoenixAdult.Sites
 {
@@ -226,24 +222,30 @@ namespace PhoenixAdult.Sites
             movie.OriginalTitle = Helper.ParseTitle(detailsPageElements["title"].ToString(), siteNum);
             movie.Overview = detailsPageElements["description"].ToString().Replace("</br>", "\n").Replace("<br>", "\n");
 
-            var network = string.Empty;
-            if (!string.IsNullOrEmpty(detailsPageElements["network_name"]?.ToString()))
-            {
-                Logger.Info($"[NetworkGammaEntOther] network_name: {detailsPageElements["network_name"]?.ToString()}");
-                network = detailsPageElements["network_name"]?.ToString();
-                movie.AddStudio(network);
-            }
-
             var studio = string.Empty;
-            if (!string.IsNullOrEmpty(detailsPageElements["studio_name"]?.ToString()) && !network.Equals(detailsPageElements["studio_name"]?.ToString()))
+            if (!string.IsNullOrEmpty(detailsPageElements["studio_name"]?.ToString()))
             {
                 Logger.Info($"[NetworkGammaEntOther] studio_name: {detailsPageElements["studio_name"]?.ToString()}");
                 studio = detailsPageElements["studio_name"]?.ToString();
                 movie.AddStudio(studio);
             }
 
+            var network = string.Empty;
+            if (!string.IsNullOrEmpty(detailsPageElements["network_name"]?.ToString()))
+            {
+                var nStudio = NormalizeString(studio);
+                var nNetwork = NormalizeString(detailsPageElements["network_name"].ToString());
+                if (!nStudio.Equals(nNetwork))
+                {
+                    Logger.Info($"[NetworkGammaEntOther] network_name: {detailsPageElements["network_name"]?.ToString()}");
+                    network = detailsPageElements["network_name"]?.ToString();
+                    movie.AddStudio(network);
+                }
+            }
+
             var std = Helper.GetSearchSiteName(siteNum);
-            if (!std.Equals(network) && !std.Equals(studio))
+            var nStd = NormalizeString(std);
+            if (!nStd.Equals(NormalizeString(network)) && !nStd.Equals(NormalizeString(studio)))
             {
                 Logger.Info($"[NetworkGammaEntOther] std: {std}");
                 movie.AddStudio(std);
@@ -322,6 +324,19 @@ namespace PhoenixAdult.Sites
             }
 
             return images;
+        }
+
+        private static string NormalizeString(string input)
+        {
+            // Step 1: Remove all spaces (" ") by replacing them with an empty string ("")
+            string noSpaces = input.Replace(" ", string.Empty);
+            string noDice = input.Replace("-", string.Empty);
+
+            // Step 2: Convert the resulting string to lowercase
+            // ToLowerInvariant() is preferred for comparisons as it's culture-insensitive.
+            string lowercased = noSpaces.ToLowerInvariant();
+
+            return lowercased;
         }
     }
 }

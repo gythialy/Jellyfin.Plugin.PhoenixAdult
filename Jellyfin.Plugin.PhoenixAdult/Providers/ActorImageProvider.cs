@@ -12,13 +12,7 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Configuration;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-
-#if __EMBY__
-using MediaBrowser.Common.Net;
-using MediaBrowser.Model.Configuration;
-#else
 using System.Net.Http;
-#endif
 
 namespace PhoenixAdult.Providers
 {
@@ -102,11 +96,7 @@ namespace PhoenixAdult.Providers
                 ImageType.Primary,
             };
 
-#if __EMBY__
-        public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, LibraryOptions libraryOptions, CancellationToken cancellationToken)
-#else
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
-#endif
         {
             var images = new List<RemoteImageInfo>();
 
@@ -177,11 +167,7 @@ namespace PhoenixAdult.Providers
             return images;
         }
 
-#if __EMBY__
-        public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
-#else
         public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
-#endif
         {
             return Helper.GetImageResponse(url, cancellationToken);
         }

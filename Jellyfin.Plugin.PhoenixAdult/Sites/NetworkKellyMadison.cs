@@ -15,11 +15,7 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-
-#if __EMBY__
-#else
 using Jellyfin.Data.Enums;
-#endif
 
 namespace PhoenixAdult.Sites
 {
@@ -70,11 +66,14 @@ namespace PhoenixAdult.Sites
                 string displayDate = !string.IsNullOrEmpty(releaseDate) ? releaseDate : string.Empty;
                 string curId = Helper.Encode($"{sceneUrl}|{releaseDate}");
 
+                string imgUrl = node.SelectSingleNode(".//img[contains(@class, 'video-thumbnail')]")?.GetAttributeValue("src", string.Empty);
+
                 result.Add(new RemoteSearchResult
                 {
                     ProviderIds = { { Plugin.Instance.Name, curId } },
                     Name = $"{titleNoFormatting} [{subsite}] {displayDate}",
                     SearchProviderName = Plugin.Instance.Name,
+                    ImageUrl = imgUrl,
                 });
             }
 

@@ -2,8 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">net9.0</TargetFramework>
-    <TargetFramework
-      Condition="'$(Configuration)'=='Debug.Emby' or '$(Configuration)'=='Release.Emby'">net6.0</TargetFramework>
     <RootNamespace>PhoenixAdult</RootNamespace>
     <Version Condition="'$(Version)' == ''">1.0.0.0</Version>
     <AssemblyVersion Condition="'$(Version)' == ''">1.0.0.0</AssemblyVersion>
@@ -12,27 +10,19 @@
     <PackageIcon>thumb.png</PackageIcon>
     <Copyright>© DirtyRacer</Copyright>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <Configurations>Debug;Release;Release.Emby;Debug.Emby</Configurations>
+    <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)'=='Debug.Emby'">
-    <DefineConstants>DEBUG;__EMBY__</DefineConstants>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)'=='Release.Emby'">
-    <DefineConstants>__EMBY__</DefineConstants>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Debug.Emby'">
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <Optimize>false</Optimize>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)'=='Release' or '$(Configuration)'=='Release.Emby'">
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <Optimize>true</Optimize>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>NU1605</WarningsAsErrors>
@@ -54,7 +44,7 @@
   </Target>
 
   <Target Name="ILRepackTarget" AfterTargets="Build"
-    Condition="'$(Configuration)'=='Release' or '$(Configuration)'=='Release.Emby'">
+    Condition="'$(Configuration)'=='Release'">
     <ItemGroup>
       <InputAssemblies Include="$(OutputPath)$(AssemblyName).dll" />
       <InputAssemblies Include="$(OutputPath)FlareSolverrSharp.dll" />
@@ -69,10 +59,6 @@
       Include="$(OutputPath)Sentry.dll" />-->
     </ItemGroup>
 
-    <ItemGroup Condition="'$(Configuration)'=='Debug.Emby' or '$(Configuration)'=='Release.Emby'">
-      <InputAssemblies Include="$(OutputPath)Newtonsoft.Json.dll" />
-    </ItemGroup>
-
     <ILRepack
       Parallel="true"
       Internalize="true"
@@ -82,20 +68,6 @@
       TargetKind="Dll"
       OutputFile="$(OutputPath)$(AssemblyName).dll"
     />
-  </Target>
-
-  <Target Name="PostBuildReleaseEmby" AfterTargets="Build"
-    Condition="'$(Configuration)'=='Release.Emby'">
-    <PropertyGroup>
-      <ZipPath>$(OutputPath)zip</ZipPath>
-      <ProjectRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)'))</ProjectRoot>
-    </PropertyGroup>
-    <Copy SourceFiles="$(OutputPath)PhoenixAdult.dll"
-      DestinationFiles="$(ZipPath)\Emby.Plugin.PhoenixAdult.dll" />
-    <Copy SourceFiles="$(OutputPath)PhoenixAdult.pdb"
-      DestinationFiles="$(ZipPath)\Emby.Plugin.PhoenixAdult.pdb" />
-    <ZipDirectory SourceDirectory="$(ZipPath)"
-      DestinationFile="$(ProjectRoot)\..\Emby.Plugin.PhoenixAdult@v$(Version).zip" Overwrite="true" />
   </Target>
 
   <ItemGroup>
@@ -117,12 +89,7 @@
     <PackageReference Include="SkiaSharp" Version="2.88.6" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(Configuration)'=='Debug.Emby' or '$(Configuration)'=='Release.Emby'">
-    <PackageReference Include="MediaBrowser.Server.Core" Version="4.8.10" />
-    <PackageReference Include="SkiaSharp" Version="2.88.6" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Debug.Emby'">
+  <ItemGroup Condition="'$(Configuration)'=='Debug'">
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -133,7 +100,7 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(Configuration)'=='Release' or '$(Configuration)'=='Release.Emby'">
+  <ItemGroup Condition="'$(Configuration)'=='Release'">
     <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.34.2" />
   </ItemGroup>
 

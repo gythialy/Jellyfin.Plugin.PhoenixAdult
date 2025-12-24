@@ -11,7 +11,7 @@ assignees: ''
 A clear and concise description of what the bug is.
 
 **Include**
-1. Jellyfin or Emby
+1. Jellyfin
 2. Plugin Version
 3. Scene URL
 4. File Name

@@ -20,11 +20,7 @@ namespace PhoenixAdult.ScheduledTasks
 
         public string Category => Plugin.Instance.Name;
 
-#if __EMBY__
-        public async Task Execute(CancellationToken cancellationToken, IProgress<double> progress)
-#else
         public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
-#endif
         {
             Logger.Info("Start Database Sync Update");
             await Task.Yield();

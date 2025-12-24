@@ -12,13 +12,8 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 using System.Text.Json;
-
-#if __EMBY__
-using MediaBrowser.Common.Net;
-#else
 using System.IO;
 using System.Net.Http;
-#endif
 
 namespace PhoenixAdult.Providers
 {
@@ -45,8 +40,6 @@ namespace PhoenixAdult.Providers
             var title = string.Empty;
             (int[] siteNum, string siteName) site = (null, null);
 
-#if __EMBY__
-#else
             if (!string.IsNullOrEmpty(searchInfo.Path) && Plugin.Instance.Configuration.UseFilePath)
             {
                 Logger.Info($"searchInfo.Path: {searchInfo.Path}");
@@ -62,7 +55,6 @@ namespace PhoenixAdult.Providers
                     }
                 }
             }
-#endif
 
             if (site.siteNum == null)
             {
@@ -70,6 +62,7 @@ namespace PhoenixAdult.Providers
                 title = Helper.ReplaceAbbrieviation(searchInfo.Name);
                 Logger.Info($"MP title: {title}");
                 site = Helper.GetSiteFromTitle(title);
+                Logger.Info($"MP site: {site}");
             }
 
             if (site.siteNum == null)
@@ -113,11 +106,7 @@ namespace PhoenixAdult.Providers
             {
                 if (searchInfo.PremiereDate.HasValue)
                 {
-#if __EMBY__
-                    searchDateObj = searchInfo.PremiereDate.Value.DateTime;
-#else
                     searchDateObj = searchInfo.PremiereDate.Value;
-#endif
                     searchDate = searchInfo.PremiereDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                 }
             }
@@ -195,7 +184,7 @@ namespace PhoenixAdult.Providers
 
                             try
                             {
-                                result = await provider.Search(site.siteNum, searchTitle, searchDateObj, cancellationToken).ConfigureAwait(false);
+                                result = await provider.Search(site.siteNum, searchInfo.Name, searchDateObj, cancellationToken).ConfigureAwait(false);
                             }
                             catch (Exception e)
                             {
@@ -266,11 +255,7 @@ namespace PhoenixAdult.Providers
             DateTime? premiereDateObj = null;
             if (info.PremiereDate.HasValue)
             {
-#if __EMBY__
-                premiereDateObj = info.PremiereDate.Value.DateTime;
-#else
                 premiereDateObj = info.PremiereDate.Value;
-#endif
             }
 
             string[] curID = null;
@@ -279,6 +264,8 @@ namespace PhoenixAdult.Providers
             {
                 curID = externalID.Split('#');
             }
+
+            Logger.Info($"sceneID: {sceneID}");
 
             if ((!sceneID.ContainsKey(this.Name) || curID == null || curID.Length < 3) && !Plugin.Instance.Configuration.DisableAutoIdentify)
             {
@@ -294,11 +281,7 @@ namespace PhoenixAdult.Providers
 
                     if (first.PremiereDate.HasValue)
                     {
-#if __EMBY__
-                        premiereDateObj = first.PremiereDate.Value.DateTime;
-#else
                         premiereDateObj = first.PremiereDate.Value;
-#endif
                     }
                 }
             }
@@ -411,11 +394,7 @@ namespace PhoenixAdult.Providers
             return result;
         }
 
-#if __EMBY__
-        public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
-#else
         public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
-#endif
         {
             return Helper.GetImageResponse(url, cancellationToken);
         }
