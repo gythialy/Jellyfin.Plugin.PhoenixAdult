@@ -28,7 +28,7 @@ namespace PhoenixAdult.Providers
                 return result;
             }
 
-            var providerList = new List<string> { "Freeones" };
+            var providerList = new List<string> { "ThePornDB" };
 
             foreach (var siteName in providerList)
             {
