@@ -98,18 +98,37 @@ namespace PhoenixAdult.Sites
             }
 
             result.Item.ExternalId = url;
+            result.Item.SetProviderId(Plugin.Instance.Name, id);
             result.Item.Name = (string)details["name"];
             result.Item.Overview = (string)details["bio"];
 
-            if (DateTime.TryParseExact((string)details["born_on"], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var bornDate))
+            var extras = details["extras"];
+            if (extras != null && extras.Type != JTokenType.Null)
             {
-                result.Item.PremiereDate = bornDate;
-            }
+                if (DateTime.TryParseExact((string)extras["birthday"], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var bornDate))
+                {
+                    result.Item.PremiereDate = bornDate;
+                }
 
-            var birthPlace = (string)details["birthplace"];
-            if (!string.IsNullOrEmpty(birthPlace))
+                var birthPlace = (string)extras["birthplace"];
+                if (!string.IsNullOrEmpty(birthPlace))
+                {
+                    result.Item.ProductionLocations = new string[] { birthPlace };
+                }
+            }
+            // Fallback to root if not in extras (though API sample suggests extras)
+            else
             {
-                result.Item.ProductionLocations = new string[] { birthPlace };
+                if (DateTime.TryParseExact((string)details["born_on"], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var bornDate))
+                {
+                    result.Item.PremiereDate = bornDate;
+                }
+
+                var birthPlace = (string)details["birthplace"];
+                if (!string.IsNullOrEmpty(birthPlace))
+                {
+                    result.Item.ProductionLocations = new string[] { birthPlace };
+                }
             }
 
             var aliases = details["aliases"];
@@ -134,11 +153,6 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            // We can re-fetch details or assume we might have it if Update was called recently?
-            // But standard practice is to fetch.
-            // Or we can try to extract image from item if it was set, but GetImages usually fetches fresh.
-            // For ThePornDB, the image URL is in the details.
-
             var id = sceneID[0];
             var url = $"{Helper.GetSearchSearchURL(siteNum)}/performers/{id}";
 
@@ -156,8 +170,11 @@ namespace PhoenixAdult.Sites
                 var details = json["data"];
                 if (details != null && details.Type != JTokenType.Null)
                 {
+                    var addedUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                    // 1. details["image"]
                     var image = (string)details["image"];
-                    if (!string.IsNullOrEmpty(image))
+                    if (!string.IsNullOrEmpty(image) && addedUrls.Add(image))
                     {
                         result.Add(new RemoteImageInfo
                         {
@@ -166,23 +183,33 @@ namespace PhoenixAdult.Sites
                         });
                     }
 
-                    // ThePornDB also has thumbnails, but "image" is usually the poster/profile.
-                    // There are also "posters" in some responses, let's check NetworkMetadataAPI for similar structure.
-                    // NetworkMetadataAPI checks "posters" then "image".
-
-                    if (details["posters"] is JObject postersObject)
+                    // 2. details["face"]
+                    var face = (string)details["face"];
+                    if (!string.IsNullOrEmpty(face) && addedUrls.Add(face))
                     {
-                        // Prioritize higher res if available, similar to NetworkMetadataAPI
-                        // NetworkMetadataAPI: large ?? medium ?? small
-                        var posterUrl = (string)postersObject["large"] ?? (string)postersObject["medium"] ?? (string)postersObject["small"];
-                        if (!string.IsNullOrEmpty(posterUrl) && posterUrl != image)
+                        result.Add(new RemoteImageInfo
                         {
-                             // If different or we want to add it.
-                             // Usually we just want one Primary.
-                             // If "image" is present, use it. If not, try posters.
-                             // Or if "image" is low res?
-                             // Let's stick to "image" first as it's the main property, but add logic to use posters if image is missing
-                             // or add both? Jellyfin picks one.
+                            Url = face,
+                            Type = ImageType.Primary,
+                        });
+                    }
+
+                    // 3. details["posters"]
+                    if (details["posters"] is JArray postersArray)
+                    {
+                        foreach (var posterToken in postersArray)
+                        {
+                            var posterUrl = (string)posterToken["url"];
+                            if (!string.IsNullOrEmpty(posterUrl) && addedUrls.Add(posterUrl))
+                            {
+                                // Default to Primary as we cannot easily determine resolution/aspect ratio from this JSON structure
+                                // without fetching headers for every image.
+                                result.Add(new RemoteImageInfo
+                                {
+                                    Url = posterUrl,
+                                    Type = ImageType.Primary,
+                                });
+                            }
                         }
                     }
                 }
