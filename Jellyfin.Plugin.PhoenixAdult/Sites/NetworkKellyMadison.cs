@@ -34,48 +34,64 @@ namespace PhoenixAdult.Sites
             }
 
             string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{Uri.EscapeDataString(searchTitle)}&type=episodes";
-            var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, null, _cookies);
-            if (!httpResult.IsOK)
-            {
-                return result;
-            }
 
-            var htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(httpResult.Content);
-            var searchResults = htmlDoc.DocumentNode.SelectNodes("//a[contains(@class, \"video-card\")]");
-
-            if (searchResults == null)
+            do
             {
-                return result;
-            }
-
-            foreach (var node in searchResults)
-            {
-                var titleNode = node.SelectSingleNode(".//h3");
-                string titleNoFormatting = titleNode?.InnerText.Trim();
-                string sceneUrl = node.GetAttributeValue("href", string.Empty);
-                string episodeId = node.SelectSingleNode(".//span[@class='video-title']")?.InnerText.Split('#').Last().Trim();
-                string subsite = node.SelectSingleNode(".//span[@class='badge badge-brand']")?.InnerText.Trim().Replace("PF", "PornFidelity").Replace("TF", "TeenFidelity").Replace("KM", "Kelly Madison");
-                string releaseDate = string.Empty;
-                var dateNode = node.SelectSingleNode(".//time");
-                if (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "MM/dd/yy", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsedDate))
+                var currentUri = new Uri(searchUrl);
+                var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken, null, _cookies);
+                if (!httpResult.IsOK)
                 {
-                    releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    break;
                 }
 
-                string displayDate = !string.IsNullOrEmpty(releaseDate) ? releaseDate : string.Empty;
-                string curId = Helper.Encode($"{sceneUrl}|{releaseDate}");
+                var htmlDoc = new HtmlDocument();
+                htmlDoc.LoadHtml(httpResult.Content);
+                var searchResults = htmlDoc.DocumentNode.SelectNodes("//a[contains(@class, \"video-card\")]");
 
-                string imgUrl = node.SelectSingleNode(".//img[contains(@class, 'video-thumbnail')]")?.GetAttributeValue("src", string.Empty);
-
-                result.Add(new RemoteSearchResult
+                if (searchResults != null)
                 {
-                    ProviderIds = { { Plugin.Instance.Name, curId } },
-                    Name = $"{titleNoFormatting} [{subsite}] {displayDate}",
-                    SearchProviderName = Plugin.Instance.Name,
-                    ImageUrl = imgUrl,
-                });
-            }
+                    foreach (var node in searchResults)
+                    {
+                        var titleNode = node.SelectSingleNode(".//h3");
+                        string titleNoFormatting = titleNode?.InnerText.Trim();
+                        string sceneUrl = node.GetAttributeValue("href", string.Empty);
+                        string episodeId = node.SelectSingleNode(".//span[@class='video-title']")?.InnerText.Split('#').Last().Trim();
+                        string subsite = node.SelectSingleNode(".//span[@class='badge badge-brand']")?.InnerText.Trim().Replace("PF", "PornFidelity").Replace("TF", "TeenFidelity").Replace("KM", "Kelly Madison");
+                        string releaseDate = string.Empty;
+                        var dateNode = node.SelectSingleNode(".//time");
+                        if (dateNode != null && DateTime.TryParseExact(dateNode.InnerText.Trim(), "MM/dd/yy", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsedDate))
+                        {
+                            releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                        }
+
+                        string displayDate = !string.IsNullOrEmpty(releaseDate) ? releaseDate : string.Empty;
+                        string curId = Helper.Encode($"{sceneUrl}|{releaseDate}");
+
+                        string imgUrl = node.SelectSingleNode(".//img[contains(@class, 'video-thumbnail')]")?.GetAttributeValue("src", string.Empty);
+
+                        result.Add(new RemoteSearchResult
+                        {
+                            ProviderIds = { { Plugin.Instance.Name, curId } },
+                            Name = $"{titleNoFormatting} [{subsite}] {displayDate}",
+                            SearchProviderName = Plugin.Instance.Name,
+                            ImageUrl = imgUrl,
+                        });
+                    }
+                }
+
+                searchUrl = null;
+                var nextNode = htmlDoc.DocumentNode.SelectSingleNode("//a[@rel='next']");
+                if (nextNode != null)
+                {
+                    var nextUrl = nextNode.GetAttributeValue("href", string.Empty);
+                    if (!string.IsNullOrEmpty(nextUrl))
+                    {
+                        searchUrl = new Uri(currentUri, nextUrl).ToString();
+                        searchUrl = System.Net.WebUtility.HtmlDecode(searchUrl);
+                    }
+                }
+
+            } while (!string.IsNullOrEmpty(searchUrl) && !cancellationToken.IsCancellationRequested);
 
             return result;
         }
