@@ -86,7 +86,7 @@ namespace PhoenixAdult.Sites
 
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
+                            ProviderIds = { { Plugin.Instance.Name, $"{curId}" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -108,14 +108,11 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string[] providerIds = sceneID[0].Split('|');
-            string sceneUrl = Helper.Decode(providerIds[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
             }
-
-            string sceneDate = providerIds.Length > 1 ? providerIds[1] : null;
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)
@@ -127,8 +124,7 @@ namespace PhoenixAdult.Sites
 
             var movie = (Movie)result.Item;
             movie.ExternalId = sceneUrl;
-            var siteNumVal = int.Parse(providerIds[1]);
-            if (siteNumVal == 1246 || siteNumVal == 1553)
+            if (siteNum[1] == 16 || siteNum[1] == 18)
             {
                 movie.Name = Helper.ParseTitle(detailsPageElements.SelectSingleNode("//h1")?.InnerText.Trim(), siteNum);
             }
@@ -147,13 +143,11 @@ namespace PhoenixAdult.Sites
             if (siteName == "Hussie Pass" || siteName == "Babe Archives" || siteName == "See Him Fuck")
             {
                 movie.AddStudio(siteName);
-                movie.AddCollection(siteName);
             }
             else
             {
                 movie.AddStudio("BellaPass");
                 movie.AddStudio(siteName);
-                movie.AddCollection(siteName);
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'featuring')]//a[contains(@href, '/categories/')]");
@@ -214,11 +208,6 @@ namespace PhoenixAdult.Sites
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
             }
-            else if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out parsedDate))
-            {
-                movie.PremiereDate = parsedDate;
-                movie.ProductionYear = parsedDate.Year;
-            }
 
             return result;
         }
@@ -226,7 +215,7 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string sceneUrl = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneUrl = Helper.Decode(sceneID[0]);
             if (!sceneUrl.StartsWith("http"))
             {
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;

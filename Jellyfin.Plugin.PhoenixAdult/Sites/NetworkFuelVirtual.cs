@@ -43,7 +43,7 @@ namespace PhoenixAdult.Sites
                 { 717, new List<string> { "Sophia Sutra" } }, { 718, new List<string> { "Sophia Striker" } }, { 728, new List<string> { "Taylor Tilden" } },
                 { 729, new List<string> { "Taylor Whyte" } }, { 749, new List<string> { "Veronica Radke" } }, { 750, new List<string> { "Veronica Rodriguez" } },
                 { 757, new List<string> { "Whitney Stevens" } }, { 825, new List<string> { "Alexa Grace" } }, { 839, new List<string> { "Abby Cross" } },
-                { 947, new List<string> { "Melissa May" } },
+                { 884, new List<string> { "Allie Rae" } }, { 947, new List<string> { "Melissa May" } },
             }
             },
             {
@@ -97,9 +97,15 @@ namespace PhoenixAdult.Sites
                     string curId = Helper.Encode(titleNode?.GetAttributeValue("href", string.Empty));
                     string releaseDate = string.Empty;
                     var dateNode = node.SelectSingleNode(".//span[@class='date']");
-                    if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Replace("Added", string.Empty).Trim(), out var parsedDate))
+                    if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Replace("Added ", string.Empty).Trim(), out var parsedDate))
                     {
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                    }
+
+                    var imgUrl = node.SelectSingleNode(".//img[@class='thumbs']")?.GetAttributeValue("src", string.Empty);
+                    if (imgUrl != string.Empty)
+                    {
+                        imgUrl = Helper.GetSearchBaseURL(siteNum) + imgUrl;
                     }
 
                     result.Add(new RemoteSearchResult
@@ -107,6 +113,7 @@ namespace PhoenixAdult.Sites
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [FuelVirtual/{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
+                        ImageUrl = imgUrl,
                     });
                 }
             }

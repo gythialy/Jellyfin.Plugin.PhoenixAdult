@@ -97,6 +97,7 @@ namespace PhoenixAdult.Sites
             }
 
             string titleNoFormatting = (string)searchResult["name"];
+            string imgUrl = (string)searchResult["screenshot"];
             string curID = Helper.Encode(sceneUrl);
             string subSite = searchResult.SelectToken("creator.name")?.ToString();
             string releaseDate = string.Empty;
@@ -110,6 +111,7 @@ namespace PhoenixAdult.Sites
                 ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } },
                 Name = $"{titleNoFormatting} [ManyVids/{subSite}] {releaseDate}",
                 SearchProviderName = Plugin.Instance.Name,
+                ImageUrl = imgUrl,
             });
 
             return result;

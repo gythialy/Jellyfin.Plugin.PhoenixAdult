@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -54,11 +55,23 @@ namespace PhoenixAdult.Sites
                     string sceneURL = searchResult.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty).Split('?')[0];
                     string releaseDate = DateTime.Parse(searchResult.SelectSingleNode(".//span[@class='scene-date']")?.InnerText.Trim()).ToString("yyyy-MM-dd");
 
+                    string imgUrl = searchResult.SelectSingleNode(".//img[contains(@class, 'scene-thumb')]")?.GetAttributeValue("data-src", string.Empty);
+                    if (string.IsNullOrEmpty(imgUrl))
+                    {
+                        imgUrl = searchResult.SelectSingleNode(".//img[contains(@class, 'scene-thumb')]")?.GetAttributeValue("src", string.Empty);
+                    }
+
+                    if (!string.IsNullOrEmpty(imgUrl) && !imgUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    {
+                        imgUrl = "https:" + imgUrl;
+                    }
+
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, Helper.Encode($"{sceneURL}|{releaseDate}") } },
                         Name = $"{titleNoFormatting} [Tonight's Girlfriend] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
+                        ImageUrl = imgUrl,
                     });
                 }
 
@@ -92,44 +105,53 @@ namespace PhoenixAdult.Sites
 
             var movie = (Movie)result.Item;
             movie.ExternalId = sceneURL;
-            var actorList = new List<string>();
-            var actors = detailsPageElements.SelectNodes("//p[@class='grey-performers']//a");
-            string sceneInfo = detailsPageElements.SelectSingleNode("//p[@class='grey-performers']")?.InnerText;
-
-            foreach (var actorLink in actors)
-            {
-                string actorName = actorLink.InnerText.Trim();
-                actorList.Add(actorName);
-                sceneInfo = sceneInfo.Replace(actorName + ",", string.Empty).Trim();
-
-                string actorPageURL = actorLink.GetAttributeValue("href", string.Empty).Split('?')[0];
-                var actorPageElements = await HTML.ElementFromURL(actorPageURL, cancellationToken);
-                string actorPhotoURL = "https:" + actorPageElements?.SelectSingleNode("//div[contains(@class, 'performer-details')]//img")?.GetAttributeValue("src", string.Empty);
-                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
-            }
-
-            movie.Name = string.Join(", ", actorList);
-            movie.Overview = detailsPageElements.SelectSingleNode("//p[@class='scene-description']")?.InnerText.Trim();
             movie.AddStudio("Naughty America");
             movie.AddStudio("Tonight's Girlfriend");
 
-            if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
+            // Try to parse JSON-LD
+            var jsonLdNode = detailsPageElements.SelectSingleNode("//script[@type='application/ld+json']");
+            if (jsonLdNode != null && !string.IsNullOrEmpty(jsonLdNode.InnerText))
             {
-                movie.PremiereDate = parsedDate;
-                movie.ProductionYear = parsedDate.Year;
-            }
+                try
+                {
+                    var jsonLd = JObject.Parse(jsonLdNode.InnerText);
+                    movie.Name = (string)jsonLd["name"];
+                    movie.Overview = (string)jsonLd["description"];
 
-            var maleActors = sceneInfo.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var maleActor in maleActors)
+                    if (DateTime.TryParse((string)jsonLd["uploadDate"], out var uploadDate))
+                    {
+                        movie.PremiereDate = uploadDate;
+                        movie.ProductionYear = uploadDate.Year;
+                    }
+
+                    var actors = jsonLd["actor"] as JArray;
+                    if (actors != null)
+                    {
+                        foreach (var actor in actors)
+                        {
+                            var name = (string)actor["name"];
+                            if (!string.IsNullOrEmpty(name))
+                            {
+                                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = name, Type = PersonKind.Actor });
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    // Fallback to HTML parsing if JSON-LD fails
+                    this.ParseHtmlDetails(detailsPageElements, result, sceneDate);
+                }
+            }
+            else
             {
-                ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = maleActor.Trim(), Type = PersonKind.Actor });
+                this.ParseHtmlDetails(detailsPageElements, result, sceneDate);
             }
 
             var genres = new List<string> { "Girlfriend Experience", "Pornstar", "Hotel", "Pornstar Experience" };
             if (result.People.Count == 3)
             {
                 genres.Add("Threesome");
-                genres.Add(actors.Count == 2 ? "BGG" : "BBG");
             }
 
             foreach (var genre in genres)
@@ -138,6 +160,47 @@ namespace PhoenixAdult.Sites
             }
 
             return result;
+        }
+
+        private void ParseHtmlDetails(HtmlNode detailsPageElements, MetadataResult<BaseItem> result, string sceneDate)
+        {
+            var movie = (Movie)result.Item;
+            var actorList = new List<string>();
+            var actors = detailsPageElements.SelectNodes("//p[@class='grey-performers']//a");
+            string sceneInfo = detailsPageElements.SelectSingleNode("//p[@class='grey-performers']")?.InnerText;
+
+            if (actors != null)
+            {
+                foreach (var actorLink in actors)
+                {
+                    string actorName = actorLink.InnerText.Trim();
+                    actorList.Add(actorName);
+                    if (sceneInfo != null)
+                    {
+                        sceneInfo = sceneInfo.Replace(actorName + ",", string.Empty).Trim();
+                    }
+
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor });
+                }
+            }
+
+            movie.Name = string.Join(", ", actorList);
+            movie.Overview = detailsPageElements.SelectSingleNode("//p[@class='scene-description']")?.InnerText.Trim();
+
+            if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParse(sceneDate, out var parsedDate))
+            {
+                movie.PremiereDate = parsedDate;
+                movie.ProductionYear = parsedDate.Year;
+            }
+
+            if (!string.IsNullOrEmpty(sceneInfo))
+            {
+                var maleActors = sceneInfo.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var maleActor in maleActors)
+                {
+                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = maleActor.Trim(), Type = PersonKind.Actor });
+                }
+            }
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
@@ -155,11 +218,28 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            string posterUrl = "https:" + detailsPageElements.SelectSingleNode("//img[@class='playcard']")?.GetAttributeValue("src", string.Empty);
-            result.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Backdrop });
+            string posterUrl = null;
+            var jsonLdNode = detailsPageElements.SelectSingleNode("//script[@type='application/ld+json']");
+            if (jsonLdNode != null && !string.IsNullOrEmpty(jsonLdNode.InnerText))
+            {
+                 try
+                 {
+                     var jsonLd = JObject.Parse(jsonLdNode.InnerText);
+                     posterUrl = (string)jsonLd["thumbnailUrl"];
+                 }
+                 catch { }
+            }
 
-            string backdropUrl = posterUrl.Split(new[] { "scene/image", "scene/horizontal" }, StringSplitOptions.None)[0] + "scene/vertical/390x590cdynamic.jpg";
-            result.Add(new RemoteImageInfo { Url = backdropUrl, Type = ImageType.Primary });
+            if (string.IsNullOrEmpty(posterUrl))
+            {
+                posterUrl = "https:" + detailsPageElements.SelectSingleNode("//img[@class='playcard']")?.GetAttributeValue("src", string.Empty);
+            }
+
+            if (!string.IsNullOrEmpty(posterUrl))
+            {
+                string backdropUrl = posterUrl.Split(new[] { "scene/image", "scene/horizontal" }, StringSplitOptions.None)[0] + "scene/vertical/390x590cdynamic.jpg";
+                result.Add(new RemoteImageInfo { Url = backdropUrl, Type = ImageType.Primary });
+            }
 
             return result;
         }

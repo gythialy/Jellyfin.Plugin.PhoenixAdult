@@ -81,10 +81,10 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">
-    <PackageReference Include="Jellyfin.Data" Version="10.11.3" />
-    <PackageReference Include="Jellyfin.Common" Version="10.11.3" />
-    <PackageReference Include="Jellyfin.Model" Version="10.11.3" />
-    <PackageReference Include="Jellyfin.Controller" Version="10.11.3" />
+    <PackageReference Include="Jellyfin.Data" Version="10.11.6" />
+    <PackageReference Include="Jellyfin.Common" Version="10.11.6" />
+    <PackageReference Include="Jellyfin.Model" Version="10.11.6" />
+    <PackageReference Include="Jellyfin.Controller" Version="10.11.6" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
     <PackageReference Include="SkiaSharp" Version="2.88.6" />
   </ItemGroup>
