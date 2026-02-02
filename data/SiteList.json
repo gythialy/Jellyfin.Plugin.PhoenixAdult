@@ -2228,7 +2228,8 @@
       "44": ["Yes Girlz", "https://yesgirlz.com", "/scenes"],
       "45": ["Z Filmz Originals", "https://z-filmz-originals.com"],
       "46": ["Hoby Buchanon", "https://hobybuchanon.com", "/updates"],
-      "47": ["VRHush", "https://vrhush.com", "/scenes"]
+      "47": ["VRHush", "https://vrhush.com", "/scenes"],
+      "48": ["Ricky's Resort", "https://rickysresort.com"]
     },
     "248": {
       "0": ["Teeny Taboo", "https://teenytaboo.com", "/videos/"]
@@ -2303,6 +2304,9 @@
     },
     "263": {
       "0": ["ThePornDB", "https://theporndb.net", "https://api.theporndb.net"]
+    },
+    "264": {
+      "0": ["NewGrounds", "https://NewGrounds.com", ""]
     }
   },
   "SiteIDList": {

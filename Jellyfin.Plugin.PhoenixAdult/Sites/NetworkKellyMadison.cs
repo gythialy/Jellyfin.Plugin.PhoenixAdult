@@ -90,8 +90,8 @@ namespace PhoenixAdult.Sites
                         searchUrl = System.Net.WebUtility.HtmlDecode(searchUrl);
                     }
                 }
-
-            } while (!string.IsNullOrEmpty(searchUrl) && !cancellationToken.IsCancellationRequested);
+            }
+            while (!string.IsNullOrEmpty(searchUrl) && !cancellationToken.IsCancellationRequested);
 
             return result;
         }

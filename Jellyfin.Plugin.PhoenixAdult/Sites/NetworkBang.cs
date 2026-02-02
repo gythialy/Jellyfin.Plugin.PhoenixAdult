@@ -86,7 +86,7 @@ namespace PhoenixAdult.Sites
                             releaseDateStr = searchDate.Value.ToString("yyyy-MM-dd");
                         }
                         
-                        string imageUrl = sceneUrlNode.SelectSingleNode("//img[contains(@class, 'preview-img')]")?.GetAttributeValue("src", string.Empty);
+                        string imageUrl = sceneUrlNode.SelectSingleNode(".//img[contains(@class, 'preview-img')]")?.GetAttributeValue("src", string.Empty);
 
                         if (!searchResults.Contains(sceneURL))
                         {
@@ -208,13 +208,19 @@ namespace PhoenixAdult.Sites
             movie.ExternalId = sceneURL;
             movie.Name = Helper.ParseTitle(HTML.Clean(name ?? string.Empty), siteNum);
             movie.Overview = HTML.Clean(description ?? string.Empty);
-            movie.AddStudio(Regex.Replace(Helper.ParseTitle((productionCompany ?? string.Empty).Trim(), siteNum), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
+            movie.AddStudio(System.Net.WebUtility.HtmlDecode(Regex.Replace(Helper.ParseTitle((productionCompany ?? string.Empty).Trim(), siteNum), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase)));
             movie.AddStudio("Bang!");
 
-            string tagline = detailsPageElements.SelectSingleNode("//a[contains(@href, 'originals') or contains(@href, 'videos')]")?.InnerText.Trim();
+            string tagline = detailsPageElements.SelectSingleNode("//p[contains(., 'In the series')]/a")?.InnerText.Trim();
             if (!string.IsNullOrEmpty(tagline))
             {
-                movie.AddStudio(Regex.Replace(Helper.ParseTitle(tagline, siteNum), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase));
+                movie.AddStudio(System.Net.WebUtility.HtmlDecode(Regex.Replace(Helper.ParseTitle(tagline, siteNum), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase)));
+            }
+
+            string studio = detailsPageElements.SelectSingleNode("//p[contains(., 'Studio')]/a")?.InnerText.Trim();
+            if (!string.IsNullOrEmpty(studio))
+            {
+                movie.AddStudio(System.Net.WebUtility.HtmlDecode(Regex.Replace(Helper.ParseTitle(studio, siteNum), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase)));
             }
 
             string dvdTitle = detailsPageElements.SelectSingleNode("//p[contains(., 'Movie')]/a[contains(@href, 'dvd')]")?.InnerText.Trim();

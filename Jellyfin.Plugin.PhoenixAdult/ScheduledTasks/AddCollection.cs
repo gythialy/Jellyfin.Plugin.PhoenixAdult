@@ -41,7 +41,7 @@ namespace PhoenixAdult.ScheduledTasks
 
             var items = this.libraryManager.GetItemList(new InternalItemsQuery() { IncludeItemTypes = new[] { BaseItemKind.Movie } }).Where(o => o.ProviderIds.ContainsKey(Plugin.Instance.Name));
 
-            var studios = items.SelectMany(o => o.Studios).Distinct().ToList();
+            var studios = items.SelectMany(o => o.Studios).Distinct().Where(s => !string.IsNullOrEmpty(s) && !string.IsNullOrWhiteSpace(s)).ToList();
             Logger.Info($"[AddCollection] studios: {JsonSerializer.Serialize(studios)}");
             foreach (var (idx, studio) in studios.WithIndex())
             {
