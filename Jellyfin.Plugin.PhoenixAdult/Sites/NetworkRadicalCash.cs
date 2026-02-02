@@ -75,6 +75,29 @@ namespace PhoenixAdult.Sites
 
                             sceneUrl = $"{Helper.GetSearchSearchURL(siteNum)}/{videoId}/{searchResult["slug"]}";
                         }
+                        else if (siteNum[1] == 48)
+                        {
+                            if (DateTime.TryParse(searchResult["publish_date"].ToString(), out var parsedDate))
+                            {
+                                releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                            }
+
+                            var season = "1";
+                            if (searchResult["tags"] != null)
+                            {
+                                foreach (var tag in searchResult["tags"])
+                                {
+                                    var tagStr = tag.ToString();
+                                    if (tagStr.StartsWith("Season", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        season = tagStr.Replace("Season", string.Empty);
+                                        break;
+                                    }
+                                }
+                            }
+
+                            sceneUrl = $"{Helper.GetSearchSearchURL(siteNum)}/seasons/{season}/{searchResult["slug"]}";
+                        }
                         else
                         {
                             if (DateTime.TryParse(searchResult["publish_date"].ToString(), out var parsedDate))
@@ -202,7 +225,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            if (!images.Any() && content["thumbs"] != null)
+            if ((!images.Any() || siteNum[1] == 48) && content["thumbs"] != null)
             {
                 foreach (var image in content["thumbs"])
                 {
