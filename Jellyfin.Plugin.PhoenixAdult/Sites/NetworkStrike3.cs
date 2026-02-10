@@ -42,6 +42,8 @@ namespace PhoenixAdult.Sites
             var param = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
             var http = await HTTP.Request(url, HttpMethod.Post, param, headers, null, cancellationToken);
+            Logger.Info($"[NetworkStrike3] GetAlgolia called. httpResult.IsOK:{http.IsOK}");
+            Logger.Info($"[NetworkStrike3] GetAlgolia called. httpResult.StatusCode: {http.StatusCode}");
             return http.IsOK ? (JObject)JObject.Parse(http.Content)["data"] : null;
         }
 
@@ -129,6 +131,8 @@ namespace PhoenixAdult.Sites
             var variables = JsonConvert.SerializeObject(new { slug = sceneURL, site = Helper.GetSearchSiteName(siteNum).ToUpper() });
             var url = Helper.GetSearchSearchURL(siteNum);
             var sceneData = await GetDataFromAPI(url, UpdateQuery, variables, Helper.GetSearchBaseURL(siteNum), cancellationToken);
+
+            Logger.Info($"[NetworkStrike3] GetAlgolia called. httpResult.Content: {sceneData}");
             var video = sceneData?.SelectToken("findOneVideo");
             if (video == null || video.Type == JTokenType.Null)
             {

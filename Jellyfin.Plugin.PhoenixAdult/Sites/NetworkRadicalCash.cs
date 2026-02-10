@@ -96,7 +96,7 @@ namespace PhoenixAdult.Sites
                                 }
                             }
 
-                            sceneUrl = $"{Helper.GetSearchSearchURL(siteNum)}/seasons/{season}/{searchResult["slug"]}";
+                            sceneUrl = $"{Helper.GetSearchBaseURL(siteNum)}/seasons/{season}/{searchResult["slug"]}";
                         }
                         else
                         {
@@ -108,12 +108,15 @@ namespace PhoenixAdult.Sites
                             sceneUrl = $"{Helper.GetSearchSearchURL(siteNum)}/{searchResult["slug"]}";
                         }
 
+                        var image = searchResult["thumb"].ToString();
+
                         string curId = Helper.Encode(sceneUrl);
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, curId } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
+                            ImageUrl = image,
                         });
                     }
                 }
@@ -213,7 +216,8 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var image in fullPreviews)
                 {
-                    images.Add(new RemoteImageInfo { Url = image.ToString() });
+                    images.Add(new RemoteImageInfo { Url = image.ToString(), Type = ImageType.Primary });
+                    images.Add(new RemoteImageInfo { Url = image.ToString(), Type = ImageType.Backdrop });
                 }
             }
 
@@ -221,21 +225,18 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var image in content["extra_thumbnails"])
                 {
-                    images.Add(new RemoteImageInfo { Url = image.ToString() });
+                    images.Add(new RemoteImageInfo { Url = image.ToString(), Type = ImageType.Primary });
+                    images.Add(new RemoteImageInfo { Url = image.ToString(), Type = ImageType.Backdrop });
                 }
             }
 
-            if ((!images.Any() || siteNum[1] == 48) && content["thumbs"] != null)
+            if (content["thumbs"] != null)
             {
                 foreach (var image in content["thumbs"])
                 {
-                    images.Add(new RemoteImageInfo { Url = image.ToString() });
+                    images.Add(new RemoteImageInfo { Url = image.ToString(), Type = ImageType.Primary });
+                    images.Add(new RemoteImageInfo { Url = image.ToString(), Type = ImageType.Backdrop });
                 }
-            }
-
-            if (images.Any())
-            {
-                images.First().Type = ImageType.Primary;
             }
 
             return images;
