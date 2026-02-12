@@ -87,6 +87,7 @@ namespace PhoenixAdult.Providers
 
                 if (site.siteNum == null)
                 {
+                    Logger.Info($"[MovieProvider] Could not identify site from title: '{searchInfo.Name}' (normalized: '{title}'). Aborting search.");
                     return result;
                 }
             }
