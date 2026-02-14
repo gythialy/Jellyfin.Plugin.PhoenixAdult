@@ -150,7 +150,7 @@ namespace PhoenixAdult.Sites
                     string titleNoFormatting = searchResult["title"].ToString().Replace("ï¿½", "'");
                     DateTime releaseDate = (DateTime)searchResult["dateReleased"];
                     string curID = searchResult["id"].ToString();
-                    string siteName = searchResult["brand"].ToString();
+                    string siteName = searchResult["brandMeta"]["displayName"].ToString();
                     string subSite = searchResult.SelectToken("collections")?.FirstOrDefault()?.SelectToken("name")?.ToString().Trim() ?? string.Empty;
                     string siteDisplay = !string.IsNullOrEmpty(subSite) ? $"{siteName}/{subSite}" : siteName;
                     string imageUrl = string.Empty;
@@ -235,8 +235,6 @@ namespace PhoenixAdult.Sites
 
             movie.Overview = description;
 
-            movie.AddStudio(details["brand"].ToString());
-
             var seriesNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if (details["collections"] != null)
             {
@@ -251,6 +249,8 @@ namespace PhoenixAdult.Sites
             {
                 seriesNames.Add(parentTitle);
             }
+
+            movie.AddStudio(details["brandMeta"]["displayName"].ToString());
 
             string mainSiteName = Helper.GetSearchSiteName(siteNum);
             if (!seriesNames.Contains(mainSiteName))
