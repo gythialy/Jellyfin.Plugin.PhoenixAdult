@@ -85,7 +85,7 @@ namespace PhoenixAdult.Sites
                         {
                             releaseDateStr = searchDate.Value.ToString("yyyy-MM-dd");
                         }
-                        
+
                         string imageUrl = sceneUrlNode.SelectSingleNode(".//img[contains(@class, 'preview-img')]")?.GetAttributeValue("src", string.Empty);
 
                         if (!searchResults.Contains(sceneURL))
@@ -321,9 +321,8 @@ namespace PhoenixAdult.Sites
 
             JObject videoPageElements = null;
             string thumbnailUrl = null;
-            // For trailer images, we might iterate. Regex fallback for array is hard.
-            // But we can get main thumbnail.
 
+            // For trailer images, we might iterate. Regex fallback for array is hard. But we can get main thumbnail.
             try
             {
                 string jsonText = ldJsonNode.InnerText.Trim().Replace("%}", "}");
@@ -334,6 +333,7 @@ namespace PhoenixAdult.Sites
             {
                 Logger.Error($"[NetworkBang] Failed to parse JSON-LD in GetImages: {ex.Message}. Falling back to regex.");
                 thumbnailUrl = GetJsonValue(ldJsonNode.InnerText, "thumbnailUrl");
+
                 // Cannot easily get trailer images via regex fallback, skip them.
             }
 

@@ -16,6 +16,7 @@ using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 using Jellyfin.Data.Enums;
+using System.Text.RegularExpressions;
 
 namespace PhoenixAdult.Sites
 {
@@ -253,7 +254,7 @@ namespace PhoenixAdult.Sites
             movie.AddStudio(details["brandMeta"]["displayName"].ToString());
 
             string mainSiteName = Helper.GetSearchSiteName(siteNum);
-            if (!seriesNames.Contains(mainSiteName))
+            if (!seriesNames.Any(s => NormalizeString(s) == NormalizeString(mainSiteName)))
             {
                 movie.AddStudio(mainSiteName);
             }
@@ -293,6 +294,17 @@ namespace PhoenixAdult.Sites
             }
 
             return result;
+        }
+
+        public static string NormalizeString(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return input;
+
+            // Use Regex to keep only letters and numbers
+            // [^a-zA-Z0-9] means "anything that is NOT a letter or a digit"
+            string clean = Regex.Replace(input, @"[^a-zA-Z0-9]", "");
+
+            return clean.ToLower();
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
