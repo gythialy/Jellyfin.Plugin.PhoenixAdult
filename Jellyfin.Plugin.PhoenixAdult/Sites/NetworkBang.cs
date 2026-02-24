@@ -110,9 +110,11 @@ namespace PhoenixAdult.Sites
                     continue;
                 }
 
-                var ldJsonNode = detailsPageHtml.SelectSingleNode("//script[@type='application/ld+json'][contains(., 'thumbnail')]");
+                var scriptNodes = detailsPageHtml.SelectNodes("//script[@type='application/ld+json']");
+                var ldJsonNode = scriptNodes?.FirstOrDefault(n => n.InnerText.Contains("VideoObject"));
                 if (ldJsonNode == null)
                 {
+                    Logger.Error($"[NetworkBang] Search: VideoObject JSON-LD not found for {searchURL}.");
                     continue;
                 }
 
@@ -172,13 +174,18 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
             if (detailsPageElements == null)
             {
-                return result;
+               Logger.Error("[NetworkBang] Update: Failed to load HTML from URL.");
+               return result;
             }
 
-            var ldJsonNode = detailsPageElements.SelectSingleNode("//script[@type='application/ld+json'][contains(., 'thumbnail')]");
+            var scriptNodes = detailsPageElements.SelectNodes("//script[@type='application/ld+json']");
+            var ldJsonNode = scriptNodes?.FirstOrDefault(n => n.InnerText.Contains("VideoObject"));
+
             if (ldJsonNode == null)
             {
-                return result;
+                Logger.Error("[NetworkBang] Update: VideoObject JSON-LD not found.");
+                var htmlSnippet = detailsPageElements.OuterHtml.Substring(0, Math.Min(detailsPageElements.OuterHtml.Length, 500));
+                Logger.Info($"[NetworkBang] HTML Snippet: {htmlSnippet}");
             }
 
             string name = null;
@@ -186,29 +193,62 @@ namespace PhoenixAdult.Sites
             string productionCompany = null;
             string datePublished = null;
 
-            try
+            if (ldJsonNode != null)
             {
-                string jsonText = ldJsonNode.InnerText.Trim().Replace("%}", "}");
-                var videoPageElements = JObject.Parse(jsonText);
-                name = videoPageElements["name"]?.ToString();
-                description = videoPageElements["description"]?.ToString();
-                productionCompany = videoPageElements["productionCompany"]?["name"]?.ToString();
-                datePublished = videoPageElements["datePublished"]?.ToString();
+                try
+                {
+                    string jsonText = ldJsonNode.InnerText.Trim().Replace("%}", "}");
+                    var videoPageElements = JObject.Parse(jsonText);
+                    name = videoPageElements["name"]?.ToString();
+                    description = videoPageElements["description"]?.ToString();
+                    productionCompany = videoPageElements["productionCompany"]?["name"]?.ToString();
+                    datePublished = videoPageElements["datePublished"]?.ToString();
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"[NetworkBang] Failed to parse JSON-LD in Update: {ex.Message}. Falling back to regex.");
+                    name = GetJsonValue(ldJsonNode.InnerText, "name");
+                    description = GetJsonValue(ldJsonNode.InnerText, "description");
+                    productionCompany = GetJsonNestedValue(ldJsonNode.InnerText, "productionCompany", "name");
+                    datePublished = GetJsonValue(ldJsonNode.InnerText, "datePublished");
+                }
             }
-            catch (Exception ex)
+            else
             {
-                Logger.Error($"[NetworkBang] Failed to parse JSON-LD in Update: {ex.Message}. Falling back to regex.");
-                name = GetJsonValue(ldJsonNode.InnerText, "name");
-                description = GetJsonValue(ldJsonNode.InnerText, "description");
-                productionCompany = GetJsonNestedValue(ldJsonNode.InnerText, "productionCompany", "name");
-                datePublished = GetJsonValue(ldJsonNode.InnerText, "datePublished");
+                Logger.Info("[NetworkBang] Update: Falling back to HTML scraping.");
+                // Fallback HTML scraping
+                name = detailsPageElements.SelectSingleNode("//h1")?.InnerText;
+                description = detailsPageElements.SelectSingleNode("//meta[@name='description']")?.GetAttributeValue("content", string.Empty);
+                if (string.IsNullOrEmpty(description))
+                {
+                    description = detailsPageElements.SelectSingleNode("//div[contains(@class, 'description')]")?.InnerText;
+                }
+                
+                // Try to find release date in HTML
+                var dateNode = detailsPageElements.SelectSingleNode("//span[contains(text(), 'Released:')]/following-sibling::span") 
+                               ?? detailsPageElements.SelectSingleNode("//div[contains(text(), 'Released:')]/following-sibling::div");
+                
+                if (dateNode != null)
+                {
+                    datePublished = dateNode.InnerText.Trim();
+                }
+                else
+                {
+                    // Try parsing from text content if specific structure missing
+                    var dateMatch = Regex.Match(detailsPageElements.InnerText, @"Released:\s*([A-MMM]{3}\s+\d{1,2},\s+\d{4})");
+                    if (dateMatch.Success)
+                    {
+                        datePublished = dateMatch.Groups[1].Value;
+                    }
+                }
             }
 
             var movie = (Movie)result.Item;
             movie.ExternalId = sceneURL;
             movie.Name = Helper.ParseTitle(HTML.Clean(name ?? string.Empty), siteNum);
             movie.Overview = HTML.Clean(description ?? string.Empty);
-            movie.AddStudio(System.Net.WebUtility.HtmlDecode(Regex.Replace(Helper.ParseTitle((productionCompany ?? string.Empty).Trim(), siteNum), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase)));
+            
+            //movie.AddStudio(System.Net.WebUtility.HtmlDecode(Regex.Replace(Helper.ParseTitle((productionCompany ?? string.Empty).Trim(), siteNum), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase)));
             movie.AddStudio("Bang!");
 
             string tagline = detailsPageElements.SelectSingleNode("//p[contains(., 'In the series')]/a")?.InnerText.Trim();
@@ -313,28 +353,37 @@ namespace PhoenixAdult.Sites
                 return images;
             }
 
-            var ldJsonNode = detailsPageElements.SelectSingleNode("//script[@type='application/ld+json'][contains(., 'thumbnail')]");
-            if (ldJsonNode == null)
-            {
-                return images;
-            }
+            var scriptNodes = detailsPageElements.SelectNodes("//script[@type='application/ld+json']");
+            var ldJsonNode = scriptNodes?.FirstOrDefault(n => n.InnerText.Contains("VideoObject"));
 
             JObject videoPageElements = null;
             string thumbnailUrl = null;
 
             // For trailer images, we might iterate. Regex fallback for array is hard. But we can get main thumbnail.
-            try
+            if (ldJsonNode != null)
             {
-                string jsonText = ldJsonNode.InnerText.Trim().Replace("%}", "}");
-                videoPageElements = JObject.Parse(jsonText);
-                thumbnailUrl = videoPageElements["thumbnailUrl"]?.ToString();
-            }
-            catch (Exception ex)
-            {
-                Logger.Error($"[NetworkBang] Failed to parse JSON-LD in GetImages: {ex.Message}. Falling back to regex.");
-                thumbnailUrl = GetJsonValue(ldJsonNode.InnerText, "thumbnailUrl");
+                try
+                {
+                    string jsonText = ldJsonNode.InnerText.Trim().Replace("%}", "}");
+                    videoPageElements = JObject.Parse(jsonText);
+                    thumbnailUrl = videoPageElements["thumbnailUrl"]?.ToString();
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"[NetworkBang] Failed to parse JSON-LD in GetImages: {ex.Message}. Falling back to regex.");
+                    thumbnailUrl = GetJsonValue(ldJsonNode.InnerText, "thumbnailUrl");
 
-                // Cannot easily get trailer images via regex fallback, skip them.
+                    // Cannot easily get trailer images via regex fallback, skip them.
+                }
+            }
+            else
+            {
+                // Fallback to HTML scraping for image
+                thumbnailUrl = detailsPageElements.SelectSingleNode("//video")?.GetAttributeValue("poster", string.Empty);
+                if (string.IsNullOrEmpty(thumbnailUrl))
+                {
+                    thumbnailUrl = detailsPageElements.SelectSingleNode("//meta[@property='og:image']")?.GetAttributeValue("content", string.Empty);
+                }
             }
 
             var imageUrls = new List<string>();
