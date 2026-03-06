@@ -298,11 +298,14 @@ namespace PhoenixAdult.Sites
 
         public static string NormalizeString(string input)
         {
-            if (string.IsNullOrEmpty(input)) return input;
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
 
             // Use Regex to keep only letters and numbers
             // [^a-zA-Z0-9] means "anything that is NOT a letter or a digit"
-            string clean = Regex.Replace(input, @"[^a-zA-Z0-9]", "");
+            string clean = Regex.Replace(input, @"[^a-zA-Z0-9]", string.Empty);
 
             return clean.ToLower();
         }
