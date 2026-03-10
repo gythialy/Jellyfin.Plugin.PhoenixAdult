@@ -21,6 +21,7 @@ namespace PhoenixAdult.Sites
     public class NetworkNubiles : IProviderBase
     {
         private readonly IDictionary<string, string> _cookies = new Dictionary<string, string> { { "18-plus-modal", "hidden" } };
+        private readonly IDictionary<string, string> _headers = new Dictionary<string, string> { { "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8" } };
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
@@ -33,7 +34,7 @@ namespace PhoenixAdult.Sites
             if (searchDate.HasValue)
             {
                 var url = $"{Helper.GetSearchSearchURL(siteNum)}date/{searchDate.Value:yyyy-MM-dd}/{searchDate.Value:yyyy-MM-dd}";
-                var data = await HTML.ElementFromURL(url, cancellationToken, null, _cookies);
+                var data = await HTML.ElementFromURL(url, cancellationToken, _headers, _cookies);
                 if (data == null)
                 {
                     return result;
@@ -63,7 +64,7 @@ namespace PhoenixAdult.Sites
             else if (int.TryParse(searchTitle.Split(' ')[0], out var sceneNum))
             {
                 var url = $"{Helper.GetSearchBaseURL(siteNum)}/video/watch/{sceneNum}";
-                var detailsPageElements = await HTML.ElementFromURL(url, cancellationToken, null, _cookies);
+                var detailsPageElements = await HTML.ElementFromURL(url, cancellationToken, _headers, _cookies);
                 if (detailsPageElements != null)
                 {
                     var titleNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'content-pane-title')]//h2");
@@ -92,7 +93,7 @@ namespace PhoenixAdult.Sites
             };
 
             string sceneURL = $"{Helper.GetSearchBaseURL(siteNum)}/video/watch/{sceneID[0]}";
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, null, _cookies);
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, _headers, _cookies);
             if (sceneData == null)
             {
                 return result;
@@ -142,7 +143,7 @@ namespace PhoenixAdult.Sites
                 {
                     string actorName = actorLink.InnerText.Trim();
                     string actorPageURL = Helper.GetSearchBaseURL(siteNum) + actorLink.GetAttributeValue("href", string.Empty);
-                    var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken, null, _cookies);
+                    var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken, _headers, _cookies);
                     string actorPhotoURL = "http:" + actorPage?.SelectSingleNode("//div[contains(@class, 'model-profile')]//img")?.GetAttributeValue("src", string.Empty);
                     ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
                 }
@@ -168,7 +169,7 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteImageInfo>();
             string sceneURL = $"{Helper.GetSearchBaseURL(siteNum)}/video/watch/{sceneID[0]}";
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, null, _cookies);
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, _headers, _cookies);
             if (sceneData == null)
             {
                 return result;
@@ -202,7 +203,7 @@ namespace PhoenixAdult.Sites
 
             if (!string.IsNullOrEmpty(galleryURL))
             {
-                var photoPage = await HTML.ElementFromURL(galleryURL, cancellationToken, null, _cookies);
+                var photoPage = await HTML.ElementFromURL(galleryURL, cancellationToken, _headers, _cookies);
                 if (photoPage != null)
                 {
                     var sceneImages = photoPage.SelectNodes("//div[@class='img-wrapper']//picture/source[1]");
