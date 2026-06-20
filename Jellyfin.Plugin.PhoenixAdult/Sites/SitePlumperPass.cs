@@ -55,13 +55,23 @@ namespace PhoenixAdult.Sites
                     var doc = new HtmlDocument();
                     doc.LoadHtml(http.Content);
 
-                    var titleNoFormatting = doc.DocumentNode.SelectSingleNode("//h2[@class='vidtitle']").InnerText.Trim().Replace("\"", string.Empty);
+                    var titleNode = doc.DocumentNode.SelectSingleNode("//h2[@class='vidtitle']");
+                    if (titleNode == null)
+                    {
+                        continue;
+                    }
+
+                    var titleNoFormatting = titleNode.InnerText.Trim().Replace("\"", string.Empty);
                     var curID = Helper.Encode(sceneURL);
                     var releaseDate = string.Empty;
-                    var dateNode = doc.DocumentNode.SelectNodes("//h3[@class='releases']//br/preceding-sibling::text()");
-                    if (dateNode != null && DateTime.TryParseExact(dateNode.Last().InnerText.Trim(), "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                    var dateH3 = doc.DocumentNode.SelectSingleNode("//h3[@class='releases']");
+                    if (dateH3 != null)
                     {
-                        releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                        var match = Regex.Match(dateH3.InnerText, @"[a-zA-Z]+\s+\d{1,2},\s+\d{4}");
+                        if (match.Success && DateTime.TryParseExact(match.Value.Trim(), "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                        {
+                            releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                        }
                     }
 
                     result.Add(new RemoteSearchResult
@@ -94,8 +104,18 @@ namespace PhoenixAdult.Sites
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
             movie.ExternalId = sceneURL;
-            movie.Name = Helper.ParseTitle(doc.DocumentNode.SelectSingleNode("//h2[@class='vidtitle']").InnerText.Trim().Replace("\"", string.Empty), siteNum);
-            movie.Overview = doc.DocumentNode.SelectSingleNode("//div[contains(@class, 'vidinfo')]/p").InnerText.Trim();
+            var titleNode = doc.DocumentNode.SelectSingleNode("//h2[@class='vidtitle']");
+            if (titleNode != null)
+            {
+                movie.Name = Helper.ParseTitle(titleNode.InnerText.Trim().Replace("\"", string.Empty), siteNum);
+            }
+
+            var overviewNode = doc.DocumentNode.SelectSingleNode("//div[contains(@class, 'vidinfo')]/p");
+            if (overviewNode != null)
+            {
+                movie.Overview = overviewNode.InnerText.Trim();
+            }
+
             movie.AddStudio("PlumperPass");
 
             var url = http.ResponseUrl.ToString();
@@ -128,11 +148,15 @@ namespace PhoenixAdult.Sites
                 movie.AddCollection("PlumperPass");
             }
 
-            var dateNode = doc.DocumentNode.SelectNodes("//h3[@class='releases']//br/preceding-sibling::text()");
-            if (dateNode != null && DateTime.TryParseExact(dateNode.Last().InnerText.Trim(), "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+            var dateH3 = doc.DocumentNode.SelectSingleNode("//h3[@class='releases']");
+            if (dateH3 != null)
             {
-                movie.PremiereDate = parsedDate;
-                movie.ProductionYear = parsedDate.Year;
+                var match = Regex.Match(dateH3.InnerText, @"[a-zA-Z]+\s+\d{1,2},\s+\d{4}");
+                if (match.Success && DateTime.TryParseExact(match.Value.Trim(), "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                {
+                    movie.PremiereDate = parsedDate;
+                    movie.ProductionYear = parsedDate.Year;
+                }
             }
 
             var genres = doc.DocumentNode.SelectNodes("//p[@class='tags clearfix']/a") ?? doc.DocumentNode.SelectNodes("//meta[@name='keywords']");
@@ -172,8 +196,12 @@ namespace PhoenixAdult.Sites
                     {
                         var actorDoc = new HtmlDocument();
                         actorDoc.LoadHtml(actorHttp.Content);
-                        var actorPhotoURL = $"{Helper.GetSearchBaseURL(siteNum)}/t1/{actorDoc.DocumentNode.SelectSingleNode("//div[@class='row mainrow']//img").GetAttributeValue("src", string.Empty).Trim()}";
-                        result.AddPerson(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
+                        var imgNode = actorDoc.DocumentNode.SelectSingleNode("//div[@class='row mainrow']//img");
+                        if (imgNode != null)
+                        {
+                            var actorPhotoURL = $"{Helper.GetSearchBaseURL(siteNum)}/t1/{imgNode.GetAttributeValue("src", string.Empty).Trim()}";
+                            result.AddPerson(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
+                        }
                     }
                 }
             }
@@ -191,13 +219,17 @@ namespace PhoenixAdult.Sites
                 var doc = new HtmlDocument();
                 doc.LoadHtml(http.Content);
 
-                var videoImage = doc.DocumentNode.SelectSingleNode("//div[@class='movie-big']//script").InnerText;
-                var pattern = new Regex("(?<=image: \").*(?=\")");
-                if (pattern.IsMatch(videoImage))
+                var scriptNode = doc.DocumentNode.SelectSingleNode("//div[@class='movie-big']//script");
+                if (scriptNode != null)
                 {
-                    var imageID = pattern.Match(videoImage).Value;
-                    var img = $"{Helper.GetSearchBaseURL(siteNum)}/t1/{imageID}";
-                    images.Add(new RemoteImageInfo { Url = img, Type = ImageType.Primary });
+                    var videoImage = scriptNode.InnerText;
+                    var pattern = new Regex("(?<=image: \").*(?=\")");
+                    if (pattern.IsMatch(videoImage))
+                    {
+                        var imageID = pattern.Match(videoImage).Value;
+                        var img = $"{Helper.GetSearchBaseURL(siteNum)}/t1/{imageID}";
+                        images.Add(new RemoteImageInfo { Url = img, Type = ImageType.Primary });
+                    }
                 }
 
                 var trailerImage = doc.DocumentNode.SelectSingleNode("//div[@class='movie-trailer']//img");

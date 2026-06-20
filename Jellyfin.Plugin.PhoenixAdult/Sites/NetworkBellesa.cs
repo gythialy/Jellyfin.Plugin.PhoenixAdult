@@ -10,6 +10,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Newtonsoft.Json.Linq;
+using HtmlAgilityPack;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -19,7 +20,7 @@ namespace PhoenixAdult.Sites
 {
     public class NetworkBellesa : IProviderBase
     {
-        private async Task<JArray> GetJSONfromAPI(string type, string query, int[] siteNum, CancellationToken cancellationToken)
+        private async Task<JToken> GetJSONfromAPI(string type, string query, int[] siteNum, CancellationToken cancellationToken)
         {
             string url = $"{Helper.GetSearchSearchURL(siteNum)}/{type}?{query}";
             var headers = new Dictionary<string, string>
@@ -33,7 +34,19 @@ namespace PhoenixAdult.Sites
                 return null;
             }
 
-            return JArray.Parse(httpResult.Content);
+            string content = httpResult.Content;
+            if (content.TrimStart().StartsWith("<"))
+            {
+                var doc = new HtmlDocument();
+                doc.LoadHtml(content);
+                var bodyNode = doc.DocumentNode.SelectSingleNode("//body");
+                if (bodyNode != null)
+                {
+                    content = bodyNode.InnerText;
+                }
+            }
+
+            return JToken.Parse(content);
         }
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
@@ -49,7 +62,7 @@ namespace PhoenixAdult.Sites
 
             if (sceneId != null)
             {
-                var scenePageElements = await GetJSONfromAPI("videos", $"filter[id]={sceneId}", siteNum, cancellationToken);
+                var scenePageElements = await GetJSONfromAPI("videos", $"filter[id]={sceneId}", siteNum, cancellationToken) as JArray;
                 if (scenePageElements != null && scenePageElements.Any())
                 {
                     var scene = scenePageElements[0];
@@ -73,7 +86,7 @@ namespace PhoenixAdult.Sites
                 var searchResults = await GetJSONfromAPI("search", $"limit=40&order[relevance]=DESC&q={Uri.EscapeDataString(searchTitle)}&providers=bellesa", siteNum, cancellationToken);
                 if (searchResults != null)
                 {
-                    var videos = searchResults.FirstOrDefault()?.SelectToken("videos");
+                    var videos = searchResults is JArray array ? array.FirstOrDefault()?.SelectToken("videos") : searchResults["videos"];
                     if (videos != null)
                     {
                         foreach (var searchResult in videos)

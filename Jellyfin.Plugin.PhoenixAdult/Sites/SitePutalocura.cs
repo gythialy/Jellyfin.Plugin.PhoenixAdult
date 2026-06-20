@@ -46,9 +46,16 @@ namespace PhoenixAdult.Sites
                     var doc = new HtmlDocument();
                     doc.LoadHtml(http.Content);
                     var language = sceneURL.Contains("/en/") ? "English" : "Español";
-                    var titleNoFormatting = doc.DocumentNode.SelectSingleNode("//title").InnerText.Split('|')[0].Split('-')[0].Trim();
+                    var titleNode = doc.DocumentNode.SelectSingleNode("//title");
+                    var dateNode = doc.DocumentNode.SelectSingleNode("//div[@class='released-views']/span");
+                    if (titleNode == null || dateNode == null)
+                    {
+                        continue;
+                    }
+
+                    var titleNoFormatting = titleNode.InnerText.Split('|')[0].Split('-')[0].Trim();
                     var curID = Helper.Encode(sceneURL);
-                    var date = doc.DocumentNode.SelectSingleNode("//div[@class='released-views']/span").InnerText.Trim();
+                    var date = dateNode.InnerText.Trim();
                     if (DateTime.TryParseExact(date, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                     {
                         var releaseDate = parsedDate.ToString("yyyy-MM-dd");
@@ -83,25 +90,46 @@ namespace PhoenixAdult.Sites
             var doc = new HtmlDocument();
             doc.LoadHtml(http.Content);
             movie.ExternalId = sceneURL;
-            movie.Name = doc.DocumentNode.SelectSingleNode("//title").InnerText.Split('|')[0].Split('-')[0].Trim();
-            movie.Overview = doc.DocumentNode.SelectSingleNode("//div[@class='description clearfix']").InnerText.Split(':').Last().Trim().Replace("\n", " ");
+            var titleNode = doc.DocumentNode.SelectSingleNode("//title");
+            if (titleNode != null)
+            {
+                movie.Name = titleNode.InnerText.Split('|')[0].Split('-')[0].Trim();
+            }
+
+            var overviewNode = doc.DocumentNode.SelectSingleNode("//div[@class='description clearfix']");
+            if (overviewNode != null)
+            {
+                movie.Overview = overviewNode.InnerText.Split(':').Last().Trim().Replace("\n", " ");
+            }
+
             movie.AddStudio(Helper.GetSearchSiteName(siteNum));
             movie.AddCollection(Helper.GetSearchSiteName(siteNum));
 
-            foreach (var genreLink in doc.DocumentNode.SelectNodes("//div[@class='categories']/a"))
+            var genreNodes = doc.DocumentNode.SelectNodes("//div[@class='categories']/a");
+            if (genreNodes != null)
             {
-                movie.AddGenre(genreLink.InnerText.Trim());
+                foreach (var genreLink in genreNodes)
+                {
+                    movie.AddGenre(genreLink.InnerText.Trim());
+                }
             }
 
             var actors = new List<string>();
             var separator = sceneURL.Contains("/en/") ? " and " : " y ";
-            if (movie.Name.Contains("&"))
+            if (!string.IsNullOrEmpty(movie.Name))
             {
-                actors.AddRange(movie.Name.Split('&').Select(a => a.Trim()));
-            }
-            else
-            {
-                actors.AddRange(doc.DocumentNode.SelectSingleNode("//span[@class='site-name']").InnerText.Split(new[] { separator }, StringSplitOptions.None).Select(a => a.Trim()));
+                if (movie.Name.Contains("&"))
+                {
+                    actors.AddRange(movie.Name.Split('&').Select(a => a.Trim()));
+                }
+                else
+                {
+                    var siteNameNode = doc.DocumentNode.SelectSingleNode("//span[@class='site-name']");
+                    if (siteNameNode != null)
+                    {
+                        actors.AddRange(siteNameNode.InnerText.Split(new[] { separator }, StringSplitOptions.None).Select(a => a.Trim()));
+                    }
+                }
             }
 
             foreach (var actorName in actors)
@@ -130,11 +158,15 @@ namespace PhoenixAdult.Sites
             {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(http.Content);
-                var scriptText = doc.DocumentNode.SelectSingleNode("//div[@class='top-area-content']/script").InnerText;
-                var posterImage = Regex.Match(scriptText, "(?<=posterImage: \").*(?=\")");
-                if (posterImage.Success)
+                var scriptNode = doc.DocumentNode.SelectSingleNode("//div[@class='top-area-content']/script");
+                if (scriptNode != null)
                 {
-                    images.Add(new RemoteImageInfo { Url = posterImage.Value, Type = ImageType.Primary });
+                    var scriptText = scriptNode.InnerText;
+                    var posterImage = Regex.Match(scriptText, "(?<=posterImage: \").*(?=\")");
+                    if (posterImage.Success)
+                    {
+                        images.Add(new RemoteImageInfo { Url = posterImage.Value, Type = ImageType.Primary });
+                    }
                 }
             }
 

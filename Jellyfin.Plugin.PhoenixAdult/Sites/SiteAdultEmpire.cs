@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -315,73 +314,76 @@ namespace PhoenixAdult.Sites
             var art = new List<string>();
             var xpaths = new[]
             {
-                "//div[@class='boxcover-container']/a/img/@src",
-                "//div[@class='boxcover-container']/a/@href",
+                "//div[@class='boxcover-container']/a/img",
+                "//div[@class='boxcover-container']/a",
             };
             foreach (var xpath in xpaths)
             {
                 var node = doc.DocumentNode.SelectSingleNode(xpath);
                 if (node != null)
                 {
-                    art.Add(node.GetAttributeValue("src", node.GetAttributeValue("href", string.Empty)));
+                    string val = node.Name == "img" ? node.GetAttributeValue("src", string.Empty) : node.GetAttributeValue("href", string.Empty);
+                    if (!string.IsNullOrEmpty(val))
+                    {
+                        art.Add(val);
+                    }
                 }
             }
 
             if (splitScene)
             {
                 var sceneIndex = int.Parse(providerIds[3]);
-                var splitScenesXpath = $"//div[@class='row'][.//div[@class='row']][.//a[@rel='scenescreenshots']][{sceneIndex + 1}]//a/@href";
+                var splitScenesXpath = $"//div[@class='row'][.//div[@class='row']][.//a[@rel='scenescreenshots']][{sceneIndex + 1}]//a";
                 var sceneImageNodes = doc.DocumentNode.SelectNodes(splitScenesXpath);
                 if (sceneImageNodes != null)
                 {
                     foreach (var node in sceneImageNodes)
                     {
-                        art.Add(node.GetAttributeValue("href", string.Empty));
+                        string val = node.GetAttributeValue("href", string.Empty);
+                        if (!string.IsNullOrEmpty(val))
+                        {
+                            art.Add(val);
+                        }
                     }
                 }
             }
             else
             {
-                var scenesXpath = "//div[@class='row'][.//div[@class='row']][.//a[@rel='scenescreenshots']]//div[@class='row']//a/@href";
+                var scenesXpath = "//div[@class='row'][.//div[@class='row']][.//a[@rel='scenescreenshots']]//div[@class='row']//a";
                 var sceneImageNodes = doc.DocumentNode.SelectNodes(scenesXpath);
                 if (sceneImageNodes != null)
                 {
                     foreach (var node in sceneImageNodes)
                     {
-                        art.Add(node.GetAttributeValue("href", string.Empty));
+                        string val = node.GetAttributeValue("href", string.Empty);
+                        if (!string.IsNullOrEmpty(val))
+                        {
+                            art.Add(val);
+                        }
                     }
                 }
             }
 
-            // This logic of downloading images to determine type can be slow.
-            foreach (var imageUrl in art)
+            bool first = true;
+            foreach (var imageUrl in art.Distinct())
             {
-                try
+                if (string.IsNullOrEmpty(imageUrl))
                 {
-                    var imageHttp = await HTTP.Request(imageUrl, HttpMethod.Get, cancellationToken, null, cookies);
-                    if (imageHttp.IsOK)
-                    {
-                        using (var ms = new MemoryStream(imageHttp.ContentStream.ToBytes()))
-                        {
-                            var image = new Bitmap(ms);
-                            var imageInfo = new RemoteImageInfo { Url = imageUrl };
-                            if (image.Height > image.Width)
-                            {
-                                imageInfo.Type = ImageType.Primary;
-                            }
-                            else
-                            {
-                                imageInfo.Type = ImageType.Backdrop;
-                            }
+                    continue;
+                }
 
-                            images.Add(imageInfo);
-                        }
-                    }
-                }
-                catch
+                var imageInfo = new RemoteImageInfo { Url = imageUrl };
+                if (first)
                 {
-                    // Ignore image processing errors
+                    imageInfo.Type = ImageType.Primary;
+                    first = false;
                 }
+                else
+                {
+                    imageInfo.Type = ImageType.Backdrop;
+                }
+
+                images.Add(imageInfo);
             }
 
             return images;

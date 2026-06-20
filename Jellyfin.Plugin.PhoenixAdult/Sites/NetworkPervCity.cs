@@ -73,7 +73,7 @@ namespace PhoenixAdult.Sites
             string tagline = detailsPageElements.SelectSingleNode("//div[@class='about']//h3")?.InnerText.Replace("About", string.Empty).Trim();
             movie.AddStudio(tagline);
 
-            var actorNodes = detailsPageElements.SelectNodes("//h3/span/a");
+            var actorNodes = detailsPageElements.SelectNodes("//h2/span/a | //h3/span/a");
             if (actorNodes != null)
             {
                 foreach (var actor in actorNodes)
@@ -85,7 +85,7 @@ namespace PhoenixAdult.Sites
                     if (actorHttp.IsOK)
                     {
                         var actorPage = HTML.ElementFromString(actorHttp.Content);
-                        actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='starPic']/img")?.GetAttributeValue("src", string.Empty);
+                        actorPhotoUrl = actorPage.SelectSingleNode("//div[@class='starPic']/img | //div[@class='bioBPic']/img")?.GetAttributeValue("src", string.Empty);
 
                         var sceneNodes = actorPage.SelectNodes("//div[@class='videoBlock']");
                         if (sceneNodes != null)
@@ -122,18 +122,26 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
-            var imageNodes = detailsPageElements.SelectNodes("//div[@class='snap']");
+            var imageNodes = detailsPageElements.SelectNodes("//div[@class='snap']//img");
             if (imageNodes != null)
             {
                 foreach (var img in imageNodes)
                 {
                     string imageUrl = img.GetAttributeValue("src0_3x", string.Empty);
-                    if (!imageUrl.StartsWith("http"))
+                    if (string.IsNullOrEmpty(imageUrl))
+                    {
+                        imageUrl = img.GetAttributeValue("src", string.Empty);
+                    }
+
+                    if (!imageUrl.StartsWith("http") && !string.IsNullOrEmpty(imageUrl))
                     {
                         imageUrl = Helper.GetSearchBaseURL(siteNum) + imageUrl;
                     }
 
-                    images.Add(new RemoteImageInfo { Url = imageUrl });
+                    if (!string.IsNullOrEmpty(imageUrl))
+                    {
+                        images.Add(new RemoteImageInfo { Url = imageUrl });
+                    }
                 }
             }
 
