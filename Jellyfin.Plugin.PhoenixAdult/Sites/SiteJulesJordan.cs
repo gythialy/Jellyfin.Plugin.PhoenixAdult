@@ -37,7 +37,7 @@ namespace PhoenixAdult.Sites
 
                 string title;
                 string dateNode;
-                if (siteNum[0] == 50)
+                if (siteNum[1] == 1)
                 {
                     title = doc.DocumentNode.SelectSingleNode("//span[@class='title_bar_hilite']")?.InnerText.Trim();
                     dateNode = doc.DocumentNode.SelectSingleNode("//div[@class='backgroundcolor_info']/div[@class='table']/div[@class='row']/div[contains(@class, 'update_date')]")?.InnerText.Trim();
@@ -48,7 +48,7 @@ namespace PhoenixAdult.Sites
                     dateNode = doc.DocumentNode.SelectSingleNode("//div[@class='player-scene-description']//span[contains(text(), 'Date:')]")?.ParentNode.InnerText.Replace("Date:", string.Empty).Trim();
                 }
 
-                var videoPoster = siteNum[0] == 50
+                var videoPoster = siteNum[1] == 1
                     ? doc.DocumentNode.SelectSingleNode("//img[contains(@id,'set-target')]")?.GetAttributeValue("src0_3x", string.Empty)
                     : doc.DocumentNode.SelectSingleNode("//video[@id='video-player']")?.GetAttributeValue("poster", string.Empty);
 
@@ -113,7 +113,7 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             movie.ExternalId = sceneURL;
             string dvdName = null;
-            if (siteNum[0] == 50)
+            if (siteNum[1] == 1)
             {
                 movie.Name = detailsPageElements.SelectSingleNode("//span[@class='title_bar_hilite']")?.InnerText.Trim();
                 movie.Overview = detailsPageElements.SelectSingleNode("//span[@class='update_description']")?.InnerText.Trim();
@@ -139,7 +139,7 @@ namespace PhoenixAdult.Sites
             else
             {
                 string dateNode;
-                if (siteNum[0] == 50)
+                if (siteNum[1] == 1)
                 {
                     dateNode = detailsPageElements.SelectSingleNode("//div[@class='backgroundcolor_info']/div[@class='table']/div[@class='row']/div[contains(@class, 'update_date')]")?.InnerText.Trim();
                 }
@@ -156,7 +156,7 @@ namespace PhoenixAdult.Sites
             }
 
             HtmlNodeCollection genreNodes;
-            if (siteNum[0] == 50)
+            if (siteNum[1] == 1)
             {
                 genreNodes = detailsPageElements.SelectNodes("//span[contains(text(), 'Tags')]/a");
             }
@@ -178,7 +178,7 @@ namespace PhoenixAdult.Sites
             var actorNodes = Helper.GetSearchSiteName(siteNum) == "GirlGirl"
                 ? detailsPageElements.SelectNodes("//div[@class='item']/span/div/a")
                 : (
-                    siteNum[0] == 50
+                    siteNum[1] == 1
                     ? detailsPageElements.SelectNodes("//div[@class='backgroundcolor_info']//span[@class='update_models']/a")
                     : detailsPageElements.SelectNodes("//div[@class='player-scene-description']/span[contains(text(), 'Starring:')]/..//a")
                 );
@@ -218,7 +218,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var videoPoster = siteNum[0] == 50
+            var videoPoster = siteNum[1] == 1
                 ? detailsPageElements.SelectSingleNode("//img[contains(@id,'set-target')]")?.GetAttributeValue("src0_3x", string.Empty)
                 : detailsPageElements.SelectSingleNode("//video[@id='video-player']")?.GetAttributeValue("poster", string.Empty);
             if (!string.IsNullOrEmpty(videoPoster))

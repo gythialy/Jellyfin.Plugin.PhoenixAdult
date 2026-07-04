@@ -60,6 +60,7 @@ namespace PhoenixAdult.Configuration
             this.JAVActorNamingStyle = JAVActorNamingStyle.WesternStyle;
             this.GenresSortingStyle = GenresSortingStyle.Alphabetical;
             this.PreferedActorNameSource = PreferedActorNameSource.LocalDatabase;
+            this.EnableMainMenu = true;
         }
 
         public string DatabaseHash { get; set; }
@@ -115,6 +116,8 @@ namespace PhoenixAdult.Configuration
         public GenresSortingStyle GenresSortingStyle { get; set; }
 
         public PreferedActorNameSource PreferedActorNameSource { get; set; }
+
+        public bool EnableMainMenu { get; set; }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Required")]
         public static void ConfigurationChanged(object sender, BasePluginConfiguration e)

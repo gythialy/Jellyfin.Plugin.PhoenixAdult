@@ -230,7 +230,7 @@ namespace PhoenixAdult.Sites
 
                         result.Add(new RemoteSearchResult
                         {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curID}|{siteNum[0]}#{siteNum[1]}|{releaseDate}|{sceneType}" } },
+                            ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}|{sceneType}" } },
                             Name = $"{titleNoFormatting} [{GetSubSite(detailsSubSite)}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
                         });
@@ -251,8 +251,8 @@ namespace PhoenixAdult.Sites
 
             string[] idParts = sceneID[0].Split('|');
             string sceneName = idParts[0];
-            string sceneDate = idParts.Length > 2 ? idParts[2] : string.Empty;
-            string sceneType = idParts.Length > 3 ? idParts[3].Replace("content", "Content") : "moviesContent";
+            string sceneDate = idParts.Length > 2 ? idParts[1] : string.Empty;
+            string sceneType = idParts.Length > 3 ? idParts[2].Replace("content", "Content") : "moviesContent";
 
             string searchNetwork = GetSubNetwork(Helper.GetSearchSiteName(siteNum), "search");
             if (string.IsNullOrEmpty(searchNetwork))
@@ -396,7 +396,7 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string[] idParts = sceneID[0].Split('|');
             string sceneName = idParts[0];
-            string sceneType = idParts.Length > 3 ? idParts[3].Replace("content", "Content") : "moviesContent";
+            string sceneType = idParts.Length > 2 ? idParts[2].Replace("content", "Content") : "moviesContent";
 
             var detailsPageJson = await GetJSONfromPage(Helper.GetSearchSearchURL(siteNum) + sceneName, cancellationToken);
             JToken detailsPageElements = null;

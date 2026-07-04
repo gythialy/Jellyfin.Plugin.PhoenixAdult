@@ -43,90 +43,19 @@ namespace PhoenixAdult.Sites
             string network_sep_dvd_prev = string.Empty;
             string network_sep_dvd = "/1/dvd";
 
-            int sNum = siteNum[0];
+            int sNum = siteNum[1];
 
-            if (sNum == 7)
-            {
-                network = "XEmpire";
-                network_sep_scene_prev = "scene/";
-                network_sep_scene_pages_prev = "scene/";
-                network_sep_dvd_prev = "dvd/";
-                network_sep_dvd = "/1";
-            }
-            else if (sNum == 9)
-            {
-                network = "Blowpass";
-                networkdvd = false;
-            }
-            else if (sNum == 11)
-            {
-                network = "Fantasy Massage";
-                networkdvd = false;
-                network_sep_scene = "/scene";
-                network_sep_scene_pages = "/scene/";
-            }
-            else if (sNum == 12)
-            {
-                network = "21Sextury";
-                networkdvd = false;
-            }
-            else if (sNum == 5)
-            {
-                network = "21Naturals";
-                networkdvd = false;
-                network_sep_scene = "/scene";
-                network_sep_scene_pages = "/scene/";
-            }
-            else if (sNum >= 16 && sNum <= 19)
+            if (sNum == 0)
             {
                 network = "Fame Digital";
-                if (sNum == 16)
-                {
-                    networkdvd = false;
-                    network_sep_scene = "/scene";
-                    network_sep_scene_pages = "/scene/";
-                    network_sep_dvd = "/dvd";
-                }
-
-                if (sNum == 19)
-                {
-                    networkscene = false;
-                    networkscenepages = false;
-                    networkdvd = false;
-                }
+                networkscene = false;
+                networkscenepages = false;
+                networkdvd = false;
             }
-            else if (sNum >= 20 && sNum <= 25)
+            else if (sNum >= 1 && sNum <= 6)
             {
                 network = "Open Life Network";
                 networkdvd = false;
-            }
-            else if (sNum == 8)
-            {
-                network = "Pure Taboo";
-                networkdvd = false;
-                network_sep_scene = "/scene";
-                network_sep_scene_pages = "/scene/";
-            }
-            else if (sNum == 14)
-            {
-                network = "Burning Angel";
-                networkdvd = false;
-                network_sep_scene = "/scene";
-                network_sep_scene_pages = "/scene/";
-            }
-            else if (sNum == 15)
-            {
-                network = "Pretty Dirty";
-                networkdvd = false;
-                network_sep_scene = "/scene";
-                network_sep_scene_pages = "/scene/";
-            }
-            else if (sNum == 26)
-            {
-                network = "21Sextreme";
-                networkdvd = false;
-                network_sep_scene = "/scene";
-                network_sep_scene_pages = "/scene/";
             }
 
             if (network.Equals(Helper.GetSearchSiteName(siteNum), StringComparison.OrdinalIgnoreCase))
@@ -152,7 +81,7 @@ namespace PhoenixAdult.Sites
 
                             result.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curID}|{sNum}" } },
+                                ProviderIds = { { Plugin.Instance.Name, curID } },
                                 Name = $"{titleNoFormatting} [{network}/{Helper.GetSearchSiteName(siteNum)}] {releaseDateStr}",
                                 SearchProviderName = Plugin.Instance.Name,
                             });
@@ -180,7 +109,7 @@ namespace PhoenixAdult.Sites
 
                             result.Add(new RemoteSearchResult
                             {
-                                ProviderIds = { { Plugin.Instance.Name, $"{curID}|{sNum}" } },
+                                ProviderIds = { { Plugin.Instance.Name, curID } },
                                 Name = $"{titleNoFormatting} ({(string.IsNullOrEmpty(releaseDateStr) ? string.Empty : DateTime.Parse(releaseDateStr).Year.ToString())}) - Full Movie [{Helper.GetSearchSiteName(siteNum)}]",
                                 SearchProviderName = Plugin.Instance.Name,
                             });
@@ -225,11 +154,10 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            int sNum = int.Parse(sceneID[0].Split('|')[1]);
-            string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http"))
             {
-                sceneURL = Helper.GetSearchBaseURL(new[] { sNum }) + sceneURL;
+                sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
@@ -255,9 +183,9 @@ namespace PhoenixAdult.Sites
                ?? detailsPageElements.SelectSingleNode("//p[@class='descriptionText']")?.InnerText.Trim();
 
             // Studio and Collections
-            string studio = this.GetStudio(sNum);
+            string studio = "Gamma Entertainment";
             movie.AddStudio(studio);
-            string tagline = detailsPageElements.SelectSingleNode("//div[@class='studioLink']")?.InnerText.Trim() ?? Helper.GetSearchSiteName(new[] { sNum });
+            string tagline = detailsPageElements.SelectSingleNode("//div[@class='studioLink']")?.InnerText.Trim() ?? Helper.GetSearchSiteName(siteNum);
             movie.AddStudio(tagline);
 
             var dvdTitleNode = detailsPageElements.SelectSingleNode("//a[contains(@class, 'dvdLink')][1]");
@@ -293,7 +221,7 @@ namespace PhoenixAdult.Sites
                 {
                     string actorName = actorLink.InnerText.Trim();
                     string actorPageURL = actorLink.GetAttributeValue("href", string.Empty);
-                    var actorPage = await HTML.ElementFromURL(Helper.GetSearchBaseURL(new[] { sNum }) + actorPageURL, cancellationToken);
+                    var actorPage = await HTML.ElementFromURL(Helper.GetSearchBaseURL(siteNum) + actorPageURL, cancellationToken);
                     string actorPhotoURL = actorPage?.SelectSingleNode("//img[@class='actorPicture'] | //span[@class='removeAvatarParent']/img")?.GetAttributeValue("src", string.Empty);
                     ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
                 }
@@ -315,11 +243,10 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            int sNum = int.Parse(sceneID[0].Split('|')[1]);
-            string sceneURL = Helper.Decode(sceneID[0].Split('|')[0]);
+            string sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http"))
             {
-                sceneURL = Helper.GetSearchBaseURL(new[] { sNum }) + sceneURL;
+                sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
             var detailsPageElements = await HTML.ElementFromURL(sceneURL, cancellationToken);
@@ -389,66 +316,6 @@ namespace PhoenixAdult.Sites
             }
 
             return images;
-        }
-
-        private string GetStudio(int siteNum)
-        {
-            if (siteNum == 278 || (siteNum >= 285 && siteNum <= 287) || siteNum == 843)
-            {
-                return "XEmpire";
-            }
-
-            if (siteNum == 329 || (siteNum >= 351 && siteNum <= 354) || siteNum == 861)
-            {
-                return "Blowpass";
-            }
-
-            if (siteNum == 331 || (siteNum >= 355 && siteNum <= 360) || siteNum == 750)
-            {
-                return "Fantasy Massage";
-            }
-
-            if ((siteNum >= 365 && siteNum <= 372) || siteNum == 466 || siteNum == 690)
-            {
-                return "21Sextury";
-            }
-
-            if (siteNum == 183 || (siteNum >= 373 && siteNum <= 374))
-            {
-                return "21Naturals";
-            }
-
-            if (siteNum >= 383 && siteNum <= 386)
-            {
-                return "Fame Digital";
-            }
-
-            if (siteNum >= 387 && siteNum <= 392)
-            {
-                return "Open Life Network";
-            }
-
-            if (siteNum == 281)
-            {
-                return "Pure Taboo";
-            }
-
-            if (siteNum == 381)
-            {
-                return "Burning Angel";
-            }
-
-            if (siteNum == 382)
-            {
-                return "Pretty Dirty";
-            }
-
-            if (siteNum >= 460 && siteNum <= 466)
-            {
-                return "21Sextreme";
-            }
-
-            return "Gamma Entertainment";
         }
     }
 

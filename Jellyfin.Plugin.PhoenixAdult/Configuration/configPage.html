@@ -108,6 +108,12 @@
                             <span>Disable Auto Identify</span>
                         </label>
                     </div>
+                    <div class="checkboxContainer checkboxContainer-withDescripton">
+                        <label class="emby-checkbox-label">
+                            <input id="EnableMainMenu" name="EnableMainMenu" type="checkbox" is="emby-checkbox" />
+                            <span>Show in Dashboard Left Menu</span>
+                        </label>
+                    </div>
                     <div class="selectContainer">
                         <label class="selectLabel" for="PreferedActorNameSource">Actor Name Source</label>
                         <select is="emby-select" id="PreferedActorNameSource" name="PreferedActorNameSource" class="emby-select-withcolor emby-select">
@@ -164,6 +170,7 @@
                     $('#DisableImageValidation').prop('checked', config.DisableImageValidation);
                     $('#DisableImageSize').prop('checked', config.DisableImageSize);
                     $('#DisableAutoIdentify').prop('checked', config.DisableAutoIdentify);
+                    $('#EnableMainMenu').prop('checked', config.EnableMainMenu);
                     $('#PreferedActorNameSource').val(config.PreferedActorNameSource).change();
                     $('#JAVActorNamingStyle').val(config.JAVActorNamingStyle).change();
                     $('#GenresSortingStyle').val(config.GenresSortingStyle).change();
@@ -191,6 +198,7 @@
                     config.DisableImageValidation = $('#DisableImageValidation').prop('checked');
                     config.DisableImageSize = $('#DisableImageSize').prop('checked');
                     config.DisableAutoIdentify = $('#DisableAutoIdentify').prop('checked');
+                    config.EnableMainMenu = $('#EnableMainMenu').prop('checked');
                     config.PreferedActorNameSource = $('#PreferedActorNameSource').val();
                     config.JAVActorNamingStyle = $('#JAVActorNamingStyle').val();
                     config.GenresSortingStyle = $('#GenresSortingStyle').val();

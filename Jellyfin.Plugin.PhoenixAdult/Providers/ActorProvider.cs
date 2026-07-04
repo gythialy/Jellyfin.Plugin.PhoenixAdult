@@ -23,7 +23,7 @@ namespace PhoenixAdult.Providers
         {
             var result = new List<RemoteSearchResult>();
 
-            if (searchInfo == null || searchInfo.ProviderIds.Any(o => !string.IsNullOrEmpty(o.Value)))
+            if (searchInfo == null)
             {
                 return result;
             }
@@ -160,16 +160,19 @@ namespace PhoenixAdult.Providers
                     result.Item.ProviderIds.Update(this.Name, sceneID[this.Name]);
                     result.Item.ProviderIds.Update(this.Name + "URL", result.Item.ExternalId);
 
-                    result.Item.OriginalTitle = WebUtility.HtmlDecode(result.Item.OriginalTitle);
-                    var aliases = result.Item.OriginalTitle.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                     var newAliases = new List<string>();
-                    foreach (var name in aliases)
+                    if (!string.IsNullOrEmpty(result.Item.OriginalTitle))
                     {
-                        var actorName = name.Trim();
-
-                        if (!string.IsNullOrEmpty(actorName) && !newAliases.Contains(actorName, StringComparer.Ordinal))
+                        result.Item.OriginalTitle = WebUtility.HtmlDecode(result.Item.OriginalTitle);
+                        var aliases = result.Item.OriginalTitle.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var name in aliases)
                         {
-                            newAliases.Add(actorName);
+                            var actorName = name.Trim();
+
+                            if (!string.IsNullOrEmpty(actorName) && !newAliases.Contains(actorName, StringComparer.Ordinal))
+                            {
+                                newAliases.Add(actorName);
+                            }
                         }
                     }
 
@@ -189,7 +192,7 @@ namespace PhoenixAdult.Providers
 
                     result.Item.ProductionLocations = new string[] { string.Join(", ", bornPlaceList) };
 
-                    if (!newAliases.Contains(info.Name, StringComparer.OrdinalIgnoreCase))
+                    if (!string.Equals(result.Item.Name, info.Name, StringComparison.OrdinalIgnoreCase) && !newAliases.Contains(info.Name, StringComparer.OrdinalIgnoreCase))
                     {
                         result.HasMetadata = false;
                     }

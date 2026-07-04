@@ -33,6 +33,11 @@ namespace PhoenixAdult.Helpers
                     ImageUrl = people.ImageUrl,
                 };
 
+                foreach (var id in people.ProviderIds)
+                {
+                    newPeople.ProviderIds[id.Key] = id.Value;
+                }
+
                 newPeople.Name = WebUtility.HtmlDecode(newPeople.Name);
                 newPeople.Name = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(newPeople.Name);
                 newPeople.Name = newPeople.Name.Split('(').First();

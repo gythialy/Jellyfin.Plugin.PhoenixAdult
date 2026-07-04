@@ -41,6 +41,7 @@ namespace PhoenixAdult
                 {
                     Name = this.Name,
                     EmbeddedResourcePath = $"{this.GetType().Namespace}.Configuration.configPage.html",
+                    EnableInMainMenu = Instance?.Configuration.EnableMainMenu ?? true,
                 },
             };
     }
