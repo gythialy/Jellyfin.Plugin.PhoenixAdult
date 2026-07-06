@@ -212,7 +212,7 @@ namespace PhoenixAdult.Sites
                 ? detailsPageElements.SelectNodes("//div[@class='item']/span/div/a")
                 : (
                     siteNum[1] == 0
-                    ? detailsPageElements.SelectNodes("//span[@class='update_models']/a")
+                    ? detailsPageElements.SelectNodes("//div[@class='scene-info']//span[@class='update_models']/a")
                     : (
                         siteNum[1] == 1
                         ? detailsPageElements.SelectNodes("//div[@class='backgroundcolor_info']//span[@class='update_models']/a")
