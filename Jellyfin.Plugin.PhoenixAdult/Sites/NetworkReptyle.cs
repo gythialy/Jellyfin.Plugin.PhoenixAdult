@@ -136,7 +136,7 @@ namespace PhoenixAdult.Sites
             var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken, null, ageCookie);
             if (httpResult.IsOK)
             {
-                var match = Regex.Match(httpResult.Content, @"window\.__INITIAL_STATE__\s*=\s*(.*?);");
+                var match = Regex.Match(httpResult.Content, @"window\.__INITIAL_STATE__\s*=\s*(.*?);\s*(?:window\b|<\/script>)", RegexOptions.Singleline);
                 if (match.Success)
                 {
                     try
