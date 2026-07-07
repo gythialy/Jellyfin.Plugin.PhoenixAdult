@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -66,7 +67,7 @@ namespace PhoenixAdult.Helpers.Utils
             if (!Plugin.Instance.Configuration.DisableCaching)
             {
                 Logger.Debug("Caching Enabled");
-                CacheHandler = new InMemoryCacheHandler(HttpHandler, CacheExpirationProvider.CreateSimple(TimeSpan.FromSeconds(60), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(5)));
+                CacheHandler = new InMemoryCacheHandler(HttpHandler, CacheExpirationProvider.CreateSimple(TimeSpan.FromHours(12), TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(10)));
             }
             else
             {
@@ -205,6 +206,156 @@ namespace PhoenixAdult.Helpers.Utils
                 result.ContentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
                 result.Headers = response.Headers;
                 result.Cookies = cookieContainer.GetCookies(request.RequestUri).Cast<Cookie>();
+            }
+
+            if (result.StatusCode == HttpStatusCode.TooManyRequests && !string.IsNullOrEmpty(Plugin.Instance.Configuration.FlareSolverrURL))
+            {
+                Logger.Info($"[HTTP Request] Encountered TooManyRequests (429). Falling back to direct FlareSolverr request for {url}");
+                try
+                {
+                    var fsResponse = await RequestDirectViaFlareSolverr(url, method, param, headers, cookies, cancellationToken).ConfigureAwait(false);
+                    if (fsResponse.IsOK)
+                    {
+                        return fsResponse;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"[HTTP Request] FlareSolverr direct fallback failed: {ex.Message}");
+                }
+            }
+
+            return result;
+        }
+
+        private static async Task<HTTPResponse> RequestDirectViaFlareSolverr(string url, HttpMethod method, HttpContent param, IDictionary<string, string> headers, IDictionary<string, string> cookies, CancellationToken cancellationToken)
+        {
+            var result = new HTTPResponse { IsOK = false };
+
+            using (var cleanHandler = new HttpClientHandler { Proxy = Proxy })
+            {
+                if (Plugin.Instance.Configuration.DisableSSLCheck)
+                {
+                    cleanHandler.ServerCertificateCustomValidationCallback += (sender, certificate, chain, errors) => true;
+                }
+
+                using (var client = new HttpClient(cleanHandler) { Timeout = TimeSpan.FromSeconds(DefaultTimeoutSeconds) })
+                {
+                    string cmd = method == HttpMethod.Post ? "request.post" : "request.get";
+
+                    var fsCookies = new List<object>();
+                    if (cookies != null)
+                    {
+                        foreach (var cookie in cookies)
+                        {
+                            fsCookies.Add(new { name = cookie.Key, value = cookie.Value });
+                        }
+                    }
+
+                    var fsHeaders = new Dictionary<string, string>();
+                    if (headers != null)
+                    {
+                        foreach (var h in headers)
+                        {
+                            fsHeaders[h.Key] = h.Value;
+                        }
+                    }
+
+                    string postData = null;
+                    if (method == HttpMethod.Post && param != null)
+                    {
+                        postData = await param.ReadAsStringAsync().ConfigureAwait(false);
+                    }
+
+                    var payload = new
+                    {
+                        cmd = cmd,
+                        url = url,
+                        maxTimeout = (int)TimeSpan.FromSeconds(DefaultTimeoutSeconds).TotalMilliseconds,
+                        cookies = fsCookies.Count > 0 ? fsCookies : null,
+                        headers = fsHeaders.Count > 0 ? fsHeaders : null,
+                        postData = postData
+                    };
+
+                    string fsUrl = Plugin.Instance.Configuration.FlareSolverrURL;
+                    if (!fsUrl.EndsWith("/"))
+                    {
+                        fsUrl += "/";
+                    }
+                    fsUrl += "v1";
+
+                    var jsonPayload = JsonSerializer.Serialize(payload);
+                    var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+                    Logger.Info($"[HTTP Request] Sending direct request to FlareSolverr at {fsUrl} for {url}");
+                    var response = await client.PostAsync(fsUrl, content, cancellationToken).ConfigureAwait(false);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseStr = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                        using (var doc = JsonDocument.Parse(responseStr))
+                        {
+                            var root = doc.RootElement;
+                            string status = root.GetProperty("status").GetString();
+                            if (status == "ok")
+                            {
+                                var solution = root.GetProperty("solution");
+                                string pageContent = solution.GetProperty("response").GetString();
+                                int statusCode = solution.GetProperty("status").GetInt32();
+
+                                result.IsOK = statusCode >= 200 && statusCode < 300;
+                                result.StatusCode = (HttpStatusCode)statusCode;
+                                result.Content = pageContent;
+                                result.ContentStream = new MemoryStream(Encoding.UTF8.GetBytes(pageContent));
+
+                                if (solution.TryGetProperty("url", out var finalUrlProp))
+                                {
+                                    result.ResponseUrl = new Uri(finalUrlProp.GetString());
+                                }
+                                else
+                                {
+                                    result.ResponseUrl = new Uri(url);
+                                }
+
+                                if (solution.TryGetProperty("cookies", out var cookiesProp) && cookiesProp.ValueKind == JsonValueKind.Array)
+                                {
+                                    var parsedCookies = new List<Cookie>();
+                                    foreach (var c in cookiesProp.EnumerateArray())
+                                    {
+                                        try
+                                        {
+                                            string cName = c.GetProperty("name").GetString();
+                                            string cValue = c.GetProperty("value").GetString();
+                                            string cDomain = c.TryGetProperty("domain", out var dProp) ? dProp.GetString() : new Uri(url).Host;
+                                            string cPath = c.TryGetProperty("path", out var pProp) ? pProp.GetString() : "/";
+
+                                            var cookieObj = new Cookie(cName, cValue, cPath, cDomain);
+                                            parsedCookies.Add(cookieObj);
+
+                                            CookieContainer.Add(cookieObj);
+                                        }
+                                        catch (Exception cookieEx)
+                                        {
+                                            Logger.Warning($"[HTTP Request] Failed to add cookie from FlareSolverr: {cookieEx.Message}");
+                                        }
+                                    }
+                                    result.Cookies = parsedCookies;
+                                }
+
+                                Logger.Info($"[HTTP Request] FlareSolverr direct request succeeded. Status code: {statusCode}");
+                                return result;
+                            }
+                            else
+                            {
+                                string message = root.TryGetProperty("message", out var msgProp) ? msgProp.GetString() : "Unknown error";
+                                Logger.Error($"[HTTP Request] FlareSolverr returned error: {message}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Logger.Error($"[HTTP Request] FlareSolverr API request failed with status: {response.StatusCode}");
+                    }
+                }
             }
 
             return result;

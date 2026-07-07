@@ -222,7 +222,7 @@ namespace PhoenixAdult.Sites
                     break;
             }
 
-            var sceneURL = Helper.GetSearchBaseURL(siteNum) + $"/{sceneType}/{sceneID[0]}/0";
+            var sceneURL = Helper.GetSearchBaseURL(siteNum) + $"/{sceneType}/{curID}";
 
             result.Item.ExternalId = sceneURL;
 

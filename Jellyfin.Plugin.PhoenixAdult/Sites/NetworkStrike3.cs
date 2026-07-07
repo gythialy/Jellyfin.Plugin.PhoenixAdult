@@ -141,7 +141,7 @@ namespace PhoenixAdult.Sites
             }
 
             var movie = (Movie)result.Item;
-            movie.ExternalId = sceneURL;
+            movie.ExternalId = Helper.GetSearchBaseURL(siteNum) + $"/{sceneURL}";
             Logger.Info("[NetworkStrike3] Parsing basic info (Name, Overview, Studio).");
             movie.Name = (string)video["title"];
             movie.Overview = (string)video["description"];
