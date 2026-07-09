@@ -19,7 +19,7 @@ namespace PhoenixAdult.Helpers.Utils
 {
     internal static class HTTP
     {
-        private const int DefaultTimeoutSeconds = 120;
+        private const int DefaultTimeoutSeconds = 1200;
 
         static HTTP()
         {
