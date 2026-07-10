@@ -41,7 +41,7 @@ namespace PhoenixAdult.Sites
 
         private async Task<NaughtyAmericaScene> GetNaughtyAmerica(string sceneId, CancellationToken cancellationToken)
         {
-            var scenePageElements = await HTML.ElementFromURL($"https://www.naughtyamerica.com/scene/0{sceneId}", cancellationToken, freshSession: true);
+            var scenePageElements = await HTML.ElementFromURL($"https://www.naughtyamerica.com/scene/0{sceneId}", cancellationToken, forceFlareSolverr: true);
             if (scenePageElements == null)
             {
                 return null;
@@ -94,7 +94,7 @@ namespace PhoenixAdult.Sites
             else
             {
                 string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Slugify()}&_gl=1";
-                var searchResultsNode = await HTML.ElementFromURL(searchUrl, cancellationToken, freshSession: true);
+                var searchResultsNode = await HTML.ElementFromURL(searchUrl, cancellationToken, forceFlareSolverr: true);
                 if (searchResultsNode == null)
                 {
                     return result;
@@ -128,7 +128,7 @@ namespace PhoenixAdult.Sites
                     if (pagination > 1 && pagination != i + 1)
                     {
                         string nextUrl = searchUrl.Contains("pornstar") ? $"{Helper.GetSearchBaseURL(siteNum)}/pornstar/{searchTitle.Slugify()}?related_page={i}" : $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.Slugify()}&page={i}";
-                        searchResultsNode = await HTML.ElementFromURL(nextUrl, cancellationToken, freshSession: true);
+                        searchResultsNode = await HTML.ElementFromURL(nextUrl, cancellationToken, forceFlareSolverr: true);
                     }
                 }
             }
@@ -166,7 +166,7 @@ namespace PhoenixAdult.Sites
             foreach (var actor in details.Performers)
             {
                 string actorPageURL = $"https://www.naughtyamerica.com/pornstar/{actor.ToLower().Replace(' ', '-').Replace("'", string.Empty)}";
-                var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken, freshSession: true);
+                var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken, forceFlareSolverr: true);
                 string actorPhotoURL = actorPage?.SelectSingleNode("//img[contains(@class, 'performer-pic')]")?.GetAttributeValue("data-src", string.Empty);
                 if (!string.IsNullOrEmpty(actorPhotoURL))
                 {

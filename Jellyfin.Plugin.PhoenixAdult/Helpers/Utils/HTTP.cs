@@ -102,12 +102,29 @@ namespace PhoenixAdult.Helpers.Utils
         public static string GetUserAgent()
             => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36";
 
-        public static async Task<HTTPResponse> Request(string url, HttpMethod method, HttpContent param, IDictionary<string, string> headers, IDictionary<string, string> cookies, CancellationToken cancellationToken, bool freshSession = false, params HttpStatusCode[] additionalSuccessStatusCodes)
+        public static async Task<HTTPResponse> Request(string url, HttpMethod method, HttpContent param, IDictionary<string, string> headers, IDictionary<string, string> cookies, CancellationToken cancellationToken, bool freshSession = false, bool forceFlareSolverr = false, params HttpStatusCode[] additionalSuccessStatusCodes)
         {
             var result = new HTTPResponse()
             {
                 IsOK = false,
             };
+
+            if (forceFlareSolverr && !string.IsNullOrEmpty(Plugin.Instance.Configuration.FlareSolverrURL))
+            {
+                Logger.Info($"[HTTP Request] Forcing FlareSolverr request for {url}");
+                try
+                {
+                    var fsResponse = await RequestDirectViaFlareSolverr(url, method, param, headers, cookies, cancellationToken).ConfigureAwait(false);
+                    if (fsResponse.IsOK)
+                    {
+                        return fsResponse;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"[HTTP Request] Forced FlareSolverr request failed: {ex.Message}");
+                }
+            }
 
             if (method == null)
             {
@@ -361,14 +378,14 @@ namespace PhoenixAdult.Helpers.Utils
             return result;
         }
 
-        public static async Task<HTTPResponse> Request(string url, HttpMethod method, HttpContent param, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, bool freshSession = false, params HttpStatusCode[] additionalSuccessStatusCodes)
-            => await Request(url, method, param, headers, cookies, cancellationToken, freshSession, additionalSuccessStatusCodes).ConfigureAwait(false);
+        public static async Task<HTTPResponse> Request(string url, HttpMethod method, HttpContent param, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, bool freshSession = false, bool forceFlareSolverr = false, params HttpStatusCode[] additionalSuccessStatusCodes)
+            => await Request(url, method, param, headers, cookies, cancellationToken, freshSession, forceFlareSolverr, additionalSuccessStatusCodes).ConfigureAwait(false);
 
-        public static async Task<HTTPResponse> Request(string url, HttpMethod method, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, bool freshSession = false, params HttpStatusCode[] additionalSuccessStatusCodes)
-            => await Request(url, method, null, headers, cookies, cancellationToken, freshSession, additionalSuccessStatusCodes).ConfigureAwait(false);
+        public static async Task<HTTPResponse> Request(string url, HttpMethod method, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, bool freshSession = false, bool forceFlareSolverr = false, params HttpStatusCode[] additionalSuccessStatusCodes)
+            => await Request(url, method, null, headers, cookies, cancellationToken, freshSession, forceFlareSolverr, additionalSuccessStatusCodes).ConfigureAwait(false);
 
-        public static async Task<HTTPResponse> Request(string url, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, bool freshSession = false, params HttpStatusCode[] additionalSuccessStatusCodes)
-            => await Request(url, null, null, headers, cookies, cancellationToken, freshSession, additionalSuccessStatusCodes).ConfigureAwait(false);
+        public static async Task<HTTPResponse> Request(string url, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, bool freshSession = false, bool forceFlareSolverr = false, params HttpStatusCode[] additionalSuccessStatusCodes)
+            => await Request(url, null, null, headers, cookies, cancellationToken, freshSession, forceFlareSolverr, additionalSuccessStatusCodes).ConfigureAwait(false);
 
         internal struct HTTPResponse
         {
