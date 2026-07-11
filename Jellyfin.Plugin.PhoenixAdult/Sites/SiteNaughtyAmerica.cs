@@ -50,15 +50,18 @@ namespace PhoenixAdult.Sites
             var photoElements = scenePageElements.SelectNodes("//div[contains(@class, 'contain-scene-images') and contains(@class, 'desktop-only')]/a/@href");
             var photos = photoElements?.Select(photo => "https:" + new Regex(@"images\d+").Replace(photo.GetAttributeValue("href", string.Empty), "images1", 1)).ToList() ?? new List<string>();
 
+            string dateStr = scenePageElements.SelectSingleNode("//div[contains(@class, 'date-tags')]//span")?.InnerText?.Trim();
+            DateTime.TryParse(dateStr, out var publishedAt);
+
             return new NaughtyAmericaScene
             {
                 Id = sceneId,
-                Title = scenePageElements.SelectSingleNode("//div[contains(@class, 'scene-info')]//h1")?.InnerText,
-                Site = scenePageElements.SelectSingleNode("//a[@class='site-title grey-text link']")?.InnerText,
-                PublishedAt = DateTime.Parse(scenePageElements.SelectSingleNode("//div[contains(@class, 'date-tags')]//span")?.InnerText),
-                Fantasies = scenePageElements.SelectNodes("//div[contains(@class, 'categories') and contains(@class, 'grey-text')]/a")?.Select(n => n.InnerText).ToList() ?? new List<string>(),
-                Performers = scenePageElements.SelectNodes("//div[contains(@class, 'performer-list')]/a")?.Select(n => n.InnerText).ToList() ?? new List<string>(),
-                Synopsis = scenePageElements.SelectSingleNode("//div[contains(@class, 'synopsis') and contains(@class, 'grey-text')]//h2")?.NextSibling.InnerText.Trim(),
+                Title = scenePageElements.SelectSingleNode("//div[contains(@class, 'scene-info')]//h1")?.InnerText?.Trim(),
+                Site = scenePageElements.SelectSingleNode("//a[@class='site-title grey-text link']")?.InnerText?.Trim(),
+                PublishedAt = publishedAt,
+                Fantasies = scenePageElements.SelectNodes("//div[contains(@class, 'categories')]//a")?.Select(n => n.InnerText.Trim()).ToList() ?? new List<string>(),
+                Performers = scenePageElements.SelectNodes("//div[contains(@class, 'performer-list')]//a")?.Select(n => n.InnerText.Trim()).ToList() ?? new List<string>(),
+                Synopsis = scenePageElements.SelectSingleNode("//div[contains(@class, 'synopsis')]")?.InnerText?.Replace("Synopsis:", string.Empty).Trim(),
                 Photos = photos,
             };
         }
@@ -82,11 +85,11 @@ namespace PhoenixAdult.Sites
                 var scenePageElements = await GetNaughtyAmerica(sceneID, cancellationToken);
                 if (scenePageElements != null)
                 {
-                    string releaseDate = scenePageElements.PublishedAt.ToString("yyyy-MM-dd");
+                    string releaseDate = scenePageElements.PublishedAt != default ? scenePageElements.PublishedAt.ToString("yyyy-MM-dd") : string.Empty;
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{scenePageElements.Id}" } },
-                        Name = $"{scenePageElements.Title} [{scenePageElements.Site.Replace("&#039;", "'", StringComparison.OrdinalIgnoreCase)}] {releaseDate}",
+                        Name = $"{scenePageElements.Title} [{scenePageElements.Site?.Replace("&#039;", "'", StringComparison.OrdinalIgnoreCase) ?? string.Empty}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
                     });
                 }
@@ -114,7 +117,12 @@ namespace PhoenixAdult.Sites
                         {
                             string titleNoFormatting = searchResult.SelectSingleNode("./a")?.GetAttributeValue("title", string.Empty).Trim();
                             int curID = int.Parse(searchResult.SelectSingleNode("./a")?.GetAttributeValue("data-scene-id", string.Empty));
-                            string releaseDate = DateTime.Parse(searchResult.SelectSingleNode("./p[@class='entry-date']")?.InnerText).ToString("yyyy-MM-dd");
+                            string releaseDate = string.Empty;
+                            string entryDateStr = searchResult.SelectSingleNode("./p[@class='entry-date']")?.InnerText;
+                            if (DateTime.TryParse(entryDateStr, out var parsedDate))
+                            {
+                                releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                            }
                             string siteName = searchResult.SelectSingleNode(".//a[@class='site-title']")?.InnerText;
                             result.Add(new RemoteSearchResult
                             {
@@ -150,7 +158,11 @@ namespace PhoenixAdult.Sites
             movie.Name = details.Title;
             movie.Overview = details.Synopsis;
             movie.AddStudio("Naughty America");
-            movie.AddStudio(details.Site.Replace("&#039;", "'", StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrEmpty(details.Site))
+            {
+                movie.AddStudio(details.Site.Replace("&#039;", "'", StringComparison.OrdinalIgnoreCase));
+            }
+            movie.ExternalId = $"https://www.naughtyamerica.com/scene/0{sceneId}";
 
             if (details.PublishedAt != default)
             {
