@@ -25,8 +25,6 @@ namespace PhoenixAdult.Sites
 
         public static async Task<JObject> GetDataFromAPI(string url, string query, string variables, CancellationToken cancellationToken)
         {
-            JObject json = null;
-
             // Parse variables as JSON to ensure proper format
             var variablesObj = JObject.Parse(variables);
 
@@ -38,31 +36,43 @@ namespace PhoenixAdult.Sites
             };
 
             var requestBody = requestBodyObj.ToString(Newtonsoft.Json.Formatting.None);
-            var param = new StringContent(requestBody, Encoding.UTF8, "application/json");
 
             Logger.Debug($"{url}, {query}, {variables}");
 
-            var http = await HTTP.Request(url, HttpMethod.Post, param, cancellationToken).ConfigureAwait(false);
-
-            if (http.IsOK)
+            // The NetworkStrike3 GraphQL API (https://<site>.com/graphql) is protected by Cloudflare
+            // based on the client TLS fingerprint: plain HTTP clients (HttpClient) get a "Just a moment..."
+            // challenge and cannot reach the API, no matter the cookies. Only a real browser can pass, so
+            // when FlareSolverr is configured we route the request through its browser context via a JSON
+            // POST (requires the FlareSolverr "contentType: json" patch, see patches/ folder).
+            if (FlareSolverr.IsConfigured)
             {
-                Logger.Debug("http.Content: " + http.Content);
-                if (!string.IsNullOrEmpty(http.Content))
+                try
                 {
-                    var parsed = JObject.Parse(http.Content);
-                    if (parsed["data"] != null)
+                    var headers = new Dictionary<string, string>
                     {
-                        json = (JObject)parsed["data"];
-                        Logger.Debug("content to jobject ok");
-                    }
-                    else
+                        ["Accept"] = "application/json",
+                        ["apollo-require-preflight"] = "true",
+                        ["x-apollo-operation-name"] = "getSearchResults",
+                    };
+
+                    var response = await FlareSolverr.PostJson(url, requestBody, headers, cancellationToken).ConfigureAwait(false);
+                    if (response?["data"] != null)
                     {
-                        Logger.Error($"GraphQL Error Response: {http.Content}");
+                        return (JObject)response["data"];
                     }
+
+                    if (response != null)
+                    {
+                        Logger.Error($"NetworkStrike3: GraphQL Error Response: {response}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"NetworkStrike3: FlareSolverr request failed, falling back to direct HTTP: {e.Message}");
                 }
             }
 
-            return json;
+            return await GetDataFromDirectHttp(url, requestBody, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
@@ -77,26 +87,39 @@ namespace PhoenixAdult.Sites
             var url = Helper.GetSearchSearchURL(siteNum);
             Logger.Debug($"search: {variables}, {url}");
             var searchResults = await GetDataFromAPI(url, this.searchQuery, variables, cancellationToken).ConfigureAwait(false);
-            if (searchResults == null)
+            if (searchResults == null || searchResults["searchVideos"]?["edges"] == null)
             {
                 return result;
             }
 
             foreach (var searchResult in searchResults["searchVideos"]["edges"])
             {
-                string sceneURL = (string)searchResult["node"]["slug"],
-                        curID = Helper.Encode(sceneURL),
-                        sceneName = (string)searchResult["node"]["title"],
-                        scenePoster = (string)searchResult["node"]["images"]["listing"].First()["src"];
-                var sceneDateObj = (DateTime)searchResult["node"]["releaseDate"];
+                var node = searchResult["node"];
+                if (node == null)
+                {
+                    continue;
+                }
+
+                string sceneURL = (string)node["slug"],
+                        sceneName = (string)node["title"];
+                if (string.IsNullOrEmpty(sceneURL) || string.IsNullOrEmpty(sceneName))
+                {
+                    continue;
+                }
+
+                var sceneDateObj = node["releaseDate"]?.ToObject<DateTime?>();
 
                 var res = new RemoteSearchResult
                 {
-                    ProviderIds = { { Plugin.Instance.Name, curID } },
+                    ProviderIds = { { Plugin.Instance.Name, Helper.Encode(sceneURL) } },
                     Name = sceneName,
-                    ImageUrl = scenePoster,
                     PremiereDate = sceneDateObj,
                 };
+
+                if (node["images"]?["listing"] is JArray listing && listing.Count > 0)
+                {
+                    res.ImageUrl = (string)listing[0]["src"];
+                }
 
                 result.Add(res);
             }
@@ -129,6 +152,10 @@ namespace PhoenixAdult.Sites
             }
 
             sceneData = (JObject)sceneData["findOneVideo"];
+            if (sceneData == null)
+            {
+                return result;
+            }
 
             result.Item.ExternalId = Helper.GetSearchBaseURL(siteNum) + $"/videos/{sceneURL}";
 
@@ -136,29 +163,43 @@ namespace PhoenixAdult.Sites
             result.Item.Overview = (string)sceneData["description"];
             result.Item.AddStudio(Helper.GetSearchSiteName(siteNum));
 
-            var sceneDateObj = (DateTime)sceneData["releaseDate"];
+            var sceneDateObj = sceneData["releaseDate"]?.ToObject<DateTime?>();
             result.Item.PremiereDate = sceneDateObj;
 
-            foreach (var genreLink in sceneData["categories"])
+            if (sceneData["categories"] is JArray categories)
             {
-                string genreName = (string)genreLink["name"];
+                foreach (var genreLink in categories)
+                {
+                    string genreName = (string)genreLink["name"];
 
-                result.Item.AddGenre(genreName);
+                    if (!string.IsNullOrEmpty(genreName))
+                    {
+                        result.Item.AddGenre(genreName);
+                    }
+                }
             }
 
-            foreach (var actorLink in sceneData["models"])
+            if (sceneData["models"] is JArray models)
             {
-                var actor = new PersonInfo
+                foreach (var actorLink in models)
                 {
-                    Name = (string)actorLink["name"],
-                };
+                    var actor = new PersonInfo
+                    {
+                        Name = (string)actorLink["name"],
+                    };
 
-                if (actorLink["images"].Any())
-                {
-                    actor.ImageUrl = (string)actorLink["images"]["listing"].First()["highdpi"]["double"];
+                    if (string.IsNullOrEmpty(actor.Name))
+                    {
+                        continue;
+                    }
+
+                    if (actorLink["images"]?["listing"] is JArray listing && listing.Count > 0)
+                    {
+                        actor.ImageUrl = (string)listing[0]["highdpi"]?["double"];
+                    }
+
+                    result.AddPerson(actor);
                 }
-
-                result.AddPerson(actor);
             }
 
             return result;
@@ -185,24 +226,63 @@ namespace PhoenixAdult.Sites
             }
 
             var video = (JObject)sceneData["findOneVideo"];
-
-            foreach (var image in video["carousel"])
+            if (video == null)
             {
-                var img = (string)image["listing"].First()["highdpi"]["triple"];
+                return result;
+            }
 
-                result.Add(new RemoteImageInfo
+            if (video["carousel"] is JArray carousel)
+            {
+                foreach (var image in carousel)
                 {
-                    Url = img,
-                    Type = ImageType.Primary,
-                });
-                result.Add(new RemoteImageInfo
-                {
-                    Url = img,
-                    Type = ImageType.Backdrop,
-                });
+                    if (image["listing"] is JArray listing && listing.Count > 0)
+                    {
+                        var img = (string)listing[0]["highdpi"]?["triple"];
+                        if (string.IsNullOrEmpty(img))
+                        {
+                            continue;
+                        }
+
+                        result.Add(new RemoteImageInfo
+                        {
+                            Url = img,
+                            Type = ImageType.Primary,
+                        });
+                        result.Add(new RemoteImageInfo
+                        {
+                            Url = img,
+                            Type = ImageType.Backdrop,
+                        });
+                    }
+                }
             }
 
             return result;
+        }
+
+        private static async Task<JObject> GetDataFromDirectHttp(string url, string requestBody, CancellationToken cancellationToken)
+        {
+            var param = new StringContent(requestBody, Encoding.UTF8, "application/json");
+
+            var http = await HTTP.Request(url, HttpMethod.Post, param, cancellationToken).ConfigureAwait(false);
+
+            if (http.IsOK)
+            {
+                Logger.Debug("http.Content: " + http.Content);
+                if (!string.IsNullOrEmpty(http.Content))
+                {
+                    var parsed = JObject.Parse(http.Content);
+                    if (parsed["data"] != null)
+                    {
+                        Logger.Debug("content to jobject ok");
+                        return (JObject)parsed["data"];
+                    }
+
+                    Logger.Error($"GraphQL Error Response: {http.Content}");
+                }
+            }
+
+            return null;
         }
     }
 }
