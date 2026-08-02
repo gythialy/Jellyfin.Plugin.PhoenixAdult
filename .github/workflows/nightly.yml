@@ -41,7 +41,7 @@ jobs:
           path: .
           depth: 8
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           prerelease: true
           tag_name: nightly
