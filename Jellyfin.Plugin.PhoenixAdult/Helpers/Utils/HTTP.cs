@@ -225,13 +225,18 @@ namespace PhoenixAdult.Helpers.Utils
                 result.Cookies = cookieContainer.GetCookies(request.RequestUri).Cast<Cookie>();
             }
 
-            if (result.StatusCode == HttpStatusCode.TooManyRequests && !string.IsNullOrEmpty(Plugin.Instance.Configuration.FlareSolverrURL))
+            bool isCloudflareChallenge = result.StatusCode == HttpStatusCode.Forbidden
+                || result.StatusCode == HttpStatusCode.ServiceUnavailable
+                || result.StatusCode == HttpStatusCode.TooManyRequests
+                || (!string.IsNullOrEmpty(result.Content) && (result.Content.Contains("<title>Just a moment...</title>") || result.Content.Contains("<title>Security Check</title>") || result.Content.Contains("cf-mitigated")));
+
+            if (isCloudflareChallenge && !string.IsNullOrEmpty(Plugin.Instance.Configuration.FlareSolverrURL))
             {
-                Logger.Info($"[HTTP Request] Encountered TooManyRequests (429). Falling back to direct FlareSolverr request for {url}");
+                Logger.Info($"[HTTP Request] Encountered Cloudflare protection ({result.StatusCode}). Falling back to direct FlareSolverr request for {url}");
                 try
                 {
                     var fsResponse = await RequestDirectViaFlareSolverr(url, method, param, headers, cookies, cancellationToken).ConfigureAwait(false);
-                    if (fsResponse.IsOK)
+                    if (fsResponse.IsOK && !string.IsNullOrEmpty(fsResponse.Content) && !fsResponse.Content.Contains("<title>Just a moment...</title>") && !fsResponse.Content.Contains("<title>Security Check</title>"))
                     {
                         return fsResponse;
                     }

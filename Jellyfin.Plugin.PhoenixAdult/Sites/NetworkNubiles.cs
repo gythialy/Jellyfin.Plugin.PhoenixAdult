@@ -34,7 +34,7 @@ namespace PhoenixAdult.Sites
             if (searchDate.HasValue)
             {
                 var url = $"{Helper.GetSearchSearchURL(siteNum)}date/{searchDate.Value:yyyy-MM-dd}/{searchDate.Value:yyyy-MM-dd}";
-                var data = await HTML.ElementFromURL(url, cancellationToken, _headers, _cookies);
+                var data = await HTML.ElementFromURL(url, cancellationToken, _headers, _cookies, forceFlareSolverr: true);
                 if (data == null)
                 {
                     return result;
@@ -78,11 +78,16 @@ namespace PhoenixAdult.Sites
             else if (int.TryParse(searchTitle.Split(' ')[0], out var sceneNum))
             {
                 var url = $"{Helper.GetSearchBaseURL(siteNum)}/video/watch/{sceneNum}";
-                var detailsPageElements = await HTML.ElementFromURL(url, cancellationToken, _headers, _cookies);
+                var detailsPageElements = await HTML.ElementFromURL(url, cancellationToken, _headers, _cookies, forceFlareSolverr: true);
                 if (detailsPageElements != null)
                 {
-                    var titleNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'content-pane-title')]//h2 | //div[contains(@class, 'content-pane-title')]//h1 | //h1 | //h2 | //title");
+                    var titleNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'content-pane-title')]//h2 | //div[contains(@class, 'content-pane-title')]//h1 | //h1 | //h2");
                     string titleNoFormatting = titleNode?.InnerText.Trim();
+                    if (!string.IsNullOrEmpty(titleNoFormatting) && (titleNoFormatting.Equals("Security Check", StringComparison.OrdinalIgnoreCase) || titleNoFormatting.Equals("Just a moment...", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        titleNoFormatting = null;
+                    }
+
                     var dateNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'content-pane')]//span[@class='date'] | //span[@class='date']");
                     string releaseDate = dateNode != null && DateTime.TryParse(dateNode.InnerText.Trim(), out var parsedDate) ? parsedDate.ToString("yyyy-MM-dd") : string.Empty;
                     var posterNode = detailsPageElements.SelectSingleNode("//video");
@@ -133,7 +138,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, _headers, _cookies);
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, _headers, _cookies, forceFlareSolverr: true);
             if (sceneData == null)
             {
                 return result;
@@ -142,11 +147,15 @@ namespace PhoenixAdult.Sites
             var movie = (Movie)result.Item;
             movie.ExternalId = sceneURL;
 
-            var titleNode = sceneData.SelectSingleNode("//div[contains(@class, 'content-pane-title')]//h2 | //div[contains(@class, 'content-pane-title')]//h1 | //h1 | //h2 | //title");
+            var titleNode = sceneData.SelectSingleNode("//div[contains(@class, 'content-pane-title')]//h2 | //div[contains(@class, 'content-pane-title')]//h1 | //h1 | //h2");
             if (titleNode != null && !string.IsNullOrWhiteSpace(titleNode.InnerText))
             {
-                var titleParts = titleNode.InnerText.Trim().Split('-');
-                movie.Name = titleParts.Length > 1 ? $"{titleParts[0].Trim()} - {titleParts[1].Trim()}" : titleParts[0].Trim();
+                string rawTitle = titleNode.InnerText.Trim();
+                if (!rawTitle.Equals("Security Check", StringComparison.OrdinalIgnoreCase) && !rawTitle.Equals("Just a moment...", StringComparison.OrdinalIgnoreCase))
+                {
+                    var titleParts = rawTitle.Split('-');
+                    movie.Name = titleParts.Length > 1 ? $"{titleParts[0].Trim()} - {titleParts[1].Trim()}" : titleParts[0].Trim();
+                }
             }
 
             var descriptionNode = sceneData.SelectSingleNode("//div[@class='col-12 content-pane-column']/div | //div[contains(@class, 'content-pane-column')]/div | //div[contains(@class, 'content-pane-column')]");
@@ -203,7 +212,7 @@ namespace PhoenixAdult.Sites
                         string actorPageURL = actorHref.StartsWith("http", StringComparison.OrdinalIgnoreCase)
                             ? actorHref
                             : Helper.GetSearchBaseURL(siteNum) + actorHref;
-                        var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken, _headers, _cookies);
+                        var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken, _headers, _cookies, forceFlareSolverr: true);
                         var actorImgNode = actorPage?.SelectSingleNode("//div[contains(@class, 'model-profile')]//img | //div[contains(@class, 'profile')]//img");
                         if (actorImgNode != null)
                         {
@@ -261,7 +270,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, _headers, _cookies);
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, _headers, _cookies, forceFlareSolverr: true);
             if (sceneData == null)
             {
                 return result;
@@ -306,7 +315,7 @@ namespace PhoenixAdult.Sites
 
             if (!string.IsNullOrEmpty(galleryURL))
             {
-                var photoPage = await HTML.ElementFromURL(galleryURL, cancellationToken, _headers, _cookies);
+                var photoPage = await HTML.ElementFromURL(galleryURL, cancellationToken, _headers, _cookies, forceFlareSolverr: true);
                 if (photoPage != null)
                 {
                     var sceneImages = photoPage.SelectNodes("//div[@class='img-wrapper']//picture/source[1] | //div[contains(@class, 'img-wrapper')]//img");
