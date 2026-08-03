@@ -117,6 +117,7 @@ namespace PhoenixAdult.Sites
 
             if (siteNum == null || sceneID == null || sceneID.Length == 0 || string.IsNullOrEmpty(sceneID[0]))
             {
+                Logger.Error("[NetworkNubiles] Update called with invalid siteNum or sceneID.");
                 return result;
             }
 
@@ -138,16 +139,27 @@ namespace PhoenixAdult.Sites
                 }
             }
 
+            Logger.Info($"[NetworkNubiles] Update fetching sceneURL: {sceneURL}");
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, _headers, _cookies, forceFlareSolverr: true);
             if (sceneData == null)
             {
+                Logger.Error($"[NetworkNubiles] sceneData is null for URL: {sceneURL}");
                 return result;
             }
+
+            string htmlSnippet = sceneData.OuterHtml;
+            if (htmlSnippet != null && htmlSnippet.Length > 2000)
+            {
+                htmlSnippet = htmlSnippet.Substring(0, 2000);
+            }
+            Logger.Info($"[NetworkNubiles] HTML payload snippet for {sceneURL}:\n{htmlSnippet}");
 
             var movie = (Movie)result.Item;
             movie.ExternalId = sceneURL;
 
             var titleNode = sceneData.SelectSingleNode("//div[contains(@class, 'content-pane-title')]//h2 | //div[contains(@class, 'content-pane-title')]//h1 | //h1 | //h2");
+            Logger.Info($"[NetworkNubiles] titleNode inner text: '{titleNode?.InnerText?.Trim()}'");
+
             if (titleNode != null && !string.IsNullOrWhiteSpace(titleNode.InnerText))
             {
                 string rawTitle = titleNode.InnerText.Trim();
@@ -157,6 +169,7 @@ namespace PhoenixAdult.Sites
                     movie.Name = titleParts.Length > 1 ? $"{titleParts[0].Trim()} - {titleParts[1].Trim()}" : titleParts[0].Trim();
                 }
             }
+            Logger.Info($"[NetworkNubiles] Set movie.Name to: '{movie.Name}'");
 
             var descriptionNode = sceneData.SelectSingleNode("//div[@class='col-12 content-pane-column']/div | //div[contains(@class, 'content-pane-column')]/div | //div[contains(@class, 'content-pane-column')]");
             string description = descriptionNode?.InnerText;

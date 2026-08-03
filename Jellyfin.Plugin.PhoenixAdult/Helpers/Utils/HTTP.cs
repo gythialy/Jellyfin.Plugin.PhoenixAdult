@@ -295,7 +295,6 @@ namespace PhoenixAdult.Helpers.Utils
                         url = url,
                         maxTimeout = (int)TimeSpan.FromSeconds(DefaultTimeoutSeconds).TotalMilliseconds,
                         cookies = fsCookies.Count > 0 ? fsCookies : null,
-                        headers = fsHeaders.Count > 0 ? fsHeaders : null,
                         postData = postData
                     };
 
@@ -323,6 +322,13 @@ namespace PhoenixAdult.Helpers.Utils
                                 var solution = root.GetProperty("solution");
                                 string pageContent = solution.GetProperty("response").GetString();
                                 int statusCode = solution.GetProperty("status").GetInt32();
+
+                                string pageSnippet = pageContent;
+                                if (pageSnippet != null && pageSnippet.Length > 1000)
+                                {
+                                    pageSnippet = pageSnippet.Substring(0, 1000);
+                                }
+                                Logger.Info($"[HTTP Request] FlareSolverr solution response snippet for {url}:\n{pageSnippet}");
 
                                 result.IsOK = statusCode >= 200 && statusCode < 300;
                                 result.StatusCode = (HttpStatusCode)statusCode;
