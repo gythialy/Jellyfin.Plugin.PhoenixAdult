@@ -135,12 +135,6 @@ namespace PhoenixAdult.Helpers.Utils
 
             var request = new HttpRequestMessage(method, new Uri(url));
 
-            request.Headers.TryAddWithoutValidation("User-Agent", GetUserAgent());
-            request.Headers.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.9");
-            request.Headers.TryAddWithoutValidation("Sec-Ch-Ua", "\"Chromium\";v=\"122\", \"Not(A:Brand\";v=\"24\", \"Google Chrome\";v=\"122\"");
-            request.Headers.TryAddWithoutValidation("Sec-Ch-Ua-Mobile", "?0");
-            request.Headers.TryAddWithoutValidation("Sec-Ch-Ua-Platform", "\"Windows\"");
-
             if (param != null)
             {
                 request.Content = param;
@@ -152,12 +146,50 @@ namespace PhoenixAdult.Helpers.Utils
             {
                 foreach (var header in headers)
                 {
-                    request.Headers.TryAddWithoutValidation(header.Key, header.Value);
-                }
+                    if (request.Headers.Contains(header.Key))
+                    {
+                        request.Headers.Remove(header.Key);
+                    }
 
-                string jsonString = JsonSerializer.Serialize(request.Headers.ToDictionary(), new JsonSerializerOptions { WriteIndented = true });
-                Logger.Info($"[HTTP Request] headers: {jsonString}");
+                    if (header.Key.Equals("User-Agent", StringComparison.OrdinalIgnoreCase))
+                    {
+                        request.Headers.UserAgent.Clear();
+                        request.Headers.UserAgent.ParseAdd(header.Value);
+                    }
+                    else
+                    {
+                        request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                    }
+                }
             }
+
+            if (!request.Headers.Contains("User-Agent") || !request.Headers.UserAgent.Any())
+            {
+                request.Headers.UserAgent.ParseAdd(GetUserAgent());
+            }
+
+            if (!request.Headers.Contains("Accept-Language"))
+            {
+                request.Headers.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.9");
+            }
+
+            if (!request.Headers.Contains("Sec-Ch-Ua"))
+            {
+                request.Headers.TryAddWithoutValidation("Sec-Ch-Ua", "\"Chromium\";v=\"122\", \"Not(A:Brand\";v=\"24\", \"Google Chrome\";v=\"122\"");
+            }
+
+            if (!request.Headers.Contains("Sec-Ch-Ua-Mobile"))
+            {
+                request.Headers.TryAddWithoutValidation("Sec-Ch-Ua-Mobile", "?0");
+            }
+
+            if (!request.Headers.Contains("Sec-Ch-Ua-Platform"))
+            {
+                request.Headers.TryAddWithoutValidation("Sec-Ch-Ua-Platform", "\"Windows\"");
+            }
+
+            string jsonString = JsonSerializer.Serialize(request.Headers.ToDictionary(), new JsonSerializerOptions { WriteIndented = true });
+            Logger.Info($"[HTTP Request] headers: {jsonString}");
 
             if (cookies != null)
             {
@@ -270,11 +302,12 @@ namespace PhoenixAdult.Helpers.Utils
                     string cmd = method == HttpMethod.Post ? "request.post" : "request.get";
 
                     var fsCookies = new List<object>();
+                    string targetDomain = new Uri(url).Host;
                     if (cookies != null)
                     {
                         foreach (var cookie in cookies)
                         {
-                            fsCookies.Add(new { name = cookie.Key, value = cookie.Value });
+                            fsCookies.Add(new { name = cookie.Key, value = cookie.Value, domain = targetDomain });
                         }
                     }
 
@@ -297,6 +330,7 @@ namespace PhoenixAdult.Helpers.Utils
                     {
                         cmd = cmd,
                         url = url,
+                        session = "phoenix_adult",
                         maxTimeout = (int)TimeSpan.FromSeconds(DefaultTimeoutSeconds).TotalMilliseconds,
                         cookies = fsCookies.Count > 0 ? fsCookies : null,
                         postData = postData
@@ -321,65 +355,90 @@ namespace PhoenixAdult.Helpers.Utils
                         {
                             var root = doc.RootElement;
                             string status = root.GetProperty("status").GetString();
-                            if (status == "ok")
+                            if (status != "ok")
                             {
-                                var solution = root.GetProperty("solution");
-                                string pageContent = solution.GetProperty("response").GetString();
-                                int statusCode = solution.GetProperty("status").GetInt32();
-
-                                string pageSnippet = pageContent;
-                                if (pageSnippet != null && pageSnippet.Length > 1000)
+                                string msg = root.TryGetProperty("message", out var mProp) ? mProp.GetString() : string.Empty;
+                                if (msg.Contains("Session", StringComparison.OrdinalIgnoreCase) && msg.Contains("exist", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    pageSnippet = pageSnippet.Substring(0, 1000);
+                                    Logger.Info($"[HTTP Request] Creating new FlareSolverr session 'phoenix_adult' at {fsUrl}");
+                                    var createPayload = new { cmd = "sessions.create", session = "phoenix_adult" };
+                                    var createContent = new StringContent(JsonSerializer.Serialize(createPayload), Encoding.UTF8, "application/json");
+                                    await client.PostAsync(fsUrl, createContent, cancellationToken).ConfigureAwait(false);
+
+                                    response = await client.PostAsync(fsUrl, content, cancellationToken).ConfigureAwait(false);
+                                    responseStr = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                                 }
-                                Logger.Info($"[HTTP Request] FlareSolverr solution response snippet for {url}:\n{pageSnippet}");
+                            }
 
-                                result.IsOK = statusCode >= 200 && statusCode < 300;
-                                result.StatusCode = (HttpStatusCode)statusCode;
-                                result.Content = pageContent;
-                                result.ContentStream = new MemoryStream(Encoding.UTF8.GetBytes(pageContent));
-
-                                if (solution.TryGetProperty("url", out var finalUrlProp))
+                            using (var doc2 = JsonDocument.Parse(responseStr))
+                            {
+                                var root2 = doc2.RootElement;
+                                string status2 = root2.GetProperty("status").GetString();
+                                if (status2 == "ok")
                                 {
-                                    result.ResponseUrl = new Uri(finalUrlProp.GetString());
+                                    var solution = root2.GetProperty("solution");
+                                    string pageContent = solution.GetProperty("response").GetString();
+                                    int statusCode = solution.GetProperty("status").GetInt32();
+
+                                    string pageSnippet = pageContent;
+                                    if (pageSnippet != null && pageSnippet.Length > 1000)
+                                    {
+                                        pageSnippet = pageSnippet.Substring(0, 1000);
+                                    }
+                                    Logger.Info($"[HTTP Request] FlareSolverr solution response snippet for {url}:\n{pageSnippet}");
+
+                                    result.IsOK = statusCode >= 200 && statusCode < 300;
+                                    result.StatusCode = (HttpStatusCode)statusCode;
+                                    result.Content = pageContent;
+                                    result.ContentStream = new MemoryStream(Encoding.UTF8.GetBytes(pageContent));
+
+                                    if (solution.TryGetProperty("url", out var finalUrlProp))
+                                    {
+                                        result.ResponseUrl = new Uri(finalUrlProp.GetString());
+                                    }
+                                    else
+                                    {
+                                        result.ResponseUrl = new Uri(url);
+                                    }
+
+                                    if (solution.TryGetProperty("cookies", out var cookiesProp) && cookiesProp.ValueKind == JsonValueKind.Array)
+                                    {
+                                        var parsedCookies = new List<Cookie>();
+                                        foreach (var c in cookiesProp.EnumerateArray())
+                                        {
+                                            try
+                                            {
+                                                string cName = c.GetProperty("name").GetString();
+                                                string cValue = c.GetProperty("value").GetString();
+                                                string cDomain = c.TryGetProperty("domain", out var dProp) ? dProp.GetString() : new Uri(url).Host;
+                                                string cPath = c.TryGetProperty("path", out var pProp) ? pProp.GetString() : "/";
+
+                                                if (!string.IsNullOrEmpty(cDomain))
+                                                {
+                                                    cDomain = cDomain.TrimStart('.');
+                                                }
+
+                                                var cookieObj = new Cookie(cName, cValue, cPath, cDomain);
+                                                parsedCookies.Add(cookieObj);
+
+                                                CookieContainer.Add(cookieObj);
+                                            }
+                                            catch (Exception cookieEx)
+                                            {
+                                                Logger.Warning($"[HTTP Request] Failed to add cookie from FlareSolverr: {cookieEx.Message}");
+                                            }
+                                        }
+                                        result.Cookies = parsedCookies;
+                                    }
+
+                                    Logger.Info($"[HTTP Request] FlareSolverr direct request succeeded. Status code: {statusCode}");
+                                    return result;
                                 }
                                 else
                                 {
-                                    result.ResponseUrl = new Uri(url);
+                                    string message = root2.TryGetProperty("message", out var msgProp) ? msgProp.GetString() : "Unknown error";
+                                    Logger.Error($"[HTTP Request] FlareSolverr returned error: {message}");
                                 }
-
-                                if (solution.TryGetProperty("cookies", out var cookiesProp) && cookiesProp.ValueKind == JsonValueKind.Array)
-                                {
-                                    var parsedCookies = new List<Cookie>();
-                                    foreach (var c in cookiesProp.EnumerateArray())
-                                    {
-                                        try
-                                        {
-                                            string cName = c.GetProperty("name").GetString();
-                                            string cValue = c.GetProperty("value").GetString();
-                                            string cDomain = c.TryGetProperty("domain", out var dProp) ? dProp.GetString() : new Uri(url).Host;
-                                            string cPath = c.TryGetProperty("path", out var pProp) ? pProp.GetString() : "/";
-
-                                            var cookieObj = new Cookie(cName, cValue, cPath, cDomain);
-                                            parsedCookies.Add(cookieObj);
-
-                                            CookieContainer.Add(cookieObj);
-                                        }
-                                        catch (Exception cookieEx)
-                                        {
-                                            Logger.Warning($"[HTTP Request] Failed to add cookie from FlareSolverr: {cookieEx.Message}");
-                                        }
-                                    }
-                                    result.Cookies = parsedCookies;
-                                }
-
-                                Logger.Info($"[HTTP Request] FlareSolverr direct request succeeded. Status code: {statusCode}");
-                                return result;
-                            }
-                            else
-                            {
-                                string message = root.TryGetProperty("message", out var msgProp) ? msgProp.GetString() : "Unknown error";
-                                Logger.Error($"[HTTP Request] FlareSolverr returned error: {message}");
                             }
                         }
                     }
