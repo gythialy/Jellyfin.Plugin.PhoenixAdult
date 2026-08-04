@@ -216,6 +216,7 @@ namespace PhoenixAdult.Sites
             else
             {
                 Logger.Info("[NetworkBang] Update: Falling back to HTML scraping.");
+
                 // Fallback HTML scraping
                 name = detailsPageElements.SelectSingleNode("//h1")?.InnerText;
                 description = detailsPageElements.SelectSingleNode("//meta[@name='description']")?.GetAttributeValue("content", string.Empty);
@@ -223,11 +224,11 @@ namespace PhoenixAdult.Sites
                 {
                     description = detailsPageElements.SelectSingleNode("//div[contains(@class, 'description')]")?.InnerText;
                 }
-                
+
                 // Try to find release date in HTML
-                var dateNode = detailsPageElements.SelectSingleNode("//span[contains(text(), 'Released:')]/following-sibling::span") 
+                var dateNode = detailsPageElements.SelectSingleNode("//span[contains(text(), 'Released:')]/following-sibling::span")
                                ?? detailsPageElements.SelectSingleNode("//div[contains(text(), 'Released:')]/following-sibling::div");
-                
+
                 if (dateNode != null)
                 {
                     datePublished = dateNode.InnerText.Trim();
@@ -247,7 +248,7 @@ namespace PhoenixAdult.Sites
             movie.ExternalId = sceneURL;
             movie.Name = Helper.ParseTitle(HTML.Clean(name ?? string.Empty), siteNum);
             movie.Overview = HTML.Clean(description ?? string.Empty);
-            
+
             //movie.AddStudio(System.Net.WebUtility.HtmlDecode(Regex.Replace(Helper.ParseTitle((productionCompany ?? string.Empty).Trim(), siteNum), @"bang(?=(\s|$))(?!\!)", "Bang!", RegexOptions.IgnoreCase)));
             movie.AddStudio("Bang!");
 
@@ -286,8 +287,9 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var actorLink in actorNodes)
                 {
-                    string actorName;
+                    string actorName = null;
                     string actorPhotoURL = string.Empty;
+
                     if (siteNum[1] == 1)
                     {
                         actorName = actorLink.InnerText;
@@ -301,23 +303,36 @@ namespace PhoenixAdult.Sites
                                 try
                                 {
                                     var modelElements = JObject.Parse(modelLdJson.InnerText.Trim());
-                                    actorPhotoURL = modelElements["image"]?.ToString().Split('?')[0].Trim();
+                                    var imageVal = modelElements["image"]?.ToString();
+                                    if (!string.IsNullOrEmpty(imageVal))
+                                    {
+                                        actorPhotoURL = imageVal.Split('?')[0].Trim();
+                                    }
                                 }
                                 catch
                                 {
-                                    // Fallback if model page JSON fails
-                                    actorPhotoURL = GetJsonValue(modelLdJson.InnerText, "image")?.Split('?')[0].Trim();
+                                    var imageVal = GetJsonValue(modelLdJson.InnerText, "image");
+                                    if (!string.IsNullOrEmpty(imageVal))
+                                    {
+                                        actorPhotoURL = imageVal.Split('?')[0].Trim();
+                                    }
                                 }
                             }
                         }
                     }
                     else
                     {
-                        actorName = actorLink.SelectSingleNode(".//span").InnerText;
-                        string img = actorLink.SelectSingleNode("../..//img").GetAttributeValue("src", string.Empty).Split('?')[0];
-                        if (!img.Contains("placeholder"))
+                        var nameNode = actorLink.SelectSingleNode(".//span");
+                        actorName = nameNode != null ? nameNode.InnerText : actorLink.InnerText;
+
+                        var imgNode = actorLink.SelectSingleNode("../..//img");
+                        if (imgNode != null)
                         {
-                            actorPhotoURL = img;
+                            string img = imgNode.GetAttributeValue("src", string.Empty).Split('?')[0];
+                            if (!string.IsNullOrEmpty(img) && !img.Contains("placeholder"))
+                            {
+                                actorPhotoURL = img;
+                            }
                         }
                     }
 
@@ -411,12 +426,16 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var img in videoPageElements["trailer"])
                 {
-                    imageUrls.Add(img["thumbnailUrl"].ToString());
+                    var trailerThumb = img["thumbnailUrl"]?.ToString();
+                    if (!string.IsNullOrEmpty(trailerThumb))
+                    {
+                        imageUrls.Add(trailerThumb);
+                    }
                 }
             }
 
             bool first = true;
-            foreach (var imageUrl in imageUrls.Distinct())
+            foreach (var imageUrl in imageUrls.Where(u => !string.IsNullOrEmpty(u)).Distinct())
             {
                 var imageInfo = new RemoteImageInfo { Url = imageUrl.Split('?')[0] };
                 if (first)
