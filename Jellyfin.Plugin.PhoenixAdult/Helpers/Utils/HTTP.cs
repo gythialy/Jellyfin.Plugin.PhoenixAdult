@@ -100,7 +100,7 @@ namespace PhoenixAdult.Helpers.Utils
         private static HttpClient Http { get; set; }
 
         public static string GetUserAgent()
-            => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36";
+            => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 
         public static async Task<HTTPResponse> Request(string url, HttpMethod method, HttpContent param, IDictionary<string, string> headers, IDictionary<string, string> cookies, CancellationToken cancellationToken, bool freshSession = false, bool forceFlareSolverr = false, params HttpStatusCode[] additionalSuccessStatusCodes)
         {
@@ -136,6 +136,10 @@ namespace PhoenixAdult.Helpers.Utils
             var request = new HttpRequestMessage(method, new Uri(url));
 
             request.Headers.TryAddWithoutValidation("User-Agent", GetUserAgent());
+            request.Headers.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.9");
+            request.Headers.TryAddWithoutValidation("Sec-Ch-Ua", "\"Chromium\";v=\"122\", \"Not(A:Brand\";v=\"24\", \"Google Chrome\";v=\"122\"");
+            request.Headers.TryAddWithoutValidation("Sec-Ch-Ua-Mobile", "?0");
+            request.Headers.TryAddWithoutValidation("Sec-Ch-Ua-Platform", "\"Windows\"");
 
             if (param != null)
             {
