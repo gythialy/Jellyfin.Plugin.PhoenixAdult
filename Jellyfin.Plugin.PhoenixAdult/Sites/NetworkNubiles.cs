@@ -40,6 +40,8 @@ namespace PhoenixAdult.Sites
                     return result;
                 }
 
+                Logger.Info(data.InnerHtml);
+
                 var searchResults = data.SelectNodes("//div[contains(@class, 'content-grid-item')]");
                 if (searchResults != null)
                 {
