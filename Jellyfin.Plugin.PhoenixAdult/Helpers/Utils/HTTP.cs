@@ -303,12 +303,17 @@ namespace PhoenixAdult.Helpers.Utils
                 string jsonPayload = JsonSerializer.Serialize(payloadObj);
                 using (var postParam = new StringContent(jsonPayload, Encoding.UTF8, "application/json"))
                 {
-                    var verifyResult = await RequestDirectViaFlareSolverr(verifyUri.AbsoluteUri, HttpMethod.Post, postParam, headers, cookies, cancellationToken).ConfigureAwait(false);
-                    if (verifyResult.IsOK)
+                    var verifyResult = await RequestDirectViaFlareSolverr(verifyUri.AbsoluteUri, HttpMethod.Post, postParam, headers, cookies, cancellationToken, skipTurnstileSolve: true).ConfigureAwait(false);
+                    Logger.Info($"[Turnstile Solver] POST /turnstile/verify response: {verifyResult.Content}");
+                    if (verifyResult.IsOK && !string.IsNullOrEmpty(verifyResult.Content) && verifyResult.Content.Contains("\"success\":true"))
                     {
                         Logger.Info($"[Turnstile Solver] Verification succeeded for {url}. Re-fetching target page via FlareSolverr...");
                         string targetUrl = string.IsNullOrEmpty(config.returnTo) ? url : new Uri(baseUri, config.returnTo).AbsoluteUri;
-                        return await RequestDirectViaFlareSolverr(targetUrl, HttpMethod.Get, null, headers, cookies, cancellationToken).ConfigureAwait(false);
+                        return await RequestDirectViaFlareSolverr(targetUrl, HttpMethod.Get, null, headers, cookies, cancellationToken, skipTurnstileSolve: true).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        Logger.Error($"[Turnstile Solver] Verification POST was not successful: {verifyResult.Content}");
                     }
                 }
             }
@@ -361,7 +366,7 @@ namespace PhoenixAdult.Helpers.Utils
             return true;
         }
 
-        private static async Task<HTTPResponse> RequestDirectViaFlareSolverr(string url, HttpMethod method, HttpContent param, IDictionary<string, string> headers, IDictionary<string, string> cookies, CancellationToken cancellationToken)
+        private static async Task<HTTPResponse> RequestDirectViaFlareSolverr(string url, HttpMethod method, HttpContent param, IDictionary<string, string> headers, IDictionary<string, string> cookies, CancellationToken cancellationToken, bool skipTurnstileSolve = false)
         {
             var result = new HTTPResponse { IsOK = false };
 
@@ -455,7 +460,7 @@ namespace PhoenixAdult.Helpers.Utils
                                 string pageContent = solution.GetProperty("response").GetString();
                                 int statusCode = solution.GetProperty("status").GetInt32();
 
-                                if (!string.IsNullOrEmpty(pageContent) && pageContent.Contains("turnstileConfig"))
+                                if (!skipTurnstileSolve && !string.IsNullOrEmpty(pageContent) && pageContent.Contains("turnstileConfig"))
                                 {
                                     var solvedResponse = await TrySolveTurnstileChallenge(url, pageContent, headers, cookies, cancellationToken).ConfigureAwait(false);
                                     if (solvedResponse.IsOK && !string.IsNullOrEmpty(solvedResponse.Content) && !solvedResponse.Content.Contains("turnstileConfig"))
@@ -489,6 +494,11 @@ namespace PhoenixAdult.Helpers.Utils
                                             string cValue = c.GetProperty("value").GetString();
                                             string cDomain = c.TryGetProperty("domain", out var dProp) ? dProp.GetString() : new Uri(url).Host;
                                             string cPath = c.TryGetProperty("path", out var pProp) ? pProp.GetString() : "/";
+
+                                            if (!string.IsNullOrEmpty(cDomain))
+                                            {
+                                                cDomain = cDomain.TrimStart('.');
+                                            }
 
                                             var cookieObj = new Cookie(cName, cValue, cPath, cDomain);
                                             parsedCookies.Add(cookieObj);
