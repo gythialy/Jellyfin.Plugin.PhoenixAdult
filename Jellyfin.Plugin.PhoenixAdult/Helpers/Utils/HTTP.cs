@@ -303,12 +303,12 @@ namespace PhoenixAdult.Helpers.Utils
                 string jsonPayload = JsonSerializer.Serialize(payloadObj);
                 using (var postParam = new StringContent(jsonPayload, Encoding.UTF8, "application/json"))
                 {
-                    var verifyResult = await Request(verifyUri.AbsoluteUri, HttpMethod.Post, postParam, headers, cookies, cancellationToken).ConfigureAwait(false);
+                    var verifyResult = await RequestDirectViaFlareSolverr(verifyUri.AbsoluteUri, HttpMethod.Post, postParam, headers, cookies, cancellationToken).ConfigureAwait(false);
                     if (verifyResult.IsOK)
                     {
-                        Logger.Info($"[Turnstile Solver] Verification succeeded for {url}. Re-fetching target page...");
+                        Logger.Info($"[Turnstile Solver] Verification succeeded for {url}. Re-fetching target page via FlareSolverr...");
                         string targetUrl = string.IsNullOrEmpty(config.returnTo) ? url : new Uri(baseUri, config.returnTo).AbsoluteUri;
-                        return await Request(targetUrl, HttpMethod.Get, null, headers, cookies, cancellationToken).ConfigureAwait(false);
+                        return await RequestDirectViaFlareSolverr(targetUrl, HttpMethod.Get, null, headers, cookies, cancellationToken).ConfigureAwait(false);
                     }
                 }
             }
@@ -377,12 +377,32 @@ namespace PhoenixAdult.Helpers.Utils
                     string cmd = method == HttpMethod.Post ? "request.post" : "request.get";
 
                     var fsCookies = new List<object>();
+                    var addedCookieNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
                     if (cookies != null)
                     {
                         foreach (var cookie in cookies)
                         {
                             fsCookies.Add(new { name = cookie.Key, value = cookie.Value });
+                            addedCookieNames.Add(cookie.Key);
                         }
+                    }
+
+                    try
+                    {
+                        var containerCookies = CookieContainer.GetCookies(new Uri(url));
+                        foreach (Cookie c in containerCookies)
+                        {
+                            if (!addedCookieNames.Contains(c.Name))
+                            {
+                                fsCookies.Add(new { name = c.Name, value = c.Value });
+                                addedCookieNames.Add(c.Name);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warning($"[HTTP Request] Error reading CookieContainer for FlareSolverr: {ex.Message}");
                     }
 
                     var fsHeaders = new Dictionary<string, string>();
