@@ -6,8 +6,10 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using FlareSolverrSharp;
@@ -115,7 +117,7 @@ namespace PhoenixAdult.Helpers.Utils
                 try
                 {
                     var fsResponse = await RequestDirectViaFlareSolverr(url, method, param, headers, cookies, cancellationToken).ConfigureAwait(false);
-                    if (fsResponse.IsOK)
+                    if (fsResponse.IsOK && !string.IsNullOrEmpty(fsResponse.Content) && !fsResponse.Content.Contains("<title>Security Check</title>") && !fsResponse.Content.Contains("turnstileConfig"))
                     {
                         return fsResponse;
                     }
@@ -227,11 +229,11 @@ namespace PhoenixAdult.Helpers.Utils
 
             if (result.StatusCode == HttpStatusCode.TooManyRequests && !string.IsNullOrEmpty(Plugin.Instance.Configuration.FlareSolverrURL))
             {
-                Logger.Info($"[HTTP Request] Encountered TooManyRequests (429). Falling back to direct FlareSolverr request for {url}");
+                Logger.Info($"[HTTP Request] Encountered Cloudflare protection ({result.StatusCode}). Falling back to direct FlareSolverr request for {url}");
                 try
                 {
                     var fsResponse = await RequestDirectViaFlareSolverr(url, method, param, headers, cookies, cancellationToken).ConfigureAwait(false);
-                    if (fsResponse.IsOK)
+                    if (fsResponse.IsOK && !string.IsNullOrEmpty(fsResponse.Content) && !fsResponse.Content.Contains("<title>Just a moment...</title>") && !fsResponse.Content.Contains("<title>Security Check</title>"))
                     {
                         return fsResponse;
                     }
@@ -243,6 +245,120 @@ namespace PhoenixAdult.Helpers.Utils
             }
 
             return result;
+        }
+
+        private class TurnstileConfig
+        {
+            public string challenge { get; set; }
+            public int difficulty { get; set; }
+            public long timestamp { get; set; }
+            public string returnTo { get; set; }
+        }
+
+        private static async Task<HTTPResponse> TrySolveTurnstileChallenge(string url, string htmlContent, IDictionary<string, string> headers, IDictionary<string, string> cookies, CancellationToken cancellationToken)
+        {
+            var fallback = new HTTPResponse { IsOK = false };
+            try
+            {
+                var match = Regex.Match(htmlContent, @"var\s+turnstileConfig\s*=\s*(\{.*?\});", RegexOptions.Singleline);
+                if (!match.Success)
+                {
+                    return fallback;
+                }
+
+                string jsonConfig = match.Groups[1].Value;
+                var config = JsonSerializer.Deserialize<TurnstileConfig>(jsonConfig);
+                if (config == null || string.IsNullOrEmpty(config.challenge))
+                {
+                    return fallback;
+                }
+
+                Logger.Info($"[Turnstile Solver] Found custom POW challenge for {url}. Solving (difficulty: {config.difficulty})...");
+                string nonce = SolveProofOfWork(config.challenge, config.difficulty);
+                Logger.Info($"[Turnstile Solver] Solved POW! Nonce: {nonce}");
+
+                var baseUri = new Uri(url);
+                var verifyUri = new Uri(baseUri, "/turnstile/verify");
+
+                var payloadObj = new
+                {
+                    nonce = nonce,
+                    timestamp = config.timestamp,
+                    difficulty = config.difficulty,
+                    environmentChecks = new
+                    {
+                        screenWidth = 1920,
+                        screenHeight = 1080,
+                        hasCanvas = true,
+                        hasWebGL = true,
+                        colorDepth = 24,
+                        timezoneOffset = 0,
+                        languages = "en-US,en",
+                        platform = "Win32",
+                        cookieEnabled = true
+                    },
+                    returnTo = config.returnTo
+                };
+
+                string jsonPayload = JsonSerializer.Serialize(payloadObj);
+                using (var postParam = new StringContent(jsonPayload, Encoding.UTF8, "application/json"))
+                {
+                    var verifyResult = await Request(verifyUri.AbsoluteUri, HttpMethod.Post, postParam, headers, cookies, cancellationToken).ConfigureAwait(false);
+                    if (verifyResult.IsOK)
+                    {
+                        Logger.Info($"[Turnstile Solver] Verification succeeded for {url}. Re-fetching target page...");
+                        string targetUrl = string.IsNullOrEmpty(config.returnTo) ? url : new Uri(baseUri, config.returnTo).AbsoluteUri;
+                        return await Request(targetUrl, HttpMethod.Get, null, headers, cookies, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"[Turnstile Solver] Exception while solving POW challenge: {ex.Message}");
+            }
+
+            return fallback;
+        }
+
+        private static string SolveProofOfWork(string challenge, int difficultyBits)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                long nonce = 0;
+                while (true)
+                {
+                    string input = $"{challenge}:{nonce}";
+                    byte[] inputBytes = Encoding.UTF8.GetBytes(input);
+                    byte[] hash = sha256.ComputeHash(inputBytes);
+
+                    if (CheckLeadingZeroBits(hash, difficultyBits))
+                    {
+                        return nonce.ToString();
+                    }
+
+                    nonce++;
+                }
+            }
+        }
+
+        private static bool CheckLeadingZeroBits(byte[] byteArray, int requiredBits)
+        {
+            int bitsChecked = 0;
+            for (int byteIndex = 0; byteIndex < byteArray.Length && bitsChecked < requiredBits; byteIndex++)
+            {
+                byte currentByte = byteArray[byteIndex];
+                for (int bitPosition = 7; bitPosition >= 0 && bitsChecked < requiredBits; bitPosition--)
+                {
+                    if (((currentByte >> bitPosition) & 1) != 0)
+                    {
+                        return false;
+                    }
+
+                    bitsChecked++;
+                }
+            }
+
+            return true;
         }
 
         private static async Task<HTTPResponse> RequestDirectViaFlareSolverr(string url, HttpMethod method, HttpContent param, IDictionary<string, string> headers, IDictionary<string, string> cookies, CancellationToken cancellationToken)
@@ -318,6 +434,15 @@ namespace PhoenixAdult.Helpers.Utils
                                 var solution = root.GetProperty("solution");
                                 string pageContent = solution.GetProperty("response").GetString();
                                 int statusCode = solution.GetProperty("status").GetInt32();
+
+                                if (!string.IsNullOrEmpty(pageContent) && pageContent.Contains("turnstileConfig"))
+                                {
+                                    var solvedResponse = await TrySolveTurnstileChallenge(url, pageContent, headers, cookies, cancellationToken).ConfigureAwait(false);
+                                    if (solvedResponse.IsOK && !string.IsNullOrEmpty(solvedResponse.Content) && !solvedResponse.Content.Contains("turnstileConfig"))
+                                    {
+                                        return solvedResponse;
+                                    }
+                                }
 
                                 result.IsOK = statusCode >= 200 && statusCode < 300;
                                 result.StatusCode = (HttpStatusCode)statusCode;

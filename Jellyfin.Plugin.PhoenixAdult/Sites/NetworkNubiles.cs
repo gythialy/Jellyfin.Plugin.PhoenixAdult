@@ -143,7 +143,7 @@ namespace PhoenixAdult.Sites
                 {
                     string actorName = actorLink.InnerText.Trim();
                     string actorPageURL = Helper.GetSearchBaseURL(siteNum) + actorLink.GetAttributeValue("href", string.Empty);
-                    var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken, _headers, _cookies);
+                    var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken, _headers, _cookies, forceFlareSolverr: true);
                     string actorPhotoURL = "http:" + actorPage?.SelectSingleNode("//div[contains(@class, 'model-profile')]//img")?.GetAttributeValue("src", string.Empty);
                     ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
                 }
@@ -203,7 +203,7 @@ namespace PhoenixAdult.Sites
 
             if (!string.IsNullOrEmpty(galleryURL))
             {
-                var photoPage = await HTML.ElementFromURL(galleryURL, cancellationToken, _headers, _cookies);
+                var photoPage = await HTML.ElementFromURL(galleryURL, cancellationToken, _headers, _cookies, forceFlareSolverr: true);
                 if (photoPage != null)
                 {
                     var sceneImages = photoPage.SelectNodes("//div[@class='img-wrapper']//picture/source[1]");
