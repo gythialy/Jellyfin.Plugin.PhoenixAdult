@@ -1,0 +1,27 @@
+# PhoenixAdult 测试镜像
+# 用途: 在隔离容器内运行离线数据测试 + 在线冒烟测试（真实站点搜索）
+# 构建: docker build -t phoenixadult-tests -f Dockerfile.test .
+# 运行离线测试: docker run --rm phoenixadult-tests
+# 运行在线冒烟: docker run --rm phoenixadult-tests dotnet test -c Release --no-build --filter "Category=Online"
+# 交互进入: docker run --rm -it --entrypoint /bin/bash phoenixadult-tests
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0
+
+WORKDIR /src
+
+# 先拷贝项目文件做 restore 缓存
+COPY Jellyfin.Plugin.PhoenixAdult/PhoenixAdult.csproj Jellyfin.Plugin.PhoenixAdult/
+COPY Jellyfin.Plugin.PhoenixAdult.Tests/Jellyfin.Plugin.PhoenixAdult.Tests.csproj Jellyfin.Plugin.PhoenixAdult.Tests/
+RUN dotnet restore Jellyfin.Plugin.PhoenixAdult.Tests/Jellyfin.Plugin.PhoenixAdult.Tests.csproj
+
+# 拷贝源码（排除构建产物和 git）
+COPY Jellyfin.Plugin.PhoenixAdult/ Jellyfin.Plugin.PhoenixAdult/
+COPY Jellyfin.Plugin.PhoenixAdult.Tests/ Jellyfin.Plugin.PhoenixAdult.Tests/
+COPY data/ data/
+COPY .editorconfig ./
+
+# 编译测试项目
+RUN dotnet build Jellyfin.Plugin.PhoenixAdult.Tests/Jellyfin.Plugin.PhoenixAdult.Tests.csproj -c Release --no-restore
+
+# 默认跑全部非在线测试
+ENTRYPOINT ["dotnet", "test", "Jellyfin.Plugin.PhoenixAdult.Tests/Jellyfin.Plugin.PhoenixAdult.Tests.csproj", "-c", "Release", "--no-build", "--filter", "Category!=Online"]

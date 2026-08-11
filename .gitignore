@@ -2,3 +2,9 @@ bin/
 obj/
 .vs/
 .idea/
+.alma-*
+.alma-snapshots
+.alma/
+.vscode/
+*.zip
+smoke-report.txt
