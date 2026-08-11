@@ -22,7 +22,7 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            string encoded = searchTitle.Split(new[] { "and" }, StringSplitOptions.None)[0].Trim().Replace(' ', '-').ToLower();
+            string encoded = searchTitle.ToLowerInvariant().Split(new[] { "and" }, StringSplitOptions.None)[0].Trim().Replace(' ', '-');
             string modelPageUrl = $"{Helper.GetSearchBaseURL(siteNum)}/models/{encoded}";
             string buildId = await this.GetBuildId(modelPageUrl, cancellationToken);
             if (buildId == null)

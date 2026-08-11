@@ -21,18 +21,56 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            var searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}/{searchTitle.Replace(" ", string.Empty)}.html";
-            var http = await HTTP.Request(searchUrl, cancellationToken);
-            if (http.IsOK)
+            if (siteNum == null || string.IsNullOrEmpty(searchTitle))
             {
+                return result;
+            }
+
+            // BrandNewAmateurs 无站内搜索，按分页浏览 /categories/movies/{page}/latest/ 再按标题过滤
+            var searchTerms = searchTitle.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(t => t.Length >= 3)
+                .Select(t => t.ToLowerInvariant())
+                .ToArray();
+            if (searchTerms.Length == 0)
+            {
+                searchTerms = searchTitle.ToLowerInvariant().Split(' ');
+            }
+
+            for (var page = 1; page <= 5; page++)
+            {
+                var searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{page}/latest/";
+                var http = await HTTP.Request(searchUrl, cancellationToken);
+                if (!http.IsOK)
+                {
+                    break;
+                }
+
                 var doc = new HtmlDocument();
                 doc.LoadHtml(http.Content);
 
-                foreach (var searchResult in doc.DocumentNode.SelectNodes("//div[contains(@class, 'item-video')]"))
+                var nodes = doc.DocumentNode.SelectNodes("//div[contains(@class, 'item-video')]");
+                if (nodes == null)
                 {
-                    var titleNode = searchResult.SelectSingleNode("./div[@class='item-thumb']//a");
+                    break;
+                }
+
+                foreach (var searchResult in nodes)
+                {
+                    var titleNode = searchResult.SelectSingleNode("./div[contains(@class, 'item-thumb')]//a");
                     var titleNoFormatting = titleNode?.GetAttributeValue("title", string.Empty).Trim();
-                    var sceneURL = titleNode?.GetAttributeValue("href", string.Empty);
+                    if (string.IsNullOrEmpty(titleNoFormatting))
+                    {
+                        continue;
+                    }
+
+                    // 标题过滤（场景名通常含搜索词；演员名场景则匹配标题）
+                    var haystack = titleNoFormatting.ToLowerInvariant();
+                    if (searchTerms.Any() && !searchTerms.All(haystack.Contains))
+                    {
+                        continue;
+                    }
+
+                    var sceneURL = titleNode!.GetAttributeValue("href", string.Empty);
                     var curID = Helper.Encode(sceneURL);
                     var actorURL = Helper.Encode(searchUrl);
                     var releaseDate = searchDate.HasValue ? searchDate.Value.ToString("yyyy-MM-dd") : string.Empty;
@@ -44,6 +82,12 @@ namespace PhoenixAdult.Sites
                         SearchProviderName = Plugin.Instance.Name,
                     };
                     result.Add(item);
+                }
+
+                // 如果本页已匹配到结果，继续翻页意义不大
+                if (result.Count > 0 && page >= 2)
+                {
+                    break;
                 }
             }
 

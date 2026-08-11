@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Entities;
@@ -87,17 +88,48 @@ namespace PhoenixAdult.Sites
             }
             else
             {
-                var url = Helper.GetSearchSearchURL(siteNum) + searchTitle;
-                var data = await HTML.ElementFromURL(url, cancellationToken, null, this.cookies).ConfigureAwait(false);
+                var url = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle) + "&ageverified=g";
 
-                var searchResults = data.SelectNodesSafe("//div[@class='shoot-card scene']");
+                // kink.com 被 Cloudflare 拦裸请求，需 FlareSolverr 浏览器上下文；无配置时直连兜底
+                var data = await this.GetSearchPage(url, cancellationToken);
+                if (data == null)
+                {
+                    return result;
+                }
+
+                // 新版页面: div.card.shoot-thumbnail, 链接 a[href^=/shoot/], 标题 a[title]
+                var searchResults = data.SelectNodesSafe("//div[contains(concat(' ', normalize-space(@class), ' '), ' shoot-thumbnail ')]");
                 foreach (var searchResult in searchResults)
                 {
-                    var sceneURL = new Uri(Helper.GetSearchBaseURL(siteNum) + searchResult.SelectSingleText(".//a[@class='shoot-link']/@href"));
+                    var linkNode = searchResult.SelectSingleNode(".//a[starts-with(@href, '/shoot/')]");
+                    if (linkNode == null)
+                    {
+                        continue;
+                    }
+
+                    var href = linkNode.GetAttributeValue("href", string.Empty);
+                    var sceneURL = new Uri(Helper.GetSearchBaseURL(siteNum) + href);
+                    var titleNode = searchResult.SelectSingleNode(".//*[contains(@class, 'card-body-title')]//a");
                     string curID = Helper.Encode(sceneURL.AbsolutePath),
-                        sceneName = searchResult.SelectSingleText(".//img/@alt"),
-                        scenePoster = searchResult.SelectSingleText(".//img/@src"),
-                        sceneDate = searchResult.SelectSingleText(".//div[@class='date']");
+                        sceneName = titleNode?.GetAttributeValue("title", string.Empty) ?? string.Empty,
+                        scenePoster = searchResult.SelectSingleText(".//img[contains(@src, 'imagedb')]/@src"),
+                        sceneDate = string.Empty;
+
+                    if (string.IsNullOrEmpty(sceneName))
+                    {
+                        sceneName = linkNode.GetAttributeValue("aria-label", string.Empty);
+                    }
+
+                    if (string.IsNullOrEmpty(scenePoster))
+                    {
+                        scenePoster = searchResult.SelectSingleText(".//img/@src");
+                    }
+
+                    var dateNode = searchResult.SelectSingleNode(".//small");
+                    if (dateNode != null)
+                    {
+                        sceneDate = Regex.Match(dateNode.InnerText, @"[A-Z][a-z]{2}\s\d{1,2},\s\d{4}").Value;
+                    }
 
                     var res = new RemoteSearchResult
                     {
@@ -106,7 +138,7 @@ namespace PhoenixAdult.Sites
                         ImageUrl = scenePoster,
                     };
 
-                    if (DateTime.TryParseExact(sceneDate, "MMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+                    if (!string.IsNullOrEmpty(sceneDate) && DateTime.TryParseExact(sceneDate, "MMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
                     {
                         res.PremiereDate = sceneDateObj;
                     }
@@ -250,6 +282,22 @@ namespace PhoenixAdult.Sites
             }
 
             return result;
+        }
+
+        private async Task<HtmlAgilityPack.HtmlNode> GetSearchPage(string url, CancellationToken cancellationToken)
+        {
+            if (PhoenixAdult.Helpers.Utils.FlareSolverr.IsConfigured)
+            {
+                var html = await PhoenixAdult.Helpers.Utils.FlareSolverr.GetHtml(url, cancellationToken).ConfigureAwait(false);
+                if (string.IsNullOrEmpty(html))
+                {
+                    return null;
+                }
+
+                return PhoenixAdult.Helpers.Utils.HTML.ElementFromString(html);
+            }
+
+            return await PhoenixAdult.Helpers.Utils.HTML.ElementFromURL(url, cancellationToken, null, this.cookies).ConfigureAwait(false);
         }
     }
 }

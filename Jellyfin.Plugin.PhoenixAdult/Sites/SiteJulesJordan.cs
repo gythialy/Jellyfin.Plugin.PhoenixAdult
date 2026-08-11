@@ -25,18 +25,35 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var url = Helper.GetSearchSearchURL(siteNum) + searchTitle;
+            var url = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
             var data = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
 
-            var searchResults = data.SelectNodesSafe("//div[@class='update_details']");
+            // 新版页面: 场景卡片 div.jj-content-card, 链接 a.jj-card-thumb, 标题 .jj-card-title, 日期 .jj-card-date
+            var searchResults = data.SelectNodesSafe("//div[contains(@class, 'jj-content-card')]");
             foreach (var searchResult in searchResults)
             {
-                var sceneURL = new Uri(searchResult.SelectSingleText("./a[last()]/@href"));
-                string curID = Helper.Encode(sceneURL.AbsolutePath),
-                    sceneName = searchResult.SelectSingleText("./a[last()]"),
-                    scenePoster = searchResult.SelectSingleText(".//img[1]/@src");
-                var sceneDateNode = searchResult.SelectSingleNode(".//div[contains(@class, 'update_date')]");
+                var sceneLink = searchResult.SelectSingleNode(".//a[contains(@class, 'jj-card-thumb')]");
+                if (sceneLink == null)
+                {
+                    continue;
+                }
 
+                var sceneHref = sceneLink.GetAttributeValue("href", string.Empty);
+                if (string.IsNullOrEmpty(sceneHref))
+                {
+                    continue;
+                }
+
+                string curID = Helper.Encode(sceneHref),
+                    sceneName = searchResult.SelectSingleText(".//div[contains(@class, 'jj-card-title')]"),
+                    scenePoster = searchResult.SelectSingleText(".//img[1]/@src");
+
+                if (string.IsNullOrEmpty(sceneName))
+                {
+                    sceneName = searchResult.SelectSingleText(".//img[1]/@alt");
+                }
+
+                var sceneDateNode = searchResult.SelectSingleNode(".//div[contains(@class, 'jj-card-date')]");
                 var res = new RemoteSearchResult
                 {
                     Name = sceneName,
@@ -46,19 +63,8 @@ namespace PhoenixAdult.Sites
                 if (sceneDateNode != null)
                 {
                     var sceneDate = sceneDateNode.InnerText.Trim();
-                    if (string.IsNullOrEmpty(sceneDate))
-                    {
-                        sceneDate = sceneDateNode.InnerHtml.Trim();
-                        if (sceneDate.Contains("<!--", StringComparison.OrdinalIgnoreCase))
-                        {
-                            sceneDate = sceneDate
-                                .Replace("<!--", string.Empty, StringComparison.OrdinalIgnoreCase)
-                                .Replace("-->", string.Empty, StringComparison.OrdinalIgnoreCase)
-                                .Replace("Date OFF", string.Empty, StringComparison.OrdinalIgnoreCase).Trim();
-                        }
-                    }
-
-                    if (DateTime.TryParseExact(sceneDate, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+                    sceneDate = Regex.Replace(sceneDate, "Released\\s*:\\s*", string.Empty, RegexOptions.IgnoreCase).Trim();
+                    if (DateTime.TryParse(sceneDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
                     {
                         res.PremiereDate = sceneDateObj;
                         curID += $"#{sceneDateObj.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
@@ -66,7 +72,6 @@ namespace PhoenixAdult.Sites
                 }
 
                 res.ProviderIds.Add(Plugin.Instance.Name, curID);
-
                 result.Add(res);
             }
 
@@ -102,9 +107,16 @@ namespace PhoenixAdult.Sites
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             result.Item.ExternalId = sceneURL;
+            result.HasMetadata = true;
 
-            result.Item.Name = sceneData.SelectSingleText("//span[@class='title_bar_hilite']");
-            result.Item.Overview = sceneData.SelectSingleText("//span[@class='update_description']");
+            // 新版页面: 标题在 h1
+            var titleNode = sceneData.SelectSingleNode("//h1");
+            result.Item.Name = System.Net.WebUtility.HtmlDecode(titleNode?.InnerText?.Trim());
+
+            // 描述: Categories 区块之前的场景描述
+            var descNode = sceneData.SelectSingleNode("//div[contains(@class, 'scene-cats')]/preceding-sibling::div[1]");
+            result.Item.Overview = descNode?.InnerText?.Trim();
+
             result.Item.AddStudio("Jules Jordan");
 
             if (!string.IsNullOrEmpty(sceneDate))
@@ -115,47 +127,59 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var genreNode = sceneData.SelectNodesSafe("//span[@class='update_tags']/a");
+            // 流派: 新版 .scene-cats a.cat-tag
+            var genreNode = sceneData.SelectNodesSafe("//div[contains(@class, 'scene-cats')]//a[contains(@class, 'cat-tag')]");
             foreach (var genreLink in genreNode)
             {
-                var genreName = genreLink.InnerText;
-
-                result.Item.AddGenre(genreName);
+                var genreName = genreLink.InnerText?.Trim();
+                if (!string.IsNullOrEmpty(genreName))
+                {
+                    result.Item.AddGenre(genreName);
+                }
             }
 
-            var actorsNode = sceneData.SelectNodesSafe("//div[@class='gallery_info']/*[1]//span[@class='update_models']//a");
+            // 演员: 新版 .update_models 仍在
+            var actorsNode = sceneData.SelectNodesSafe("//span[contains(@class, 'update_models')]//a");
             foreach (var actorLink in actorsNode)
             {
+                var actorName = actorLink.InnerText?.Trim();
+                if (string.IsNullOrEmpty(actorName))
+                {
+                    continue;
+                }
+
                 var actor = new PersonInfo
                 {
-                    Name = actorLink.InnerText,
+                    Name = actorName,
                 };
 
-                var actorPage = await HTML.ElementFromURL(actorLink.Attributes["href"].Value, cancellationToken).ConfigureAwait(false);
-                var actorPhotoNode = actorPage.SelectSingleNode("//img[contains(@class, 'model_bio_thumb')]");
-                if (actorPhotoNode != null)
+                var href = actorLink.GetAttributeValue("href", string.Empty);
+                if (!string.IsNullOrEmpty(href))
                 {
-                    string actorPhoto = string.Empty;
-                    if (actorPhotoNode.Attributes.Contains("src0_3x"))
+                    var actorPage = await HTML.ElementFromURL(href, cancellationToken).ConfigureAwait(false);
+                    var actorPhotoNode = actorPage.SelectSingleNode("//img[contains(@class, 'model_bio_thumb')]");
+                    if (actorPhotoNode != null)
                     {
-                        actorPhoto = actorPhotoNode.Attributes["src0_3x"].Value;
-                    }
-                    else
-                    {
-                        if (actorPhotoNode.Attributes.Contains("src0"))
+                        string actorPhoto = actorPhotoNode.GetAttributeValue("src0_3x", string.Empty);
+                        if (string.IsNullOrEmpty(actorPhoto))
                         {
-                            actorPhoto = actorPhotoNode.Attributes["src0"].Value;
-                        }
-                    }
-
-                    if (!string.IsNullOrEmpty(actorPhoto))
-                    {
-                        if (!actorPhoto.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                        {
-                            actorPhoto = Helper.GetSearchBaseURL(siteNum) + actorPhoto;
+                            actorPhoto = actorPhotoNode.GetAttributeValue("src0", string.Empty);
                         }
 
-                        actor.ImageUrl = actorPhoto;
+                        if (string.IsNullOrEmpty(actorPhoto))
+                        {
+                            actorPhoto = actorPhotoNode.GetAttributeValue("src", string.Empty);
+                        }
+
+                        if (!string.IsNullOrEmpty(actorPhoto))
+                        {
+                            if (!actorPhoto.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                            {
+                                actorPhoto = Helper.GetSearchBaseURL(siteNum) + actorPhoto;
+                            }
+
+                            actor.ImageUrl = actorPhoto;
+                        }
                     }
                 }
 
@@ -182,16 +206,33 @@ namespace PhoenixAdult.Sites
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
-            var script = sceneData.SelectSingleText("//script[contains(text(), 'df_movie')]");
-            if (!string.IsNullOrEmpty(script))
+            // 封面: og:image
+            var ogImage = sceneData.SelectSingleText("//meta[@property='og:image']/@content");
+            if (!string.IsNullOrEmpty(ogImage))
             {
-                var match = Regex.Match(script, "useimage = \"(.*)\";");
-                if (match.Success)
+                result.Add(new RemoteImageInfo
                 {
-                    var img = match.Groups[1].Value;
-                    if (!img.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    Url = ogImage,
+                    Type = ImageType.Primary,
+                });
+            }
+
+            // 场景图集: 页面中的 jj-thumb-img / contentthumbs 图片
+            var thumbs = sceneData.SelectNodes("//img[contains(@class, 'stdimage') or contains(@class, 'thumbs')]");
+            var seen = new HashSet<string>();
+            if (thumbs != null)
+            {
+                foreach (var thumbNode in thumbs)
+                {
+                    var img = thumbNode.GetAttributeValue("src", string.Empty);
+                    if (string.IsNullOrEmpty(img) || !img.Contains("contentthumbs", StringComparison.OrdinalIgnoreCase))
                     {
-                        img = Helper.GetSearchBaseURL(siteNum) + img;
+                        continue;
+                    }
+
+                    if (!seen.Add(img))
+                    {
+                        continue;
                     }
 
                     result.Add(new RemoteImageInfo
@@ -199,73 +240,11 @@ namespace PhoenixAdult.Sites
                         Url = img,
                         Type = ImageType.Primary,
                     });
-                }
-
-                match = Regex.Match(script, "setid:.?\"([0-9]{1,})\"");
-                if (match.Success)
-                {
-                    var setId = match.Groups[1].Value;
-                    var sceneSearch = await HTML.ElementFromURL(Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(item.Name), cancellationToken).ConfigureAwait(false);
-
-                    var scenePosters = sceneSearch.SelectSingleNode($"//img[@id='set-target-{setId}' and contains(@class, 'hideMobile')]");
-                    if (scenePosters != null)
+                    result.Add(new RemoteImageInfo
                     {
-                        for (var i = 0; i <= scenePosters.Attributes.Count(o => o.Name.Contains("src", StringComparison.OrdinalIgnoreCase)); i++)
-                        {
-                            var attrName = $"src{i}_1x";
-                            if (scenePosters.Attributes.Contains(attrName))
-                            {
-                                var img = scenePosters.Attributes[attrName].Value;
-                                result.Add(new RemoteImageInfo
-                                {
-                                    Url = img,
-                                    Type = ImageType.Primary,
-                                });
-                                result.Add(new RemoteImageInfo
-                                {
-                                    Url = img,
-                                    Type = ImageType.Backdrop,
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-
-            var photoPageURL = sceneData.SelectSingleText("//div[contains(@class, 'content_tab')]/a[text()='Photos']/@href");
-            var photoPage = await HTML.ElementFromURL(photoPageURL, cancellationToken).ConfigureAwait(false);
-            script = photoPage.SelectSingleText("//script[contains(text(), 'ptx[\"1600\"]')]");
-            if (!string.IsNullOrEmpty(script))
-            {
-                var matches = Regex.Matches(script, "ptx\\[\"1600\"\\].*{src:.?\"(.*?)\"");
-                if (matches.Count > 0)
-                {
-                    var total = Math.Min(matches.Count, 10);
-                    for (var i = 1; i <= total; i++)
-                    {
-                        var t = (matches.Count / total * i) - 1;
-                        if (t < 0 || t >= matches.Count)
-                        {
-                            continue;
-                        }
-
-                        var img = matches[t].Groups[1].Value;
-                        if (!img.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                        {
-                            img = Helper.GetSearchBaseURL(siteNum) + img;
-                        }
-
-                        result.Add(new RemoteImageInfo
-                        {
-                            Url = img,
-                            Type = ImageType.Primary,
-                        });
-                        result.Add(new RemoteImageInfo
-                        {
-                            Url = img,
-                            Type = ImageType.Backdrop,
-                        });
-                    }
+                        Url = img,
+                        Type = ImageType.Backdrop,
+                    });
                 }
             }
 

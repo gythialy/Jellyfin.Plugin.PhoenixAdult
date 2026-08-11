@@ -91,6 +91,134 @@ namespace PhoenixAdult.Helpers.Utils
                     {
                         Logger.Error($"FlareSolverr attempt {attempt + 1} failed for {url}: {e.Message}");
                         WarmedHosts.Remove(host);
+                        await DestroySession(flareSolverrUrl, cancellationToken).ConfigureAwait(false);
+                        if (attempt == 1)
+                        {
+                            throw;
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                Lock.Release();
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// GET a URL from FlareSolverr's browser context and parse the JSON response body.
+        /// </summary>
+        /// <param name="url">Target URL.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The parsed JSON response body, or <c>null</c> when FlareSolverr is not configured
+        /// or the response was not successful JSON.</returns>
+        /// <exception cref="Exception">Thrown when FlareSolverr itself fails (after one retry).</exception>
+        public static async Task<JObject> GetJson(string url, CancellationToken cancellationToken = default)
+        {
+            if (!IsConfigured)
+            {
+                return null;
+            }
+
+            var flareSolverrUrl = Plugin.Instance.Configuration.FlareSolverrURL.TrimEnd('/');
+            var host = new Uri(url).Host;
+
+            await Lock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                for (var attempt = 0; attempt < 2; attempt++)
+                {
+                    try
+                    {
+                        await EnsureSession(flareSolverrUrl, cancellationToken).ConfigureAwait(false);
+
+                        // 不预热：某些站（sexart.com）首页会触发 Cloudflare 挑战导致 tab 崩溃，
+                        // 但 API 路径本身可正常访问。API GET 不需要浏览器上下文预热。
+                        // 注意：FlareSolverr v2+ 的 request.get 忽略 headers 参数（仅 contentType=json 时生效），
+                        // 这里不传以避免 WARNING 噪音。
+                        var request = new JObject
+                        {
+                            ["cmd"] = "request.get",
+                            ["url"] = url,
+                            ["session"] = SessionId,
+                            ["maxTimeout"] = MaxTimeoutSeconds * 1000,
+                        };
+
+                        var result = await SendCommand(flareSolverrUrl, request, cancellationToken).ConfigureAwait(false);
+                        return ParseResponse(result);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error($"FlareSolverr attempt {attempt + 1} failed for {url}: {e.Message}");
+                        WarmedHosts.Remove(host);
+                        await DestroySession(flareSolverrUrl, cancellationToken).ConfigureAwait(false);
+                        if (attempt == 1)
+                        {
+                            throw;
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                Lock.Release();
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// GET a URL from FlareSolverr's browser context and return the raw response body.
+        /// </summary>
+        /// <param name="url">Target URL.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The raw HTML/text response body, or <c>null</c> when FlareSolverr is not configured
+        /// or the response was not successful.</returns>
+        /// <exception cref="Exception">Thrown when FlareSolverr itself fails (after one retry).</exception>
+        public static async Task<string> GetHtml(string url, CancellationToken cancellationToken = default)
+        {
+            if (!IsConfigured)
+            {
+                return null;
+            }
+
+            var flareSolverrUrl = Plugin.Instance.Configuration.FlareSolverrURL.TrimEnd('/');
+            var host = new Uri(url).Host;
+
+            await Lock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                for (var attempt = 0; attempt < 2; attempt++)
+                {
+                    try
+                    {
+                        await EnsureSession(flareSolverrUrl, cancellationToken).ConfigureAwait(false);
+
+                        var request = new JObject
+                        {
+                            ["cmd"] = "request.get",
+                            ["url"] = url,
+                            ["session"] = SessionId,
+                            ["maxTimeout"] = MaxTimeoutSeconds * 1000,
+                        };
+
+                        var result = await SendCommand(flareSolverrUrl, request, cancellationToken).ConfigureAwait(false);
+                        var response = (string)result?["solution"]?["response"];
+                        if (string.IsNullOrEmpty(response))
+                        {
+                            Logger.Error($"FlareSolverr empty response for {url}");
+                            return null;
+                        }
+
+                        return response;
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error($"FlareSolverr attempt {attempt + 1} failed for {url}: {e.Message}");
+                        WarmedHosts.Remove(host);
+                        await DestroySession(flareSolverrUrl, cancellationToken).ConfigureAwait(false);
                         if (attempt == 1)
                         {
                             throw;
@@ -117,6 +245,24 @@ namespace PhoenixAdult.Helpers.Utils
             await SendCommand(flareSolverrUrl, create, cancellationToken).ConfigureAwait(false);
         }
 
+        private static async Task DestroySession(string flareSolverrUrl, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var destroy = new JObject
+                {
+                    ["cmd"] = "sessions.destroy",
+                    ["session"] = SessionId,
+                };
+
+                await SendCommand(flareSolverrUrl, destroy, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"FlareSolverr session destroy failed: {e.Message}");
+            }
+        }
+
         private static async Task EnsureWarmed(string flareSolverrUrl, string host, CancellationToken cancellationToken)
         {
             if (WarmedHosts.Contains(host))
@@ -132,10 +278,19 @@ namespace PhoenixAdult.Helpers.Utils
                 ["maxTimeout"] = WarmupTimeoutSeconds * 1000,
             };
 
-            var result = await SendCommand(flareSolverrUrl, warm, cancellationToken).ConfigureAwait(false);
-            if (result?["solution"]?["status"]?.Value<int>() == 200)
+            try
             {
-                WarmedHosts.Add(host);
+                var result = await SendCommand(flareSolverrUrl, warm, cancellationToken).ConfigureAwait(false);
+                if (result?["solution"]?["status"]?.Value<int>() == 200)
+                {
+                    WarmedHosts.Add(host);
+                }
+            }
+            catch (Exception e)
+            {
+                // 预热只是让浏览器建立目标站上下文；某些站（如 sexart.com）首页会触发
+                // Cloudflare 挑战导致 tab 崩溃，但具体 API 路径仍可正常访问。预热失败不阻断后续请求。
+                Logger.Warning($"FlareSolverr warmup failed for {host}: {e.Message}");
             }
         }
 

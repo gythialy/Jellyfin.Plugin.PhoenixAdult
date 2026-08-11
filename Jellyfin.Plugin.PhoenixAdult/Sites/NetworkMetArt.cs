@@ -23,13 +23,29 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
             string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}/search-results?query[contentType]=movies&searchPhrase={Uri.EscapeDataString(searchTitle)}";
-            var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK)
+
+            JObject searchResults;
+            if (PhoenixAdult.Helpers.Utils.FlareSolverr.IsConfigured)
+            {
+                // sexart.com 等 MetArt 系列站被 Cloudflare 拦裸请求，走 FlareSolverr 浏览器上下文
+                searchResults = await PhoenixAdult.Helpers.Utils.FlareSolverr.GetJson(searchUrl, cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
+                if (!httpResult.IsOK)
+                {
+                    return result;
+                }
+
+                searchResults = JObject.Parse(httpResult.Content);
+            }
+
+            if (searchResults == null)
             {
                 return result;
             }
 
-            var searchResults = JObject.Parse(httpResult.Content);
             if (searchResults["items"] != null)
             {
                 foreach (var searchResult in searchResults["items"])
@@ -37,6 +53,8 @@ namespace PhoenixAdult.Sites
                     string subSite = Helper.GetSearchSiteName(siteNum);
                     string titleNoFormatting = searchResult["item"]["name"].ToString();
                     var sceneUrlParts = searchResult["item"]["path"].ToString().Split('/').Skip(1).ToArray();
+
+                    // path 形如 /model/{模型}/movie/{日期}/{场景名}
                     string sceneUrl = $"{Helper.GetSearchSearchURL(siteNum)}/movie?name={sceneUrlParts[4]}&date={sceneUrlParts[3]}";
                     string curId = Helper.Encode(sceneUrl);
                     string releaseDate = string.Empty;
@@ -64,6 +82,8 @@ namespace PhoenixAdult.Sites
                 Item = new Movie(),
                 People = new List<PersonInfo>(),
             };
+
+            result.HasMetadata = true;
 
             string sceneUrl = Helper.Decode(sceneID[0]);
             if (!sceneUrl.StartsWith("http"))

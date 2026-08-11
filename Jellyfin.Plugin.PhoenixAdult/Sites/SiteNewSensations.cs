@@ -100,6 +100,7 @@ namespace PhoenixAdult.Sites
             }
 
             result.Item.ExternalId = sceneURL;
+            result.HasMetadata = true;
             result.Item.AddStudio("New Sensations");
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
@@ -185,8 +186,11 @@ namespace PhoenixAdult.Sites
                         }
 
                         var descriptionNodes = sceneData.SelectNodesSafe("//div[@class='description']//h2");
-                        var overview = descriptionNodes[0].InnerText.Trim();
-                        result.Item.Overview = overview;
+                        if (descriptionNodes.Count > 0)
+                        {
+                            var overview = descriptionNodes[0].InnerText.Trim();
+                            result.Item.Overview = overview;
+                        }
 
                         // performers
                         var performerNodes = sceneData.SelectNodesSafe("//div[@class='sceneRight']//div[@class='indScene']//div[@class='sceneTextLink']//p//span//a");
@@ -224,11 +228,15 @@ namespace PhoenixAdult.Sites
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             var posterNode = sceneData.SelectSingleNode("//span[@id='trailer_thumb']//span//img");
-            result.Add(new RemoteImageInfo
+            var posterSrc = posterNode?.Attributes["src"]?.Value;
+            if (!string.IsNullOrEmpty(posterSrc))
             {
-                Url = posterNode.Attributes["src"].Value,
-                Type = ImageType.Primary,
-            });
+                result.Add(new RemoteImageInfo
+                {
+                    Url = posterSrc,
+                    Type = ImageType.Primary,
+                });
+            }
 
             return result;
         }

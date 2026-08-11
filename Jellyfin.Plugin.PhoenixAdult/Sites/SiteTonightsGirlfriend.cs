@@ -31,7 +31,13 @@ namespace PhoenixAdult.Sites
             var searchResults = data.SelectNodesSafe("//div[@class='scene-thumbnail']/a");
             foreach (var searchResult in searchResults)
             {
-                var sceneURL = searchResult.Attributes["href"].Value;
+                var hrefAttr = searchResult.Attributes["href"];
+                if (hrefAttr == null)
+                {
+                    continue;
+                }
+
+                var sceneURL = hrefAttr.Value;
 
                 var sceneID = new List<string> { Helper.Encode(sceneURL) };
 
