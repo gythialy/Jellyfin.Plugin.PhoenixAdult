@@ -87,7 +87,12 @@ namespace PhoenixAdult.Sites
             }
 
             string sceneURL = Helper.Decode(sceneID[0]),
+                sceneDate = string.Empty;
+
+            if (sceneID.Length > 1)
+            {
                 sceneDate = sceneID[1];
+            }
 
             if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
@@ -235,9 +240,15 @@ namespace PhoenixAdult.Sites
                 var matches = Regex.Matches(script, "ptx\\[\"1600\"\\].*{src:.?\"(.*?)\"");
                 if (matches.Count > 0)
                 {
-                    for (var i = 1; i <= 10; i++)
+                    var total = Math.Min(matches.Count, 10);
+                    for (var i = 1; i <= total; i++)
                     {
-                        var t = (matches.Count / 10 * i) - 1;
+                        var t = (matches.Count / total * i) - 1;
+                        if (t < 0 || t >= matches.Count)
+                        {
+                            continue;
+                        }
+
                         var img = matches[t].Groups[1].Value;
                         if (!img.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                         {

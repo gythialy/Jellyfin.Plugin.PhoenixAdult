@@ -226,7 +226,7 @@ namespace PhoenixAdult.Sites
                 subSite = Helper.GetSearchSiteName(siteNum);
             }
 
-            if (Genres.ContainsKey(subSite))
+            if (!string.IsNullOrEmpty(subSite) && Genres.ContainsKey(subSite))
             {
                 foreach (var genreName in Genres[subSite])
                 {
@@ -239,16 +239,27 @@ namespace PhoenixAdult.Sites
                 result.Item.AddGenre(genreName);
             }
 
-            foreach (var actorLink in sceneData["models"])
+            foreach (var actorLink in sceneData["models"] ?? new JArray())
             {
                 string actorName = (string)actorLink["modelName"],
                        actorID = (string)actorLink["modelId"],
-                       actorPhotoURL;
+                       actorPhotoURL = null;
+
+                if (string.IsNullOrEmpty(actorID))
+                {
+                    continue;
+                }
 
                 var actorData = await GetJSONfromPage($"{Helper.GetSearchBaseURL(siteNum)}/models/{actorID}", cancellationToken).ConfigureAwait(false);
                 if (actorData != null)
                 {
-                    actorPhotoURL = (string)actorData["modelsContent"][actorID]["img"];
+                    var actorModelsContent = actorData["modelsContent"] as JObject;
+                    var modelData = actorModelsContent != null ? actorModelsContent[actorID] as JObject : null;
+                    if (modelData != null)
+                    {
+                        actorPhotoURL = (string)modelData["img"];
+                    }
+
                     result.AddPerson(new PersonInfo
                     {
                         Name = actorName,

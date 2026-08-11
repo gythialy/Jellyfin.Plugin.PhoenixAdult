@@ -85,6 +85,11 @@ namespace PhoenixAdult.Sites
             }
 
             var http = await HTTP.Request(sceneURL, HttpMethod.Post, cancellationToken).ConfigureAwait(false);
+            if (!http.IsOK)
+            {
+                return result;
+            }
+
             var sceneData = HTML.ElementFromStream(http.ContentStream);
             var json = sceneData.SelectSingleText("//script[@type='application/ld+json']");
             JObject sceneDataJSON = null;
@@ -156,6 +161,11 @@ namespace PhoenixAdult.Sites
             }
 
             var http = await HTTP.Request(sceneURL, HttpMethod.Post, cancellationToken).ConfigureAwait(false);
+            if (!http.IsOK)
+            {
+                return result;
+            }
+
             var sceneData = HTML.ElementFromStream(http.ContentStream);
 
             var img = sceneData.SelectSingleText("//div[@id='player']//img/@src");

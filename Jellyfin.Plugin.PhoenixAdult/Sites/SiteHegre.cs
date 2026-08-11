@@ -96,7 +96,15 @@ namespace PhoenixAdult.Sites
             result.Item.Name = sceneData.SelectSingleText("//div[@class='title']/h1");
 
             var description = sceneData.SelectSingleText("//div[contains(@class, 'record-description-content')]");
-            description = description.Substring(0, description.IndexOf("Runtime", StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrEmpty(description))
+            {
+                var runtimeIndex = description.IndexOf("Runtime", StringComparison.OrdinalIgnoreCase);
+                if (runtimeIndex > 0)
+                {
+                    description = description.Substring(0, runtimeIndex);
+                }
+            }
+
             result.Item.Overview = description;
 
             result.Item.AddStudio("Hegre");
