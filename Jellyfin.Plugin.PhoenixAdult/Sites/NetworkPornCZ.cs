@@ -88,7 +88,7 @@ namespace PhoenixAdult.Sites
             var descriptionNodes = sceneData.SelectNodesSafe("//div[@class='heading-detail']//p");
             foreach (var description in descriptionNodes)
             {
-                result.Item.Overview = description.InnerText.Trim() + "\n";
+                result.Item.Overview += description.InnerText.Trim() + "\n";
             }
 
             result.Item.AddStudio("PornCZ");

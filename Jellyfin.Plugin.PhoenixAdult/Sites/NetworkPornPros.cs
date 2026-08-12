@@ -135,7 +135,10 @@ namespace PhoenixAdult.Sites
                 var metadataApiProvider = Helper.GetMetadataAPIProvider();
                 var searchResults = await metadataApiProvider.Search(new int[] { 48, 0 }, title, null, cancellationToken);
 
-                result.Item.PremiereDate = searchResults[0].PremiereDate;
+                if (searchResults.Any())
+                {
+                    result.Item.PremiereDate = searchResults[0].PremiereDate;
+                }
             }
 
             if (Genres.ContainsKey(subSite))

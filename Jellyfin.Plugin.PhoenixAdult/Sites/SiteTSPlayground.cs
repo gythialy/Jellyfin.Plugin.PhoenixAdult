@@ -34,11 +34,16 @@ namespace PhoenixAdult.Sites
             var url = Helper.GetSearchSearchURL(siteNum) + urlEncodedSearchTitle;
             Logger.Info($"Searching for scene: {url}");
             var data = await HTML.ElementFromURL(url, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
-            var siteResults = data.SelectNodesSafe("//div[contains(@class, 'inner-col')]//a[./span[@class='item-name']]");
+            var siteResults = data.SelectNodesSafe("//div[contains(@class, 'item-col')]//a[contains(@href, '/video/')]");
 
             foreach (var searchResult in siteResults)
             {
-                var sceneURL = searchResult.Attributes["href"].Value;
+                var sceneURL = searchResult.Attributes["href"]?.Value ?? string.Empty;
+                if (string.IsNullOrEmpty(sceneURL))
+                {
+                    continue;
+                }
+
                 Logger.Info($"Possible result {sceneURL}");
                 searchResultsURLs.Add(sceneURL);
             }
@@ -93,10 +98,13 @@ namespace PhoenixAdult.Sites
             var dateString = sceneData.SelectSingleText("//aside[contains(@class, 'content-aside-col')]//div[@class='content-date']/div");
 
             // example: 'Date: 09.01.2024'
-            dateString = dateString.Substring(6); // remove 'Date: '
-            if (DateTime.TryParseExact(dateString, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+            if (dateString.Length > 6)
             {
-                result.Item.PremiereDate = sceneDateObj;
+                dateString = dateString.Substring(6); // remove 'Date: '
+                if (DateTime.TryParseExact(dateString, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+                {
+                    result.Item.PremiereDate = sceneDateObj;
+                }
             }
 
             // performers
@@ -104,15 +112,25 @@ namespace PhoenixAdult.Sites
 
             foreach (var performer in performers)
             {
-                var performerURL = performer.Attributes["href"].Value;
+                var performerURL = performer.Attributes["href"]?.Value ?? string.Empty;
+                if (string.IsNullOrEmpty(performerURL))
+                {
+                    continue;
+                }
+
                 Logger.Info($"Loading performer page: {performerURL}");
                 var performerData = await HTML.ElementFromURL(performerURL, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
                 var performerImage = performerData.SelectSingleNode("//div[@class='model-avatar']/img");
                 var performerName = performerData.SelectSingleText("//h1");
+                if (string.IsNullOrEmpty(performerName))
+                {
+                    continue;
+                }
+
                 result.AddPerson(new PersonInfo
                 {
                     Name = performerName,
-                    ImageUrl = performerImage.Attributes["src"].Value,
+                    ImageUrl = performerImage?.GetAttributeValue("src", string.Empty) ?? string.Empty,
                 });
             }
 
@@ -138,7 +156,12 @@ namespace PhoenixAdult.Sites
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
 
             var poster = sceneData.SelectSingleNode("//div[@class='fluid_pseudo_poster']");
-            var posterStyle = poster.Attributes["style"].Value;
+            if (poster == null)
+            {
+                return result;
+            }
+
+            var posterStyle = poster.GetAttributeValue("style", string.Empty);
             var posterUrl = posterUrlRegex.Match(posterStyle).Groups[1].Value;
 
             result.Add(new RemoteImageInfo

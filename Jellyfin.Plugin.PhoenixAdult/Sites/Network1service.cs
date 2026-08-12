@@ -37,12 +37,16 @@ namespace PhoenixAdult.Sites
             var keyName = new Uri(Helper.GetSearchBaseURL(siteNum)).Host;
             if (db.ContainsKey(keyName))
             {
-                string token = (string)db[keyName],
-                    res = Encoding.UTF8.GetString(Helper.ConvertFromBase64String(token.Split('.')[1]) ?? Array.Empty<byte>());
-
-                if ((int)JObject.Parse(res)["exp"] > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                string token = (string)db[keyName];
+                var tokenParts = token?.Split('.');
+                if (tokenParts != null && tokenParts.Length > 1)
                 {
-                    result = token;
+                    var res = Encoding.UTF8.GetString(Helper.ConvertFromBase64String(tokenParts[1]) ?? Array.Empty<byte>());
+                    var tokenData = JObject.Parse(res);
+                    if (tokenData["exp"] != null && (long)tokenData["exp"] > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                    {
+                        result = token;
+                    }
                 }
             }
 

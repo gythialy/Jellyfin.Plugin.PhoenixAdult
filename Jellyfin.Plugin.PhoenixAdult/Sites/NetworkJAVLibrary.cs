@@ -37,10 +37,12 @@ namespace PhoenixAdult.Sites
                 searchTitle = searchJAVID;
             }
 
+            var siteSubId = siteNum[1];
             foreach (var site in Database.SiteList.Sites[siteNum[0]])
             {
-                siteNum[1] = site.Key;
-                var url = Helper.GetSearchSearchURL(siteNum) + searchTitle;
+                siteSubId = site.Key;
+                var siteNumLocal = new[] { siteNum[0], siteSubId };
+                var url = Helper.GetSearchSearchURL(siteNumLocal) + searchTitle;
                 var data = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
 
                 var searchResults = data.SelectNodesSafe("//div[@class='videos']//div[@class='video']");
@@ -48,7 +50,7 @@ namespace PhoenixAdult.Sites
                 {
                     foreach (var searchResult in searchResults)
                     {
-                        var sceneURL = new Uri(Helper.GetSearchBaseURL(siteNum) + $"/en/?v={searchResult.SelectSingleText(".//a/@id")}");
+                        var sceneURL = new Uri(Helper.GetSearchBaseURL(siteNumLocal) + $"/en/?v={searchResult.SelectSingleText(".//a/@id")}");
                         string curID = Helper.Encode(sceneURL.PathAndQuery),
                             sceneName = searchResult.SelectSingleText(".//div[@class='title']"),
                             scenePoster = $"{searchResult.SelectSingleText(".//img/@src").Replace("ps.", "pl.", StringComparison.OrdinalIgnoreCase)}",
@@ -76,10 +78,10 @@ namespace PhoenixAdult.Sites
                 }
                 else
                 {
-                    var sceneURL = new Uri(Helper.GetSearchBaseURL(siteNum) + data.SelectSingleText("//div[@id='video_title']//a/@href"));
+                    var sceneURL = new Uri(Helper.GetSearchBaseURL(siteNumLocal) + data.SelectSingleText("//div[@id='video_title']//a/@href"));
                     var sceneID = new string[] { Helper.Encode(sceneURL.PathAndQuery) };
 
-                    var searchResult = await Helper.GetSearchResultsFromUpdate(this, siteNum, sceneID, searchDate, cancellationToken).ConfigureAwait(false);
+                    var searchResult = await Helper.GetSearchResultsFromUpdate(this, siteNumLocal, sceneID, searchDate, cancellationToken).ConfigureAwait(false);
                     if (searchResult.Any())
                     {
                         result.AddRange(searchResult);
