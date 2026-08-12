@@ -31,4 +31,30 @@ internal static class StringExtension
     {
         return Regex.Split(source, Regex.Escape(separator));
     }
+
+    public static string Slugify(this string phrase)
+    {
+        string str = phrase.ToLowerInvariant();
+
+        // invalid chars
+        str = Regex.Replace(str, @"[^a-z0-9\s-]", string.Empty);
+
+        // convert multiple spaces into one space
+        str = Regex.Replace(str, @"\s+", " ").Trim();
+
+        // cut and trim
+        str = str.Replace("'", "-");
+        str = Regex.Replace(str, @"\s", "-"); // hyphens
+        return str;
+    }
+
+    public static string Capitalize(this string source)
+    {
+        if (string.IsNullOrEmpty(source))
+        {
+            return source;
+        }
+
+        return char.ToUpper(source[0]) + source.Substring(1).ToLower();
+    }
 }
