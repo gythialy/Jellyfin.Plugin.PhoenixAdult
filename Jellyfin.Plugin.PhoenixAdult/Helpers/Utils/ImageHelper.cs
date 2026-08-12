@@ -12,6 +12,10 @@ namespace PhoenixAdult.Helpers.Utils
 {
     internal static class ImageHelper
     {
+        // Jellyfin 默认对 Backdrop 的 MinWidth 过滤值（MediaBrowser.Model.Configuration.TypeOptions.DefaultImageOptions）
+        // 低于该宽度的 backdrop 在自动下载时会被静默跳过（手动设置不受此限制）
+        private const int BackdropMinWidth = 1280;
+
         public static async Task<List<RemoteImageInfo>> GetImagesSizeAndValidate(IEnumerable<RemoteImageInfo> images, CancellationToken cancellationToken)
         {
             var result = new List<RemoteImageInfo>();
@@ -58,6 +62,11 @@ namespace PhoenixAdult.Helpers.Utils
             {
                 foreach (var task in tasks)
                 {
+                    if (!task.IsCompletedSuccessfully)
+                    {
+                        continue;
+                    }
+
                     var res = task.Result;
 
                     if (res != null)
@@ -76,14 +85,22 @@ namespace PhoenixAdult.Helpers.Utils
                     {
                         var img = res.First();
 
-                        result.Add(new RemoteImageInfo
+                        var dublResult = new RemoteImageInfo
                         {
                             ProviderName = image.ProviderName,
                             Url = image.Url,
                             Type = ImageType.Backdrop,
-                            Height = img.Height,
-                            Width = img.Width,
-                        });
+                        };
+
+                        // 与 primary 同 URL 的 backdrop 复用其尺寸；同样受 Jellyfin MinWidth 过滤影响，
+                        // 宽度不足 1280 时不填尺寸，避免被自动下载流程跳过
+                        if (!img.Width.HasValue || img.Width.Value >= BackdropMinWidth)
+                        {
+                            dublResult.Height = img.Height;
+                            dublResult.Width = img.Width;
+                        }
+
+                        result.Add(dublResult);
                     }
                 }
             }
@@ -147,14 +164,24 @@ namespace PhoenixAdult.Helpers.Utils
 
                         if (dimensions.HasValue && dimensions.Value.width > 100)
                         {
-                            return new RemoteImageInfo
+                            var result = new RemoteImageInfo
                             {
                                 ProviderName = item.ProviderName,
                                 Url = item.Url,
                                 Type = item.Type,
-                                Height = dimensions.Value.height,
-                                Width = dimensions.Value.width,
                             };
+
+                            // Jellyfin 自动下载 backdrop 时按 MinWidth=1280 过滤（TypeOptions 默认值），
+                            // 宽度不足的图会被静默跳过，导致 backdrop 无法自动设置（手动设置无此限制）。
+                            // 对不满足尺寸的 backdrop 不填 Width/Height，Jellyfin 的过滤检查
+                            // (image.Width.HasValue && image.Width.Value < minWidth) 不成立，即可正常下载。
+                            if (item.Type != ImageType.Backdrop || dimensions.Value.width >= BackdropMinWidth)
+                            {
+                                result.Height = dimensions.Value.height;
+                                result.Width = dimensions.Value.width;
+                            }
+
+                            return result;
                         }
                     }
                     catch (Exception e)
