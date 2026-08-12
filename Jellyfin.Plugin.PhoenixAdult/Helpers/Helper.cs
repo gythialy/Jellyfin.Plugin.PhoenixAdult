@@ -32,7 +32,8 @@ namespace PhoenixAdult.Helpers
             string siteName = Database.SiteList.Sites[siteNum[0]][siteNum[1]][0];
             if (string.IsNullOrEmpty(siteName))
             {
-                siteName = Database.SiteList.Sites[siteNum[0]][0][0];
+                // 组内第一个存在的站（组删除站0后不能固定访问 [0]）
+                siteName = Database.SiteList.Sites[siteNum[0]].First().Value[0];
             }
 
             return siteName;
@@ -53,7 +54,9 @@ namespace PhoenixAdult.Helpers
             }
             else
             {
-                url = Database.SiteList.Sites[siteNum[0]].First().Value[1];
+                // 组内第一个带 URL 的站
+                var fallback = Database.SiteList.Sites[siteNum[0]].FirstOrDefault(o => o.Value.ElementAtOrDefault(1) != null);
+                url = fallback.Value?.ElementAtOrDefault(1) ?? string.Empty;
             }
 
             return url;
@@ -74,7 +77,9 @@ namespace PhoenixAdult.Helpers
             }
             else
             {
-                url = Database.SiteList.Sites[siteNum[0]].First().Value[2];
+                // 组内第一个带 search URL 的站（不能固定 First()——站0可能已被删除）
+                var fallback = Database.SiteList.Sites[siteNum[0]].FirstOrDefault(o => !string.IsNullOrEmpty(o.Value.ElementAtOrDefault(2)));
+                url = fallback.Value?.ElementAtOrDefault(2) ?? string.Empty;
             }
 
             if (!string.IsNullOrEmpty(url))
