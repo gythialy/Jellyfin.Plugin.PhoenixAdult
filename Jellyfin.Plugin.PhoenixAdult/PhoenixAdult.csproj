@@ -68,7 +68,7 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="FlareSolverrSharp" Version="3.0.7" />
+    <PackageReference Include="FlareSolverrSharp" Version="3.0.9" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
     <PackageReference Include="HttpClient.Caching" Version="1.6.6" />
     <PackageReference Include="HttpToSocks5Proxy" Version="1.4.0" />
