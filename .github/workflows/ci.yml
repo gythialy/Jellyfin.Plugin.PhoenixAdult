@@ -33,9 +33,9 @@ jobs:
         run: dotnet test Jellyfin.Plugin.PhoenixAdult.Tests/Jellyfin.Plugin.PhoenixAdult.Tests.csproj -c Release --nologo --filter "Category!=Online"
 
   online-smoke:
-    name: Online smoke (best effort)
+    name: Online smoke (best effort, manual)
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    if: github.event_name == 'workflow_dispatch'
     needs: test
     continue-on-error: true
     timeout-minutes: 20

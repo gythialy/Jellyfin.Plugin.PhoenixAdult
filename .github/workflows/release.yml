@@ -27,11 +27,11 @@ jobs:
 
       - name: Build Jellyfin Plugin for release
         run: |
-          dotnet build -c Release /p:Version=${{ steps.shell.outputs.version }}
+          dotnet build Jellyfin.Plugin.PhoenixAdult/PhoenixAdult.csproj -c Release /p:Version=${{ steps.shell.outputs.version }}
 
       - name: Build Emby Plugin for release
         run: |
-          dotnet build -c Release.Emby /p:Version=${{ steps.shell.outputs.version }}
+          dotnet build Jellyfin.Plugin.PhoenixAdult/PhoenixAdult.csproj -c Release.Emby /p:Version=${{ steps.shell.outputs.version }}
 
       - name: Print Folder Tree
         uses: jaywcjlove/github-action-folder-tree@main
