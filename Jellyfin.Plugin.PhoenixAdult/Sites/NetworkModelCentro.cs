@@ -46,7 +46,8 @@ namespace PhoenixAdult.Sites
             string apiUrl = await this.GetApiUrl(siteNum, "/videos/", cancellationToken);
             if (apiUrl == null)
             {
-                return result;
+                // /videos/ 页面改版拿不到 ah/aet token（2026-08-12）→ 分页浏览兜底（TPDB 同款）
+                return await this.SearchByPagination(siteNum, searchTitle, cancellationToken);
             }
 
             var searchResults = await this.GetJsonFromApi($"{Helper.GetSearchSearchURL(siteNum)}{Uri.EscapeDataString(apiUrl)}{Query}", cancellationToken);
@@ -190,6 +191,69 @@ namespace PhoenixAdult.Sites
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// SAPI token 拿不到时的分页浏览兜底：翻页收集 /trailers/ 链接 + 标题分词过滤。
+        /// </summary>
+        private async Task<List<RemoteSearchResult>> SearchByPagination(int[] siteNum, string searchTitle, CancellationToken cancellationToken)
+        {
+            var result = new List<RemoteSearchResult>();
+            var titleTokens = searchTitle.ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+            for (var page = 1; page <= 5; page++)
+            {
+                var pageUrl = $"{Helper.GetSearchBaseURL(siteNum)}/porn-categories/Movies/?page={page}";
+                var pageResult = await HTTP.Request(pageUrl, HttpMethod.Get, cancellationToken).ConfigureAwait(false);
+                if (!pageResult.IsOK)
+                {
+                    break;
+                }
+
+                var pageDoc = HTML.ElementFromString(pageResult.Content);
+                var cards = pageDoc.SelectNodesSafe("//a[contains(@href, '/trailers/')]");
+                if (!cards.Any())
+                {
+                    break;
+                }
+
+                foreach (var card in cards)
+                {
+                    var href = card.GetAttributeValue("href", string.Empty);
+                    if (string.IsNullOrEmpty(href))
+                    {
+                        continue;
+                    }
+
+                    var cardTitle = card.InnerText.Trim();
+                    var haystack = string.IsNullOrEmpty(cardTitle) ? href : cardTitle;
+                    if (!titleTokens.All(t => haystack.ToLowerInvariant().Contains(t, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue;
+                    }
+
+                    var sceneUrl = href.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? href : Helper.GetSearchBaseURL(siteNum) + href;
+                    var curId = Helper.Encode(sceneUrl);
+                    if (result.Any(r => r.ProviderIds.First().Value == curId))
+                    {
+                        continue;
+                    }
+
+                    result.Add(new RemoteSearchResult
+                    {
+                        ProviderIds = { { Plugin.Instance.Name, curId } },
+                        Name = $"{cardTitle} [{Helper.GetSearchSiteName(siteNum)}]",
+                        SearchProviderName = Plugin.Instance.Name,
+                    });
+                }
+
+                if (result.Count >= 10)
+                {
+                    break;
+                }
+            }
+
+            return result;
         }
     }
 }

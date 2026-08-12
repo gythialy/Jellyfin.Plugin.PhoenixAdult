@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -12,7 +13,6 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Newtonsoft.Json.Linq;
-using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -23,34 +23,88 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
-            var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK)
+            if (siteNum == null || string.IsNullOrEmpty(searchTitle))
             {
                 return result;
             }
 
-            var searchResults = JObject.Parse(httpResult.Content);
-            if (searchResults["results"] != null)
+            // Femjoy 没有站内搜索 API（旧 /api/v2/search/videos 已死）。
+            // 用 FlareSolverr 分页浏览 /videos，按标题/演员名过滤。
+            var searchTerms = searchTitle.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var needTerms = searchTerms.Where(t => t.Length >= 3).Select(t => t.ToLowerInvariant()).ToArray();
+            if (needTerms.Length == 0)
             {
-                string curId = Helper.Encode(searchUrl);
-                foreach (var searchResult in searchResults["results"])
+                needTerms = searchTerms.Select(t => t.ToLowerInvariant()).ToArray();
+            }
+
+            for (var page = 1; page <= 3; page++)
+            {
+                string pageUrl = page == 1
+                    ? "https://www.femjoy.com/videos"
+                    : $"https://www.femjoy.com/videos?page={page}";
+
+                string html;
+                if (FlareSolverr.IsConfigured)
                 {
-                    string titleNoFormatting = searchResult["title"].ToString();
-                    string sceneId = searchResult["id"].ToString();
-                    string releaseDate = string.Empty;
-                    if (DateTime.TryParse(searchResult["release_date"].ToString(), out var parsedDate))
+                    html = await FlareSolverr.GetHtml(pageUrl, cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    var httpResult = await HTTP.Request(pageUrl, HttpMethod.Get, cancellationToken);
+                    if (!httpResult.IsOK)
                     {
-                        releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                        continue;
                     }
 
-                    var actors = searchResult["actors"].Select(a => a["name"].ToString());
-                    string actorsString = string.Join(", ", actors);
+                    html = httpResult.Content;
+                }
 
+                if (string.IsNullOrEmpty(html))
+                {
+                    continue;
+                }
+
+                var items = Regex.Matches(html, @"<div class=""_results_item[^""]*""(.*?)<div class=""_results_item", RegexOptions.Singleline);
+                foreach (Match itemMatch in items)
+                {
+                    var itemHtml = itemMatch.Groups[1].Value;
+                    var idMatch = Regex.Match(itemHtml, @"data-post-id=""(\d+)""");
+                    var titleMatch = Regex.Match(itemHtml, @"<h1><a[^>]*title=""([^""]*)""");
+                    var actorMatch = Regex.Match(itemHtml, @"<h2><a[^>]*title=""([^""]*)""");
+                    var dateMatch = Regex.Match(itemHtml, @"posted_on[^>]*>([^<]+)<");
+
+                    if (!idMatch.Success || !titleMatch.Success)
+                    {
+                        continue;
+                    }
+
+                    var title = System.Net.WebUtility.HtmlDecode(titleMatch.Groups[1].Value).Trim();
+                    var actor = System.Net.WebUtility.HtmlDecode(actorMatch.Groups[1].Value).Trim();
+                    var haystack = $"{title} {actor}".ToLowerInvariant();
+                    if (needTerms.Any() && !needTerms.All(haystack.Contains))
+                    {
+                        continue;
+                    }
+
+                    var sceneId = idMatch.Groups[1].Value;
+                    var sceneUrl = $"https://www.femjoy.com/post/{sceneId}";
+                    string curId = Helper.Encode(sceneUrl);
+
+                    var releaseDate = string.Empty;
+                    if (dateMatch.Success)
+                    {
+                        if (DateTime.TryParse(dateMatch.Groups[1].Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                        {
+                            releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                        }
+                    }
+
+                    var imageMatch = Regex.Match(itemHtml, @"item_cover[^>]*src=""([^""]*)""");
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, $"{curId}|{sceneId}" } },
-                        Name = $"{titleNoFormatting} - {actorsString} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
+                        ProviderIds = { { Plugin.Instance.Name, curId } },
+                        Name = $"{title} - {actor} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}".Trim(),
+                        ImageUrl = imageMatch.Success ? imageMatch.Groups[1].Value : string.Empty,
                         SearchProviderName = Plugin.Instance.Name,
                     });
                 }
@@ -67,103 +121,120 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            string[] providerIds = sceneID[0].Split('|');
-            string searchUrl = Helper.Decode(providerIds[0]);
-            string sceneId = providerIds[1];
+            if (sceneID == null)
+            {
+                return result;
+            }
 
-            var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
+            var sceneUrl = Helper.Decode(sceneID[0]);
+            if (!sceneUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                sceneUrl = "https://www.femjoy.com" + sceneUrl;
+            }
+
+            var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)
             {
                 return result;
             }
 
-            var searchResults = JObject.Parse(httpResult.Content);
-            if (searchResults["results"] == null)
+            var html = httpResult.Content;
+            result.Item.ExternalId = sceneUrl;
+            result.HasMetadata = true;
+
+            // 场景页 h1: <a title="演员">演员</a><small>in</small><span>标题</span>
+            var titleMatch = Regex.Match(html, @"<h1[^>]*>(.*?)</h1>", RegexOptions.Singleline);
+            if (titleMatch.Success)
             {
-                return result;
-            }
-
-            var detailsPageElements = searchResults["results"].FirstOrDefault(r => r["id"].ToString() == sceneId);
-            if (detailsPageElements == null)
-            {
-                return result;
-            }
-
-            var movie = (Movie)result.Item;
-            movie.Name = detailsPageElements["title"].ToString();
-            movie.Overview = Regex.Replace(detailsPageElements["long_description"].ToString(), @"<.*?>", string.Empty).Trim();
-            movie.AddStudio(Helper.GetSearchSiteName(siteNum));
-
-            if (DateTime.TryParse(detailsPageElements["release_date"].ToString(), out var parsedDate))
-            {
-                movie.PremiereDate = parsedDate;
-                movie.ProductionYear = parsedDate.Year;
-            }
-
-            if (detailsPageElements["actors"] != null)
-            {
-                var actors = detailsPageElements["actors"];
-                if (actors.Count() == 3)
+                var spanMatch = Regex.Match(titleMatch.Groups[1].Value, @"<span[^>]*>(.*?)</span>", RegexOptions.Singleline);
+                if (spanMatch.Success)
                 {
-                    movie.AddGenre("Threesome");
-                }
-
-                if (actors.Count() == 4)
-                {
-                    movie.AddGenre("Foursome");
-                }
-
-                if (actors.Count() > 4)
-                {
-                    movie.AddGenre("Orgy");
-                }
-
-                foreach (var actor in actors)
-                {
-                    string actorName = actor["name"].ToString();
-                    string actorPhotoUrl = actor["thumb"]["image"].ToString();
-                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoUrl });
+                    result.Item.Name = System.Net.WebUtility.HtmlDecode(Regex.Replace(spanMatch.Groups[1].Value, @"<.*?>", string.Empty)).Trim();
                 }
             }
 
-            if (detailsPageElements["directors"] != null)
+            if (string.IsNullOrEmpty(result.Item.Name))
             {
-                foreach (var director in detailsPageElements["directors"])
+                var t = Regex.Match(html, @"<title>([^<]*)</title>");
+                if (t.Success)
                 {
-                    ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = director["name"].ToString(), Type = PersonKind.Director });
+                    var parts = t.Groups[1].Value.Split('-');
+                    result.Item.Name = parts.Length >= 2 ? parts[1].Trim() : t.Groups[1].Value.Trim();
                 }
             }
 
+            var dateMatch = Regex.Match(html, @"posted_on"">([^<]+)<");
+            if (dateMatch.Success && DateTime.TryParse(dateMatch.Groups[1].Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+            {
+                result.Item.PremiereDate = parsedDate;
+                result.Item.ProductionYear = parsedDate.Year;
+            }
+
+            // 描述: post_text / description 区块
+            var descMatch = Regex.Match(html, @"class=""[^""]*(?:post_text|description|entry-content)[^""]*"">(.*?)</div>", RegexOptions.Singleline);
+            if (descMatch.Success)
+            {
+                result.Item.Overview = System.Net.WebUtility.HtmlDecode(Regex.Replace(descMatch.Groups[1].Value, @"<.*?>", string.Empty)).Trim();
+            }
+
+            // 演员: h2 里 by 前面的链接
+            var actorMatches = Regex.Matches(html, @"<h2><a[^>]*title=""([^""]*)""[^>]*>([^<]*)</a>");
+            foreach (Match actorMatch in actorMatches)
+            {
+                var actorName = System.Net.WebUtility.HtmlDecode(actorMatch.Groups[1].Value).Trim();
+                if (string.IsNullOrEmpty(actorName) || actorName.Equals("by", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                result.AddPerson(new PersonInfo
+                {
+                    Name = actorName,
+                    Type = PersonKind.Actor,
+                });
+            }
+
+            result.Item.AddStudio("Femjoy");
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string[] providerIds = sceneID[0].Split('|');
-            string searchUrl = Helper.Decode(providerIds[0]);
-            string sceneId = providerIds[1];
 
-            var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
+            if (sceneID == null)
+            {
+                return images;
+            }
+
+            var sceneUrl = Helper.Decode(sceneID[0]);
+            if (!sceneUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                sceneUrl = "https://www.femjoy.com" + sceneUrl;
+            }
+
+            var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)
             {
                 return images;
             }
 
-            var searchResults = JObject.Parse(httpResult.Content);
-            if (searchResults["results"] == null)
+            var html = httpResult.Content;
+            var coverMatches = Regex.Matches(html, @"item_cover[^>]*src=""([^""]*)""");
+            var seen = new HashSet<string>();
+            foreach (Match m in coverMatches)
             {
-                return images;
-            }
-
-            var detailsPageElements = searchResults["results"].FirstOrDefault(r => r["id"].ToString() == sceneId);
-            if (detailsPageElements != null)
-            {
-                var imageUrl = detailsPageElements.SelectToken("thumb.image")?.ToString();
-                if (!string.IsNullOrEmpty(imageUrl))
+                var url = m.Groups[1].Value;
+                if (!seen.Add(url))
                 {
-                    images.Add(new RemoteImageInfo { Url = imageUrl, Type = ImageType.Primary });
+                    continue;
                 }
+
+                images.Add(new RemoteImageInfo
+                {
+                    Url = url,
+                    Type = images.Count == 0 ? ImageType.Primary : ImageType.Backdrop,
+                });
             }
 
             return images;

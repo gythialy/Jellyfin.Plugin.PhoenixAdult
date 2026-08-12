@@ -32,18 +32,30 @@ namespace PhoenixAdult.Sites
                 var doc = new HtmlDocument();
                 doc.LoadHtml(http.Content);
 
-                var nodes = doc.DocumentNode.SelectNodes("//div[contains(@class, 'thumbnail')]");
+                var nodes = doc.DocumentNode.SelectNodes("//div[contains(@class, 'videothumbnail')]");
                 if (nodes != null)
                 {
                     foreach (var node in nodes)
                     {
-                        var titleNode = node.SelectSingleNode(".//h5");
+                        // 新版页面: 标题在 a[title]，封面在 img[alt]
                         var linkNode = node.SelectSingleNode(".//a");
-                        var dateNode = node.SelectSingleNode(".//p[@class='scene-date']");
-
-                        if (titleNode != null && linkNode != null)
+                        var title = string.Empty;
+                        if (linkNode != null)
                         {
-                            var title = Helper.ParseTitle(titleNode.InnerText.Trim(), siteNum);
+                            title = linkNode.GetAttributeValue("title", string.Empty);
+                        }
+
+                        if (string.IsNullOrEmpty(title))
+                        {
+                            var imgNode = node.SelectSingleNode(".//img");
+                            title = imgNode?.GetAttributeValue("alt", string.Empty) ?? string.Empty;
+                        }
+
+                        var dateNode = node.SelectSingleNode(".//p[contains(@class, 'scene-date')]");
+
+                        if (!string.IsNullOrEmpty(title) && linkNode != null)
+                        {
+                            title = Helper.ParseTitle(System.Net.WebUtility.HtmlDecode(title).Trim(), siteNum);
                             var href = linkNode.GetAttributeValue("href", string.Empty);
                             var curID = Helper.Encode(href);
                             DateTime? releaseDateObj = null;

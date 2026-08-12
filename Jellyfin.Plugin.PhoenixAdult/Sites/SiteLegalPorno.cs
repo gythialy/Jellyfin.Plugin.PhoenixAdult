@@ -29,7 +29,13 @@ namespace PhoenixAdult.Sites
 
             if (!data.SelectSingleText("//title").Contains("Search for", StringComparison.OrdinalIgnoreCase))
             {
-                var sceneURL = new Uri(data.SelectSingleText("//div[@class='user--guest']//a/@href"));
+                var sceneHref = data.SelectSingleText("//div[@class='user--guest']//a/@href");
+                if (string.IsNullOrEmpty(sceneHref))
+                {
+                    return result;
+                }
+
+                var sceneURL = new Uri(sceneHref);
                 var sceneID = new string[] { Helper.Encode(sceneURL.AbsolutePath) };
 
                 var searchResult = await Helper.GetSearchResultsFromUpdate(this, siteNum, sceneID, searchDate, cancellationToken).ConfigureAwait(false);
