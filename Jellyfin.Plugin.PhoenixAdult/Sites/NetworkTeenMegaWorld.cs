@@ -32,22 +32,22 @@ namespace PhoenixAdult.Sites
                 }
 
                 var searchPageElements = HTML.ElementFromString(httpResult.Content);
-                var searchNodes = searchPageElements.SelectNodes("//div[contains(@class,'thumb thumb-video')]");
+                var searchNodes = searchPageElements.SelectNodes("//a[contains(@class,'thumb-video')]");
                 if (searchNodes != null)
                 {
                     foreach (var node in searchNodes)
                     {
-                        var titleNode = node.SelectSingleNode(".//a[@class='thumb__title-link']");
+                        var titleNode = node.SelectSingleNode(".//span[contains(@class,'thumb__title-link')]");
                         string titleNoFormatting = titleNode?.InnerText.Trim();
-                        string curId = Helper.Encode(titleNode?.GetAttributeValue("href", string.Empty));
+                        string curId = Helper.Encode(node.GetAttributeValue("href", string.Empty));
                         string releaseDate = string.Empty;
                         var dateNode = node.SelectSingleNode(".//time");
-                        if (dateNode != null && DateTime.TryParse(dateNode.InnerText, out var parsedDate))
+                        if (dateNode != null && DateTime.TryParse(dateNode.GetAttributeValue("datetime", string.Empty), out var parsedDate))
                         {
                             releaseDate = parsedDate.ToString("yyyy-MM-dd");
                         }
 
-                        string subSite = node.SelectSingleNode(".//a[@class='thumb__detail__site-link clr-grey']")?.InnerText.Trim();
+                        string subSite = node.SelectSingleNode(".//span[contains(@class,'thumb__detail__site-link')]")?.InnerText.Trim();
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, curId } },

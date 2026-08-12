@@ -92,7 +92,15 @@ public class SiteSmokeTests
                 }
                 catch (Exception ex)
                 {
-                    status = $"ERR: {ex.GetType().Name}: {ex.Message.Split('\n')[0][..Math.Min(120, ex.Message.Split('\n')[0].Length)]}";
+                    var msg = ex.Message.Split('\n')[0];
+                    if (msg.Contains("Connection refused", StringComparison.OrdinalIgnoreCase) && msg.Contains("8191", StringComparison.OrdinalIgnoreCase))
+                    {
+                        status = $"SKIP: FlareSolverr 未配置（环境依赖）";
+                    }
+                    else
+                    {
+                        status = $"ERR: {ex.GetType().Name}: {msg[..Math.Min(120, msg.Length)]}";
+                    }
                 }
 
                 results[h.Handler] = status;

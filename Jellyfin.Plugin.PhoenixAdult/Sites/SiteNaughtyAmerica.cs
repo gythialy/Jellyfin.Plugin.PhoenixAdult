@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Entities;
@@ -9,6 +10,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Newtonsoft.Json.Linq;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -16,6 +18,8 @@ namespace PhoenixAdult.Sites
 {
     public class SiteNaughtyAmerica : IProviderBase
     {
+        private const string ApiBase = "https://api.naughtyapi.com/tools/scenes/scenes";
+
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
@@ -24,27 +28,40 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var searchURL = Helper.GetSearchSearchURL(siteNum) + searchTitle;
-            var searchData = await HTML.ElementFromURL(searchURL, cancellationToken).ConfigureAwait(false);
-
-            var searchResultNodes = searchData.SelectNodesSafe("//div[@class='scene-grid-item']/a[@class='contain-img']");
-
-            foreach (var node in searchResultNodes)
+            var searchURL = $"{ApiBase}?search={Uri.EscapeDataString(searchTitle)}";
+            var searchData = await HTTP.Request(searchURL, cancellationToken);
+            if (!searchData.IsOK)
             {
-                var sceneUrl = node.Attributes["href"].Value;
-                Logger.Info($"Possible result: {sceneUrl}");
-                var sceneID = new List<string> { Helper.Encode(sceneUrl) };
+                return result;
+            }
 
-                if (searchDate.HasValue)
+            var json = JObject.Parse(searchData.Content);
+            if (json["data"] == null)
+            {
+                return result;
+            }
+
+            foreach (JObject scene in json["data"])
+            {
+                var sceneUrl = (string)scene["scene_url"];
+                if (string.IsNullOrEmpty(sceneUrl))
                 {
-                    sceneID.Add(searchDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+                    continue;
                 }
 
-                var searchResult = await Helper.GetSearchResultsFromUpdate(this, siteNum, sceneID.ToArray(), searchDate, cancellationToken).ConfigureAwait(false);
-                if (searchResult.Any())
+                var res = new RemoteSearchResult
                 {
-                    result.AddRange(searchResult);
+                    Name = (string)scene["title"],
+                };
+
+                if (DateTime.TryParse((string)scene["published_date"], CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDate))
+                {
+                    res.PremiereDate = sceneDate;
                 }
+
+                var curID = Helper.Encode(sceneUrl);
+                res.ProviderIds.Add(Plugin.Instance.Name, curID);
+                result.Add(res);
             }
 
             return result;
@@ -64,52 +81,85 @@ namespace PhoenixAdult.Sites
             }
 
             var sceneURL = Helper.Decode(sceneID[0]);
-            if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrEmpty(sceneURL))
             {
-                sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+                return result;
             }
 
-            Logger.Info($"Loading scene: {sceneURL}");
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
+            var idMatch = Regex.Match(sceneURL, @"-(\d+)$");
+            if (!idMatch.Success)
+            {
+                return result;
+            }
+
+            var apiURL = $"{ApiBase}?id={idMatch.Groups[1].Value}";
+            var http = await HTTP.Request(apiURL, cancellationToken);
+            if (!http.IsOK)
+            {
+                return result;
+            }
+
+            var json = JObject.Parse(http.Content);
+            var sceneData = json["data"]?.First;
+            if (sceneData == null)
+            {
+                return result;
+            }
 
             result.Item.ExternalId = sceneURL;
-            result.Item.AddStudio("Naughty America");
-            result.Item.Name = sceneData.SelectSingleText("//div[@class='scene-info']/h1");
+            result.Item.Name = (string)sceneData["title"];
 
-            var date = sceneData.SelectSingleText("//span[contains(@class, 'entry-date')]");
-            if (DateTime.TryParseExact(date, "MMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+            var synopsis = (string)sceneData["synopsis"];
+            if (!string.IsNullOrEmpty(synopsis))
+            {
+                result.Item.Overview = synopsis.Trim();
+            }
+
+            result.Item.AddStudio("Naughty America");
+
+            var siteName = (string)sceneData["site_name"];
+            if (!string.IsNullOrEmpty(siteName))
+            {
+                result.Item.AddStudio(siteName);
+            }
+
+            if (DateTime.TryParse((string)sceneData["published_date"], CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
             {
                 result.Item.PremiereDate = sceneDateObj;
+                result.Item.ProductionYear = sceneDateObj.Year;
             }
 
-            var subSite = sceneData.SelectSingleNode("//div[@class='scene-info']//h2/a");
-            if (subSite != null)
+            if (sceneData["tags"] != null)
             {
-                result.Item.AddStudio(subSite.InnerText);
-            }
-
-            var synopsis = sceneData.SelectSingleText("//div[contains(@class, 'synopsis')]");
-            if (synopsis.StartsWith("Synopsis", StringComparison.OrdinalIgnoreCase) && synopsis.Length > "Synopsis".Length)
-            {
-                synopsis = synopsis.Substring("Synopsis".Length).Trim();
-            }
-
-            result.Item.Overview = synopsis;
-
-            var categories = sceneData.SelectNodesSafe("//div[contains(@class, 'categories')]/a");
-            foreach (var category in categories)
-            {
-                result.Item.AddGenre(category.InnerText);
-            }
-
-            var performers = sceneData.SelectNodesSafe("//div[@class='performer-list']/a");
-            foreach (var performer in performers)
-            {
-                var performerName = performer.InnerText;
-                result.AddPerson(new PersonInfo
+                foreach (var tag in sceneData["tags"])
                 {
-                    Name = performerName,
-                });
+                    var tagName = (string)tag;
+                    if (!string.IsNullOrEmpty(tagName))
+                    {
+                        result.Item.AddGenre(tagName.Trim());
+                    }
+                }
+            }
+
+            var performers = sceneData["performers"];
+            if (performers != null)
+            {
+                foreach (var gender in new[] { "female", "male", "transgender" })
+                {
+                    if (performers[gender] == null)
+                    {
+                        continue;
+                    }
+
+                    foreach (var performer in performers[gender])
+                    {
+                        var performerName = (string)performer;
+                        if (!string.IsNullOrEmpty(performerName))
+                        {
+                            result.AddPerson(new PersonInfo { Name = performerName });
+                        }
+                    }
+                }
             }
 
             return result;
@@ -125,28 +175,59 @@ namespace PhoenixAdult.Sites
             }
 
             var sceneURL = Helper.Decode(sceneID[0]);
-            if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrEmpty(sceneURL))
             {
-                sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+                return result;
             }
 
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
-
-            var galleryImages = sceneData.SelectNodesSafe("//div[@class='contain-scene-images desktop-only']/a");
-            foreach (var image in galleryImages)
+            var idMatch = Regex.Match(sceneURL, @"-(\d+)$");
+            if (!idMatch.Success)
             {
-                var imageUrl = "https:" + image.Attributes["href"].Value;
-                result.Add(new RemoteImageInfo
-                {
-                    Url = imageUrl,
-                    Type = ImageType.Primary,
-                });
-                result.Add(new RemoteImageInfo
-                {
-                    Url = imageUrl,
-                    Type = ImageType.Backdrop,
-                });
+                return result;
             }
+
+            var apiURL = $"{ApiBase}?id={idMatch.Groups[1].Value}";
+            var http = await HTTP.Request(apiURL, cancellationToken);
+            if (!http.IsOK)
+            {
+                return result;
+            }
+
+            var json = JObject.Parse(http.Content);
+            var sceneData = json["data"]?.First;
+            if (sceneData == null)
+            {
+                return result;
+            }
+
+            var promo = (string)sceneData["promo_video_data"]?["aff_16mp4"];
+            var trailer = (string)sceneData["trailers"]?["trailer_720"];
+            var videoUrl = promo ?? trailer;
+            if (string.IsNullOrEmpty(videoUrl))
+            {
+                return result;
+            }
+
+            var match = Regex.Match(videoUrl, @"/(\w+)/(\w+)/[^/]*\.mp4$");
+            if (!match.Success)
+            {
+                return result;
+            }
+
+            var prefix = match.Groups[1].Value;
+            var name = match.Groups[2].Value;
+            var imageUrl = $"https://images4.naughtycdn.com/cms/nacmscontent/v1/scenes/{prefix}/{name}/scene/horizontal/1279x852c.jpg";
+
+            result.Add(new RemoteImageInfo
+            {
+                Url = imageUrl,
+                Type = ImageType.Primary,
+            });
+            result.Add(new RemoteImageInfo
+            {
+                Url = imageUrl,
+                Type = ImageType.Backdrop,
+            });
 
             return result;
         }

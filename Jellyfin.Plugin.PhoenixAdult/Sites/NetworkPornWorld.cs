@@ -87,23 +87,53 @@ namespace PhoenixAdult.Sites
                 }
                 else
                 {
-                    string searchUrl = Helper.GetSearchSearchURL(siteNum) + searchTitle.Replace(' ', '+');
+                    // 新版页面: pornworld.com/videos?q={term}，卡片 article.card.scene
+                    string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle.Replace(' ', '+'));
                     var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
                     if (httpResult.IsOK)
                     {
                         var searchResults = HTML.ElementFromString(httpResult.Content);
-                        var searchNodes = searchResults.SelectNodes("//div[@class='card-scene__text']");
+                        var searchNodes = searchResults.SelectNodes("//article[contains(concat(' ', normalize-space(@class), ' '), ' card scene ')]");
                         if (searchNodes != null)
                         {
                             foreach (var node in searchNodes)
                             {
-                                string titleNoFormatting = node.SelectSingleNode("./a")?.InnerText.Trim();
-                                string url = node.SelectSingleNode("./a")?.GetAttributeValue("href", string.Empty);
+                                var linkNode = node.SelectSingleNode(".//a[contains(@class, 'thumbnail-pic')]");
+                                if (linkNode == null)
+                                {
+                                    continue;
+                                }
+
+                                var url = linkNode.GetAttributeValue("href", string.Empty);
+                                if (string.IsNullOrEmpty(url))
+                                {
+                                    continue;
+                                }
+
+                                // 标题: img[alt] 或 card-title a
+                                var titleNoFormatting = node.SelectSingleText(".//img/@alt");
+                                if (string.IsNullOrEmpty(titleNoFormatting))
+                                {
+                                    titleNoFormatting = node.SelectSingleText(".//p[contains(@class, 'card-title')]/a");
+                                }
+
+                                // 日期: div.release-date "2026 August, 11"
+                                var releaseDate = string.Empty;
+                                var dateNode = node.SelectSingleNode(".//div[contains(@class, 'release-date')]");
+                                if (dateNode != null)
+                                {
+                                    var dateText = dateNode.InnerText.Trim();
+                                    if (DateTime.TryParse(dateText, out var parsedDate))
+                                    {
+                                        releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                                    }
+                                }
+
                                 string curId = Helper.Encode(url);
                                 result.Add(new RemoteSearchResult
                                 {
                                     ProviderIds = { { Plugin.Instance.Name, curId } },
-                                    Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
+                                    Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}".Trim(),
                                     SearchProviderName = Plugin.Instance.Name,
                                 });
                             }

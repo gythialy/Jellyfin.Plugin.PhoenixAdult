@@ -22,33 +22,61 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            string directUrl = $"{Helper.GetSearchSearchURL(siteNum)}{searchTitle.ToLower().Replace(' ', '-')}.html";
-            var searchResults = new List<string> { directUrl };
-
-            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
-            searchResults.AddRange(googleResults.Where(u => u.Contains("/trailers/")));
-
-            foreach (var sceneUrl in searchResults.Distinct())
+            if (siteNum == null || string.IsNullOrEmpty(searchTitle))
             {
-                var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-                if (httpResult.IsOK && !httpResult.Content.Contains("Page not found"))
+                return result;
+            }
+
+            // 站内搜索不可用（无搜索接口），改分页浏览 + 标题过滤（TPDB 同款模式）
+            var titleTokens = searchTitle.ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            for (var page = 1; page <= 5; page++)
+            {
+                var pageUrl = $"https://tour.girlsoutwest.com/categories/Movies_{page}_d.html";
+                var httpResult = await HTTP.Request(pageUrl, HttpMethod.Get, cancellationToken);
+                if (!httpResult.IsOK)
                 {
-                    var detailsPageElements = HTML.ElementFromString(httpResult.Content);
-                    string titleNoFormatting = detailsPageElements.SelectSingleNode("//meta[@name='twitter:title']")?.GetAttributeValue("content", string.Empty).Trim();
-                    string curId = Helper.Encode(sceneUrl);
-                    string releaseDate = string.Empty;
-                    var dateNode = detailsPageElements.SelectSingleNode("//div[@class='trailer topSpace']/div[2]/p");
-                    if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Split('\\')[1].Trim(), out var parsedDate))
+                    break;
+                }
+
+                var pageDoc = HTML.ElementFromString(httpResult.Content);
+                var cards = pageDoc.SelectNodesSafe("//a[contains(@href, '/trailers/')]");
+                if (!cards.Any())
+                {
+                    break;
+                }
+
+                foreach (var card in cards)
+                {
+                    var href = card.GetAttributeValue("href", string.Empty);
+                    if (string.IsNullOrEmpty(href))
                     {
-                        releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                        continue;
+                    }
+
+                    var cardTitle = card.InnerText.Trim();
+                    var haystack = string.IsNullOrEmpty(cardTitle) ? href : cardTitle;
+                    if (!titleTokens.All(t => haystack.ToLowerInvariant().Contains(t, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue;
+                    }
+
+                    var sceneUrl = href.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? href : Helper.GetSearchBaseURL(siteNum) + href;
+                    if (result.Any(r => r.ProviderIds.First().Value == Helper.Encode(sceneUrl)))
+                    {
+                        continue;
                     }
 
                     result.Add(new RemoteSearchResult
                     {
-                        ProviderIds = { { Plugin.Instance.Name, curId } },
-                        Name = $"{titleNoFormatting} [GirlsOutWest] {releaseDate}",
+                        ProviderIds = { { Plugin.Instance.Name, Helper.Encode(sceneUrl) } },
+                        Name = $"{cardTitle} [GirlsOutWest]",
                         SearchProviderName = Plugin.Instance.Name,
                     });
+                }
+
+                if (result.Count >= 10)
+                {
+                    break;
                 }
             }
 
