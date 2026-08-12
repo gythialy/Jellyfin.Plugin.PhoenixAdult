@@ -39,10 +39,27 @@ namespace PhoenixAdult.Helpers.Utils
 
         public static HtmlNode ElementFromStream(Stream data)
         {
+            if (data == null)
+            {
+                return new HtmlDocument().DocumentNode;
+            }
+
             var html = new HtmlDocument();
             html.Load(data);
 
             return html.DocumentNode;
+        }
+
+        public static string StripHtml(string html)
+        {
+            if (string.IsNullOrEmpty(html))
+            {
+                return string.Empty;
+            }
+
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html);
+            return System.Net.WebUtility.HtmlDecode(doc.DocumentNode.InnerText);
         }
     }
 }
