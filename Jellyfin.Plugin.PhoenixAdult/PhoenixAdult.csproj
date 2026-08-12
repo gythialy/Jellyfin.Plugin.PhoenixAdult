@@ -72,6 +72,7 @@
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
     <PackageReference Include="HttpClient.Caching" Version="1.6.6" />
     <PackageReference Include="HttpToSocks5Proxy" Version="1.4.0" />
+    <PackageReference Include="DuckDuckGoSearch" Version="4.20.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
@@ -106,6 +107,10 @@
   <ItemGroup>
     <None Remove="Configuration\configPage.html" />
     <EmbeddedResource Include="Configuration\configPage.html" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Jellyfin.Plugin.PhoenixAdult.Tests" />
   </ItemGroup>
 
 </Project>
