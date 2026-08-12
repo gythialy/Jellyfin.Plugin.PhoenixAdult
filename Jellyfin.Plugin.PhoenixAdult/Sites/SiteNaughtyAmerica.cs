@@ -88,7 +88,13 @@ namespace PhoenixAdult.Sites
                 result.Item.AddStudio(subSite.InnerText);
             }
 
-            result.Item.Overview = sceneData.SelectSingleText("//div[contains(@class, 'synopsis')]").Substring("Synopsis".Length);
+            var synopsis = sceneData.SelectSingleText("//div[contains(@class, 'synopsis')]");
+            if (synopsis.StartsWith("Synopsis", StringComparison.OrdinalIgnoreCase) && synopsis.Length > "Synopsis".Length)
+            {
+                synopsis = synopsis.Substring("Synopsis".Length).Trim();
+            }
+
+            result.Item.Overview = synopsis;
 
             var categories = sceneData.SelectNodesSafe("//div[contains(@class, 'categories')]/a");
             foreach (var category in categories)

@@ -27,7 +27,7 @@ namespace PhoenixAdult.Sites
 
             var splitedSearchTitle = searchTitle.Split();
             var movieID = string.Empty;
-            if (int.TryParse(splitedSearchTitle[0], out _) && int.TryParse(splitedSearchTitle[1], out _))
+            if (splitedSearchTitle.Length > 1 && int.TryParse(splitedSearchTitle[0], out _) && int.TryParse(splitedSearchTitle[1], out _))
             {
                 var separator = string.Empty;
                 switch (siteNum[1])

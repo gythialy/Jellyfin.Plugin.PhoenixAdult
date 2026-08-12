@@ -30,12 +30,17 @@ namespace PhoenixAdult.Sites
             var url = Helper.GetSearchSearchURL(siteNum) + searchTitle.ToLower();
             Logger.Info($"Searching for scene: {url}");
             var data = await HTML.ElementFromURL(url, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
-            var siteResults = data.SelectNodesSafe("//div[contains(@class, 'content-item')]//h3[@class='title']/a");
+            var siteResults = data.SelectNodesSafe("//div[contains(@class, 'content-item')]//h4[contains(@class, 'content-title-wrap')]/a");
             if (siteResults.Count > 0)
             {
                 foreach (var searchResult in siteResults)
                 {
-                    var sceneURL = searchResult.Attributes["href"].Value;
+                    var sceneURL = searchResult.Attributes["href"]?.Value ?? string.Empty;
+                    if (string.IsNullOrEmpty(sceneURL))
+                    {
+                        continue;
+                    }
+
                     Logger.Info($"Possible result {sceneURL}");
                     searchResultsURLs.Add(sceneURL);
                 }
@@ -99,8 +104,6 @@ namespace PhoenixAdult.Sites
                 sceneDate = sceneID[1];
             }
 
-            var siteUrl = Helper.GetSearchBaseURL(siteNum);
-
             result.Item.ExternalId = sceneURL;
             result.Item.AddStudio("PurgatoryX");
 
@@ -111,10 +114,13 @@ namespace PhoenixAdult.Sites
             result.Item.Name = title;
 
             var series = sceneData.SelectSingleText("//section[contains(@class, 'content-info-wrap')]//p[@class='series']/span");
-            result.Item.AddStudio(series);
+            if (!string.IsNullOrEmpty(series))
+            {
+                result.Item.AddStudio(series);
+            }
 
             var dateString = sceneData.SelectSingleText("//section[contains(@class, 'content-info-wrap')]//span[@class='date']");
-            if (DateTime.TryParseExact(dateString, "dddd MMMM dd, YYYY", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+            if (DateTime.TryParseExact(dateString, "dddd MMMM dd, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
             {
                 result.Item.PremiereDate = sceneDateObj;
             }
@@ -127,15 +133,25 @@ namespace PhoenixAdult.Sites
 
             foreach (var performer in performers)
             {
-                var performerURL = performer.Attributes["href"].Value;
+                var performerURL = performer.Attributes["href"]?.Value ?? string.Empty;
+                if (string.IsNullOrEmpty(performerURL))
+                {
+                    continue;
+                }
+
                 Logger.Info($"Loading performer page: {performerURL}");
                 var performerData = await HTML.ElementFromURL(performerURL, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
                 var performerImage = performerData.SelectSingleNode("//span[@class='model-pic']/img");
                 var performerName = performerData.SelectSingleText("//h1[@class='model-name']");
+                if (string.IsNullOrEmpty(performerName))
+                {
+                    continue;
+                }
+
                 result.AddPerson(new PersonInfo
                 {
                     Name = performerName,
-                    ImageUrl = performerImage.Attributes["src"].Value,
+                    ImageUrl = performerImage?.GetAttributeValue("src", string.Empty) ?? string.Empty,
                 });
             }
 
@@ -161,14 +177,20 @@ namespace PhoenixAdult.Sites
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
 
             var video = sceneData.SelectSingleNode("//video[@id='main-player']");
+            if (video == null)
+            {
+                return result;
+            }
+
+            var posterUrl = video.GetAttributeValue("poster", string.Empty);
             result.Add(new RemoteImageInfo
             {
-                Url = video.Attributes["poster"].Value,
+                Url = posterUrl,
                 Type = ImageType.Primary,
             });
             result.Add(new RemoteImageInfo
             {
-                Url = video.Attributes["poster"].Value,
+                Url = posterUrl,
                 Type = ImageType.Backdrop,
             });
 

@@ -32,13 +32,18 @@ namespace PhoenixAdult.Sites
             foreach (var searchResult in searchResults)
             {
                 var sceneLink = searchResult.SelectSingleNode(".//h2[@class='entry-title']//a");
-                var sceneURL = sceneLink.Attributes["href"].Value;
+                if (sceneLink == null)
+                {
+                    continue;
+                }
+
+                var sceneURL = sceneLink.Attributes["href"]?.Value ?? string.Empty;
                 var sceneName = sceneLink.InnerText.Trim();
                 var curID = Helper.Encode(sceneURL);
                 var image = searchResult.SelectSingleNode(".//a[@class='entry-featured-image-url']/img");
-                var scenePoster = image.Attributes["src"].Value;
+                var scenePoster = image?.Attributes["src"]?.Value ?? string.Empty;
                 var date = searchResult.SelectSingleNode(".//p[@class='post-meta']//span[@class='published']");
-                var sceneDate = date.InnerText.Trim();
+                var sceneDate = date?.InnerText.Trim() ?? string.Empty;
 
                 var res = new RemoteSearchResult
                 {
@@ -140,7 +145,11 @@ namespace PhoenixAdult.Sites
 
             // unable to get video poster from scene page, so performing search to get that poster
             var searchResults = await this.Search(siteNum, sceneName, null, cancellationToken).ConfigureAwait(false);
-            var sceneResult = searchResults.First(x => x.Name == sceneName);
+            var sceneResult = searchResults.FirstOrDefault(x => x.Name == sceneName);
+            if (sceneResult == null || string.IsNullOrEmpty(sceneResult.ImageUrl))
+            {
+                return result;
+            }
 
             result.Add(new RemoteImageInfo
             {
