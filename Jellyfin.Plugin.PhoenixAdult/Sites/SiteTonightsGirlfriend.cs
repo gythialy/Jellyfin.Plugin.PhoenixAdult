@@ -119,14 +119,30 @@ namespace PhoenixAdult.Sites
 
             foreach (var performer in performers)
             {
-                var performerURL = performer.Attributes["href"].Value;
+                var performerHref = performer.Attributes["href"];
+                if (performerHref == null)
+                {
+                    continue;
+                }
+
+                var performerURL = performerHref.Value;
                 Logger.Info($"Loading performer page: {performerURL}");
                 var performerData = await HTML.ElementFromURL(performerURL, cancellationToken).ConfigureAwait(false);
                 var performerImage = performerData.SelectSingleNode("//div[@class='performer-details']/img");
+                if (performerImage == null)
+                {
+                    result.AddPerson(new PersonInfo
+                    {
+                        Name = performer.InnerText,
+                    });
+                    continue;
+                }
+
+                var performerImageSrc = performerImage.Attributes["src"];
                 result.AddPerson(new PersonInfo
                 {
                     Name = performer.InnerText,
-                    ImageUrl = "https:" + performerImage.Attributes["src"].Value,
+                    ImageUrl = performerImageSrc == null ? null : "https:" + performerImageSrc.Value,
                 });
             }
 
@@ -151,10 +167,20 @@ namespace PhoenixAdult.Sites
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             var poster = sceneData.SelectSingleNode("//div[@class='scenepage-video']//picture//img[@class='playcard']");
+            if (poster == null)
+            {
+                return result;
+            }
+
+            var posterSrc = poster.Attributes["src"];
+            if (posterSrc == null || string.IsNullOrEmpty(posterSrc.Value))
+            {
+                return result;
+            }
 
             result.Add(new RemoteImageInfo
             {
-                Url = "https:" + poster.Attributes["src"].Value,
+                Url = "https:" + posterSrc.Value,
                 Type = ImageType.Primary,
             });
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Entities;
@@ -31,32 +32,59 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var rootUrl = Helper.GetSearchSearchURL(siteNum);
-            var searchResultsURLs = new List<string>();
-
-            var searchResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken).ConfigureAwait(false);
-            foreach (var searchResult in searchResults)
+            // 站内搜索不可用（无搜索接口），改分页浏览 + 标题过滤（TPDB 同款模式）
+            var titleTokens = searchTitle.ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            for (var page = 1; page <= 5; page++)
             {
-                if (searchResult.StartsWith(rootUrl))
+                var pageUrl = page == 1
+                    ? $"{Helper.GetSearchSearchURL(siteNum)}"
+                    : $"{Helper.GetSearchSearchURL(siteNum)}?page={page}";
+                var httpResult = await HTTP.Request(pageUrl, HttpMethod.Get, cancellationToken);
+                if (!httpResult.IsOK)
                 {
-                    searchResultsURLs.Add(searchResult);
-                }
-            }
-
-            foreach (var url in searchResultsURLs)
-            {
-                var sceneURL = new Uri(url);
-                var sceneID = new List<string> { Helper.Encode(sceneURL.AbsolutePath) };
-
-                if (searchDate.HasValue)
-                {
-                    sceneID.Add(searchDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+                    break;
                 }
 
-                var searchResult = await Helper.GetSearchResultsFromUpdate(this, siteNum, sceneID.ToArray(), searchDate, cancellationToken).ConfigureAwait(false);
-                if (searchResult.Any())
+                var pageDoc = HTML.ElementFromString(httpResult.Content);
+                var links = pageDoc.SelectNodesSafe("//a[contains(@href, '/updates/')]");
+                if (!links.Any())
                 {
-                    result.AddRange(searchResult);
+                    break;
+                }
+
+                foreach (var link in links)
+                {
+                    var href = link.GetAttributeValue("href", string.Empty);
+                    if (string.IsNullOrEmpty(href) || !href.Contains("/updates/", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    if (!titleTokens.All(t => href.ToLowerInvariant().Contains(t, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue;
+                    }
+
+                    var sceneURL = new Uri(href);
+                    var curId = Helper.Encode(sceneURL.AbsolutePath);
+                    if (result.Any(r => r.ProviderIds.First().Value == curId))
+                    {
+                        continue;
+                    }
+
+                    // /updates/New-Sensations-Title.html -> "New Sensations Title"
+                    var lastSegment = sceneURL.AbsolutePath.Trim('/').Split('/').Last().Replace(".html", string.Empty, StringComparison.OrdinalIgnoreCase);
+                    result.Add(new RemoteSearchResult
+                    {
+                        ProviderIds = { { Plugin.Instance.Name, curId } },
+                        Name = lastSegment.Replace('-', ' '),
+                        SearchProviderName = Plugin.Instance.Name,
+                    });
+                }
+
+                if (result.Count >= 10)
+                {
+                    break;
                 }
             }
 

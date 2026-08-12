@@ -77,7 +77,7 @@ namespace PhoenixAdult.Helpers.Utils
                 // ignored
             }
 
-            return results;
+            return results.Where(u => !string.IsNullOrEmpty(u)).Distinct().ToList();
         }
 
         public static async Task<List<string>> GetSearchResults(string text, CancellationToken cancellationToken)

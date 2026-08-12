@@ -30,7 +30,7 @@ namespace PhoenixAdult.Sites
             var url = Helper.GetSearchSearchURL(siteNum) + searchTitle.ToLower();
             Logger.Info($"Searching for scene: {url}");
             var data = await HTML.ElementFromURL(url, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
-            var siteResults = data.SelectNodesSafe("//div[contains(@class, 'content-item')]//h4[contains(@class, 'content-title-wrap')]/a");
+            var siteResults = data.SelectNodesSafe("//h4[contains(@class, 'content-title-wrap')]/a[contains(@class, 'content-title')]");
             if (siteResults.Count > 0)
             {
                 foreach (var searchResult in siteResults)
@@ -110,48 +110,39 @@ namespace PhoenixAdult.Sites
             Logger.Info($"Loading scene {sceneURL}");
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
 
-            var title = sceneData.SelectSingleText("//section[contains(@class, 'content-info-wrap')]//h1[@class='title']");
+            var title = sceneData.SelectSingleText("//h1[contains(@class, 'title')]");
             result.Item.Name = title;
 
-            var series = sceneData.SelectSingleText("//section[contains(@class, 'content-info-wrap')]//p[@class='series']/span");
+            var series = sceneData.SelectSingleText("//p[contains(@class, 'series')]");
             if (!string.IsNullOrEmpty(series))
             {
                 result.Item.AddStudio(series);
             }
 
-            var dateString = sceneData.SelectSingleText("//section[contains(@class, 'content-info-wrap')]//span[@class='date']");
+            var dateString = sceneData.SelectSingleText("//div[contains(@class, 'meta')]/span[1]");
             if (DateTime.TryParseExact(dateString, "dddd MMMM dd, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
             {
                 result.Item.PremiereDate = sceneDateObj;
             }
 
-            var description = sceneData.SelectSingleText("//section[contains(@class, 'content-info-wrap')]//div[@class='description']/p").Trim();
+            var description = sceneData.SelectSingleText("//div[contains(@class, 'description')]/p").Trim();
             result.Item.Overview = description;
 
             // performers
-            var performers = sceneData.SelectNodesSafe("//section[contains(@class, 'content-info-wrap')]//div[@class='model-wrap']//li//a");
-
-            foreach (var performer in performers)
+            var performerItems = sceneData.SelectNodesSafe("//ul[contains(@class, 'models-list')]/li");
+            foreach (var performerItem in performerItems)
             {
-                var performerURL = performer.Attributes["href"]?.Value ?? string.Empty;
-                if (string.IsNullOrEmpty(performerURL))
-                {
-                    continue;
-                }
-
-                Logger.Info($"Loading performer page: {performerURL}");
-                var performerData = await HTML.ElementFromURL(performerURL, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
-                var performerImage = performerData.SelectSingleNode("//span[@class='model-pic']/img");
-                var performerName = performerData.SelectSingleText("//h1[@class='model-name']");
+                var performerName = performerItem.SelectSingleNode(".//h5")?.InnerText.Trim() ?? string.Empty;
                 if (string.IsNullOrEmpty(performerName))
                 {
                     continue;
                 }
 
+                var performerImage = performerItem.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty) ?? string.Empty;
                 result.AddPerson(new PersonInfo
                 {
                     Name = performerName,
-                    ImageUrl = performerImage?.GetAttributeValue("src", string.Empty) ?? string.Empty,
+                    ImageUrl = performerImage,
                 });
             }
 
