@@ -23,8 +23,11 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Build
+      - name: Build (Jellyfin)
         run: dotnet build Jellyfin.Plugin.PhoenixAdult/PhoenixAdult.csproj -c Release --nologo
+
+      - name: Build (Emby)
+        run: dotnet build Jellyfin.Plugin.PhoenixAdult/PhoenixAdult.csproj -c Release.Emby --nologo
 
       - name: Run offline tests
         run: dotnet test Jellyfin.Plugin.PhoenixAdult.Tests/Jellyfin.Plugin.PhoenixAdult.Tests.csproj -c Release --nologo --filter "Category!=Online"
