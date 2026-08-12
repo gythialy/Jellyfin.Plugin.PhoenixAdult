@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 using MediaBrowser.Controller.Collections;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.Entities.Movies;
+#if !__EMBY__
+using Jellyfin.Data.Enums;
+#endif
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Tasks;
 
@@ -40,7 +44,14 @@ namespace PhoenixAdult.ScheduledTasks
             await Task.Yield();
             progress?.Report(0);
 
-            var items = this.libraryManager.GetItemList(new InternalItemsQuery()).Where(o => o.ProviderIds.ContainsKey(Plugin.Instance.Name));
+            var items = this.libraryManager.GetItemList(new InternalItemsQuery
+            {
+#if __EMBY__
+                IncludeItemTypes = new[] { nameof(Movie) },
+#else
+                IncludeItemTypes = [BaseItemKind.Movie],
+#endif
+            }).Where(o => o.ProviderIds.ContainsKey(Plugin.Instance.Name));
 
             var studios = items.SelectMany(o => o.Studios).Distinct().ToList();
 
