@@ -93,11 +93,15 @@ namespace PhoenixAdult.Sites
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [Adult Prime] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
+                        PremiereDate = string.IsNullOrEmpty(releaseDate) ? null : (DateTime.TryParseExact(releaseDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var releaseDateObj) ? releaseDateObj : (DateTime?)null),
                     });
                 }
             }
             else
             {
+                // /studios/search 对长搜索串无结果（返回通用列表），文件名 Site.YY.MM.DD.Actors.Title 的演员在开头 → 取前 2 词
+                searchTitle = Helper.GetSearchTitle(searchTitle, 2);
+
                 string encodedTitle = Uri.EscapeDataString(searchTitle);
                 for (int i = 0; i < 2; i++)
                 {
@@ -137,6 +141,7 @@ namespace PhoenixAdult.Sites
                                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                                         Name = $"{titleNoFormatting} [Adult Prime] {releaseDate}",
                                         SearchProviderName = Plugin.Instance.Name,
+                                        PremiereDate = string.IsNullOrEmpty(releaseDate) ? null : (DateTime.TryParseExact(releaseDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var releaseDateObj) ? releaseDateObj : (DateTime?)null),
                                     });
                                 }
                             }
