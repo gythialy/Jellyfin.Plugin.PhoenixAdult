@@ -58,9 +58,11 @@ namespace PhoenixAdult.Sites
                         string titleNoFormatting = Helper.ParseTitle(searchResult["title"].ToString(), siteNum);
                         string curId = searchResult[sceneType == "scenes" ? "clip_id" : "movie_id"].ToString();
                         string releaseDate = string.Empty;
+                        DateTime? premiereDate = null;
                         if (DateTime.TryParse(searchResult[sceneType == "scenes" ? "release_date" : "date_created"].ToString(), out var parsedDate))
                         {
                             releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                            premiereDate = parsedDate;
                         }
 
                         var topImageObject = searchResult.SelectToken("pictures.nsfw.top") as JObject;
@@ -77,6 +79,7 @@ namespace PhoenixAdult.Sites
                             Name = $"[{sceneType.Capitalize()}] {titleNoFormatting} {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
                             ImageUrl = imageUrl,
+                            PremiereDate = premiereDate,
                         });
                     }
                 }
