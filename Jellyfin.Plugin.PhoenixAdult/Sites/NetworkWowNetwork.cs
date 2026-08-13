@@ -64,12 +64,20 @@ namespace PhoenixAdult.Sites
 
                             string titleNoFormatting = linkNode.GetAttributeValue("title", string.Empty).Trim();
                             string curId = Helper.Encode(linkNode.GetAttributeValue("href", string.Empty));
-                            string image = Helper.Encode(node.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty) ?? string.Empty);
+                            var imgNode = node.SelectSingleNode(".//img");
+                            string imgUrl = imgNode?.GetAttributeValue("data-src", string.Empty) ?? string.Empty;
+                            if (string.IsNullOrEmpty(imgUrl) || imgUrl.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                            {
+                                imgUrl = imgNode?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                            }
+
+                            string image = Helper.Encode(imgUrl);
 
                             result.Add(new RemoteSearchResult
                             {
                                 ProviderIds = { { Plugin.Instance.Name, $"{curId}|{image}" } },
                                 Name = $"{titleNoFormatting} [{siteName}]",
+                                ImageUrl = imgUrl,
                                 SearchProviderName = Plugin.Instance.Name,
                             });
                         }
@@ -105,14 +113,26 @@ namespace PhoenixAdult.Sites
 
             var movie = (Movie)result.Item;
             movie.ExternalId = sceneUrl;
-            movie.Name = detailsPageElements.SelectNodes("//h1[@class='entry-title']").Last().InnerText.Trim();
+            var titleNode = detailsPageElements.SelectSingleNode("//h1[@class='entry-title']");
+            if (titleNode != null)
+            {
+                movie.Name = titleNode.InnerText.Trim();
+            }
+
             movie.AddStudio("WowNetwork");
 
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddStudio(tagline);
 
-            var dateNode = detailsPageElements.SelectSingleNode("//div[@id='video-date']");
-            if (dateNode != null && DateTime.TryParse(dateNode.InnerText.Replace("Date:", string.Empty).Trim(), out var parsedDate))
+            // 日期：优先 article:published_time meta（video-date 元素在新版页面已移除）
+            var dateNode = detailsPageElements.SelectSingleNode("//meta[@property='article:published_time']/@content");
+            string dateText = dateNode?.GetAttributeValue("content", string.Empty) ?? string.Empty;
+            if (string.IsNullOrEmpty(dateText))
+            {
+                dateText = detailsPageElements.SelectSingleNode("//div[@id='video-date']")?.InnerText.Replace("Date:", string.Empty).Trim() ?? string.Empty;
+            }
+
+            if (!string.IsNullOrEmpty(dateText) && DateTime.TryParse(dateText, out var parsedDate))
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
@@ -123,7 +143,11 @@ namespace PhoenixAdult.Sites
             {
                 foreach (var genre in genreNodes)
                 {
-                    movie.AddGenre(genre.InnerText.Replace("Movies", string.Empty).Trim());
+                    string genreName = genre.InnerText.Replace("Movies", string.Empty).Trim();
+                    if (!string.IsNullOrEmpty(genreName))
+                    {
+                        movie.AddGenre(genreName);
+                    }
                 }
             }
 
@@ -139,21 +163,112 @@ namespace PhoenixAdult.Sites
             return result;
         }
 
-        public Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var images = new List<RemoteImageInfo>();
-            string image = Helper.Decode(sceneID[0].Split('|')[1]);
-            if (!string.IsNullOrEmpty(image))
+
+            if (sceneID == null || sceneID.Length == 0)
             {
-                images.Add(new RemoteImageInfo { Url = image });
+                return images;
             }
 
-            if (images.Any())
+            string[] providerIds = sceneID[0].Split('|');
+            string sceneUrl = Helper.Decode(providerIds[0]);
+            if (!sceneUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
-                images.First().Type = ImageType.Primary;
+                sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
             }
 
-            return Task.FromResult<IEnumerable<RemoteImageInfo>>(images);
+            // 兜底：Search 阶段保存的封面（data-src 真图）
+            string fallbackImage = providerIds.Length > 1 ? Helper.Decode(providerIds[1]) : string.Empty;
+            if (string.IsNullOrEmpty(fallbackImage) || fallbackImage.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            {
+                fallbackImage = string.Empty;
+            }
+
+            var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
+            if (!httpResult.IsOK)
+            {
+                if (!string.IsNullOrEmpty(fallbackImage))
+                {
+                    images.Add(new RemoteImageInfo { Url = fallbackImage, Type = ImageType.Primary });
+                }
+
+                return images;
+            }
+
+            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
+
+            // NextGen gallery：相册 post 的原图（1200x675 ~ 1800x1201 高清）
+            var galleryLinks = detailsPageElements.SelectNodes("//div[contains(@class,'ngg-galleryoverview')]//a/@href");
+            var galleryImages = new List<string>();
+            if (galleryLinks != null)
+            {
+                foreach (var link in galleryLinks)
+                {
+                    string url = link.GetAttributeValue("href", string.Empty);
+                    if (url.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                        && url.Contains("/wp-content/gallery/", StringComparison.OrdinalIgnoreCase))
+                    {
+                        galleryImages.Add(url);
+                    }
+                }
+            }
+
+            if (galleryImages.Any())
+            {
+                images.Add(new RemoteImageInfo
+                {
+                    Url = galleryImages.First(),
+                    Type = ImageType.Primary,
+                });
+
+                foreach (var url in galleryImages)
+                {
+                    images.Add(new RemoteImageInfo
+                    {
+                        Url = url,
+                        Type = ImageType.Backdrop,
+                    });
+                }
+            }
+            else
+            {
+                // movie post：og:image 或 fp-splash data-src
+                string cover = string.Empty;
+                var ogImage = detailsPageElements.SelectSingleNode("//meta[@property='og:image']/@content");
+                if (ogImage != null)
+                {
+                    cover = ogImage.GetAttributeValue("content", string.Empty);
+                }
+
+                if (string.IsNullOrEmpty(cover))
+                {
+                    cover = detailsPageElements.SelectSingleNode("//img[contains(@class,'fp-splash')]")?.GetAttributeValue("data-src", string.Empty) ?? string.Empty;
+                }
+
+                if (string.IsNullOrEmpty(cover))
+                {
+                    cover = fallbackImage;
+                }
+
+                if (!string.IsNullOrEmpty(cover))
+                {
+                    images.Add(new RemoteImageInfo
+                    {
+                        Url = cover,
+                        Type = ImageType.Primary,
+                    });
+
+                    images.Add(new RemoteImageInfo
+                    {
+                        Url = cover,
+                        Type = ImageType.Backdrop,
+                    });
+                }
+            }
+
+            return images;
         }
     }
 }
