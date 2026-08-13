@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -91,6 +92,79 @@ namespace PhoenixAdult.Sites
                 searchNetwork = "Reptyle";
             }
 
+            // Elasticsearch 搜索：按演员名稳定命中（WebSearch 依赖 Google/DDG，反爬下不稳定）
+            var bundle = searchNetwork.ToLowerInvariant() switch
+            {
+                "teamskeet" => "ts_network",
+                "mylf" => "network_mylf",
+                "swappz" => "swap_bundle",
+                "freeuse" => "freeusebundle",
+                "pervz" => "pervbundle",
+                "family strokes" => "familybundle",
+                _ => "reptyle_bundle",
+            };
+            var nameTerms = searchTitle.ToLowerInvariant()
+                .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(w => !new[] { "and", "the", "with", "feat", "vs" }.Contains(w))
+                .Select(w => $"models.name:{w}")
+                .Distinct()
+                .ToList();
+            if (nameTerms.Count > 0)
+            {
+                var esQuery = $"(type:video AND {string.Join(" AND ", nameTerms)})";
+                var esURL = $"https://tours-store.psmcdn.net/{bundle}/_search?q={Uri.EscapeDataString(esQuery)}&sort=publishedDate:desc&size=10";
+                var esHttp = await HTTP.Request(esURL, cancellationToken).ConfigureAwait(false);
+                if (esHttp.IsOK)
+                {
+                    try
+                    {
+                        var esJson = JObject.Parse(esHttp.Content);
+                        var esHits = esJson["hits"]?["hits"] as JArray;
+                        if (esHits != null)
+                        {
+                            foreach (var hit in esHits)
+                            {
+                                var src = hit["_source"];
+                                string sceneId = (string)src["id"];
+                                if (string.IsNullOrEmpty(sceneId))
+                                {
+                                    continue;
+                                }
+
+                                string titleNoFormatting = Helper.ParseTitle((string)src["title"], siteNum);
+                                string releaseDate = string.Empty;
+                                DateTime? premiereDate = null;
+                                if (src["publishedDate"] != null && DateTime.TryParse((string)src["publishedDate"], out var parsedDate))
+                                {
+                                    releaseDate = parsedDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                    premiereDate = parsedDate;
+                                }
+
+                                string imageUrl = src["img"]?.ToString() ?? string.Empty;
+
+                                result.Add(new RemoteSearchResult
+                                {
+                                    ProviderIds = { { Plugin.Instance.Name, $"{sceneId}|{releaseDate}|videosContent" } },
+                                    Name = $"{titleNoFormatting} [{this.GetSubSite(Helper.GetSearchSiteName(siteNum))}] {releaseDate}",
+                                    SearchProviderName = Plugin.Instance.Name,
+                                    PremiereDate = premiereDate,
+                                    ImageUrl = imageUrl,
+                                });
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error($"Reptyle ES search error: {e.Message}");
+                    }
+                }
+            }
+
+            if (result.Any())
+            {
+                return result;
+            }
+
             string searchNetworkCleanLower = Regex.Replace(searchNetwork, @"\W", string.Empty).ToLowerInvariant();
 
             string directURL1 = Helper.GetSearchSearchURL(siteNum) + directURL;
@@ -155,11 +229,19 @@ namespace PhoenixAdult.Sites
 
                         var score = 100 - LevenshteinDistance.Calculate(searchTitle, titleNoFormatting, StringComparison.OrdinalIgnoreCase);
 
+                        DateTime? premiereDate = null;
+                        if (!string.IsNullOrEmpty(releaseDate)
+                            && DateTime.TryParseExact(releaseDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var releaseDateObj))
+                        {
+                            premiereDate = releaseDateObj;
+                        }
+
                         result.Add(new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}|{sceneType}" } },
                             Name = $"{titleNoFormatting} [{this.GetSubSite(detailsSubSite)}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
+                            PremiereDate = premiereDate,
                         });
                     }
                 }
