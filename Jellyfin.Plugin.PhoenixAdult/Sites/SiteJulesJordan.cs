@@ -25,7 +25,12 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var url = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
+            // 站内搜索按词 AND 匹配，完整 searchTitle（文件名 SEO 标题串）与站点标题不同 → 0 结果。
+            // 文件名 Site.YY.MM.DD.Actors.Title 的演员在开头 → 用前 2 词（演员名）搜索。
+            var searchWords = searchTitle.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var searchQuery = searchWords.Length > 2 ? string.Join(" ", searchWords.Take(2)) : searchTitle;
+
+            var url = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchQuery);
             var data = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
 
             // 新版页面: 场景卡片 div.jj-content-card, 链接 a.jj-card-thumb, 标题 .jj-card-title, 日期 .jj-card-date
@@ -138,8 +143,8 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            // 演员: 新版 .update_models 仍在
-            var actorsNode = sceneData.SelectNodesSafe("//span[contains(@class, 'update_models')]//a");
+            // 演员: 主演员区在 .scene-meta（相关视频卡片里也有 update_models，需限定）
+            var actorsNode = sceneData.SelectNodesSafe("//div[contains(@class, 'scene-meta')]//span[contains(@class, 'update_models')]//a");
             foreach (var actorLink in actorsNode)
             {
                 var actorName = actorLink.InnerText?.Trim();
