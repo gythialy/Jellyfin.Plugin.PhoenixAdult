@@ -170,6 +170,29 @@ namespace PhoenixAdult.Helpers
             return clearName;
         }
 
+        /// <summary>
+        /// 截取搜索词：文件名 Site.YY.MM.DD.Actors.Title 中演员/标题位置因站而异，
+        /// 取前 N 词（演员）或后 N 词（标题）作为站内搜索词。
+        /// 长搜索串（演员名+标题混串）会被按词 AND 匹配的站内搜索全部过滤掉，需截短。
+        /// </summary>
+        public static string GetSearchTitle(string title, int maxWords, bool fromEnd = false)
+        {
+            if (string.IsNullOrEmpty(title))
+            {
+                return title;
+            }
+
+            var words = title.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length <= maxWords)
+            {
+                return title;
+            }
+
+            return fromEnd
+                ? string.Join(" ", words.Skip(words.Length - maxWords))
+                : string.Join(" ", words.Take(maxWords));
+        }
+
         public static (string searchTitle, DateTime? searchDateObj) GetDateFromTitle(string title)
         {
             string searchDate,

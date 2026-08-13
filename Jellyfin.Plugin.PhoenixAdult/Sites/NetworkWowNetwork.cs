@@ -29,11 +29,7 @@ namespace PhoenixAdult.Sites
 
             // WordPress 搜索对多词 OR 匹配不可靠：演员名混入标题串会淹没目标。
             // 文件名格式 Site.YY.MM.DD.Actors.Title，标题在末尾 → 只取末尾 4 词搜索。
-            var words = searchTitle.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            if (words.Length > 4)
-            {
-                searchTitle = string.Join(" ", words.Skip(words.Length - 4));
-            }
+            searchTitle = Helper.GetSearchTitle(searchTitle, 4, fromEnd: true);
 
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
