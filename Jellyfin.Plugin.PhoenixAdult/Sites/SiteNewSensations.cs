@@ -66,6 +66,7 @@ namespace PhoenixAdult.Sites
                     }
 
                     var sceneURL = new Uri(href);
+
                     // 更新页链接无 tour 前缀（/updates/...），访问会 301 到 /tour_ns/updates/... → 补前缀
                     var tourRoot = new Uri(Helper.GetSearchSearchURL(siteNum)).AbsolutePath;
                     var tourIdx = tourRoot.LastIndexOf("/updates/", StringComparison.OrdinalIgnoreCase);
