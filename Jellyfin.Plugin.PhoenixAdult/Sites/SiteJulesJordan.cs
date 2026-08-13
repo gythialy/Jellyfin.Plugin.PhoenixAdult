@@ -27,8 +27,7 @@ namespace PhoenixAdult.Sites
 
             // 站内搜索按词 AND 匹配，完整 searchTitle（文件名 SEO 标题串）与站点标题不同 → 0 结果。
             // 文件名 Site.YY.MM.DD.Actors.Title 的演员在开头 → 用前 2 词（演员名）搜索。
-            var searchWords = searchTitle.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            var searchQuery = searchWords.Length > 2 ? string.Join(" ", searchWords.Take(2)) : searchTitle;
+            var searchQuery = Helper.GetSearchTitle(searchTitle, 2);
 
             var url = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchQuery);
             var data = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
