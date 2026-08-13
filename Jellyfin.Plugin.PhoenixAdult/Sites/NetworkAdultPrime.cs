@@ -93,6 +93,7 @@ namespace PhoenixAdult.Sites
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [Adult Prime] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
+                        PremiereDate = string.IsNullOrEmpty(releaseDate) ? null : (DateTime.TryParseExact(releaseDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var releaseDateObj) ? releaseDateObj : (DateTime?)null),
                     });
                 }
             }
@@ -137,6 +138,7 @@ namespace PhoenixAdult.Sites
                                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                                         Name = $"{titleNoFormatting} [Adult Prime] {releaseDate}",
                                         SearchProviderName = Plugin.Instance.Name,
+                                        PremiereDate = string.IsNullOrEmpty(releaseDate) ? null : (DateTime.TryParseExact(releaseDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var releaseDateObj) ? releaseDateObj : (DateTime?)null),
                                     });
                                 }
                             }
