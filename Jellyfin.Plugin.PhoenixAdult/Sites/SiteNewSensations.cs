@@ -66,14 +66,25 @@ namespace PhoenixAdult.Sites
                     }
 
                     var sceneURL = new Uri(href);
-                    var curId = Helper.Encode(sceneURL.AbsolutePath);
+
+                    // 更新页链接无 tour 前缀（/updates/...），访问会 301 到 /tour_ns/updates/... → 补前缀
+                    var tourRoot = new Uri(Helper.GetSearchSearchURL(siteNum)).AbsolutePath;
+                    var tourIdx = tourRoot.LastIndexOf("/updates/", StringComparison.OrdinalIgnoreCase);
+                    var tourPrefix = tourIdx > 0 ? tourRoot.Substring(0, tourIdx) : string.Empty;
+                    var scenePath = sceneURL.AbsolutePath;
+                    if (!string.IsNullOrEmpty(tourPrefix) && !scenePath.StartsWith(tourPrefix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        scenePath = tourPrefix + scenePath;
+                    }
+
+                    var curId = Helper.Encode(scenePath);
                     if (result.Any(r => r.ProviderIds.First().Value == curId))
                     {
                         continue;
                     }
 
-                    // /updates/New-Sensations-Title.html -> "New Sensations Title"
-                    var lastSegment = sceneURL.AbsolutePath.Trim('/').Split('/').Last().Replace(".html", string.Empty, StringComparison.OrdinalIgnoreCase);
+                    // /tour_ns/updates/New-Sensations-Title.html -> "New Sensations Title"
+                    var lastSegment = scenePath.Trim('/').Split('/').Last().Replace(".html", string.Empty, StringComparison.OrdinalIgnoreCase);
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, curId } },
@@ -110,6 +121,17 @@ namespace PhoenixAdult.Sites
             if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+            }
+
+            // 兼容旧 ProviderId：/updates/... 补 tour 前缀（如 /tour_ns/updates/...），否则 301
+            var tourRoot = new Uri(Helper.GetSearchSearchURL(siteNum)).AbsolutePath;
+            var tourIdx = tourRoot.LastIndexOf("/updates/", StringComparison.OrdinalIgnoreCase);
+            var tourPrefix = tourIdx > 0 ? tourRoot.Substring(0, tourIdx) : string.Empty;
+            if (!string.IsNullOrEmpty(tourPrefix)
+                && sceneURL.Contains("/updates/", StringComparison.OrdinalIgnoreCase)
+                && !sceneURL.Contains(tourPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                sceneURL = sceneURL.Replace("/updates/", tourPrefix + "/updates/", StringComparison.OrdinalIgnoreCase);
             }
 
             var searchSite = Helper.GetSearchSiteName(siteNum);
