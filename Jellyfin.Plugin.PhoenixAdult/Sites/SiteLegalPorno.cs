@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using HtmlAgilityPack;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
@@ -27,58 +29,72 @@ namespace PhoenixAdult.Sites
             var url = Helper.GetSearchSearchURL(siteNum) + searchTitle;
             var data = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
 
-            if (!data.SelectSingleText("//title").Contains("Search for", StringComparison.OrdinalIgnoreCase))
+            // LegalPorno 已迁移到 AnalVids：搜索词精确命中演员时会 301 到 model 页
+            // （页面含 SCENES section + 相关推荐），普通搜索词返回 "Search for ..." 列表页。
+            // 只取 SCENES section 内的卡片，避免把相关推荐混入结果。
+            var scenesTitle = data.SelectSingleNode("//h2[contains(@class, 'section_title')][contains(text(), 'SCENES')]");
+            HtmlAgilityPack.HtmlNodeCollection searchResults;
+            if (scenesTitle != null)
             {
-                var sceneHref = data.SelectSingleText("//div[@class='user--guest']//a/@href");
-                if (string.IsNullOrEmpty(sceneHref))
-                {
-                    return result;
-                }
-
-                var sceneURL = new Uri(sceneHref);
-                var sceneID = new string[] { Helper.Encode(sceneURL.AbsolutePath) };
-
-                var searchResult = await Helper.GetSearchResultsFromUpdate(this, siteNum, sceneID, searchDate, cancellationToken).ConfigureAwait(false);
-                if (searchResult.Any())
-                {
-                    result.AddRange(searchResult);
-                }
+                searchResults = scenesTitle.SelectNodesSafe("./following-sibling::div//div[@data-content]");
             }
             else
             {
-                var searchResults = data.SelectNodesSafe("//div[@class='thumbnails']/div");
-                foreach (var searchResult in searchResults)
+                searchResults = data.SelectNodesSafe("//div[@data-content]");
+            }
+
+            if (searchResults == null)
+            {
+                return result;
+            }
+
+            foreach (var searchResult in searchResults)
+            {
+                var sceneLink = searchResult.SelectSingleNode(".//a[contains(@href, '/watch/')]");
+                if (sceneLink == null)
                 {
-                    var sceneURL = new Uri(searchResult.SelectSingleText(".//a/@href"));
-
-                    string curID = Helper.Encode(sceneURL.AbsolutePath),
-                        sceneName = searchResult.SelectSingleText(".//div[contains(@class, 'thumbnail-title')]//a"),
-                        sceneDate = searchResult.SelectSingleText("./@release");
-
-                    var res = new RemoteSearchResult
-                    {
-                        ProviderIds = { { Plugin.Instance.Name, curID } },
-                        Name = sceneName,
-                    };
-
-                    if (DateTime.TryParseExact(sceneDate, "yyyy/MM/dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
-                    {
-                        res.PremiereDate = sceneDateObj;
-                    }
-
-                    var scenePoster = searchResult.SelectSingleText(".//div[@class='thumbnail-image']/a/@style");
-                    if (!string.IsNullOrEmpty(scenePoster))
-                    {
-                        scenePoster = scenePoster.Split('(')[1].Split(')')[0];
-                    }
-
-                    if (!string.IsNullOrEmpty(scenePoster))
-                    {
-                        res.ImageUrl = scenePoster;
-                    }
-
-                    result.Add(res);
+                    continue;
                 }
+
+                var sceneURL = sceneLink.GetAttributeValue("href", string.Empty);
+                if (string.IsNullOrEmpty(sceneURL))
+                {
+                    continue;
+                }
+
+                var sceneName = searchResult.SelectSingleText(".//div[contains(@class, 'card-scene__text')]//a").Trim();
+                if (string.IsNullOrEmpty(sceneName))
+                {
+                    sceneName = sceneLink.GetAttributeValue("title", string.Empty).Trim();
+                }
+
+                if (string.IsNullOrEmpty(sceneName))
+                {
+                    continue;
+                }
+
+                var res = new RemoteSearchResult
+                {
+                    ProviderIds = { { Plugin.Instance.Name, Helper.Encode(sceneURL) } },
+                    Name = sceneName,
+                };
+
+                var poster = searchResult.SelectSingleNode(".//img");
+                if (poster != null)
+                {
+                    var imageURL = poster.GetAttributeValue("data-src", string.Empty);
+                    if (string.IsNullOrEmpty(imageURL))
+                    {
+                        imageURL = poster.GetAttributeValue("src", string.Empty);
+                    }
+
+                    if (!string.IsNullOrEmpty(imageURL) && !imageURL.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        res.ImageUrl = imageURL;
+                    }
+                }
+
+                result.Add(res);
             }
 
             return result;
@@ -100,48 +116,86 @@ namespace PhoenixAdult.Sites
             var sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
-                sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+                sceneURL = "https://www.analvids.com" + sceneURL;
             }
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             result.Item.ExternalId = sceneURL;
-
-            result.Item.Name = sceneData.SelectSingleText("//h1[@class='watchpage-title']");
             result.Item.AddStudio("LegalPorno");
-            var studio = sceneData.SelectSingleText("//a[@class='watchpage-studioname']/text()");
-            if (!string.IsNullOrEmpty(studio))
+
+            // 标题: h1.watch__title 含嵌套的 model 链接（演员名）+ featuring span（配角），
+            // 用 Split("featuring") 剥离（与 SiteAnalVids 一致），只保留标题主体
+            var titleNode = sceneData.SelectSingleNode("//h1[contains(@class, 'watch__title')]");
+            if (titleNode != null)
             {
-                result.Item.AddStudio(studio);
+                var titleText = System.Net.WebUtility.HtmlDecode(titleNode.InnerText).Trim();
+                titleText = titleText.Split(new[] { "featuring" }, StringSplitOptions.None)[0].Trim();
+                if (!string.IsNullOrEmpty(titleText))
+                {
+                    result.Item.Name = titleText;
+                }
             }
 
-            var sceneDate = sceneData.SelectSingleText("//span[@class='scene-description__detail']//a");
+            // Studio
+            var studioLink = sceneData.SelectSingleNode("//a[contains(@href, '/studios/')]");
+            if (studioLink != null)
+            {
+                var studioName = studioLink.InnerText.Trim();
+                if (!string.IsNullOrEmpty(studioName))
+                {
+                    result.Item.AddStudio(studioName);
+                }
+            }
+
+            // 日期
+            var dateNode = sceneData.SelectSingleNode("//i[contains(@class, 'bi-calendar3')]");
+            var sceneDate = dateNode?.InnerText.Trim() ?? string.Empty;
             if (DateTime.TryParseExact(sceneDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
             {
                 result.Item.PremiereDate = sceneDateObj;
             }
 
-            var genreNode = sceneData.SelectNodesSafe("//dd/a[contains(@href, '/niche/')]");
-            foreach (var genreLink in genreNode)
+            // 流派
+            var genreNodes = sceneData.SelectNodesSafe("//a[contains(@href, '/genre/')]");
+            foreach (var genreLink in genreNodes)
             {
-                var genreName = genreLink.InnerText;
-
-                result.Item.AddGenre(genreName);
+                var genreName = genreLink.InnerText.Trim();
+                if (!string.IsNullOrEmpty(genreName))
+                {
+                    result.Item.AddGenre(genreName);
+                }
             }
 
-            var actorsNode = sceneData.SelectNodesSafe("//dd/a[contains(@href, 'model') and not(contains(@href, 'forum'))]");
-            foreach (var actorLink in actorsNode)
+            // 演员: h1 内的 model 链接（主演员 + featuring 演员）
+            var actorNodes = sceneData.SelectNodesSafe("//h1[contains(@class, 'watch__title')]//a[contains(@href, '/model/')]");
+            foreach (var actorLink in actorNodes)
             {
+                var actorName = actorLink.InnerText.Trim();
+                if (string.IsNullOrEmpty(actorName))
+                {
+                    continue;
+                }
+
                 var actor = new PersonInfo
                 {
-                    Name = actorLink.InnerText,
+                    Name = actorName,
                 };
 
-                var actorPage = await HTML.ElementFromURL(actorLink.Attributes["href"].Value, cancellationToken).ConfigureAwait(false);
-                var actorPhoto = actorPage.SelectSingleText("//div[@class='model--avatar']//img/@src");
-                if (!string.IsNullOrEmpty(actorPhoto))
+                var modelURL = actorLink.GetAttributeValue("href", string.Empty);
+                if (!string.IsNullOrEmpty(modelURL))
                 {
-                    actor.ImageUrl = actorPhoto;
+                    var actorPage = await HTML.ElementFromURL(modelURL, cancellationToken).ConfigureAwait(false);
+                    var actorPhoto = actorPage.SelectSingleText("//img[contains(@class, 'model')]/@src");
+                    if (string.IsNullOrEmpty(actorPhoto))
+                    {
+                        actorPhoto = actorPage.SelectSingleText("//div[contains(@class, 'model')]//img/@src");
+                    }
+
+                    if (!string.IsNullOrEmpty(actorPhoto) && !actorPhoto.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        actor.ImageUrl = actorPhoto;
+                    }
                 }
 
                 result.AddPerson(actor);
@@ -162,32 +216,29 @@ namespace PhoenixAdult.Sites
             var sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
-                sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+                sceneURL = "https://www.analvids.com" + sceneURL;
             }
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
-            var scenePoster = sceneData.SelectSingleText("//div[@id='player']/@style").Split('(')[1].Split(')')[0];
-            result.Add(new RemoteImageInfo
+            // 主图: video[data-poster]
+            var posterNode = sceneData.SelectSingleNode("//video[contains(@data-poster, 'http')]");
+            if (posterNode != null)
             {
-                Url = scenePoster,
-                Type = ImageType.Primary,
-            });
-
-            var scenePosters = sceneData.SelectNodesSafe("//div[contains(@class, 'thumbs2 gallery')]//img");
-            foreach (var poster in scenePosters)
-            {
-                scenePoster = poster.Attributes["src"].Value.Split('?')[0];
-                result.Add(new RemoteImageInfo
+                var poster = posterNode.GetAttributeValue("data-poster", string.Empty);
+                if (!string.IsNullOrEmpty(poster))
                 {
-                    Url = scenePoster,
-                    Type = ImageType.Primary,
-                });
-                result.Add(new RemoteImageInfo
-                {
-                    Url = scenePoster,
-                    Type = ImageType.Backdrop,
-                });
+                    result.Add(new RemoteImageInfo
+                    {
+                        Url = poster,
+                        Type = ImageType.Primary,
+                    });
+                    result.Add(new RemoteImageInfo
+                    {
+                        Url = poster,
+                        Type = ImageType.Backdrop,
+                    });
+                }
             }
 
             return result;
