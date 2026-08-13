@@ -53,7 +53,8 @@ namespace PhoenixAdult.Sites
 
             if (string.IsNullOrEmpty(result))
             {
-                var http = await HTTP.Request(Helper.GetSearchBaseURL(siteNum) + "/en/login", cancellationToken).ConfigureAwait(false);
+                // 从站点首页抓 Algolia apiKey（/en/login 有 429 限流，stash/TPDB 均从首页抓取）
+                var http = await HTTP.Request(Helper.GetSearchBaseURL(siteNum) + "/en", cancellationToken).ConfigureAwait(false);
                 if (http.IsOK)
                 {
                     var regEx = Regex.Match(http.Content, "\"apiKey\":\"(.*?)\"");
