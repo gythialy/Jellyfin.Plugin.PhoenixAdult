@@ -181,10 +181,10 @@ namespace PhoenixAdult.Sites
 
                     if (searchResult.ContainsKey("pictures"))
                     {
-                        var images = searchResult["pictures"].Where(o => o.Type == JTokenType.Property);
-                        if (images.Any())
+                        var pictureURL = GetBestPictureURL((JObject)searchResult["pictures"]);
+                        if (!string.IsNullOrEmpty(pictureURL))
                         {
-                            res.ImageUrl = $"https://images-fame.gammacdn.com/movies/{(string)images.Last()}";
+                            res.ImageUrl = "https://images-fame.gammacdn.com/movies" + pictureURL;
                         }
                     }
 
@@ -365,22 +365,69 @@ namespace PhoenixAdult.Sites
 
             if (sceneData.ContainsKey("pictures"))
             {
-                image = (string)sceneData["pictures"].Last(o => !o.ToString().Equals("resized", StringComparison.OrdinalIgnoreCase));
-                imageURL = $"https://images-fame.gammacdn.com/movies/{image}";
+                var pictureURL = GetBestPictureURL((JObject)sceneData["pictures"]);
+                if (!string.IsNullOrEmpty(pictureURL))
+                {
+                    imageURL = "https://images-fame.gammacdn.com/movies" + pictureURL;
 
-                result.Add(new RemoteImageInfo
-                {
-                    Url = imageURL,
-                    Type = ImageType.Primary,
-                });
-                result.Add(new RemoteImageInfo
-                {
-                    Url = imageURL,
-                    Type = ImageType.Backdrop,
-                });
+                    result.Add(new RemoteImageInfo
+                    {
+                        Url = imageURL,
+                        Type = ImageType.Primary,
+                    });
+                    result.Add(new RemoteImageInfo
+                    {
+                        Url = imageURL,
+                        Type = ImageType.Backdrop,
+                    });
+                }
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// 从 Algolia pictures 对象中选取最高清的图片路径。
+        /// pictures 形如 { "nsfw": {...}, "76x55": "...", "1920x1080": "...", "resized": "..." }，
+        /// 键为 WxH 分辨率，resized 是低清缩略图，nsfw 是嵌套对象。
+        /// 解析所有 WxH 键取宽度最大者，避免写死某个分辨率；无 WxH 键时回退到任意字符串值。
+        /// </summary>
+        private static string GetBestPictureURL(JObject pictures)
+        {
+            if (pictures == null)
+            {
+                return null;
+            }
+
+            string best = null;
+            var bestWidth = 0;
+            string fallback = null;
+
+            foreach (var property in pictures.Properties())
+            {
+                if (property.Value.Type != JTokenType.String)
+                {
+                    continue; // nsfw 等嵌套对象
+                }
+
+                var value = (string)property.Value;
+                if (string.IsNullOrEmpty(value))
+                {
+                    continue;
+                }
+
+                fallback ??= value;
+
+                if (Regex.IsMatch(property.Name, @"^\d+x\d+$", RegexOptions.IgnoreCase)
+                    && int.TryParse(property.Name.Split('x')[0], out var width)
+                    && width > bestWidth)
+                {
+                    bestWidth = width;
+                    best = value;
+                }
+            }
+
+            return best ?? fallback;
         }
     }
 }
