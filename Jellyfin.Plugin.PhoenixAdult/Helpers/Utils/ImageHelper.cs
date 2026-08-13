@@ -250,10 +250,11 @@ namespace PhoenixAdult.Helpers.Utils
                     marker == 0xCF)
                 {
                     // We found a SOF (Start of Frame) marker
-                    if (pos + 5 < bytes.Length)
+                    // 段结构: FF C0 [2B segment length] [1B precision] [2B height] [2B width]
+                    if (pos + 6 < bytes.Length)
                     {
-                        int height = (bytes[pos + 1] << 8) | bytes[pos + 2];
-                        int width = (bytes[pos + 3] << 8) | bytes[pos + 4];
+                        int height = (bytes[pos + 3] << 8) | bytes[pos + 4];
+                        int width = (bytes[pos + 5] << 8) | bytes[pos + 6];
                         return (width, height);
                     }
                 }
