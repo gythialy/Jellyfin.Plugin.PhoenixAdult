@@ -54,7 +54,7 @@ jobs:
           DOTNET_NOLOGO: "1"
       - name: Upload probe report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: online-probe-report
           path: Jellyfin.Plugin.PhoenixAdult.Tests/bin/Release/net10.0/*report*.txt
