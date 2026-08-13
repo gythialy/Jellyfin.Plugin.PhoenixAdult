@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Entities;
@@ -93,17 +94,11 @@ namespace PhoenixAdult.Sites
 
             result.Item.ExternalId = sceneURL;
 
-            result.Item.Name = sceneData.SelectSingleText("//div[@class='title']/h1");
+            result.Item.Name = sceneData.SelectSingleText("//meta[@property='og:title']/@content");
 
-            var description = sceneData.SelectSingleText("//div[contains(@class, 'record-description-content')]");
-            if (!string.IsNullOrEmpty(description))
-            {
-                var runtimeIndex = description.IndexOf("Runtime", StringComparison.OrdinalIgnoreCase);
-                if (runtimeIndex > 0)
-                {
-                    description = description.Substring(0, runtimeIndex);
-                }
-            }
+            // 描述只取正文段落，跳过副标题/格式信息，避免混入运行时与清晰度列表
+            var descriptionNodes = sceneData.SelectNodesSafe("//div[contains(@class, 'record-description-content')]//p");
+            var description = string.Join(Environment.NewLine, descriptionNodes.Select(o => o.InnerText.Trim()).Where(o => !string.IsNullOrEmpty(o)));
 
             result.Item.Overview = description;
 
