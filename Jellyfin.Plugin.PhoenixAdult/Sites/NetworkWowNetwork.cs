@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -24,6 +26,15 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
+
+            // WordPress 搜索对多词 OR 匹配不可靠：演员名混入标题串会淹没目标。
+            // 文件名格式 Site.YY.MM.DD.Actors.Title，标题在末尾 → 只取末尾 4 词搜索。
+            var words = searchTitle.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length > 4)
+            {
+                searchTitle = string.Join(" ", words.Skip(words.Length - 4));
+            }
+
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
             var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)
@@ -136,6 +147,17 @@ namespace PhoenixAdult.Sites
             {
                 movie.PremiereDate = parsedDate;
                 movie.ProductionYear = parsedDate.Year;
+            }
+            else
+            {
+                // 新版页面无 #video-date，改从 meta[itemprop=uploadDate] 取日期（如 2026-07-11T01:59:00+02:00）
+                var uploadDate = detailsPageElements.SelectSingleText("//meta[@itemprop='uploadDate']/@content");
+                var dateMatch = Regex.Match(uploadDate, @"(\d{4}-\d{2}-\d{2})");
+                if (dateMatch.Success && DateTime.TryParseExact(dateMatch.Groups[1].Value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
+                {
+                    movie.PremiereDate = parsedDate;
+                    movie.ProductionYear = parsedDate.Year;
+                }
             }
 
             var genreNodes = detailsPageElements.SelectNodes("//div[@class='tags-list']/a//i[@class='fa fa-folder-open']/..");
