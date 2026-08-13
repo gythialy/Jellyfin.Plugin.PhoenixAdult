@@ -416,6 +416,18 @@ The above is a reference list. Please see [the manualsearch doc](./manualsearch.
   - SpyFam
   - Tiny4k
 + #### Pornhub | Matching type: *[Enhanced](./manualsearch.md#enhanced-search)*
++ #### Private | Matching type: *[Enhanced](./manualsearch.md#enhanced-search)*
+  - Anal Introductions
+  - Blacks on Sluts
+  - I confess Files
+  - Mission Ass Possible
+  - Private Fetish
+  - Private MILFs
+  - Private Stars
+  - Russian Fake Agent
+  - Russian Teen Ass
+  - Sex on the beach
+  - Tight and Teen
 + #### Naughty America Network | Matching type: *[Enhanced](./manualsearch.md#enhanced-search)*
   - 2 Chicks Same Time
   - American Daydreams
