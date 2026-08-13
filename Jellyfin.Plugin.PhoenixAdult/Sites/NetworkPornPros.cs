@@ -9,6 +9,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Newtonsoft.Json.Linq;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -39,26 +40,68 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var directURL = searchTitle
-                .Replace(" ", "-", StringComparison.OrdinalIgnoreCase)
-                .Replace("'", "-", StringComparison.OrdinalIgnoreCase);
-            if (int.TryParse(directURL.AsSpan(directURL.Length - 1, 1), out _) && directURL.Substring(directURL.Length - 2, 1) == "-")
+            // Nuxt/API 站点：场景 URL = {base}/video/{标题slug}，slug 不含演员名。
+            // 文件名 Site.YY.MM.DD.Actors.Title 的标题在末尾 → 从末尾 4-1 词生成 slug 候选逐个试。
+            var words = searchTitle.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var candidates = new List<string> { searchTitle };
+            for (var n = Math.Min(4, words.Length); n >= 1; n--)
             {
-                directURL = $"{directURL.Substring(0, directURL.Length - 1)}-{directURL.Substring(directURL.Length - 1, 1)}";
+                candidates.Add(string.Join(" ", words.Skip(words.Length - n)));
             }
 
-            var sceneURL = new Uri(Helper.GetSearchSearchURL(siteNum) + directURL);
-            var sceneID = new List<string> { Helper.Encode(sceneURL.AbsolutePath) };
+            // API 只认无 www 域名 + x-site header
+            var baseUri = new Uri(Helper.GetSearchBaseURL(siteNum));
+            var apiHost = baseUri.Host.StartsWith("www.", StringComparison.OrdinalIgnoreCase) ? baseUri.Host.Substring(4) : baseUri.Host;
 
-            if (searchDate.HasValue)
+            foreach (var candidate in candidates)
             {
-                sceneID.Add(searchDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
-            }
+                var slug = candidate
+                    .Replace("'", "-", StringComparison.OrdinalIgnoreCase)
+                    .Replace(" ", "-", StringComparison.OrdinalIgnoreCase)
+                    .ToLowerInvariant();
 
-            var searchResult = await Helper.GetSearchResultsFromUpdate(this, siteNum, sceneID.ToArray(), searchDate, cancellationToken).ConfigureAwait(false);
-            if (searchResult.Any())
-            {
-                result.AddRange(searchResult);
+                var apiURL = new Uri($"https://{apiHost}/api/releases/{slug}");
+                var headers = new Dictionary<string, string> { { "x-site", apiHost } };
+                var httpResult = await HTTP.Request(apiURL.AbsoluteUri, cancellationToken, headers).ConfigureAwait(false);
+                if (!httpResult.IsOK)
+                {
+                    continue;
+                }
+
+                JObject release;
+                try
+                {
+                    release = JObject.Parse(httpResult.Content);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"PornPros API parse error for {slug}: {e.Message}");
+                    continue;
+                }
+
+                if (release["title"] == null)
+                {
+                    continue; // 404 返回 {"message":"Not found"}
+                }
+
+                string curID = Helper.Encode($"/video/{slug}"),
+                    sceneName = (string)release["title"];
+                DateTime? sceneDateObj = null;
+                if (release["releasedAt"] != null && DateTime.TryParse((string)release["releasedAt"], CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                {
+                    sceneDateObj = parsedDate;
+                }
+
+                var res = new RemoteSearchResult
+                {
+                    Name = sceneName,
+                    ImageUrl = (string)release["posterUrl"],
+                    PremiereDate = sceneDateObj,
+                };
+                res.ProviderIds.Add(Plugin.Instance.Name, curID);
+
+                result.Add(res);
+                break;
             }
 
             return result;
@@ -84,6 +127,71 @@ namespace PhoenixAdult.Sites
             }
 
             var subSite = Helper.GetSearchSiteName(siteNum);
+
+            // Nuxt/API 站点优先：/api/releases/{slug} 返回完整 JSON（标题/日期/演员/图片）
+            var slug = new Uri(sceneURL).AbsolutePath.TrimEnd('/').Split('/').LastOrDefault();
+            if (!string.IsNullOrEmpty(slug))
+            {
+                var baseUri = new Uri(Helper.GetSearchBaseURL(siteNum));
+                var apiHost = baseUri.Host.StartsWith("www.", StringComparison.OrdinalIgnoreCase) ? baseUri.Host.Substring(4) : baseUri.Host;
+                var apiURL = $"https://{apiHost}/api/releases/{slug}";
+                var headers = new Dictionary<string, string> { { "x-site", apiHost } };
+                var apiHttp = await HTTP.Request(apiURL, cancellationToken, headers).ConfigureAwait(false);
+                if (apiHttp.IsOK)
+                {
+                    JObject apiRelease;
+                    try
+                    {
+                        apiRelease = JObject.Parse(apiHttp.Content);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error($"PornPros API parse error in Update for {slug}: {e.Message}");
+                        apiRelease = null;
+                    }
+
+                    if (apiRelease != null && apiRelease["title"] != null)
+                    {
+                        result.Item.ExternalId = sceneURL;
+
+                        result.Item.Name = (string)apiRelease["title"];
+                        var apiDescription = (string)apiRelease["description"];
+                        result.Item.Overview = string.IsNullOrEmpty(apiDescription) ? string.Empty : apiDescription.Replace("\r\n", "\n", StringComparison.OrdinalIgnoreCase);
+
+                        result.Item.AddStudio("Porn Pros");
+                        result.Item.AddStudio(subSite);
+
+                        if (apiRelease["releasedAt"] != null
+                            && DateTime.TryParse((string)apiRelease["releasedAt"], CultureInfo.InvariantCulture, DateTimeStyles.None, out var apiDateObj))
+                        {
+                            result.Item.PremiereDate = apiDateObj;
+                            result.Item.ProductionYear = apiDateObj.Year;
+                        }
+
+                        if (Genres.ContainsKey(subSite))
+                        {
+                            foreach (var genreLink in Genres[subSite])
+                            {
+                                result.Item.AddGenre(genreLink);
+                            }
+                        }
+
+                        if (apiRelease["actors"] is JArray apiActors)
+                        {
+                            foreach (var actorToken in apiActors)
+                            {
+                                var actorName = (string)actorToken["name"];
+                                if (!string.IsNullOrEmpty(actorName))
+                                {
+                                    result.AddPerson(new PersonInfo { Name = actorName });
+                                }
+                            }
+                        }
+
+                        return result;
+                    }
+                }
+            }
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
@@ -194,6 +302,71 @@ namespace PhoenixAdult.Sites
             if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+            }
+
+            // Nuxt/API 站点优先：posterUrl + thumbUrls
+            var slug = new Uri(sceneURL).AbsolutePath.TrimEnd('/').Split('/').LastOrDefault();
+            if (!string.IsNullOrEmpty(slug))
+            {
+                var baseUri = new Uri(Helper.GetSearchBaseURL(siteNum));
+                var apiHost = baseUri.Host.StartsWith("www.", StringComparison.OrdinalIgnoreCase) ? baseUri.Host.Substring(4) : baseUri.Host;
+                var apiURL = $"https://{apiHost}/api/releases/{slug}";
+                var headers = new Dictionary<string, string> { { "x-site", apiHost } };
+                var apiHttp = await HTTP.Request(apiURL, cancellationToken, headers).ConfigureAwait(false);
+                if (apiHttp.IsOK)
+                {
+                    JObject apiRelease;
+                    try
+                    {
+                        apiRelease = JObject.Parse(apiHttp.Content);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error($"PornPros API parse error in GetImages for {slug}: {e.Message}");
+                        apiRelease = null;
+                    }
+
+                    if (apiRelease != null && apiRelease["title"] != null)
+                    {
+                        var poster = (string)apiRelease["posterUrl"];
+                        if (!string.IsNullOrEmpty(poster))
+                        {
+                            result.Add(new RemoteImageInfo
+                            {
+                                Url = poster,
+                                Type = ImageType.Primary,
+                            });
+                            result.Add(new RemoteImageInfo
+                            {
+                                Url = poster,
+                                Type = ImageType.Backdrop,
+                            });
+                        }
+
+                        if (apiRelease["thumbUrls"] is JArray thumbUrls)
+                        {
+                            foreach (var thumbToken in thumbUrls)
+                            {
+                                var thumbUrl = (string)thumbToken;
+                                if (!string.IsNullOrEmpty(thumbUrl))
+                                {
+                                    result.Add(new RemoteImageInfo
+                                    {
+                                        Url = thumbUrl,
+                                        Type = ImageType.Primary,
+                                    });
+                                    result.Add(new RemoteImageInfo
+                                    {
+                                        Url = thumbUrl,
+                                        Type = ImageType.Backdrop,
+                                    });
+                                }
+                            }
+                        }
+
+                        return result;
+                    }
+                }
             }
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
