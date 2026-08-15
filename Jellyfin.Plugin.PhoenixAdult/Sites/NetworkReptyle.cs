@@ -156,7 +156,33 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            string directURL = searchTitle.Replace("'", string.Empty).Slugify();
+            if (siteNum == null || string.IsNullOrEmpty(searchTitle))
+            {
+                return result;
+            }
+
+            string cleanTitle = searchTitle;
+            var idPrefixMatch = Regex.Match(searchTitle, @"^\s*\d+\s*[-_–—]\s*(.+)$");
+            if (idPrefixMatch.Success && !string.IsNullOrWhiteSpace(idPrefixMatch.Groups[1].Value))
+            {
+                cleanTitle = idPrefixMatch.Groups[1].Value.Trim();
+            }
+            else
+            {
+                var split = searchTitle.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (split.Length > 1 && int.TryParse(split[0], out _) && split[0].Length >= 3)
+                {
+                    cleanTitle = string.Join(" ", split.Skip(1)).Trim();
+                }
+            }
+
+            var idSuffixMatch = Regex.Match(cleanTitle, @"^(.+?)\s*[-_–—]\s*\d+$");
+            if (idSuffixMatch.Success && !string.IsNullOrWhiteSpace(idSuffixMatch.Groups[1].Value))
+            {
+                cleanTitle = idSuffixMatch.Groups[1].Value.Trim();
+            }
+
+            string directURL = cleanTitle.Replace("'", string.Empty).Slugify();
 
             string subSite = Regex.Replace(Helper.GetSearchSiteName(siteNum), @"\W", string.Empty);
             string searchNetwork = GetSubNetwork(subSite, "search");
@@ -175,7 +201,7 @@ namespace PhoenixAdult.Sites
                 searchResultsURLs.Add(directURL2);
             }
 
-            var googleResults = await WebSearch.GetSearchResults(searchTitle, siteNum, cancellationToken);
+            var googleResults = await WebSearch.GetSearchResults(cleanTitle, siteNum, cancellationToken);
             foreach (var sceneURL in googleResults)
             {
                 var cleanURL = sceneURL.Split('?')[0];
@@ -226,7 +252,7 @@ namespace PhoenixAdult.Sites
                             releaseDate = searchDate.Value.ToString("yyyy-MM-dd");
                         }
 
-                        var score = 100 - LevenshteinDistance.Calculate(searchTitle, titleNoFormatting, StringComparison.OrdinalIgnoreCase);
+                        var score = 100 - LevenshteinDistance.Calculate(cleanTitle, titleNoFormatting, StringComparison.OrdinalIgnoreCase);
 
                         result.Add(new RemoteSearchResult
                         {

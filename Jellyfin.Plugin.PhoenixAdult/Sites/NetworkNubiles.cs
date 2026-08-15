@@ -20,8 +20,34 @@ namespace PhoenixAdult.Sites
 {
     public class NetworkNubiles : IProviderBase
     {
-        private readonly IDictionary<string, string> _cookies = new Dictionary<string, string> { { "18-plus-modal", "hidden" } };
-        private readonly IDictionary<string, string> _headers = new Dictionary<string, string> { { "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8" } };
+        private static readonly IDictionary<string, string> Headers = new Dictionary<string, string>
+        {
+            { "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8" },
+            { "Accept-Language", "en-US,en;q=0.9" },
+            { "Sec-Ch-Ua", "\"Microsoft Edge\";v=\"107\", \"Chromium\";v=\"107\", \"Not=A?Brand\";v=\"24\"" },
+            { "Sec-Ch-Ua-Mobile", "?0" },
+            { "Sec-Ch-Ua-Platform", "\"Windows\"" },
+            { "Sec-Fetch-Dest", "document" },
+            { "Sec-Fetch-Mode", "navigate" },
+            { "Sec-Fetch-Site", "none" },
+            { "Sec-Fetch-User", "?1" },
+            { "Upgrade-Insecure-Requests", "1" },
+        };
+
+        private static async Task<IDictionary<string, string>> GetCookies(int[] siteNum, CancellationToken cancellationToken)
+        {
+            var cookies = new Dictionary<string, string> { { "18-plus-modal", "hidden" } };
+            var verifiedCookies = await CaptchaHelper.NCookies(siteNum, cancellationToken).ConfigureAwait(false);
+            if (verifiedCookies != null)
+            {
+                foreach (var kvp in verifiedCookies)
+                {
+                    cookies[kvp.Key] = kvp.Value;
+                }
+            }
+
+            return cookies;
+        }
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
@@ -31,10 +57,12 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
+            var cookies = await GetCookies(siteNum, cancellationToken).ConfigureAwait(false);
+
             if (searchDate.HasValue)
             {
                 var url = $"{Helper.GetSearchSearchURL(siteNum)}date/{searchDate.Value:yyyy-MM-dd}/{searchDate.Value:yyyy-MM-dd}";
-                var data = await HTML.ElementFromURL(url, cancellationToken, _headers, _cookies, forceFlareSolverr: true);
+                var data = await HTML.ElementFromURL(url, cancellationToken, Headers, cookies).ConfigureAwait(false);
                 if (data == null)
                 {
                     return result;
@@ -64,7 +92,7 @@ namespace PhoenixAdult.Sites
             else if (int.TryParse(searchTitle.Split(' ')[0], out var sceneNum))
             {
                 var url = $"{Helper.GetSearchBaseURL(siteNum)}/video/watch/{sceneNum}";
-                var detailsPageElements = await HTML.ElementFromURL(url, cancellationToken, _headers, _cookies, forceFlareSolverr: true);
+                var detailsPageElements = await HTML.ElementFromURL(url, cancellationToken, Headers, cookies).ConfigureAwait(false);
                 if (detailsPageElements != null)
                 {
                     var titleNode = detailsPageElements.SelectSingleNode("//div[contains(@class, 'content-pane-title')]//h2");
@@ -92,8 +120,9 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
+            var cookies = await GetCookies(siteNum, cancellationToken).ConfigureAwait(false);
             string sceneURL = $"{Helper.GetSearchBaseURL(siteNum)}/video/watch/{sceneID[0]}";
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, _headers, _cookies, forceFlareSolverr: true);
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, Headers, cookies).ConfigureAwait(false);
             if (sceneData == null)
             {
                 return result;
@@ -143,7 +172,7 @@ namespace PhoenixAdult.Sites
                 {
                     string actorName = actorLink.InnerText.Trim();
                     string actorPageURL = Helper.GetSearchBaseURL(siteNum) + actorLink.GetAttributeValue("href", string.Empty);
-                    var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken, _headers, _cookies, forceFlareSolverr: true);
+                    var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken, Headers, cookies).ConfigureAwait(false);
                     string actorPhotoURL = "http:" + actorPage?.SelectSingleNode("//div[contains(@class, 'model-profile')]//img")?.GetAttributeValue("src", string.Empty);
                     ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, ImageUrl = actorPhotoURL, Type = PersonKind.Actor });
                 }
@@ -168,8 +197,9 @@ namespace PhoenixAdult.Sites
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
             var result = new List<RemoteImageInfo>();
+            var cookies = await GetCookies(siteNum, cancellationToken).ConfigureAwait(false);
             string sceneURL = $"{Helper.GetSearchBaseURL(siteNum)}/video/watch/{sceneID[0]}";
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, _headers, _cookies, forceFlareSolverr: true);
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, Headers, cookies).ConfigureAwait(false);
             if (sceneData == null)
             {
                 return result;
@@ -203,7 +233,7 @@ namespace PhoenixAdult.Sites
 
             if (!string.IsNullOrEmpty(galleryURL))
             {
-                var photoPage = await HTML.ElementFromURL(galleryURL, cancellationToken, _headers, _cookies, forceFlareSolverr: true);
+                var photoPage = await HTML.ElementFromURL(galleryURL, cancellationToken, Headers, cookies).ConfigureAwait(false);
                 if (photoPage != null)
                 {
                     var sceneImages = photoPage.SelectNodes("//div[@class='img-wrapper']//picture/source[1]");

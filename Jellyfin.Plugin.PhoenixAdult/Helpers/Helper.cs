@@ -425,5 +425,8 @@ namespace PhoenixAdult.Helpers
                 return lowerExceptions.Contains(cleanWord.ToLower()) ? word.ToLower() : CultureInfo.InvariantCulture.TextInfo.ToTitleCase(word);
             }
         }
+
+        public static Task<IDictionary<string, string>> NCookies(int[] siteNum, CancellationToken cancellationToken = default)
+            => CaptchaHelper.NCookies(siteNum, cancellationToken);
     }
 }

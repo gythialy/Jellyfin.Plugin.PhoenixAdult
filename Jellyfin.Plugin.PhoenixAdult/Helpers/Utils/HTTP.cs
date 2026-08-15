@@ -93,7 +93,7 @@ namespace PhoenixAdult.Helpers.Utils
 
         private static CookieContainer CookieContainer { get; } = new CookieContainer();
 
-        private static IWebProxy Proxy { get; set; }
+        internal static IWebProxy Proxy { get; set; }
 
         private static HttpClientHandler HttpHandler { get; set; }
 
@@ -250,8 +250,11 @@ namespace PhoenixAdult.Helpers.Utils
         private class TurnstileConfig
         {
             public string challenge { get; set; }
+
             public int difficulty { get; set; }
+
             public long timestamp { get; set; }
+
             public string returnTo { get; set; }
         }
 
@@ -274,7 +277,7 @@ namespace PhoenixAdult.Helpers.Utils
                 }
 
                 Logger.Info($"[Turnstile Solver] Found custom POW challenge for {url}. Solving (difficulty: {config.difficulty})...");
-                string nonce = SolveProofOfWork(config.challenge, config.difficulty);
+                long nonce = CaptchaHelper.SolvePoW(config.challenge, config.difficulty);
                 Logger.Info($"[Turnstile Solver] Solved POW! Nonce: {nonce}");
 
                 var baseUri = new Uri(url);
@@ -282,7 +285,7 @@ namespace PhoenixAdult.Helpers.Utils
 
                 var payloadObj = new
                 {
-                    nonce = nonce,
+                    nonce = nonce.ToString(CultureInfo.InvariantCulture),
                     timestamp = config.timestamp,
                     difficulty = config.difficulty,
                     environmentChecks = new
@@ -292,19 +295,34 @@ namespace PhoenixAdult.Helpers.Utils
                         hasCanvas = true,
                         hasWebGL = true,
                         colorDepth = 24,
-                        timezoneOffset = 0,
+                        timezoneOffset = 300,
                         languages = "en-US,en",
                         platform = "Win32",
-                        cookieEnabled = true
+                        cookieEnabled = true,
                     },
-                    returnTo = config.returnTo
+                    returnTo = config.returnTo,
                 };
 
                 string jsonPayload = JsonSerializer.Serialize(payloadObj);
+
+                var verifyHeaders = new Dictionary<string, string>();
+                if (headers != null)
+                {
+                    foreach (var h in headers)
+                    {
+                        verifyHeaders[h.Key] = h.Value;
+                    }
+                }
+
+                verifyHeaders["Origin"] = $"{baseUri.Scheme}://{baseUri.Host}";
+                verifyHeaders["Referer"] = url;
+
                 using (var postParam = new StringContent(jsonPayload, Encoding.UTF8, "application/json"))
                 {
-                    var verifyResult = await RequestDirectViaFlareSolverr(verifyUri.AbsoluteUri, HttpMethod.Post, postParam, headers, cookies, cancellationToken, skipTurnstileSolve: true).ConfigureAwait(false);
+                    Logger.Info($"[Turnstile Solver] Sending direct POST request to {verifyUri.AbsoluteUri} with solved PoW nonce...");
+                    var verifyResult = await Request(verifyUri.AbsoluteUri, HttpMethod.Post, postParam, verifyHeaders, cookies, cancellationToken).ConfigureAwait(false);
                     Logger.Info($"[Turnstile Solver] POST /turnstile/verify response: {verifyResult.Content}");
+
                     if (verifyResult.IsOK && !string.IsNullOrEmpty(verifyResult.Content) && verifyResult.Content.Contains("\"success\":true"))
                     {
                         Logger.Info($"[Turnstile Solver] Verification succeeded for {url}. Re-fetching target page via FlareSolverr...");
@@ -323,47 +341,6 @@ namespace PhoenixAdult.Helpers.Utils
             }
 
             return fallback;
-        }
-
-        private static string SolveProofOfWork(string challenge, int difficultyBits)
-        {
-            using (var sha256 = SHA256.Create())
-            {
-                long nonce = 0;
-                while (true)
-                {
-                    string input = $"{challenge}:{nonce}";
-                    byte[] inputBytes = Encoding.UTF8.GetBytes(input);
-                    byte[] hash = sha256.ComputeHash(inputBytes);
-
-                    if (CheckLeadingZeroBits(hash, difficultyBits))
-                    {
-                        return nonce.ToString();
-                    }
-
-                    nonce++;
-                }
-            }
-        }
-
-        private static bool CheckLeadingZeroBits(byte[] byteArray, int requiredBits)
-        {
-            int bitsChecked = 0;
-            for (int byteIndex = 0; byteIndex < byteArray.Length && bitsChecked < requiredBits; byteIndex++)
-            {
-                byte currentByte = byteArray[byteIndex];
-                for (int bitPosition = 7; bitPosition >= 0 && bitsChecked < requiredBits; bitPosition--)
-                {
-                    if (((currentByte >> bitPosition) & 1) != 0)
-                    {
-                        return false;
-                    }
-
-                    bitsChecked++;
-                }
-            }
-
-            return true;
         }
 
         private static async Task<HTTPResponse> RequestDirectViaFlareSolverr(string url, HttpMethod method, HttpContent param, IDictionary<string, string> headers, IDictionary<string, string> cookies, CancellationToken cancellationToken, bool skipTurnstileSolve = false)
@@ -423,6 +400,10 @@ namespace PhoenixAdult.Helpers.Utils
                     if (method == HttpMethod.Post && param != null)
                     {
                         postData = await param.ReadAsStringAsync().ConfigureAwait(false);
+                        if (fsHeaders != null && !fsHeaders.ContainsKey("Content-Type"))
+                        {
+                            fsHeaders["Content-Type"] = "application/json";
+                        }
                     }
 
                     var payload = new

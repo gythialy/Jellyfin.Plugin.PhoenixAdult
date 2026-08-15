@@ -4,3 +4,4 @@ obj/
 .idea/
 _dotnet_sdk/
 *.zip
+plex/
