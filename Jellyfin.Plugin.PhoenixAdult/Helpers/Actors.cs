@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.Entities;
 using PhoenixAdult.Configuration;
 using PhoenixAdult.Helpers.Utils;
-using Jellyfin.Data.Enums;
-using MediaBrowser.Model.Entities;
 
 namespace PhoenixAdult.Helpers
 {

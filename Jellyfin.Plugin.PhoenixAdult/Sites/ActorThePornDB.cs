@@ -116,9 +116,9 @@ namespace PhoenixAdult.Sites
                     result.Item.ProductionLocations = new string[] { birthPlace };
                 }
             }
-            // Fallback to root if not in extras (though API sample suggests extras)
             else
             {
+                // Fallback to root if not in extras (though API sample suggests extras)
                 if (DateTime.TryParseExact((string)details["born_on"], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var bornDate))
                 {
                     result.Item.PremiereDate = bornDate;

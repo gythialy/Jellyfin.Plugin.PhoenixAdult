@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
+using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
@@ -15,7 +16,6 @@ using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-using Jellyfin.Data.Enums;
 
 namespace PhoenixAdult.Sites
 {
@@ -32,14 +32,10 @@ namespace PhoenixAdult.Sites
             var searchData = new SearchData(searchTitle, searchDate);
 
             bool networkscene = true;
-            bool networkscenepages = true;
             bool networkdvd = true;
             string network = string.Empty;
             string network_sep_scene_prev = string.Empty;
             string network_sep_scene = string.Empty;
-            string network_sep_scene_pages_prev = string.Empty;
-            string network_sep_scene_pages = "/";
-            string network_sep_scene_pages_next = string.Empty;
             string network_sep_dvd_prev = string.Empty;
             string network_sep_dvd = "/1/dvd";
 
@@ -49,7 +45,6 @@ namespace PhoenixAdult.Sites
             {
                 network = "Fame Digital";
                 networkscene = false;
-                networkscenepages = false;
                 networkdvd = false;
             }
             else if (sNum >= 1 && sNum <= 6)

@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
+using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
@@ -15,7 +16,6 @@ using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-using Jellyfin.Data.Enums;
 
 namespace PhoenixAdult.Sites
 {
@@ -227,7 +227,10 @@ namespace PhoenixAdult.Sites
                      var jsonLd = JObject.Parse(jsonLdNode.InnerText);
                      posterUrl = (string)jsonLd["thumbnailUrl"];
                  }
-                 catch { }
+                 catch
+                 {
+                     // ignored
+                 }
             }
 
             if (string.IsNullOrEmpty(posterUrl))

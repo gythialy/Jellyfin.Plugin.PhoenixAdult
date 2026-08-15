@@ -2,7 +2,7 @@ using System.IO;
 
 namespace PhoenixAdult.Extensions
 {
-    public static class StreamExtensions
+    public static class StreamExtension
     {
         public static byte[] ToBytes(this Stream input)
         {

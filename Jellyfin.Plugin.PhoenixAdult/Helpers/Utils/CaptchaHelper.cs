@@ -57,6 +57,7 @@ namespace PhoenixAdult.Helpers.Utils
             {
                 CookieContainer = cookieContainer,
                 Proxy = HTTP.Proxy,
+                AutomaticDecompression = DecompressionMethods.All,
             };
 
             if (Plugin.Instance.Configuration.DisableSSLCheck)
@@ -146,7 +147,11 @@ namespace PhoenixAdult.Helpers.Utils
                         Content = postContent,
                     };
                     postRequest.Headers.TryAddWithoutValidation("User-Agent", UserAgent);
-                    postRequest.Headers.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8");
+                    postRequest.Headers.TryAddWithoutValidation("Accept", "*/*");
+                    postRequest.Headers.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.9");
+                    postRequest.Headers.TryAddWithoutValidation("Sec-Fetch-Dest", "empty");
+                    postRequest.Headers.TryAddWithoutValidation("Sec-Fetch-Mode", "cors");
+                    postRequest.Headers.TryAddWithoutValidation("Sec-Fetch-Site", "same-origin");
                     postRequest.Headers.TryAddWithoutValidation("Referer", galleryUrl);
                     postRequest.Headers.TryAddWithoutValidation("Origin", baseUri);
 

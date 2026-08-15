@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -11,7 +12,6 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
 using PhoenixAdult.Sites;
-using System.Net.Http;
 
 namespace PhoenixAdult.Helpers
 {
@@ -98,10 +98,10 @@ namespace PhoenixAdult.Helpers
 
             foreach (var siteGroup in Database.SiteList.Sites)
             {
-                //Logger.Info($"siteGroup: {siteGroup}");
+                // Logger.Info($"siteGroup: {siteGroup}");
                 foreach (var siteData in siteGroup.Value)
                 {
-                    //Logger.Info($"siteData: {siteData}");
+                    // Logger.Info($"siteData: {siteData}");
                     var siteName = siteData.Value[0];
 
                     if (!string.IsNullOrEmpty(siteName))

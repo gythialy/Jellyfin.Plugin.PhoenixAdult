@@ -5,6 +5,8 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using HtmlAgilityPack;
+using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
@@ -14,7 +16,6 @@ using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-using Jellyfin.Data.Enums;
 
 namespace PhoenixAdult.Sites
 {
@@ -23,12 +24,12 @@ namespace PhoenixAdult.Sites
         private static readonly HashSet<string> familystrokesDB = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "Ask Your Mother", "Black Step Dad", "Dad Crush", "Family Strokes", "Family Strokes Features",
-            "Foster Tapes", "Not My Grandpa", "Perv Mom", "Perv Nana", "Sis Loves Me", "Tiny Sis"
+            "Foster Tapes", "Not My Grandpa", "Perv Mom", "Perv Nana", "Sis Loves Me", "Tiny Sis",
         };
 
         private static readonly HashSet<string> freeuseDB = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "Freaky Fembots", "FreeUse", "FreeUse Fantasy", "FreeUse MILF", "FreeUse Singles", "Use POV"
+            "Freaky Fembots", "FreeUse", "FreeUse Fantasy", "FreeUse MILF", "FreeUse Singles", "Use POV",
         };
 
         private static readonly HashSet<string> mylfDB = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -37,18 +38,18 @@ namespace PhoenixAdult.Sites
             "Hookup Pad", "Lone MILF", "MILF Body", "Milfty", "Mom Drips", "Mom Shoot", "Mommy's Little Man",
             "MYLF", "MYLF After Dark", "MYLF Blows", "MYLF Boss", "MYLF Features", "MYLF of the Month",
             "MYLF Singles", "Mylfdom", "Mylfed", "MylfWood", "New MYLFs", "Oye Mami", "Secrets", "Shag Street",
-            "Stay Home MILF", "Tiger Moms"
+            "Stay Home MILF", "Tiger Moms",
         };
 
         private static readonly HashSet<string> pervzDB = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "Charmed", "MILF Taxi", "Perv Doctor", "Perv Driver", "Perv Massage", "Perv Principal",
-            "Perv Singles", "Perv Therapy", "Pervz", "Pervz Features", "Shoplyfter MYLF", "Shoplyfter"
+            "Perv Singles", "Perv Therapy", "Pervz", "Pervz Features", "Shoplyfter MYLF", "Shoplyfter",
         };
 
         private static readonly HashSet<string> swappzDB = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "Daughter Swap", "Mom Swap", "Sis Swap", "Swappz"
+            "Daughter Swap", "Mom Swap", "Sis Swap", "Swappz",
         };
 
         private static readonly HashSet<string> teamskeetDB = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -63,7 +64,7 @@ namespace PhoenixAdult.Sites
             "TeamSkeet Classics", "TeamSkeet Extras", "TeamSkeet Features", "TeamSkeet Labs", "TeamSkeet Singles",
             "TeamSkeet VIP", "TeamSkeet", "Teen Curves", "Teen JOI", "Teen Pies", "Teens Do Porn", "Teens Love Anal",
             "Teens Love Black Cocks", "Teens Love Money", "Teeny Black", "The Loft", "The Real Workout", "Thickumz",
-            "This Girl Sucks", "Titty Attack", "Tomboyz"
+            "This Girl Sucks", "Titty Attack", "Tomboyz",
         };
 
         private static readonly Dictionary<string, string[]> data18ManualMappings = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
@@ -72,14 +73,46 @@ namespace PhoenixAdult.Sites
             { "1313219", new[] { "delicious-firsts" } },
             { "1349311", new[] { "thanksgiving-the-hijab-way" } },
             { "1341218", new[] { "the-vamp-next-door" } },
-            { "1341212", new[] { "home-for-the-holidays" } }
+            { "1341212", new[] { "home-for-the-holidays" } },
         };
 
         private static readonly Dictionary<string, string> ageCookie = new Dictionary<string, string> { { "age_verified", "yes" } };
 
+        private class ReptyleSceneDetails
+        {
+            public string Id { get; set; }
+
+            public string Title { get; set; }
+
+            public string Description { get; set; }
+
+            public string ImageUrl { get; set; }
+
+            public string PublishedDate { get; set; }
+
+            public DateTime? ParsedDate { get; set; }
+
+            public string SubSite { get; set; }
+
+            public string SceneType { get; set; } = "videosContent";
+
+            public List<ReptyleActorDetails> Models { get; set; } = new List<ReptyleActorDetails>();
+
+            public List<string> Tags { get; set; } = new List<string>();
+        }
+
+        private class ReptyleActorDetails
+        {
+            public string Id { get; set; }
+
+            public string Name { get; set; }
+
+            public string ImageUrl { get; set; }
+        }
+
         private string GetSubNetwork(string subSite, string type = null)
         {
-            string subSiteLower = subSite.Replace(" ", "").ToLowerInvariant();
+            string subSiteLower = subSite.Replace(" ", string.Empty).ToLowerInvariant();
 
             if (subSiteLower.StartsWith("teamskeetx") || (type == "search" && subSiteLower.StartsWith("mylfx")))
             {
@@ -98,13 +131,13 @@ namespace PhoenixAdult.Sites
                 (swappzDB, "Swappz"),
                 (freeuseDB, "FreeUse"),
                 (pervzDB, "Pervz"),
-                (familystrokesDB, "Family Strokes")
+                (familystrokesDB, "Family Strokes"),
             };
 
-            var cleanSubSite = Regex.Replace(subSite, @"\W", "").ToLowerInvariant();
+            var cleanSubSite = Regex.Replace(subSite, @"\W", string.Empty).ToLowerInvariant();
             foreach (var (db, name) in databases)
             {
-                if (db.Any(x => Regex.Replace(x, @"\W", "").ToLowerInvariant() == cleanSubSite))
+                if (db.Any(x => Regex.Replace(x, @"\W", string.Empty).ToLowerInvariant() == cleanSubSite))
                 {
                     return name;
                 }
@@ -116,12 +149,12 @@ namespace PhoenixAdult.Sites
         private string GetSubSite(string subSite)
         {
             var databases = new[] { mylfDB, teamskeetDB, swappzDB, freeuseDB, pervzDB, familystrokesDB };
-            var cleanSubSite = Regex.Replace(subSite, @"\W", "").ToLowerInvariant();
+            var cleanSubSite = Regex.Replace(subSite, @"\W", string.Empty).ToLowerInvariant();
             foreach (var db in databases)
             {
                 foreach (var site in db)
                 {
-                    if (Regex.Replace(site, @"\W", "").ToLowerInvariant() == cleanSubSite)
+                    if (Regex.Replace(site, @"\W", string.Empty).ToLowerInvariant() == cleanSubSite)
                     {
                         return site;
                     }
@@ -131,26 +164,334 @@ namespace PhoenixAdult.Sites
             return subSite;
         }
 
-        private async Task<JObject> GetJSONfromPage(string url, CancellationToken cancellationToken)
+        private async Task<ReptyleSceneDetails> GetSceneDetailsFromPage(string url, CancellationToken cancellationToken, string expectedSlug = null)
         {
             var httpResult = await HTTP.Request(url, HttpMethod.Get, cancellationToken, null, ageCookie);
-            if (httpResult.IsOK)
+            if (!httpResult.IsOK || string.IsNullOrEmpty(httpResult.Content))
             {
-                var match = Regex.Match(httpResult.Content, @"window\.__INITIAL_STATE__\s*=\s*(.*?);\s*(?:window\b|<\/script>)", RegexOptions.Singleline);
-                if (match.Success)
+                return null;
+            }
+
+            // 1. Try window.__INITIAL_STATE__ (Legacy React SPA layout)
+            var match = Regex.Match(httpResult.Content, @"window\.__INITIAL_STATE__\s*=\s*(.*?);\s*(?:window\b|<\/script>)", RegexOptions.Singleline);
+            if (match.Success)
+            {
+                try
                 {
+                    var json = JObject.Parse(match.Groups[1].Value);
+                    if (json["content"] is JObject content)
+                    {
+                        foreach (var type in new[] { "moviesContent", "videosContent" })
+                        {
+                            if (content[type] is JObject section && section.HasValues)
+                            {
+                                JToken details = null;
+                                string slug = expectedSlug;
+                                if (!string.IsNullOrEmpty(slug) && section[slug] != null)
+                                {
+                                    details = section[slug];
+                                }
+                                else
+                                {
+                                    var prop = section.Properties().FirstOrDefault();
+                                    if (prop != null)
+                                    {
+                                        slug = prop.Name;
+                                        details = prop.Value;
+                                    }
+                                }
+
+                                if (details != null)
+                                {
+                                    var scene = new ReptyleSceneDetails
+                                    {
+                                        Id = slug,
+                                        Title = details["title"]?.ToString() ?? details["videoTitle"]?.ToString(),
+                                        Description = details["description"]?.ToString(),
+                                        ImageUrl = details["img"]?.ToString(),
+                                        SubSite = details["site"]?["name"]?.ToString(),
+                                        SceneType = type,
+                                    };
+
+                                    if (details["publishedDate"] != null && DateTime.TryParse(details["publishedDate"].ToString(), out var parsedDate))
+                                    {
+                                        scene.ParsedDate = parsedDate;
+                                        scene.PublishedDate = parsedDate.ToString("yyyy-MM-dd");
+                                    }
+
+                                    if (details["models"] is JArray models)
+                                    {
+                                        foreach (var m in models)
+                                        {
+                                            string actorId = m["id"]?.ToString() ?? m["modelId"]?.ToString();
+                                            string actorName = m["name"]?.ToString() ?? m["title"]?.ToString() ?? m["modelName"]?.ToString();
+                                            string actorImg = m["img"]?.ToString();
+                                            if (!string.IsNullOrEmpty(actorName))
+                                            {
+                                                scene.Models.Add(new ReptyleActorDetails { Id = actorId, Name = actorName, ImageUrl = actorImg });
+                                            }
+                                        }
+                                    }
+
+                                    if (details["tags"] is JArray tags)
+                                    {
+                                        foreach (var tag in tags)
+                                        {
+                                            string genreName = tag?.ToString()?.Trim();
+                                            if (!string.IsNullOrEmpty(genreName))
+                                            {
+                                                scene.Tags.Add(genreName);
+                                            }
+                                        }
+                                    }
+
+                                    return scene;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Debug($"Error parsing __INITIAL_STATE__: {ex.Message}");
+                }
+            }
+
+            // 2. Try JSON-LD and HTML DOM (Astro SSR / new layout)
+            try
+            {
+                var doc = new HtmlDocument();
+                doc.LoadHtml(httpResult.Content);
+                var root = doc.DocumentNode;
+
+                JObject videoLd = null;
+                var ldScripts = root.SelectNodesSafe("//script[@type='application/ld+json']");
+                foreach (var s in ldScripts)
+                {
+                    var text = s.InnerText?.Trim();
+                    if (string.IsNullOrEmpty(text))
+                    {
+                        continue;
+                    }
+
                     try
                     {
-                        var json = JObject.Parse(match.Groups[1].Value);
-                        return json["content"] as JObject;
+                        var parsed = JToken.Parse(text);
+                        if (parsed is JObject jObj && jObj["@type"]?.ToString() == "VideoObject")
+                        {
+                            videoLd = jObj;
+                            break;
+                        }
+                        else if (parsed is JArray jArr)
+                        {
+                            var vo = jArr.OfType<JObject>().FirstOrDefault(x => x["@type"]?.ToString() == "VideoObject");
+                            if (vo != null)
+                            {
+                                videoLd = vo;
+                                break;
+                            }
+                        }
                     }
                     catch
                     {
                         // ignored
                     }
                 }
+
+                if (videoLd != null || root.SelectSingleNodeSafe("//h1") != null)
+                {
+                    string slug = expectedSlug;
+                    if (string.IsNullOrEmpty(slug))
+                    {
+                        try
+                        {
+                            var uri = new Uri(url);
+                            slug = uri.AbsolutePath.TrimEnd('/').Split('/').Last();
+                        }
+                        catch
+                        {
+                            slug = string.Empty;
+                        }
+                    }
+
+                    string title = videoLd?["name"]?.ToString()
+                        ?? root.SelectSingleNodeSafe("//h1[contains(@class, 'meta-title')] | //h1")?.InnerText?.Trim()
+                        ?? root.SelectSingleNodeSafe("//meta[@property='og:title']")?.GetAttributeValue("content", string.Empty);
+
+                    if (string.IsNullOrEmpty(title))
+                    {
+                        return null;
+                    }
+
+                    string desc = videoLd?["description"]?.ToString()
+                        ?? root.SelectSingleNodeSafe("//meta[@name='description'] | //meta[@property='og:description']")?.GetAttributeValue("content", string.Empty);
+
+                    string img = videoLd?["thumbnailUrl"]?.ToString()
+                        ?? root.SelectSingleNodeSafe("//meta[@property='og:image'] | //meta[@name='twitter:image']")?.GetAttributeValue("content", string.Empty);
+
+                    var scene = new ReptyleSceneDetails
+                    {
+                        Id = slug,
+                        Title = title,
+                        Description = desc,
+                        ImageUrl = img,
+                        SceneType = "videosContent",
+                    };
+
+                    string dateStr = videoLd?["uploadDate"]?.ToString();
+                    if (!string.IsNullOrEmpty(dateStr) && DateTime.TryParse(dateStr, out var pDate))
+                    {
+                        scene.ParsedDate = pDate;
+                        scene.PublishedDate = pDate.ToString("yyyy-MM-dd");
+                    }
+
+                    // Extract Actors
+                    if (videoLd?["actor"] is JArray actorArr)
+                    {
+                        foreach (var a in actorArr)
+                        {
+                            string aName = a["name"]?.ToString();
+                            string aUrl = a["url"]?.ToString();
+                            string aId = !string.IsNullOrEmpty(aUrl) ? aUrl.TrimEnd('/').Split('/').Last() : string.Empty;
+                            if (!string.IsNullOrEmpty(aName))
+                            {
+                                scene.Models.Add(new ReptyleActorDetails { Id = aId, Name = aName });
+                            }
+                        }
+                    }
+
+                    if (!scene.Models.Any())
+                    {
+                        var modelNodes = root.SelectNodesSafe("//p[contains(@class, 'starring')]//a | //a[starts-with(@href, '/models/')]");
+                        var seenActors = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        foreach (var mNode in modelNodes)
+                        {
+                            string aName = mNode.InnerText?.Trim();
+                            string aHref = mNode.GetAttributeValue("href", string.Empty);
+                            string aId = aHref.TrimEnd('/').Split('/').Last();
+                            if (!string.IsNullOrEmpty(aName) && !seenActors.Contains(aName) && !aName.Equals("See All", StringComparison.OrdinalIgnoreCase) && !aName.Equals("Models", StringComparison.OrdinalIgnoreCase))
+                            {
+                                seenActors.Add(aName);
+                                scene.Models.Add(new ReptyleActorDetails { Id = aId, Name = aName });
+                            }
+                        }
+                    }
+
+                    // Extract Tags
+                    if (videoLd?["genre"] is JArray genreArr)
+                    {
+                        foreach (var g in genreArr)
+                        {
+                            string genre = g?.ToString()?.Trim();
+                            if (!string.IsNullOrEmpty(genre))
+                            {
+                                scene.Tags.Add(genre);
+                            }
+                        }
+                    }
+                    else if (videoLd?["genre"] != null)
+                    {
+                        string genre = videoLd["genre"].ToString().Trim();
+                        if (!string.IsNullOrEmpty(genre))
+                        {
+                            scene.Tags.Add(genre);
+                        }
+                    }
+
+                    var tagNodes = root.SelectNodesSafe("//ul[contains(@class, 'tags')]//li | //a[starts-with(@href, '/categories/')]");
+                    foreach (var tNode in tagNodes)
+                    {
+                        string tag = tNode.InnerText?.Trim();
+                        if (!string.IsNullOrEmpty(tag) && !scene.Tags.Contains(tag, StringComparer.OrdinalIgnoreCase))
+                        {
+                            scene.Tags.Add(tag);
+                        }
+                    }
+
+                    // Extract SubSite
+                    string subSite = root.SelectSingleNodeSafe("//a[contains(@class, 'series-link')]")?.InnerText?.Trim();
+                    if (string.IsNullOrEmpty(subSite))
+                    {
+                        subSite = root.SelectSingleNodeSafe("//*[contains(@class, 'head-logo')]//img")?.GetAttributeValue("alt", string.Empty)?.Trim();
+                    }
+
+                    if (string.IsNullOrEmpty(subSite))
+                    {
+                        subSite = root.SelectSingleNodeSafe("//meta[@property='og:site_name']")?.GetAttributeValue("content", string.Empty)?.Trim();
+                    }
+
+                    scene.SubSite = subSite;
+
+                    return scene;
+                }
             }
+            catch (Exception ex)
+            {
+                Logger.Debug($"Error parsing JSON-LD / HTML: {ex.Message}");
+            }
+
             return null;
+        }
+
+        private async Task<string> GetActorPhoto(string actorID, string baseURL, string searchNetworkCleanLower, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(actorID))
+            {
+                return string.Empty;
+            }
+
+            var urls = new List<string>
+            {
+                $"{baseURL}/models/{actorID}",
+                $"https://www.{searchNetworkCleanLower}.com/models/{actorID}",
+            };
+
+            foreach (var actorUrl in urls.Distinct())
+            {
+                try
+                {
+                    var httpResult = await HTTP.Request(actorUrl, HttpMethod.Get, cancellationToken, null, ageCookie);
+                    if (!httpResult.IsOK || string.IsNullOrEmpty(httpResult.Content))
+                    {
+                        continue;
+                    }
+
+                    var match = Regex.Match(httpResult.Content, @"window\.__INITIAL_STATE__\s*=\s*(.*?);\s*(?:window\b|<\/script>)", RegexOptions.Singleline);
+                    if (match.Success)
+                    {
+                        try
+                        {
+                            var json = JObject.Parse(match.Groups[1].Value);
+                            if (json["content"]?["modelsContent"]?[actorID]?["img"] != null)
+                            {
+                                string img = json["content"]["modelsContent"][actorID]["img"].ToString();
+                                if (!string.IsNullOrEmpty(img))
+                                {
+                                    return img;
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            // ignored
+                        }
+                    }
+
+                    var doc = new HtmlDocument();
+                    doc.LoadHtml(httpResult.Content);
+                    var ogImg = doc.DocumentNode.SelectSingleNodeSafe("//meta[@property='og:image'] | //meta[@name='twitter:image']")?.GetAttributeValue("content", string.Empty);
+                    if (!string.IsNullOrEmpty(ogImg) && !ogImg.Contains("logo", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return ogImg;
+                    }
+                }
+                catch
+                {
+                    // ignored
+                }
+            }
+
+            return string.Empty;
         }
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
@@ -190,6 +531,7 @@ namespace PhoenixAdult.Sites
             {
                 searchNetwork = "Reptyle";
             }
+
             string searchNetworkCleanLower = Regex.Replace(searchNetwork, @"\W", string.Empty).ToLowerInvariant();
 
             string directURL1 = Helper.GetSearchSearchURL(siteNum) + directURL;
@@ -213,54 +555,28 @@ namespace PhoenixAdult.Sites
 
             foreach (var sceneURL in searchResultsURLs)
             {
-                var content = await GetJSONfromPage(sceneURL, cancellationToken);
-                if (content != null)
+                string expectedSlug = sceneURL.Split('?')[0].TrimEnd('/').Split('/').Last();
+                var details = await GetSceneDetailsFromPage(sceneURL, cancellationToken, expectedSlug);
+                if (details != null)
                 {
-                    string sceneType = null;
-                    foreach (var type in new[] { "moviesContent", "videosContent" })
+                    string curID = details.Id;
+                    string titleNoFormatting = Helper.ParseTitle(details.Title, siteNum);
+                    string detailsSubSite = !string.IsNullOrEmpty(details.SubSite) ? details.SubSite : Helper.GetSearchSiteName(siteNum);
+
+                    string releaseDate = details.PublishedDate ?? string.Empty;
+                    if (string.IsNullOrEmpty(releaseDate) && searchDate.HasValue)
                     {
-                        if (content[type] != null && content[type].HasValues)
-                        {
-                            sceneType = type;
-                            break;
-                        }
+                        releaseDate = searchDate.Value.ToString("yyyy-MM-dd");
                     }
 
-                    if (sceneType != null)
+                    var score = 100 - LevenshteinDistance.Calculate(cleanTitle, titleNoFormatting, StringComparison.OrdinalIgnoreCase);
+
+                    result.Add(new RemoteSearchResult
                     {
-                        var section = content[sceneType] as JObject;
-                        string curID = section.Properties().First().Name;
-                        var details = section[curID];
-                        if (details == null)
-                        {
-                            continue;
-                        }
-
-                        string titleNoFormatting = Helper.ParseTitle(details["title"]?.ToString(), siteNum);
-                        string detailsSubSite = details["site"]?["name"]?.ToString() ?? Helper.GetSearchSiteName(siteNum);
-
-                        string releaseDate = string.Empty;
-                        if (details["publishedDate"] != null)
-                        {
-                            if (DateTime.TryParse(details["publishedDate"].ToString(), out var parsedDate))
-                            {
-                                releaseDate = parsedDate.ToString("yyyy-MM-dd");
-                            }
-                        }
-                        else if (searchDate.HasValue)
-                        {
-                            releaseDate = searchDate.Value.ToString("yyyy-MM-dd");
-                        }
-
-                        var score = 100 - LevenshteinDistance.Calculate(cleanTitle, titleNoFormatting, StringComparison.OrdinalIgnoreCase);
-
-                        result.Add(new RemoteSearchResult
-                        {
-                            ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}|{sceneType}" } },
-                            Name = $"{titleNoFormatting} [{GetSubSite(detailsSubSite)}] {releaseDate}",
-                            SearchProviderName = Plugin.Instance.Name,
-                        });
-                    }
+                        ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}|{details.SceneType}" } },
+                        Name = $"{titleNoFormatting} [{GetSubSite(detailsSubSite)}] {releaseDate}",
+                        SearchProviderName = Plugin.Instance.Name,
+                    });
                 }
             }
 
@@ -277,66 +593,44 @@ namespace PhoenixAdult.Sites
 
             string[] idParts = sceneID[0].Split('|');
             string sceneName = idParts[0];
-            string sceneDate = idParts.Length > 2 ? idParts[1] : string.Empty;
-            string sceneType = idParts.Length > 3 ? idParts[2].Replace("content", "Content") : "moviesContent";
+            string sceneDate = idParts.Length > 1 ? idParts[1] : string.Empty;
+            string sceneType = idParts.Length > 2 ? idParts[2].Replace("content", "Content") : "videosContent";
 
             string searchNetwork = GetSubNetwork(Helper.GetSearchSiteName(siteNum), "search");
             if (string.IsNullOrEmpty(searchNetwork))
             {
                 searchNetwork = "Reptyle";
             }
+
             string searchNetworkCleanLower = Regex.Replace(searchNetwork, @"\W", string.Empty).ToLowerInvariant();
 
-            var detailsPageJson = await GetJSONfromPage(Helper.GetSearchSearchURL(siteNum) + sceneName, cancellationToken);
-            JToken detailsPageElements = null;
+            var details = await GetSceneDetailsFromPage(Helper.GetSearchSearchURL(siteNum) + sceneName, cancellationToken, sceneName);
 
-            if (detailsPageJson != null)
+            if (details == null)
             {
-                if (detailsPageJson[sceneType] != null && detailsPageJson[sceneType][sceneName] != null)
-                {
-                    detailsPageElements = detailsPageJson[sceneType][sceneName];
-                }
-                else if (detailsPageJson["videosContent"] != null && detailsPageJson["videosContent"][sceneName] != null)
-                {
-                    detailsPageElements = detailsPageJson["videosContent"][sceneName];
-                }
+                details = await GetSceneDetailsFromPage($"https://www.{searchNetworkCleanLower}.com/movies/{sceneName}", cancellationToken, sceneName);
             }
 
-            if (detailsPageElements == null)
-            {
-                var fallbackJson = await GetJSONfromPage($"https://www.{searchNetworkCleanLower}.com/movies/{sceneName}", cancellationToken);
-                if (fallbackJson != null)
-                {
-                    if (fallbackJson[sceneType] != null && fallbackJson[sceneType][sceneName] != null)
-                    {
-                        detailsPageElements = fallbackJson[sceneType][sceneName];
-                    }
-                    else if (fallbackJson["videosContent"] != null && fallbackJson["videosContent"][sceneName] != null)
-                    {
-                        detailsPageElements = fallbackJson["videosContent"][sceneName];
-                    }
-                }
-            }
-
-            if (detailsPageElements == null)
+            if (details == null)
             {
                 return result;
             }
 
-            string detailsSubSite = detailsPageElements["site"]?["name"]?.ToString() ?? Helper.GetSearchSiteName(siteNum);
+            string detailsSubSite = !string.IsNullOrEmpty(details.SubSite) ? details.SubSite : Helper.GetSearchSiteName(siteNum);
             string subSite = GetSubSite(detailsSubSite);
             string subNetwork = GetSubNetwork(subSite);
 
             var movie = (Movie)result.Item;
             movie.ExternalId = $"{Helper.GetSearchBaseURL(siteNum)}/movies/{sceneName}";
-            movie.Name = Helper.ParseTitle(detailsPageElements["title"]?.ToString(), siteNum);
-            movie.Overview = HTML.StripHtml(detailsPageElements["description"]?.ToString() ?? string.Empty);
+            movie.Name = Helper.ParseTitle(details.Title, siteNum);
+            movie.Overview = HTML.StripHtml(details.Description ?? string.Empty);
             movie.AddStudio(string.IsNullOrEmpty(subNetwork) ? "Reptyle" : subNetwork);
 
             if (subSite != subNetwork)
             {
                 movie.AddStudio(subSite);
             }
+
             movie.AddCollection(subSite);
 
             if (DateTime.TryParse(sceneDate, out var date))
@@ -344,64 +638,38 @@ namespace PhoenixAdult.Sites
                 movie.PremiereDate = date;
                 movie.ProductionYear = date.Year;
             }
-            else if (detailsPageElements["publishedDate"] != null && DateTime.TryParse(detailsPageElements["publishedDate"].ToString(), out var parsedDate))
+            else if (details.ParsedDate.HasValue)
             {
-                movie.PremiereDate = parsedDate;
-                movie.ProductionYear = parsedDate.Year;
+                movie.PremiereDate = details.ParsedDate.Value;
+                movie.ProductionYear = details.ParsedDate.Value.Year;
             }
 
-            var models = detailsPageElements["models"] as JArray;
-            if (models != null)
+            if (details.Models != null)
             {
-                foreach (var model in models)
+                foreach (var model in details.Models)
                 {
-                    string actorID = model["modelId"]?.ToString() ?? model["id"]?.ToString();
-                    string actorName = model["modelName"]?.ToString() ?? model["name"]?.ToString();
+                    string actorID = model.Id;
+                    string actorName = model.Name;
                     if (string.IsNullOrEmpty(actorName))
                     {
                         continue;
                     }
 
-                    string actorPhotoURL = string.Empty;
-                    try
-                    {
-                        var actorData = await GetJSONfromPage($"{Helper.GetSearchBaseURL(siteNum)}/models/{actorID}", cancellationToken);
-                        if (actorData != null && actorData["modelsContent"] != null && actorData["modelsContent"][actorID] != null)
-                        {
-                            actorPhotoURL = actorData["modelsContent"][actorID]["img"]?.ToString();
-                        }
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-
+                    string actorPhotoURL = model.ImageUrl;
                     if (string.IsNullOrEmpty(actorPhotoURL))
                     {
-                        try
-                        {
-                            var actorData = await GetJSONfromPage($"https://www.{searchNetworkCleanLower}.com/models/{actorID}", cancellationToken);
-                            if (actorData != null && actorData["modelsContent"] != null && actorData["modelsContent"][actorID] != null)
-                            {
-                                actorPhotoURL = actorData["modelsContent"][actorID]["img"]?.ToString();
-                            }
-                        }
-                        catch
-                        {
-                            // ignored
-                        }
+                        actorPhotoURL = await GetActorPhoto(actorID, Helper.GetSearchBaseURL(siteNum), searchNetworkCleanLower, cancellationToken);
                     }
 
                     ((List<PersonInfo>)result.People).Add(new PersonInfo { Name = actorName, Type = PersonKind.Actor, ImageUrl = actorPhotoURL });
                 }
             }
 
-            var tags = detailsPageElements["tags"] as JArray;
-            if (tags != null)
+            if (details.Tags != null)
             {
-                foreach (var tag in tags)
+                foreach (var tag in details.Tags)
                 {
-                    string genreName = tag?.ToString().Trim();
+                    string genreName = tag?.Trim();
                     if (!string.IsNullOrEmpty(genreName))
                     {
                         movie.AddGenre(genreName);
@@ -409,7 +677,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            if (models != null && models.Count > 1 && subSite != "Mylfed")
+            if (details.Models != null && details.Models.Count > 1 && subSite != "Mylfed")
             {
                 movie.AddGenre("Threesome");
             }
@@ -422,30 +690,25 @@ namespace PhoenixAdult.Sites
             var images = new List<RemoteImageInfo>();
             string[] idParts = sceneID[0].Split('|');
             string sceneName = idParts[0];
-            string sceneType = idParts.Length > 2 ? idParts[2].Replace("content", "Content") : "moviesContent";
 
-            var detailsPageJson = await GetJSONfromPage(Helper.GetSearchSearchURL(siteNum) + sceneName, cancellationToken);
-            JToken detailsPageElements = null;
-
-            if (detailsPageJson != null)
+            string searchNetwork = GetSubNetwork(Helper.GetSearchSiteName(siteNum), "search");
+            if (string.IsNullOrEmpty(searchNetwork))
             {
-                if (detailsPageJson[sceneType] != null && detailsPageJson[sceneType][sceneName] != null)
-                {
-                    detailsPageElements = detailsPageJson[sceneType][sceneName];
-                }
-                else if (detailsPageJson["videosContent"] != null && detailsPageJson["videosContent"][sceneName] != null)
-                {
-                    detailsPageElements = detailsPageJson["videosContent"][sceneName];
-                }
+                searchNetwork = "Reptyle";
             }
 
-            if (detailsPageElements != null)
+            string searchNetworkCleanLower = Regex.Replace(searchNetwork, @"\W", string.Empty).ToLowerInvariant();
+
+            var details = await GetSceneDetailsFromPage(Helper.GetSearchSearchURL(siteNum) + sceneName, cancellationToken, sceneName);
+
+            if (details == null)
             {
-                string imageUrl = detailsPageElements["img"]?.ToString();
-                if (!string.IsNullOrEmpty(imageUrl))
-                {
-                    images.Add(new RemoteImageInfo { Url = imageUrl, Type = ImageType.Primary });
-                }
+                details = await GetSceneDetailsFromPage($"https://www.{searchNetworkCleanLower}.com/movies/{sceneName}", cancellationToken, sceneName);
+            }
+
+            if (details != null && !string.IsNullOrEmpty(details.ImageUrl))
+            {
+                images.Add(new RemoteImageInfo { Url = details.ImageUrl, Type = ImageType.Primary });
             }
 
             return images;

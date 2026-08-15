@@ -39,10 +39,15 @@ internal static class HtmlNodeExtension
 
     public static HtmlNodeCollection SelectNodesSafe(this HtmlNode source, string xpath)
     {
-        var nodes = source.SelectNodes(xpath);
+        var nodes = source?.SelectNodes(xpath);
 
         nodes ??= new HtmlNodeCollection(HtmlNode.CreateNode(string.Empty));
 
         return nodes;
+    }
+
+    public static HtmlNode SelectSingleNodeSafe(this HtmlNode source, string xpath)
+    {
+        return source?.SelectSingleNode(xpath);
     }
 }

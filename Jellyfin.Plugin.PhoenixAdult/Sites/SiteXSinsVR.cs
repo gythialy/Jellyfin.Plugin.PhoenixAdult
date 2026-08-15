@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
+using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
@@ -15,7 +16,6 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-using Jellyfin.Data.Enums;
 
 namespace PhoenixAdult.Sites
 {
@@ -35,6 +35,7 @@ namespace PhoenixAdult.Sites
 
                 var nodes = doc.DocumentNode.SelectNodes("//div[@class='tn-video tn-video--horizontal']");
                 if (nodes != null)
+                {
                     foreach (var node in nodes)
                     {
                         var infoNode = node.SelectSingleNode(".//div/a[@class='tn-video-name']");
@@ -49,6 +50,7 @@ namespace PhoenixAdult.Sites
                             {
                                 href = Helper.GetSearchBaseURL(siteNum) + href;
                             }
+
                             var curID = Helper.Encode(href);
 
                             var actorsList = new List<string>();
@@ -59,6 +61,7 @@ namespace PhoenixAdult.Sites
                                     actorsList.Add(actor.InnerText.Trim());
                                 }
                             }
+
                             string actors = string.Join(", ", actorsList);
 
                             result.Add(new RemoteSearchResult
@@ -69,6 +72,7 @@ namespace PhoenixAdult.Sites
                             });
                         }
                     }
+                }
             }
 
             return result;
@@ -113,6 +117,7 @@ namespace PhoenixAdult.Sites
                 {
                     summary += paragraph.InnerText.Trim() + " ";
                 }
+
                 movie.Overview = summary.Trim();
             }
 

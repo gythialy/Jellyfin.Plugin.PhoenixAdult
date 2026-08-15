@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
+using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
@@ -14,7 +15,6 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-using Jellyfin.Data.Enums;
 
 namespace PhoenixAdult.Sites
 {
@@ -123,6 +123,7 @@ namespace PhoenixAdult.Sites
                             {
                                 releaseDate = parsedDate.ToString("yyyy-MM-dd");
                             }
+
                             string siteName = searchResult.SelectSingleNode(".//a[@class='site-title']")?.InnerText;
                             result.Add(new RemoteSearchResult
                             {
@@ -162,6 +163,7 @@ namespace PhoenixAdult.Sites
             {
                 movie.AddStudio(details.Site.Replace("&#039;", "'", StringComparison.OrdinalIgnoreCase));
             }
+
             movie.ExternalId = $"https://www.naughtyamerica.com/scene/0{sceneId}";
 
             if (details.PublishedAt != default)

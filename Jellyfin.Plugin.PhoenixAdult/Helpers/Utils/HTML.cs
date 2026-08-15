@@ -14,13 +14,13 @@ namespace PhoenixAdult.Helpers.Utils
         {
             var html = new HtmlDocument().DocumentNode;
             var http = await HTTP.Request(url, cancellationToken, headers, cookies, freshSession, forceFlareSolverr, additionalSuccessStatusCodes).ConfigureAwait(false);
-            if (http.IsOK)
+            if (http.IsOK && !string.IsNullOrEmpty(http.Content))
             {
-                html = ElementFromStream(http.ContentStream);
+                html = ElementFromString(http.Content);
 
-                //Logger.Info(http.Content);
+                // Logger.Info(http.Content);
             }
-            else
+            else if (!http.IsOK)
             {
                 Logger.Error($"Error loading {url} ({http.StatusCode})");
             }

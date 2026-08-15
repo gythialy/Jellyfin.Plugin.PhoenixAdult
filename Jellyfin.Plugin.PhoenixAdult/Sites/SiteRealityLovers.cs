@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
+using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
@@ -16,7 +17,6 @@ using Newtonsoft.Json.Linq;
 using PhoenixAdult.Extensions;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
-using Jellyfin.Data.Enums;
 
 namespace PhoenixAdult.Sites
 {
@@ -31,7 +31,7 @@ namespace PhoenixAdult.Sites
             {
                 { "sortBy", "MOST_RELEVANT" },
                 { "searchQuery", searchTitle },
-                { "videoView", "MEDIUM" }
+                { "videoView", "MEDIUM" },
             };
 
             var content = new StringContent(jsonBody.ToString(), Encoding.UTF8, "application/json");

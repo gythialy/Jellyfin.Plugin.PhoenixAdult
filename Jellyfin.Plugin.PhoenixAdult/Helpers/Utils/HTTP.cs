@@ -59,6 +59,7 @@ namespace PhoenixAdult.Helpers.Utils
             {
                 CookieContainer = CookieContainer,
                 Proxy = Proxy,
+                AutomaticDecompression = DecompressionMethods.All,
             };
 
             if (Plugin.Instance.Configuration.DisableSSLCheck)
@@ -413,7 +414,7 @@ namespace PhoenixAdult.Helpers.Utils
                         maxTimeout = (int)TimeSpan.FromSeconds(DefaultTimeoutSeconds).TotalMilliseconds,
                         cookies = fsCookies.Count > 0 ? fsCookies : null,
                         headers = fsHeaders.Count > 0 ? fsHeaders : null,
-                        postData = postData
+                        postData = postData,
                     };
 
                     string fsUrl = Plugin.Instance.Configuration.FlareSolverrURL;
@@ -421,6 +422,7 @@ namespace PhoenixAdult.Helpers.Utils
                     {
                         fsUrl += "/";
                     }
+
                     fsUrl += "v1";
 
                     var jsonPayload = JsonSerializer.Serialize(payload);
@@ -491,6 +493,7 @@ namespace PhoenixAdult.Helpers.Utils
                                             Logger.Warning($"[HTTP Request] Failed to add cookie from FlareSolverr: {cookieEx.Message}");
                                         }
                                     }
+
                                     result.Cookies = parsedCookies;
                                 }
 
