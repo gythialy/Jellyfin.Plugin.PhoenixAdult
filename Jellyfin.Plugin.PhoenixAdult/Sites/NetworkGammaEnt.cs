@@ -64,6 +64,24 @@ namespace PhoenixAdult.Sites
                     }
                 }
 
+                // 站点首页无 Algolia apiKey（如 My Pervy Family 独立模板）→ 用组内子站 0 的 key（Algolia 是共享索引）
+                if (string.IsNullOrEmpty(result) && siteNum.Length > 1 && siteNum[1] != 0)
+                {
+                    var groupBase = Helper.GetSearchBaseURL(new[] { siteNum[0], 0 });
+                    if (!string.Equals(groupBase, Helper.GetSearchBaseURL(siteNum), StringComparison.OrdinalIgnoreCase))
+                    {
+                        http = await HTTP.Request(groupBase + "/en", cancellationToken).ConfigureAwait(false);
+                        if (http.IsOK)
+                        {
+                            var regExFallback = Regex.Match(http.Content, "\"apiKey\":\"(.*?)\"");
+                            if (regExFallback.Groups.Count > 0)
+                            {
+                                result = regExFallback.Groups[1].Value;
+                            }
+                        }
+                    }
+                }
+
                 if (db.ContainsKey(keyName))
                 {
                     db[keyName] = result;
@@ -138,7 +156,7 @@ namespace PhoenixAdult.Sites
                 }
 
                 var url = $"{Helper.GetSearchSearchURL(siteNum)}?x-algolia-application-id=TSMKFA364Q&x-algolia-api-key={apiKEY}";
-                var searchResults = await GetDataFromAPI(url, $"all_{sceneType}", Helper.GetSearchBaseURL(siteNum), searchParams, cancellationToken).ConfigureAwait(false);
+                var searchResults = await GetDataFromAPI(url, $"all_{sceneType}", Helper.GetSearchBaseURL(new[] { siteNum[0], 0 }), searchParams, cancellationToken).ConfigureAwait(false);
 
                 if (searchResults == null)
                 {
@@ -212,7 +230,7 @@ namespace PhoenixAdult.Sites
             string apiKEY = await GetAPIKey(siteNum, cancellationToken).ConfigureAwait(false),
                    sceneType = sceneID[1] == "scenes" ? "clip_id" : "movie_id",
                    url = $"{Helper.GetSearchSearchURL(siteNum)}?x-algolia-application-id=TSMKFA364Q&x-algolia-api-key={apiKEY}";
-            var sceneData = await GetDataFromAPI(url, $"all_{sceneID[1]}", Helper.GetSearchBaseURL(siteNum), $"filters={sceneType}={sceneID[0]}", cancellationToken).ConfigureAwait(false);
+            var sceneData = await GetDataFromAPI(url, $"all_{sceneID[1]}", Helper.GetSearchBaseURL(new[] { siteNum[0], 0 }), $"filters={sceneType}={sceneID[0]}", cancellationToken).ConfigureAwait(false);
             if (sceneData == null)
             {
                 return result;
@@ -320,7 +338,7 @@ namespace PhoenixAdult.Sites
             string apiKEY = await GetAPIKey(siteNum, cancellationToken).ConfigureAwait(false),
                    sceneType = sceneID[1] == "scenes" ? "clip_id" : "movie_id",
                    url = $"{Helper.GetSearchSearchURL(siteNum)}?x-algolia-application-id=TSMKFA364Q&x-algolia-api-key={apiKEY}";
-            var sceneData = await GetDataFromAPI(url, $"all_{sceneID[1]}", Helper.GetSearchBaseURL(siteNum), $"filters={sceneType}={sceneID[0]}", cancellationToken).ConfigureAwait(false);
+            var sceneData = await GetDataFromAPI(url, $"all_{sceneID[1]}", Helper.GetSearchBaseURL(new[] { siteNum[0], 0 }), $"filters={sceneType}={sceneID[0]}", cancellationToken).ConfigureAwait(false);
             if (sceneData == null)
             {
                 return result;
