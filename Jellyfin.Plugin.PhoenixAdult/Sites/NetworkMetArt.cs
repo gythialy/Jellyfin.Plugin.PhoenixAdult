@@ -24,7 +24,11 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
-            string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}/search-results?query[contentType]=movies&searchPhrase={Uri.EscapeDataString(searchTitle)}";
+            // MetArt API 搜索按短语/AND 严格匹配：完整词（演员+标题混串）→ 0 结果。
+            // 文件名 Site.YY.MM.DD.Actors.Title 的演员在开头 → 取前 2 词搜索，日期排序选目标。
+            searchTitle = Helper.GetSearchTitle(searchTitle, 2);
+
+            string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}/search-results?query%5BcontentType%5D=movies&searchPhrase={Uri.EscapeDataString(searchTitle)}";
 
             JObject searchResults;
             if (PhoenixAdult.Helpers.Utils.FlareSolverr.IsConfigured)
@@ -60,9 +64,11 @@ namespace PhoenixAdult.Sites
                     string sceneUrl = $"{Helper.GetSearchSearchURL(siteNum)}/movie?name={sceneUrlParts[4]}&date={sceneUrlParts[3]}";
                     string curId = Helper.Encode(sceneUrl);
                     string releaseDate = string.Empty;
+                    DateTime? premiereDate = null;
                     if (DateTime.TryParse(searchResult["item"]["publishedAt"].ToString(), out var parsedDate))
                     {
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
+                        premiereDate = parsedDate;
                     }
 
                     result.Add(new RemoteSearchResult
@@ -70,6 +76,7 @@ namespace PhoenixAdult.Sites
                         ProviderIds = { { Plugin.Instance.Name, curId } },
                         Name = $"{titleNoFormatting} [MetArt/{subSite}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
+                        PremiereDate = premiereDate,
                     });
                 }
             }
