@@ -24,6 +24,7 @@ namespace PhoenixAdult.Sites
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
+
             // MetArt API 搜索按短语/AND 严格匹配：完整词（演员+标题混串）→ 0 结果。
             // 文件名 Site.YY.MM.DD.Actors.Title 的演员在开头 → 取前 2 词搜索，日期排序选目标。
             searchTitle = Helper.GetSearchTitle(searchTitle, 2);
