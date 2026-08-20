@@ -200,7 +200,24 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var promo = (string)sceneData["promo_video_data"]?["aff_16mp4"];
+            // 从场景页 og:image 取图片（从 trailer 路径推 scenes/{prefix}/{name} 的 name 常错，如 DirtyWivesClub → lucycodey）
+            var sceneUrl = (string)sceneData["scene_url"];
+            if (!string.IsNullOrEmpty(sceneUrl))
+            {
+                var pageHtml = await HTML.ElementFromURL(sceneUrl, cancellationToken);
+                var ogNode = pageHtml?.SelectSingleNode("//meta[@property='og:image']");
+                var ogImageUrl = ogNode?.GetAttributeValue("content", string.Empty);
+                if (!string.IsNullOrEmpty(ogImageUrl))
+                {
+                    result.Add(new RemoteImageInfo { Url = ogImageUrl, Type = ImageType.Primary });
+                    result.Add(new RemoteImageInfo { Url = ogImageUrl, Type = ImageType.Backdrop });
+                    return result;
+                }
+            }
+
+            var promo = sceneData["promo_video_data"] is JObject promoObj
+                ? (string)promoObj["aff_16mp4"]
+                : null; // promo_video_data 可能是 JArray（空）不能按 aff_16mp4 索引
             var trailer = (string)sceneData["trailers"]?["trailer_720"];
             var videoUrl = promo ?? trailer;
             if (string.IsNullOrEmpty(videoUrl))
@@ -216,7 +233,7 @@ namespace PhoenixAdult.Sites
 
             var prefix = match.Groups[1].Value;
             var name = match.Groups[2].Value;
-            var imageUrl = $"https://images4.naughtycdn.com/cms/nacmscontent/v1/scenes/{prefix}/{name}/scene/horizontal/1279x852c.jpg";
+            var imageUrl = $"{ApiBase.Replace("api.naughtyapi.com", "images4.naughtycdn.com")}/scenes/{prefix}/{name}/scene/horizontal/1279x852c.jpg";
 
             result.Add(new RemoteImageInfo
             {

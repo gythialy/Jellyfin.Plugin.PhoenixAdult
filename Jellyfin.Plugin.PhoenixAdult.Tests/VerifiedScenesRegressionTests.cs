@@ -32,6 +32,7 @@ public class VerifiedScenesRegressionTests
         ("Transfixed.26.07.01.Ariel.Demure.and.Penny.Barber.An.Easy.Prospect.", "An Easy Prospect", "2026-07-01", "Ariel Demure", "Penny Barber"),
         ("Cum4K.26.06.30.Aubry.Babcock.Hot.Handywoman", "Hot Handywoman", "2026-06-30", "Aubry Babcock", "Sam Shock"),
         ("NewSensations.26.06.27.Lucy.Mochi.", "Lucy Mochi Finds Out", "2026-06-27", "Lucy Mochi", "Vince Karter"),
+        ("DirtyWivesClub.26.08.18.Lucy.Mochi", "Hot and Married Lucy Mochi", "2026-08-18", "Lucy Mochi", "Codey Steele"),
         ("SinDeLuxe.26.07.15.Olivia.Sparkle.Prologue.Chapter.6", "Prologue - Chapter 6", "2026-07-15", "Olivia Sparkle", "Charlie Dean"),
         // Hegre：匿名页按 IP 地理服务返回中文标题/演员（og:title 中文），日期/演员受会员墙限制，
         // 只断言日期与 HasMetadata（标题/演员断言置 null 跳过）
