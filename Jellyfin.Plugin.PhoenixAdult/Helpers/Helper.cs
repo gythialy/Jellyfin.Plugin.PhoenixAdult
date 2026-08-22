@@ -432,6 +432,9 @@ namespace PhoenixAdult.Helpers
             return output;
         }
 
+        public static Task<IDictionary<string, string>> NCookies(int[] siteNum, CancellationToken cancellationToken = default)
+            => CaptchaHelper.NCookies(siteNum, cancellationToken);
+
         private static string ParseWord(string word)
         {
             var lowerExceptions = new List<string> { "a", "y", "n", "an", "of", "the", "and", "for", "to", "onto", "but", "or", "nor", "at", "with", "vs", "in", "on", "com", "co", "org" };

@@ -16,6 +16,20 @@ namespace PhoenixAdult.Sites
 {
     public class NetworkNubiles : IProviderBase
     {
+        private static readonly IDictionary<string, string> Headers = new Dictionary<string, string>
+        {
+            { "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8" },
+            { "Accept-Language", "en-US,en;q=0.9" },
+            { "Sec-Ch-Ua", "\"Microsoft Edge\";v=\"107\", \"Chromium\";v=\"107\", \"Not=A?Brand\";v=\"24\"" },
+            { "Sec-Ch-Ua-Mobile", "?0" },
+            { "Sec-Ch-Ua-Platform", "\"Windows\"" },
+            { "Sec-Fetch-Dest", "document" },
+            { "Sec-Fetch-Mode", "navigate" },
+            { "Sec-Fetch-Site", "none" },
+            { "Sec-Fetch-User", "?1" },
+            { "Upgrade-Insecure-Requests", "1" },
+        };
+
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
@@ -24,11 +38,13 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
+            var cookies = await GetCookies(siteNum, cancellationToken).ConfigureAwait(false);
+
             if (searchDate.HasValue)
             {
                 var date = searchDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                 var url = Helper.GetSearchSearchURL(siteNum) + $"date/{date}/{date}";
-                var data = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
+                var data = await HTML.ElementFromURL(url, cancellationToken, Headers, cookies).ConfigureAwait(false);
 
                 var searchResults = data.SelectNodesSafe("//div[contains(@class, 'content-grid-item')]");
                 foreach (var searchResult in searchResults)
@@ -87,13 +103,15 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
+            var cookies = await GetCookies(siteNum, cancellationToken).ConfigureAwait(false);
+
             var sceneURL = Helper.Decode(sceneID[0]);
             if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, Headers, cookies).ConfigureAwait(false);
 
             result.Item.ExternalId = sceneURL;
 
@@ -135,7 +153,7 @@ namespace PhoenixAdult.Sites
                 string actorName = actorLink.InnerText,
                     actorPageURL = Helper.GetSearchBaseURL(siteNum) + actorLink.Attributes["href"].Value;
 
-                var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken).ConfigureAwait(false);
+                var actorPage = await HTML.ElementFromURL(actorPageURL, cancellationToken, Headers, cookies).ConfigureAwait(false);
                 var actorPhotoURL = "http:" + actorPage.SelectSingleText("//div[contains(@class, 'model-profile')]//img/@src");
 
                 result.AddPerson(new PersonInfo
@@ -157,6 +175,8 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
+            var cookies = await GetCookies(siteNum, cancellationToken).ConfigureAwait(false);
+
             var sceneURL = Helper.Decode(sceneID[0]);
             Logger.Debug($"SceneURL: {sceneURL}");
             if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
@@ -164,12 +184,12 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, Headers, cookies).ConfigureAwait(false);
 
             var photoLink = sceneData.SelectNodesSafe("//a[i[@class='icon-camera']]")[0];
             var photoPageURL = $"https://nubiles-porn.com{photoLink.Attributes["href"].Value}";
             Logger.Debug($"Getting posters: {photoPageURL}");
-            var photoPage = await HTML.ElementFromURL(photoPageURL, cancellationToken).ConfigureAwait(false);
+            var photoPage = await HTML.ElementFromURL(photoPageURL, cancellationToken, Headers, cookies).ConfigureAwait(false);
             var sceneImages = photoPage.SelectNodesSafe("//div[@class='img-wrapper']//source[1]");
             foreach (var sceneImage in sceneImages)
             {
@@ -208,6 +228,22 @@ namespace PhoenixAdult.Sites
             }
 
             return result;
+        }
+
+        private static async Task<IDictionary<string, string>> GetCookies(int[] siteNum, CancellationToken cancellationToken)
+        {
+            var cookies = new Dictionary<string, string> { { "18-plus-modal", "hidden" } };
+            var verifiedCookies = await CaptchaHelper.NCookies(siteNum, cancellationToken).ConfigureAwait(false);
+
+            if (verifiedCookies != null)
+            {
+                foreach (var kvp in verifiedCookies)
+                {
+                    cookies[kvp.Key] = kvp.Value;
+                }
+            }
+
+            return cookies;
         }
     }
 }
