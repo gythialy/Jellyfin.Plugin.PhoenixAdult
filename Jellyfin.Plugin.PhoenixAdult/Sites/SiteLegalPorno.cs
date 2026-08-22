@@ -222,10 +222,12 @@ namespace PhoenixAdult.Sites
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             // 主图: video[data-poster]
+            // CDN 签名 URL 的 query 参与签名（剥掉即 403），必须原样保留。
+            // HTML 解析会把 &amp; 实体还原，但保险起见再反转义一次。
             var posterNode = sceneData.SelectSingleNode("//video[contains(@data-poster, 'http')]");
             if (posterNode != null)
             {
-                var poster = posterNode.GetAttributeValue("data-poster", string.Empty);
+                var poster = System.Net.WebUtility.HtmlDecode(posterNode.GetAttributeValue("data-poster", string.Empty));
                 if (!string.IsNullOrEmpty(poster))
                 {
                     result.Add(new RemoteImageInfo
