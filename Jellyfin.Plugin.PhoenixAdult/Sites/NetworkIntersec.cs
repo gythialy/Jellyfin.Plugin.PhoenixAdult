@@ -38,6 +38,15 @@ namespace PhoenixAdult.Sites
                 foreach (var node in searchNodes)
                 {
                     string curId = Helper.Encode(node.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty));
+
+                    // href 已含 /{prefix}/video... 完整路径，存绝对 URL 避免依赖固定 /iod/ 前缀
+                    var sceneHref = node.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty);
+
+                    if (!string.IsNullOrEmpty(sceneHref))
+                    {
+                        curId = Helper.Encode(new Uri(new Uri(Helper.GetSearchBaseURL(siteNum)), sceneHref).ToString());
+                    }
+
                     string titleNoFormatting = node.SelectSingleNode(".//div[@class='has-text-weight-bold']")?.InnerText;
                     string releaseDate = string.Empty;
                     var dateNode = node.SelectSingleNode(".//span[contains(@class, 'tag')]");
@@ -68,7 +77,12 @@ namespace PhoenixAdult.Sites
             };
 
             string[] providerIds = sceneID[0].Split('|');
-            string sceneUrl = $"{Helper.GetSearchBaseURL(siteNum)}/iod/{Helper.Decode(providerIds[0])}";
+            string decodedScene = Helper.Decode(providerIds[0]);
+
+            // 兼容两种 ID：绝对 URL（新）与相对路径（旧缓存，拼 /iod/ 前缀）
+            string sceneUrl = decodedScene.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                ? decodedScene
+                : $"{Helper.GetSearchBaseURL(siteNum)}/iod/{decodedScene}";
 
             var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
             if (!httpResult.IsOK)
@@ -167,7 +181,13 @@ namespace PhoenixAdult.Sites
         {
             var images = new List<RemoteImageInfo>();
             string[] providerIds = sceneID[0].Split('|');
-            string sceneUrl = $"{Helper.GetSearchBaseURL(siteNum)}/iod/{Helper.Decode(providerIds[0])}";
+            string decodedScene = Helper.Decode(providerIds[0]);
+
+            // 兼容两种 ID：绝对 URL（新）与相对路径（旧缓存，拼 /iod/ 前缀）
+            string sceneUrl = decodedScene.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                ? decodedScene
+                : $"{Helper.GetSearchBaseURL(siteNum)}/iod/{decodedScene}";
+
             string scenePoster = Helper.Decode(providerIds[1]);
             images.Add(new RemoteImageInfo { Url = scenePoster });
 
