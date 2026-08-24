@@ -15,11 +15,6 @@ jobs:
         with:
           dotnet-version: "8.x"
 
-      - name: Setup Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.9"
-
       - name: Generate Version
         id: shell
         run: |
@@ -42,8 +37,7 @@ jobs:
 
       - name: Generate Manifest
         run: |
-          python3 -m pip install packaging
-          python3 scripts/manifest.py Jellyfin.Plugin.PhoenixAdult@v${{ steps.shell.outputs.version }}.zip
+          scripts/manifest.sh Jellyfin.Plugin.PhoenixAdult@v${{ steps.shell.outputs.version }}.zip
 
       - name: Publish Manifest
         run: |
