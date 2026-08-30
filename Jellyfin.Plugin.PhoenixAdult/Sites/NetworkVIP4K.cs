@@ -256,16 +256,16 @@ namespace PhoenixAdult.Sites
                 var doc = new HtmlDocument();
                 doc.LoadHtml(http.Content);
 
-                var imageNodes = doc.DocumentNode.SelectNodes("//div[@class='player-item__block']//img/@data-src");
+                var imageNodes = doc.DocumentNode.SelectNodes("//div[@class='player-item__block']//img");
                 if (imageNodes != null)
                 {
                     var imageType = ImageType.Primary;
                     foreach (var img in imageNodes)
                     {
-                        var imgUrl = img.GetAttributeValue("data-src", string.Empty);
-                        if (!imgUrl.StartsWith("http"))
+                        var imgUrl = img.GetAttributeValue("src", string.Empty);
+                        if (imgUrl.StartsWith("//"))
                         {
-                            imgUrl = $"http:{imgUrl}";
+                            imgUrl = $"https:{imgUrl}";
                         }
 
                         images.Add(new RemoteImageInfo
