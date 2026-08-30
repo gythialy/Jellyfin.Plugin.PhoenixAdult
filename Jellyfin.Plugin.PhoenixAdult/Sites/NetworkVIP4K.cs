@@ -74,6 +74,13 @@ namespace PhoenixAdult.Sites
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
                     }
 
+                    var posterNode = doc.DocumentNode.SelectSingleNode("//div[@class='player-item__block']//img");
+                    var imageUrl = posterNode != null ? posterNode.GetAttributeValue("src", string.Empty) : string.Empty;
+                    if (imageUrl.StartsWith("//", StringComparison.Ordinal))
+                    {
+                        imageUrl = $"https:{imageUrl}";
+                    }
+
                     var score = 100;
                     if (searchDate.HasValue)
                     {
@@ -92,9 +99,16 @@ namespace PhoenixAdult.Sites
                     var item = new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } },
-                        Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
+                        Name = titleNoFormatting,
                         SearchProviderName = Plugin.Instance.Name,
+                        ImageUrl = imageUrl,
                     };
+
+                    if (DateTime.TryParse(releaseDate, out var searchPremiereDate))
+                    {
+                        item.PremiereDate = searchPremiereDate;
+                    }
+
                     result.Add(item);
                 }
             }
@@ -119,6 +133,14 @@ namespace PhoenixAdult.Sites
                         var curID = Helper.Encode(sceneURL);
                         var releaseDate = searchDate.HasValue ? searchDate.Value.ToString("yyyy-MM-dd") : string.Empty;
 
+                        var imageNode = searchResultNode.SelectSingleNode(
+                            "ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' item ')]//div[@class='item__image']//img");
+                        var imageUrl = imageNode != null ? imageNode.GetAttributeValue("src", string.Empty) : string.Empty;
+                        if (imageUrl.StartsWith("//", StringComparison.Ordinal))
+                        {
+                            imageUrl = $"https:{imageUrl}";
+                        }
+
                         var score = 100;
                         if (searchDate.HasValue)
                         {
@@ -137,9 +159,16 @@ namespace PhoenixAdult.Sites
                         var item = new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } },
-                            Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
+                            Name = titleNoFormatting,
                             SearchProviderName = Plugin.Instance.Name,
+                            ImageUrl = imageUrl,
                         };
+
+                        if (DateTime.TryParse(releaseDate, out var parsedDate))
+                        {
+                            item.PremiereDate = parsedDate;
+                        }
+
                         result.Add(item);
                     }
                 }
@@ -256,24 +285,37 @@ namespace PhoenixAdult.Sites
                 var doc = new HtmlDocument();
                 doc.LoadHtml(http.Content);
 
-                var imageNodes = doc.DocumentNode.SelectNodes("//div[@class='player-item__block']//img/@data-src");
+                var imageNodes = doc.DocumentNode.SelectNodes("//div[@class='player-item__block']//img");
                 if (imageNodes != null)
                 {
-                    var imageType = ImageType.Primary;
+                    var urls = new List<string>();
                     foreach (var img in imageNodes)
                     {
-                        var imgUrl = img.GetAttributeValue("data-src", string.Empty);
-                        if (!imgUrl.StartsWith("http"))
+                        var imgUrl = img.GetAttributeValue("src", string.Empty);
+                        if (imgUrl.StartsWith("//", StringComparison.Ordinal))
                         {
-                            imgUrl = $"http:{imgUrl}";
+                            imgUrl = $"https:{imgUrl}";
                         }
 
+                        urls.Add(imgUrl);
+                    }
+
+                    for (var i = 0; i < urls.Count; i++)
+                    {
                         images.Add(new RemoteImageInfo
                         {
-                            Url = imgUrl,
-                            Type = imageType,
+                            Url = urls[i],
+                            Type = i == 0 ? ImageType.Primary : ImageType.Backdrop,
                         });
-                        imageType = ImageType.Backdrop;
+                    }
+
+                    if (urls.Count == 1 && !string.IsNullOrEmpty(urls[0]))
+                    {
+                        images.Add(new RemoteImageInfo
+                        {
+                            Url = urls[0],
+                            Type = ImageType.Backdrop,
+                        });
                     }
                 }
             }
