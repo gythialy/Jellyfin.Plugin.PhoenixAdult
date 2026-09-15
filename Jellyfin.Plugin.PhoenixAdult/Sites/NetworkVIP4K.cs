@@ -89,10 +89,18 @@ namespace PhoenixAdult.Sites
                         score--;
                     }
 
+                    var posterNode = doc.DocumentNode.SelectSingleNode("//div[@class='player-item__block']//img");
+                    var poster = posterNode?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                    if (poster.StartsWith("//", StringComparison.Ordinal))
+                    {
+                        poster = $"https:{poster}";
+                    }
+
                     var item = new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
+                        ImageUrl = poster,
                         SearchProviderName = Plugin.Instance.Name,
                     };
                     result.Add(item);
@@ -134,10 +142,18 @@ namespace PhoenixAdult.Sites
                             score--;
                         }
 
+                        var posterNode = searchResultNode.SelectSingleNode("./ancestor::div[@class='item']//div[@class='item__image']//img");
+                        var poster = posterNode?.GetAttributeValue("src", string.Empty) ?? string.Empty;
+                        if (poster.StartsWith("//", StringComparison.Ordinal))
+                        {
+                            poster = $"https:{poster}";
+                        }
+
                         var item = new RemoteSearchResult
                         {
                             ProviderIds = { { Plugin.Instance.Name, $"{curID}|{releaseDate}" } },
                             Name = $"{titleNoFormatting} [{subSite}] {releaseDate}",
+                            ImageUrl = poster,
                             SearchProviderName = Plugin.Instance.Name,
                         };
                         result.Add(item);
@@ -275,6 +291,15 @@ namespace PhoenixAdult.Sites
                         });
                         imageType = ImageType.Backdrop;
                     }
+                }
+
+                if (images.Count == 1)
+                {
+                    images.Add(new RemoteImageInfo
+                    {
+                        Url = images[0].Url,
+                        Type = ImageType.Backdrop,
+                    });
                 }
             }
 

@@ -83,12 +83,20 @@ namespace PhoenixAdult.Sites
                         continue;
                     }
 
+                    var posterNode = link.SelectSingleNode("./ancestor::div[contains(@class, 'videothumb')]//img[@data-src]");
+                    var poster = posterNode?.GetAttributeValue("data-src", string.Empty) ?? string.Empty;
+                    if (string.IsNullOrEmpty(poster))
+                    {
+                        poster = posterNode?.GetAttributeValue("src0_1x", string.Empty) ?? string.Empty;
+                    }
+
                     // /tour_ns/updates/New-Sensations-Title.html -> "New Sensations Title"
                     var lastSegment = scenePath.Trim('/').Split('/').Last().Replace(".html", string.Empty, StringComparison.OrdinalIgnoreCase);
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, curId } },
                         Name = lastSegment.Replace('-', ' '),
+                        ImageUrl = poster,
                         SearchProviderName = Plugin.Instance.Name,
                     });
                 }
