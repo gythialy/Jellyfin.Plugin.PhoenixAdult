@@ -36,8 +36,22 @@ jobs:
           depth: 8
 
       - name: Generate Manifest
+        env:
+          # The plugin only supports Jellyfin 12+ (net10.0 / Jellyfin.Controller 12.x)
+          # since v2026.912.926.0, so every published version pins targetAbi 12.0.0.0.
+          TARGET_ABI: "12.0.0.0"
         run: |
           scripts/manifest.sh Jellyfin.Plugin.PhoenixAdult@v${{ steps.shell.outputs.version }}.zip
+
+      - name: Verify Manifest targets Jellyfin 12
+        run: |
+          # New releases require Jellyfin 12+ (targetAbi 12.0.0.0), while the unmaintained
+          # pre-12 entries must stay in dist so Jellyfin 10.x installs keep working.
+          jq -e '
+            .[0].versions[0].targetAbi == "12.0.0.0"
+            and ([.[0].versions[] | select(.targetAbi != "12.0.0.0")] | length > 0)
+          ' manifest.json > /dev/null
+          echo "OK: newest version requires Jellyfin 12 and legacy pre-12 entries are preserved"
 
       - name: Publish Manifest
         run: |

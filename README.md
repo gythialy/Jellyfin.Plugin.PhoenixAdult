@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./docs/logo.png" width="420" alt="PhoenixAdult" />
+</p>
+
 # PhoenixAdult
 
 This metadata provider helps fill Jellyfin/Emby with information for your adult videos by pulling from the original site
@@ -24,6 +28,7 @@ This metadata provider helps fill Jellyfin/Emby with information for your adult 
   - Genres / Categories / Tags
   - PornStars
   - Movie Poster(s) / Background Art
+- Links a movie page back to the site it was scraped from
 
 ## File Naming
 
