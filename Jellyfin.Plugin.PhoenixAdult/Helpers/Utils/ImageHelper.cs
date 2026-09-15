@@ -224,6 +224,13 @@ namespace PhoenixAdult.Helpers.Utils
                     return GetGifDimensions(bytes);
                 }
 
+                // Check for WebP
+                else if (bytes[0] == 'R' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == 'F' &&
+                         bytes[8] == 'W' && bytes[9] == 'E' && bytes[10] == 'B' && bytes[11] == 'P')
+                {
+                    return GetWebpDimensions(bytes);
+                }
+
                 return null;
             }
         }
@@ -296,6 +303,71 @@ namespace PhoenixAdult.Helpers.Utils
             int height = (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23];
 
             return (width, height);
+        }
+
+        private static (int width, int height)? GetWebpDimensions(byte[] bytes)
+        {
+            // RIFF container: "RIFF" + 4B size + "WEBP" + chunk
+            if (bytes.Length < 30 || bytes[12] != 'V' || bytes[13] != 'P' || bytes[14] != '8')
+            {
+                return null;
+            }
+
+            var fourcc = (char)bytes[12] + ((char)bytes[13]).ToString() + ((char)bytes[14]).ToString() + ((char)bytes[15]).ToString();
+
+            switch (fourcc)
+            {
+                case "VP8X":
+                    // Extended: 24B canvas width-1, 24B canvas height-1 (little-endian), after 4B chunk size
+                    if (bytes.Length < 30)
+                    {
+                        return null;
+                    }
+
+                    {
+                        int canvasWidthMinusOne = bytes[24] | (bytes[25] << 8) | (bytes[26] << 16);
+                        int canvasHeightMinusOne = bytes[27] | (bytes[28] << 8) | (bytes[29] << 16);
+                        return (canvasWidthMinusOne + 1, canvasHeightMinusOne + 1);
+                    }
+
+                case "VP8L":
+                    // Lossless: 1B signature 0x2F, then 14b width-1 + 14b height-1 (little-endian bit stream)
+                    if (bytes.Length < 25 || bytes[20] != 0x2F)
+                    {
+                        return null;
+                    }
+
+                    {
+                        uint bits = (uint)(bytes[21] | (bytes[22] << 8) | (bytes[23] << 16) | (bytes[24] << 24));
+                        int width = (int)(bits & 0x3FFF) + 1;
+                        int height = (int)((bits >> 14) & 0x3FFF) + 1;
+                        return (width, height);
+                    }
+
+                case "VP8 ":
+                    // Lossy: payload starts at 20 with the 3B frame tag, then the 3B start code
+                    // (9d 01 2a), then 14b width-1 and 14b height-1 (little-endian).
+                    if (bytes.Length < 30)
+                    {
+                        return null;
+                    }
+
+                    {
+                        int pos = 23;
+                        if (bytes[pos] != 0x9D || bytes[pos + 1] != 0x01 || bytes[pos + 2] != 0x2A)
+                        {
+                            return null;
+                        }
+
+                        pos += 3;
+                        int width = (bytes[pos] | (bytes[pos + 1] << 8)) & 0x3FFF;
+                        int height = (bytes[pos + 2] | (bytes[pos + 3] << 8)) & 0x3FFF;
+                        return (width, height);
+                    }
+
+                default:
+                    return null;
+            }
         }
 
         private static (int width, int height)? GetGifDimensions(byte[] bytes)
