@@ -221,35 +221,22 @@ namespace PhoenixAdult.Sites
                 });
             }
 
-            // 场景图集: 页面中的 jj-thumb-img / contentthumbs 图片
-            var thumbs = sceneData.SelectNodes("//img[contains(@class, 'stdimage') or contains(@class, 'thumbs')]");
-            var seen = new HashSet<string>();
-            if (thumbs != null)
+            // Backdrop: 播放器海报。原实现按 img 的 stdimage/thumbs class 取图，
+            // 但本场景图集的 img 无 class，带该 class 的反而是页面底部相关视频卡片，
+            // 导致 backdrop 取到别的场景。播放器 poster 才是本场景的全尺寸静止帧（1920x1080）。
+            var backdropUrl = sceneData.SelectSingleText("//video[@id='video-player']/@poster");
+            if (string.IsNullOrEmpty(backdropUrl))
             {
-                foreach (var thumbNode in thumbs)
+                backdropUrl = ogImage;
+            }
+
+            if (!string.IsNullOrEmpty(backdropUrl))
+            {
+                result.Add(new RemoteImageInfo
                 {
-                    var img = thumbNode.GetAttributeValue("src", string.Empty);
-                    if (string.IsNullOrEmpty(img) || !img.Contains("contentthumbs", StringComparison.OrdinalIgnoreCase))
-                    {
-                        continue;
-                    }
-
-                    if (!seen.Add(img))
-                    {
-                        continue;
-                    }
-
-                    result.Add(new RemoteImageInfo
-                    {
-                        Url = img,
-                        Type = ImageType.Primary,
-                    });
-                    result.Add(new RemoteImageInfo
-                    {
-                        Url = img,
-                        Type = ImageType.Backdrop,
-                    });
-                }
+                    Url = backdropUrl,
+                    Type = ImageType.Backdrop,
+                });
             }
 
             return result;
