@@ -109,6 +109,12 @@
     <EmbeddedResource Include="Configuration\configPage.html" />
   </ItemGroup>
 
+  <!-- PackageIcon above names "thumb.png"; NuGet resolves it against the package root,
+       so the real icon must be packed under that name (NU5046 otherwise). -->
+  <ItemGroup>
+    <None Include="..\docs\thumb.png" Pack="true" PackagePath="" Link="thumb.png" />
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="Jellyfin.Plugin.PhoenixAdult.Tests" />
   </ItemGroup>
