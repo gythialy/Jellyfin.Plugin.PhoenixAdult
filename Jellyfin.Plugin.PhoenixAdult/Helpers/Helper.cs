@@ -348,22 +348,85 @@ namespace PhoenixAdult.Helpers
             }
         }
 
+        /// <summary>
+        /// 部分图片 CDN 对签名 URL 做 Referer 防盗链，缺少 Referer 时直接 403。
+        /// 仅对已知需要 Referer 的主机补上，避免影响其他站点的图片代理。
+        /// </summary>
+        /// <param name="url">图片地址。</param>
+        /// <returns>需要发送的 Referer；无需发送时返回 null。</returns>
+        private static string GetImageReferer(string url)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                return null;
+            }
+
+            // 配置项优先：用户可新增规则，或用空值显式关闭某条内置规则
+            var overrides = Plugin.Instance?.Configuration?.ImageReferers;
+            if (overrides != null)
+            {
+                foreach (var rule in overrides)
+                {
+                    if (!string.IsNullOrEmpty(rule.Key) && url.Contains(rule.Key, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return string.IsNullOrEmpty(rule.Value) ? null : rule.Value;
+                    }
+                }
+            }
+
+            foreach (var rule in Consts.ImageReferers)
+            {
+                if (url.Contains(rule.Key, StringComparison.OrdinalIgnoreCase))
+                {
+                    return rule.Value;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 图片请求所需的额外请求头（当前仅 Referer）；无需附加时返回 null。
+        /// </summary>
+        /// <param name="url">图片地址。</param>
+        /// <returns>请求头字典或 null。</returns>
+        internal static IDictionary<string, string> GetImageRefererHeaders(string url)
+        {
+            var referer = GetImageReferer(url);
+            return referer == null ? null : new Dictionary<string, string> { { "Referer", referer } };
+        }
+
 #if __EMBY__
         public static Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
         {
-            return Plugin.Http.GetResponse(new HttpRequestOptions
+            var options = new HttpRequestOptions
             {
                 CancellationToken = cancellationToken,
                 Url = url,
                 EnableDefaultUserAgent = false,
                 UserAgent = HTTP.GetUserAgent(),
-            });
+            };
+
+            var referer = GetImageReferer(url);
+            if (referer != null)
+            {
+                // Emby 的 HttpRequestOptions.RequestHeaders 为只读集合，只能逐项写入
+                options.RequestHeaders["Referer"] = referer;
+            }
+
+            return Plugin.Http.GetResponse(options);
         }
 #else
         public static Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.TryAddWithoutValidation("User-Agent", HTTP.GetUserAgent());
+
+            var referer = GetImageReferer(url);
+            if (referer != null)
+            {
+                request.Headers.TryAddWithoutValidation("Referer", referer);
+            }
 
             return Plugin.Http.CreateClient().SendAsync(request, cancellationToken);
         }

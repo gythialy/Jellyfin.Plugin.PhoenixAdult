@@ -146,7 +146,11 @@ namespace PhoenixAdult.Helpers.Utils
                 return item;
             }
 
-            var http = await HTTP.Request(item.Url, HttpMethod.Head, cancellationToken).ConfigureAwait(false);
+            // 防盗链 CDN（如 phncdn.com）的签名 URL 缺少 Referer 会 403，
+            // 校验必须与最终下载使用同一套请求头，否则会把可用的图判为不可用。
+            var headers = Helper.GetImageRefererHeaders(item.Url);
+
+            var http = await HTTP.Request(item.Url, HttpMethod.Head, cancellationToken, headers).ConfigureAwait(false);
             if (http.IsOK)
             {
                 if (Plugin.Instance.Configuration.DisableImageSize)
@@ -154,7 +158,7 @@ namespace PhoenixAdult.Helpers.Utils
                     return item;
                 }
 
-                http = await HTTP.Request(item.Url, cancellationToken).ConfigureAwait(false);
+                http = await HTTP.Request(item.Url, cancellationToken, headers).ConfigureAwait(false);
                 if (http.IsOK)
                 {
                     try

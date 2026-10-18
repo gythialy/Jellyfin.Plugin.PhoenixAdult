@@ -231,7 +231,13 @@ namespace PhoenixAdult.Sites
             var posterNode = detailsPageElements.SelectSingleNode("//video");
             if (posterNode != null)
             {
-                images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("data-poster", string.Empty), Type = ImageType.Primary });
+                // 与 SiteLegalPorno 一致：data-poster 是 CDN 签名 URL，query 参与签名，
+                // HTML 实体（&amp;）必须还原成 & 才能原样保留参数，否则 CDN 返回 403。
+                var posterUrl = System.Net.WebUtility.HtmlDecode(posterNode.GetAttributeValue("data-poster", string.Empty));
+                if (!string.IsNullOrEmpty(posterUrl))
+                {
+                    images.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
+                }
             }
 
             return images;

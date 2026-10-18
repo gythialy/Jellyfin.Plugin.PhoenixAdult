@@ -80,6 +80,30 @@ namespace PhoenixAdult.Sites
 
         private static readonly Dictionary<string, string> AgeCookie = new Dictionary<string, string> { { "age_verified", "yes" } };
 
+        /// <summary>
+        /// 站点名 → tours-store Elasticsearch 索引别名。
+        /// 映射依据 TPDB scrapers/scenes/networkTeamskeet2025.py 的 endpoints 表：
+        /// 每个别名只承载其背后域名的场景 id。
+        /// </summary>
+        /// <param name="searchNetwork">子网络/站点名（如 "TeamSkeet"、"Family Strokes"）。</param>
+        /// <returns>ES 别名。</returns>
+        private string GetBundle(string searchNetwork)
+            => (searchNetwork ?? string.Empty).ToLowerInvariant() switch
+            {
+                "teamskeet" => "ts_network",
+                "mylf" => "network_mylf",
+                "swappz" => "swap_bundle",
+                "freeuse" => "freeusebundle",
+                "pervz" => "pervbundle",
+                "family strokes" => "familybundle",
+
+                // Ask Your Mother 属于 familystrokes.com（TPDB familybundle 端点包含
+                // ['Ask Your Mother', 'Family Strokes Features']）。落默认 reptyle_bundle
+                // 会跨站乱匹配，并拼出已下线的 askyourmother.com 场景页。
+                "ask your mother" => "familybundle",
+                _ => "reptyle_bundle",
+            };
+
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
@@ -93,16 +117,7 @@ namespace PhoenixAdult.Sites
             }
 
             // Elasticsearch 搜索：按演员名稳定命中（WebSearch 依赖 Google/DDG，反爬下不稳定）
-            var bundle = searchNetwork.ToLowerInvariant() switch
-            {
-                "teamskeet" => "ts_network",
-                "mylf" => "network_mylf",
-                "swappz" => "swap_bundle",
-                "freeuse" => "freeusebundle",
-                "pervz" => "pervbundle",
-                "family strokes" => "familybundle",
-                _ => "reptyle_bundle",
-            };
+            var bundle = this.GetBundle(searchNetwork);
             var nameTerms = searchTitle.ToLowerInvariant()
                 .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
                 .Where(w => !new[] { "and", "the", "with", "feat", "vs" }.Contains(w))
@@ -258,10 +273,25 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
+            // Search 产出的 sceneID 形如 "{id}|{date}|videosContent"，共 3 段：
+            // 索引 0=id、1=date、2=type。原实现用 Length > 2 / > 3 判断，
+            // 导致 date 永远为空、type 永远回退默认，Update 拿不到正确日期与内容节点。
             string[] idParts = sceneID[0].Split('|');
             string sceneName = idParts[0];
-            string sceneDate = idParts.Length > 2 ? idParts[1] : string.Empty;
-            string sceneType = idParts.Length > 3 ? idParts[2].Replace("content", "Content") : "moviesContent";
+            string sceneDate = idParts.Length > 1 ? idParts[1] : string.Empty;
+            string sceneType = idParts.Length > 2 && !string.IsNullOrEmpty(idParts[2])
+                ? idParts[2].Replace("content", "Content")
+                : "moviesContent";
+
+            // 新版游览站页面已不再内嵌 window.__INITIAL_STATE__（TPDB 为此另写了
+            // networkTeamskeet2025 并注明“较新旅游站页面拿不到详情”），但 tours-store 的
+            // Elasticsearch 仍保留完整场景元数据。优先用 ES，HTML 解析降级为回退。
+            var esScene = await this.GetSceneFromElasticsearch(siteNum, sceneName, cancellationToken).ConfigureAwait(false);
+            if (esScene != null)
+            {
+                this.FillFromElasticsearch(result, siteNum, esScene);
+                return result;
+            }
 
             string searchNetwork = this.GetSubNetwork(Helper.GetSearchSiteName(siteNum), "search");
             if (string.IsNullOrEmpty(searchNetwork))
@@ -409,6 +439,19 @@ namespace PhoenixAdult.Sites
             string sceneName = idParts[0];
             string sceneType = idParts.Length > 2 ? idParts[2].Replace("content", "Content") : "moviesContent";
 
+            // 新版游览站页面已无 window.__INITIAL_STATE__，改从 ES 取封面（与 Update 同一数据源）
+            var esScene = await this.GetSceneFromElasticsearch(siteNum, sceneName, cancellationToken).ConfigureAwait(false);
+            if (esScene != null)
+            {
+                string esImage = esScene["img"]?.ToString();
+                if (!string.IsNullOrEmpty(esImage))
+                {
+                    images.Add(new RemoteImageInfo { Url = esImage, Type = ImageType.Primary });
+                }
+
+                return images;
+            }
+
             var detailsPageJson = await this.GetJSONfromPage(Helper.GetSearchSearchURL(siteNum) + sceneName, cancellationToken);
             JToken detailsPageElements = null;
 
@@ -488,6 +531,133 @@ namespace PhoenixAdult.Sites
             }
 
             return subSite;
+        }
+
+        /// <summary>
+        /// 从 tours-store Elasticsearch 按场景 id 取完整场景文档（_source）。
+        /// 新版游览站场景页已不再内嵌元数据，ES 是唯一稳定的详情来源。
+        /// </summary>
+        /// <param name="siteNum">站点编号。</param>
+        /// <param name="sceneName">场景 id（slug）。</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>场景 _source，取不到时为 null。</returns>
+        private async Task<JObject> GetSceneFromElasticsearch(int[] siteNum, string sceneName, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(sceneName))
+            {
+                return null;
+            }
+
+            string searchNetwork = this.GetSubNetwork(Helper.GetSearchSiteName(siteNum), "search");
+            if (string.IsNullOrEmpty(searchNetwork))
+            {
+                searchNetwork = "Reptyle";
+            }
+
+            string bundle = this.GetBundle(searchNetwork);
+            string esURL = $"https://tours-store.psmcdn.net/{bundle}/_search?q={Uri.EscapeDataString($"id:\"{sceneName}\"")}&size=1";
+
+            var httpResult = await HTTP.Request(esURL, cancellationToken).ConfigureAwait(false);
+            if (!httpResult.IsOK)
+            {
+                return null;
+            }
+
+            try
+            {
+                var json = JObject.Parse(httpResult.Content);
+                if (json["hits"]?["hits"] is JArray hits && hits.Count > 0)
+                {
+                    return hits[0]["_source"] as JObject;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"Reptyle ES detail error: {e.Message}");
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 用 ES 场景文档填充元数据（标题/描述/日期/站点/演员/标签/图片）。
+        /// </summary>
+        /// <param name="result">待填充的结果。</param>
+        /// <param name="siteNum">站点编号。</param>
+        /// <param name="scene">ES _source。</param>
+        private void FillFromElasticsearch(MetadataResult<BaseItem> result, int[] siteNum, JObject scene)
+        {
+            // ES 里的标题来自 HTML 源，可能带 &quot; 等实体，先解码再交给 ParseTitle
+            string title = Helper.ParseTitle(
+                System.Net.WebUtility.HtmlDecode(scene["title"]?.ToString() ?? string.Empty),
+                siteNum);
+            if (string.IsNullOrEmpty(title))
+            {
+                return;
+            }
+
+            var movie = (Movie)result.Item;
+            string sceneId = scene["id"]?.ToString() ?? string.Empty;
+            string detailsSubSite = scene["site"]?["name"]?.ToString() ?? Helper.GetSearchSiteName(siteNum);
+            string subSite = this.GetSubSite(detailsSubSite);
+            string subNetwork = this.GetSubNetwork(subSite);
+
+            string baseUrl = Helper.GetSearchBaseURL(siteNum).TrimEnd('/');
+            movie.ExternalId = $"{baseUrl}/movies/{sceneId}";
+            movie.Name = title;
+
+            string overview = HTML.StripHtml(scene["description"]?.ToString() ?? string.Empty);
+            if (!string.IsNullOrEmpty(overview))
+            {
+                movie.Overview = overview;
+            }
+
+            movie.AddStudio(string.IsNullOrEmpty(subNetwork) ? "Reptyle" : subNetwork);
+            if (subSite != subNetwork)
+            {
+                movie.AddStudio(subSite);
+            }
+
+            movie.AddCollection(subSite);
+
+            if (scene["publishedDate"] != null && DateTime.TryParse(scene["publishedDate"].ToString(), out var publishedDate))
+            {
+                movie.PremiereDate = publishedDate;
+                movie.ProductionYear = publishedDate.Year;
+            }
+
+            if (scene["models"] is JArray models)
+            {
+                foreach (var model in models)
+                {
+                    string actorName = model["title"]?.ToString();
+                    if (string.IsNullOrEmpty(actorName))
+                    {
+                        continue;
+                    }
+
+                    result.AddPerson(new PersonInfo
+                    {
+                        Name = actorName,
+                        ImageUrl = model["img"]?.ToString(),
+                        Type = PersonKind.Actor,
+                    });
+                }
+            }
+
+            if (scene["tags"] is JArray tags)
+            {
+                foreach (var tag in tags)
+                {
+                    string tagName = tag.ToString();
+                    if (!string.IsNullOrEmpty(tagName))
+                    {
+                        movie.AddGenre(tagName);
+                    }
+                }
+            }
+
+            result.HasMetadata = true;
         }
 
         private async Task<JObject> GetJSONfromPage(string url, CancellationToken cancellationToken)

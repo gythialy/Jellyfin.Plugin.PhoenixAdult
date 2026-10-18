@@ -60,10 +60,14 @@ namespace PhoenixAdult.Sites
 
                 res.ProviderIds.Add(Plugin.Instance.Name, curID);
 
-                if (searchResult.ContainsKey("pictures"))
+                if (searchResult.ContainsKey("pictures") && searchResult["pictures"] is JObject dogfartPics)
                 {
-                    var image = (string)searchResult["pictures"].Last(o => !o.ToString().Equals("resized", StringComparison.OrdinalIgnoreCase));
-                    res.ImageUrl = $"https://images-fame.gammacdn.com/movies/{image}";
+                    // 与 NetworkGammaEnt 一致：pictures 值形如 "/{id}/..."，直接拼接
+                    var image = NetworkGammaEnt.GetBestPictureURL(dogfartPics);
+                    if (!string.IsNullOrEmpty(image))
+                    {
+                        res.ImageUrl = "https://images-fame.gammacdn.com/movies" + image;
+                    }
                 }
 
                 result.Add(res);
@@ -179,10 +183,10 @@ namespace PhoenixAdult.Sites
 
             sceneData = (JObject)sceneData["results"].First["hits"].First;
 
-            if (sceneData.ContainsKey("pictures"))
+            if (sceneData.ContainsKey("pictures") && sceneData["pictures"] is JObject dogfartScenePics)
             {
-                var image = (string)sceneData["pictures"].Last(o => !o.ToString().Equals("resized", StringComparison.OrdinalIgnoreCase));
-                var imageURL = $"https://images-fame.gammacdn.com/movies/{image}";
+                var image = NetworkGammaEnt.GetBestPictureURL(dogfartScenePics);
+                var imageURL = string.IsNullOrEmpty(image) ? string.Empty : "https://images-fame.gammacdn.com/movies" + image;
 
                 result.Add(new RemoteImageInfo
                 {

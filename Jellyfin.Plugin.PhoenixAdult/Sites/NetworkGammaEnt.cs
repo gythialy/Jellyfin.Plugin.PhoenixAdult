@@ -411,7 +411,7 @@ namespace PhoenixAdult.Sites
         /// 键为 WxH 分辨率，resized 是低清缩略图，nsfw 是嵌套对象。
         /// 解析所有 WxH 键取宽度最大者，避免写死某个分辨率；无 WxH 键时回退到任意字符串值。
         /// </summary>
-        private static string GetBestPictureURL(JObject pictures)
+        internal static string GetBestPictureURL(JObject pictures)
         {
             if (pictures == null)
             {
