@@ -84,7 +84,9 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
-            var http = await HTTP.Request(sceneURL, HttpMethod.Post, cancellationToken).ConfigureAwait(false);
+            // 场景页只接受 GET：POST https://www.pornhub.com/view_video.php?viewkey=...
+            // 会被站点直接返回 404 "Page Not Found"，导致标题/演员/日期/图片全部为空。
+            var http = await HTTP.Request(sceneURL, HttpMethod.Get, cancellationToken).ConfigureAwait(false);
             if (!http.IsOK)
             {
                 return result;
@@ -100,7 +102,15 @@ namespace PhoenixAdult.Sites
 
             result.Item.ExternalId = sceneURL;
 
-            result.Item.Name = sceneData.SelectSingleText("//h1[@class='title']");
+            // 标题文本位于 h1 的子节点：<h1 class="title"><span class="inlineFree">…</span></h1>，
+            // 直接取 h1 的文本会得到空串。与 TPDB networkPornhub 的
+            // '//h1[@class="title"]/span/text()' 选择器保持一致，并保留回退。
+            result.Item.Name = sceneData.SelectSingleText("//h1[@class='title']/span");
+            if (string.IsNullOrEmpty(result.Item.Name))
+            {
+                result.Item.Name = sceneData.SelectSingleText("//h1[@class='title']");
+            }
+
             var studioName = sceneData.SelectSingleText("//div[@class='userInfo']//a");
             result.Item.AddStudio("Pornhub");
 
@@ -160,7 +170,9 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
-            var http = await HTTP.Request(sceneURL, HttpMethod.Post, cancellationToken).ConfigureAwait(false);
+            // 场景页只接受 GET：POST https://www.pornhub.com/view_video.php?viewkey=...
+            // 会被站点直接返回 404 "Page Not Found"，导致标题/演员/日期/图片全部为空。
+            var http = await HTTP.Request(sceneURL, HttpMethod.Get, cancellationToken).ConfigureAwait(false);
             if (!http.IsOK)
             {
                 return result;
@@ -168,7 +180,14 @@ namespace PhoenixAdult.Sites
 
             var sceneData = HTML.ElementFromStream(http.ContentStream);
 
-            var img = sceneData.SelectSingleText("//div[@id='player']//img/@src");
+            // 场景页新版已移除 div#player 内的 <img>，改为读取社交卡片元数据。
+            // 与 TPDB networkPornhub 的 '//meta[@property="og:image"]/@content|//meta[@name="twitter:image"]/@content' 一致。
+            var img = sceneData.SelectSingleText("//meta[@property='og:image']/@content");
+            if (string.IsNullOrEmpty(img))
+            {
+                img = sceneData.SelectSingleText("//meta[@name='twitter:image']/@content");
+            }
+
             if (!string.IsNullOrEmpty(img))
             {
                 result.Add(new RemoteImageInfo

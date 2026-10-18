@@ -131,6 +131,20 @@ namespace PhoenixAdult.Sites
                 }
             }
 
+            // sceneDate 只在外部传入 sceneID 时才有（Search 结果不含日期）。
+            // 场景页内嵌 JSON 带 uploadDate，缺失时用它兜底，避免首播日期为空。
+            if (!result.Item.PremiereDate.HasValue)
+            {
+                var uploadDateMatch = System.Text.RegularExpressions.Regex.Match(
+                    sceneData.InnerHtml ?? string.Empty,
+                    "\"uploadDate\"\\s*:\\s*\"([^\"]+)\"");
+                if (uploadDateMatch.Success
+                    && DateTime.TryParse(uploadDateMatch.Groups[1].Value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var uploadDate))
+                {
+                    result.Item.PremiereDate = uploadDate;
+                }
+            }
+
             // 流派: 新版 .scene-cats a.cat-tag
             var genreNode = sceneData.SelectNodesSafe("//div[contains(@class, 'scene-cats')]//a[contains(@class, 'cat-tag')]");
             foreach (var genreLink in genreNode)

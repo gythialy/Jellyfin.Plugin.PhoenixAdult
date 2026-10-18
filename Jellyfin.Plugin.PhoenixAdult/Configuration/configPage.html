@@ -26,6 +26,11 @@
                         <label class="inputLabel inputLabelUnfocused" for="FlareSolverrURL">FlareSolverr URL</label>
                         <input id="FlareSolverrURL" name="FlareSolverrURL" type="text" is="emby-input" />
                     </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="ImageReferers">Image Referer rules</label>
+                        <textarea id="ImageReferers" name="ImageReferers" is="emby-textarea" rows="3" placeholder="cdn.example.com=https://www.example.com/"></textarea>
+                        <div class="fieldDescription">One rule per line, format: <code>host=referer</code>. Some image CDNs (e.g. phncdn.com) reject signed URLs without a Referer; built-in rules apply automatically. Add a rule here to override or disable one (empty value disables it).</div>
+                    </div>
                     <div class="checkboxContainer checkboxContainer-withDescripton">
                         <label class="emby-checkbox-label">
                             <input id="ProxyEnable" name="ProxyEnable" type="checkbox" is="emby-checkbox" />
@@ -148,6 +153,7 @@
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(phoenixAdultConfig.pluginUniqueId).then(function (config) {
                     $('#FlareSolverrURL').val(config.FlareSolverrURL).change();
+                    $('#ImageReferers').val(Object.keys(config.ImageReferers || {}).map(function (k) { return k + '=' + config.ImageReferers[k]; }).join('\n'));
                     $('#DisableCaching').prop('checked', config.DisableCaching);
                     $('#DisableSSLCheck').prop('checked', config.DisableSSLCheck);
                     $('#ProxyEnable').prop('checked', config.ProxyEnable);
@@ -175,6 +181,13 @@
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(phoenixAdultConfig.pluginUniqueId).then(function (config) {
                     config.FlareSolverrURL = $('#FlareSolverrURL').val();
+                    config.ImageReferers = {};
+                    $('#ImageReferers').val().split('\n').forEach(function (line) {
+                        var idx = line.indexOf('=');
+                        if (idx > 0) {
+                            config.ImageReferers[line.substring(0, idx).trim()] = line.substring(idx + 1).trim();
+                        }
+                    });
                     config.DisableCaching = $('#DisableCaching').prop('checked');
                     config.DisableSSLCheck = $('#DisableSSLCheck').prop('checked');
                     config.ProxyEnable = $('#ProxyEnable').prop('checked');

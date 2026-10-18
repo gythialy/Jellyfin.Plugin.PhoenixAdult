@@ -82,9 +82,19 @@ namespace PhoenixAdult.Sites
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             var applicationLD = sceneData.SelectSingleText("//script[@id='applicationLD']");
-            var metadata = JsonConvert.DeserializeObject<ManyVidsMetadata>(applicationLD);
+            var metadata = string.IsNullOrEmpty(applicationLD)
+                ? null
+                : JsonConvert.DeserializeObject<ManyVidsMetadata>(applicationLD);
 
-            if (metadata.Name.EndsWith(TitleWatermark))
+            // 场景页不存在/被拦截时 applicationLD 缺失，反序列化结果为 null。
+            // 原实现在这里直接 metadata.Name.EndsWith 会抛 NullReferenceException 给 Jellyfin。
+            if (metadata == null || string.IsNullOrEmpty(metadata.Name))
+            {
+                result.Item.ExternalId = sceneURL;
+                return result;
+            }
+
+            if (metadata.Name.EndsWith(TitleWatermark, StringComparison.OrdinalIgnoreCase))
             {
                 metadata.Name = metadata.Name.Substring(0, metadata.Name.Length - TitleWatermark.Length);
             }
@@ -94,7 +104,11 @@ namespace PhoenixAdult.Sites
             result.Item.Overview = metadata.Description;
 
             result.Item.AddStudio("ManyVids");
-            result.Item.AddStudio(metadata.Creator.Name);
+
+            if (!string.IsNullOrEmpty(metadata.Creator?.Name))
+            {
+                result.Item.AddStudio(metadata.Creator.Name);
+            }
 
             if (!string.IsNullOrEmpty(sceneDate))
             {

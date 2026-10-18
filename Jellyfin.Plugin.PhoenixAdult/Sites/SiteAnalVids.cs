@@ -183,7 +183,13 @@ namespace PhoenixAdult.Sites
             var posterNode = detailsPageElements.SelectSingleNode("//div[contains(@class,'watch__video')]//video");
             if (posterNode != null)
             {
-                images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("data-poster", string.Empty), Type = ImageType.Primary });
+                // 属性里的 "&" 以 "&amp;" 形式出现，直接拿去请求会被 CDN 403；
+                // 图片 URL 只需要 & 分隔查询参数，统一按 HTML 实体解码。
+                var posterUrl = System.Net.WebUtility.HtmlDecode(posterNode.GetAttributeValue("data-poster", string.Empty));
+                if (!string.IsNullOrEmpty(posterUrl))
+                {
+                    images.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
+                }
             }
 
             return images;

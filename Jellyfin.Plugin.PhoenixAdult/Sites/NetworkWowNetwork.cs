@@ -32,13 +32,30 @@ namespace PhoenixAdult.Sites
             searchTitle = Helper.GetSearchTitle(searchTitle, 4, fromEnd: true);
 
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
-            var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK)
+
+            // wowgirlsblog.com 整站 Cloudflare 挑战（裸请求 403 "Just a moment..."）。
+            // 与 SiteFemjoy / NetworkKink 同范式：配置了 FlareSolverr 时走浏览器上下文，否则直连兜底。
+            string searchHtml;
+            if (FlareSolverr.IsConfigured)
             {
-                return result;
+                searchHtml = await FlareSolverr.GetHtml(searchUrl, cancellationToken).ConfigureAwait(false);
+                if (string.IsNullOrEmpty(searchHtml))
+                {
+                    return result;
+                }
+            }
+            else
+            {
+                var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
+                if (!httpResult.IsOK)
+                {
+                    return result;
+                }
+
+                searchHtml = httpResult.Content;
             }
 
-            var searchResults = HTML.ElementFromString(httpResult.Content);
+            var searchResults = HTML.ElementFromString(searchHtml);
             var pages = new List<string> { searchUrl };
             var pageNodes = searchResults.SelectNodes("//div[@class='pagination']/ul/li/a");
             if (pageNodes != null)
@@ -53,10 +70,21 @@ namespace PhoenixAdult.Sites
                     continue;
                 }
 
-                var pageHttp = await HTTP.Request(page, HttpMethod.Get, cancellationToken);
-                if (pageHttp.IsOK)
+                // 翻页页同样受 Cloudflare 保护，与首页保持一致
+                string pageHtml;
+                if (FlareSolverr.IsConfigured)
                 {
-                    var pageResults = HTML.ElementFromString(pageHttp.Content);
+                    pageHtml = await FlareSolverr.GetHtml(page, cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    var pageHttp = await HTTP.Request(page, HttpMethod.Get, cancellationToken);
+                    pageHtml = pageHttp.IsOK ? pageHttp.Content : null;
+                }
+
+                if (!string.IsNullOrEmpty(pageHtml))
+                {
+                    var pageResults = HTML.ElementFromString(pageHtml);
                     var searchNodes = pageResults.SelectNodes("//main//article[contains(@class,'thumb-block')]");
                     if (searchNodes != null)
                     {
@@ -110,13 +138,25 @@ namespace PhoenixAdult.Sites
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
             }
 
-            var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK)
+            // 场景页同样受 Cloudflare 保护，必须与 Search 一致地走 FlareSolverr，
+            // 否则直连只会拿到挑战页，标题/日期/演员全为空。
+            string detailsHtml;
+            if (FlareSolverr.IsConfigured)
+            {
+                detailsHtml = await FlareSolverr.GetHtml(sceneUrl, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
+                detailsHtml = httpResult.IsOK ? httpResult.Content : null;
+            }
+
+            if (string.IsNullOrEmpty(detailsHtml))
             {
                 return result;
             }
 
-            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
+            var detailsPageElements = HTML.ElementFromString(detailsHtml);
 
             var movie = (Movie)result.Item;
             movie.ExternalId = sceneUrl;
@@ -204,9 +244,21 @@ namespace PhoenixAdult.Sites
                 fallbackImage = string.Empty;
             }
 
-            var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
-            if (!httpResult.IsOK)
+            // 场景页受 Cloudflare 保护，与 Search/Update 一致地走 FlareSolverr
+            string sceneHtml;
+            if (FlareSolverr.IsConfigured)
             {
+                sceneHtml = await FlareSolverr.GetHtml(sceneUrl, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                var httpResult = await HTTP.Request(sceneUrl, HttpMethod.Get, cancellationToken);
+                sceneHtml = httpResult.IsOK ? httpResult.Content : null;
+            }
+
+            if (string.IsNullOrEmpty(sceneHtml))
+            {
+                // 取不到场景页时退回 Search 阶段保存的封面
                 if (!string.IsNullOrEmpty(fallbackImage))
                 {
                     images.Add(new RemoteImageInfo { Url = fallbackImage, Type = ImageType.Primary });
@@ -215,7 +267,7 @@ namespace PhoenixAdult.Sites
                 return images;
             }
 
-            var detailsPageElements = HTML.ElementFromString(httpResult.Content);
+            var detailsPageElements = HTML.ElementFromString(sceneHtml);
 
             // NextGen gallery：相册 post 的原图（1200x675 ~ 1800x1201 高清）
             var galleryLinks = detailsPageElements.SelectNodes("//div[contains(@class,'ngg-galleryoverview')]//a/@href");

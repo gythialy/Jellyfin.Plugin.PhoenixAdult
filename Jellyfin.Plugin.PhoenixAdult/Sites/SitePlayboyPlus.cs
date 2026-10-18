@@ -62,10 +62,11 @@ namespace PhoenixAdult.Sites
 
                 if (searchResult.ContainsKey("pictures") && searchResult["pictures"] is JObject picObj)
                 {
-                    var image = picObj.Properties().LastOrDefault(o => !o.Name.Equals("resized", StringComparison.OrdinalIgnoreCase))?.Value?.ToString();
+                    // 与 GetImages 一致：值为 "/{id}/..." 形式，需直接拼接而非 "movies/{image}"
+                    var image = NetworkGammaEnt.GetBestPictureURL(picObj);
                     if (!string.IsNullOrEmpty(image))
                     {
-                        res.ImageUrl = $"https://images-fame.gammacdn.com/movies/{image}";
+                        res.ImageUrl = "https://images-fame.gammacdn.com/movies" + image;
                     }
                 }
 
@@ -184,13 +185,15 @@ namespace PhoenixAdult.Sites
 
             if (sceneData.ContainsKey("pictures") && sceneData["pictures"] is JObject picObj2)
             {
-                var image = picObj2.Properties().LastOrDefault(o => !o.Name.Equals("resized", StringComparison.OrdinalIgnoreCase))?.Value?.ToString();
+                // 与 NetworkGammaEnt 一致：pictures 的值为 "/{id}/{id}_01/previews/..." 形式，
+                // 已带前导斜杠；原实现用 "movies/{image}" 会拼出 "movies//165111/..." 导致 404。
+                var image = NetworkGammaEnt.GetBestPictureURL(picObj2);
                 if (string.IsNullOrEmpty(image))
                 {
                     return result;
                 }
 
-                var imageURL = $"https://images-fame.gammacdn.com/movies/{image}";
+                var imageURL = "https://images-fame.gammacdn.com/movies" + image;
 
                 result.Add(new RemoteImageInfo
                 {

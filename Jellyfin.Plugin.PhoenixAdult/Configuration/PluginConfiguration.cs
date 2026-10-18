@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using MediaBrowser.Model.Plugins;
 
 namespace PhoenixAdult.Configuration
@@ -42,6 +43,7 @@ namespace PhoenixAdult.Configuration
             this.ProxyPassword = string.Empty;
 
             this.FlareSolverrURL = "http://localhost:8191/";
+            this.ImageReferers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             this.DefaultSiteName = string.Empty;
             this.UseFilePath = false;
@@ -87,6 +89,12 @@ namespace PhoenixAdult.Configuration
         public string ProxyPassword { get; set; }
 
         public string FlareSolverrURL { get; set; }
+
+        /// <summary>
+        /// 追加/覆盖图片 Referer 防盗链规则：主机名（可只写域名后缀）→ Referer。
+        /// 内置规则见 <see cref="Consts.ImageReferers"/>，此项仅用于站点 CDN 变更时的免改版修正。
+        /// </summary>
+        public Dictionary<string, string> ImageReferers { get; set; }
 
         public string DefaultSiteName { get; set; }
 
