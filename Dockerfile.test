@@ -2,6 +2,7 @@
 # 用途: 在隔离容器内运行离线数据测试 + 在线冒烟测试（真实站点搜索）
 # 构建: docker build -t phoenixadult-tests -f Dockerfile.test .
 # 运行离线测试: docker run --rm phoenixadult-tests
+# 运行在线回归: docker run --rm phoenixadult-tests dotnet test -c Release --no-build --filter "Category=Online&FullyQualifiedName~ProviderRegression"
 # 运行在线冒烟: docker run --rm phoenixadult-tests dotnet test -c Release --no-build --filter "Category=Online"
 # 交互进入: docker run --rm -it --entrypoint /bin/bash phoenixadult-tests
 

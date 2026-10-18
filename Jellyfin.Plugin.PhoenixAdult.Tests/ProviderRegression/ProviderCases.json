@@ -1,0 +1,1486 @@
+{
+  "version": 1,
+  "description": "PhoenixAdult provider 统一回归用例目录。kind=search 走 provider.Search；kind=update 走 provider.Update(场景URL)；kind=e2e 走 MovieProvider 全链路。由 ProviderRegression*Tests 数据驱动执行。",
+  "generatedFrom": [
+    "PornripsRegressionTests",
+    "PornripsNewSitesTests",
+    "VerifiedScenesRegressionTests",
+    "P1PaginateTests",
+    "各独立 *ProbeTests"
+  ],
+  "cases": [
+    {
+      "id": "search-5kporn-70-0",
+      "kind": "search",
+      "handler": "Network5Kporn",
+      "group": 70,
+      "site": 0,
+      "siteName": "5KPorn",
+      "searchTerms": [
+        "Remi Raw",
+        "Remi"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "5KPorn.26.08.04.Remi.Raw.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-abbywinters-57-0",
+      "kind": "search",
+      "handler": "SiteAbbyWinters",
+      "group": 57,
+      "site": 0,
+      "siteName": "AbbyWinters",
+      "searchTerms": [
+        "Larisa And Ivi Facesitting",
+        "Larisa And",
+        "Larisa"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "AbbyWinters.26.08.07.Larisa.And.Ivi.Facesitting.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-verified-assparade-22-1",
+      "kind": "search",
+      "handler": "Network1service",
+      "group": 22,
+      "site": 1,
+      "siteName": "AssParade",
+      "searchTerms": [
+        "Maya Luz"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "AssParade.26.08.10.Maya.Luz.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsRegressionTests"
+      ],
+      "note": "pornrips 已验证站点：必须仍能搜到结果",
+      "expectedFirstHint": "Big Booty Maya Luz"
+    },
+    {
+      "id": "search-auntjudysxxx-73-0",
+      "kind": "search",
+      "handler": "NetworkAuntJudys",
+      "group": 73,
+      "site": 0,
+      "siteName": "AuntJudysXXX",
+      "searchTerms": [
+        "Sadie Star",
+        "Sadie"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "AuntJudysXXX.26.08.09.Sadie.Star.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-bang-1-0",
+      "kind": "search",
+      "handler": "NetworkBang",
+      "group": 1,
+      "site": 0,
+      "siteName": "Bang",
+      "searchTerms": [
+        "YNGR 26 08 07 JoJo Austin",
+        "YNGR 26",
+        "YNGR"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "Bang.YNGR.26.08.07.JoJo.Austin.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-bbcsurprise-58-2",
+      "kind": "search",
+      "handler": "NetworkExploitedX",
+      "group": 58,
+      "site": 2,
+      "siteName": "BBCSurprise",
+      "searchTerms": [
+        "Brittany Loveless Big Dick Good Day",
+        "Brittany Loveless",
+        "Brittany"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "BBCSurprise.26.08.01.Brittany.Loveless.Big.Dick.Good.Day.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests",
+        "P1PaginateTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；BBCSurprise 站2 分页浏览命中"
+    },
+    {
+      "id": "search-beauty-angels-116-7",
+      "kind": "search",
+      "handler": "NetworkTeenMegaWorld",
+      "group": 116,
+      "site": 7,
+      "siteName": "Beauty-Angels",
+      "searchTerms": [
+        "Luna Evans",
+        "Luna"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "Beauty-Angels.26.08.09.Luna.Evans.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests",
+        "ProbeTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；改版修复：搜索节点 div→a，标题 a→span"
+    },
+    {
+      "id": "search-biggulpgirls-67-4",
+      "kind": "search",
+      "handler": "NetworkRadicalCash",
+      "group": 67,
+      "site": 4,
+      "siteName": "BigGulpGirls",
+      "searchTerms": [
+        "Lola Aiko",
+        "Lola"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "BigGulpGirls.26.08.08.Lola.Aiko.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-blacksonblondes-19-1",
+      "kind": "search",
+      "handler": "NetworkDogfart",
+      "group": 19,
+      "site": 1,
+      "siteName": "BlacksOnBlondes",
+      "searchTerms": [
+        "Harley Love",
+        "Harley"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "BlacksOnBlondes.26.08.07.Harley.Love.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests",
+        "ProbeTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；Algolia API；全链路 Search→Update→GetImages",
+      "chain": true,
+      "expectName": true,
+      "expectImages": true
+    },
+    {
+      "id": "search-brandnewamateurs-137-0",
+      "kind": "search",
+      "handler": "SiteBrandNewAmateurs",
+      "group": 137,
+      "site": 0,
+      "siteName": "BrandNewAmateurs",
+      "searchTerms": [
+        "Itty Bitty Lil Haven Moss Fuck Suck Teasing",
+        "Itty Bitty",
+        "Itty"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "BrandNewAmateurs.26.07.28.Itty.Bitty.Lil.Haven.Moss.Fuck.Suck.Teasing.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-verified-brazzersexxtra-0-16",
+      "kind": "search",
+      "handler": "Network1service",
+      "group": 0,
+      "site": 16,
+      "siteName": "BrazzersExxtra",
+      "searchTerms": [
+        "Ryan Reid Double Indulgence"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "BrazzersExxtra.26.08.10.Ryan.Reid.Double.Indulgence.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsRegressionTests"
+      ],
+      "note": "pornrips 已验证站点：必须仍能搜到结果",
+      "expectedFirstHint": "Double Indulgence"
+    },
+    {
+      "id": "search-digitalplayground-2-14",
+      "kind": "search",
+      "handler": "Network1service",
+      "group": 2,
+      "site": 14,
+      "siteName": "DigitalPlayground",
+      "searchTerms": [
+        "Rissa May Just Visiting Episode 1",
+        "Rissa May",
+        "Rissa"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "DigitalPlayground.26.08.06.Rissa.May.Just.Visiting.Episode.1.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-verified-elegantraw-72-20",
+      "kind": "search",
+      "handler": "NetworkAdultPrime",
+      "group": 72,
+      "site": 20,
+      "siteName": "ElegantRaw",
+      "searchTerms": [
+        "Sweet Vicki"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "ElegantRaw.26.07.20.Sweet.Vicki.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsRegressionTests"
+      ],
+      "note": "pornrips 已验证站点：必须仍能搜到结果",
+      "expectedFirstHint": "Blonde milf savors"
+    },
+    {
+      "id": "search-verified-evilangel-11-1",
+      "kind": "search",
+      "handler": "NetworkGammaEnt",
+      "group": 11,
+      "site": 1,
+      "siteName": "EvilAngel",
+      "searchTerms": [
+        "TS Shakira Brazil and TS Angel Hadashian"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "EvilAngel.26.07.12.TS.Shakira.Brazil.and.TS.Angel.Hadashian.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsRegressionTests"
+      ],
+      "note": "pornrips 已验证站点：必须仍能搜到结果",
+      "expectedFirstHint": "TS ANGEL HADASHIAN"
+    },
+    {
+      "id": "search-exploitedcollegegirls-58-0",
+      "kind": "search",
+      "handler": "NetworkExploitedX",
+      "group": 58,
+      "site": 0,
+      "siteName": "ExploitedCollegeGirls",
+      "searchTerms": [
+        "Girls Girls Girls"
+      ],
+      "expectMinResults": 1,
+      "source": [
+        "P1PaginateTests"
+      ],
+      "note": "分页浏览命中最新场景"
+    },
+    {
+      "id": "search-familystrokes-24-31",
+      "kind": "search",
+      "handler": "NetworkMylf",
+      "group": 24,
+      "site": 31,
+      "siteName": "FamilyStrokes",
+      "searchTerms": [
+        "Della Cate And Koda Monroe",
+        "Della Cate",
+        "Della"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "FamilyStrokes.26.08.07.Della.Cate.And.Koda.Monroe.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-familytherapyxxx-52-0",
+      "kind": "search",
+      "handler": "SiteFamilyTherapyXXX",
+      "group": 52,
+      "site": 0,
+      "siteName": "FamilyTherapyXXX",
+      "searchTerms": [
+        "Angel Youngs The Secret Deal",
+        "Angel Youngs",
+        "Angel"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "FamilyTherapyXXX.26.08.04.Angel.Youngs.The.Secret.Deal.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-femjoy-149-0",
+      "kind": "search",
+      "handler": "SiteFemjoy",
+      "group": 149,
+      "site": 0,
+      "siteName": "FemJoy",
+      "searchTerms": [
+        "Wikki K Cozy Sensuality",
+        "Wikki K",
+        "Wikki"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "FemJoy.26.08.08.Wikki.K.Cozy.Sensuality.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-ftvgirls-88-1",
+      "kind": "search",
+      "handler": "NetworkFTV",
+      "group": 88,
+      "site": 1,
+      "siteName": "FTVGirls",
+      "searchTerms": [
+        "Cecee Pretty And Petite",
+        "Cecee Pretty",
+        "Cecee"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "FTVGirls.26.08.05.Cecee.Pretty.And.Petite.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-gangbangcreampie-64-75",
+      "kind": "search",
+      "handler": "NetworkGammaEntOther",
+      "group": 64,
+      "site": 75,
+      "siteName": "GangbangCreampie",
+      "searchTerms": [
+        "Angelina Moon Blowbang",
+        "Angelina Moon",
+        "Angelina"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "GangbangCreampie.26.08.10.Angelina.Moon.Blowbang.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-girlsoutwest-154-0",
+      "kind": "search",
+      "handler": "SiteGirlsOutWest",
+      "group": 154,
+      "site": 0,
+      "siteName": "GirlsOutWest",
+      "searchTerms": [
+        "Cartier Rose And Hazel Leone",
+        "Cartier Rose",
+        "Cartier"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "GirlsOutWest.26.08.09.Cartier.Rose.And.Hazel.Leone.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests",
+        "P1PaginateTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；分页浏览命中 Cartier Rose"
+    },
+    {
+      "id": "search-hegre-37-0",
+      "kind": "search",
+      "handler": "SiteHegre",
+      "group": 37,
+      "site": 0,
+      "siteName": "Hegre",
+      "searchTerms": [
+        "Malena A Nude Fashion",
+        "Malena A",
+        "Malena"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "Hegre.26.08.04.Malena.A.Nude.Fashion.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-hotmilfsfuck-160-6",
+      "kind": "search",
+      "handler": "SiteInterracialPass",
+      "group": 160,
+      "site": 6,
+      "siteName": "HotMilfsFuck",
+      "searchTerms": [
+        "Jasmine If You Dont Love Me Lie To Me",
+        "Jasmine If",
+        "Jasmine"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "HotMilfsFuck.26.07.26.Jasmine.If.You.Dont.Love.Me.Lie.To.Me.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-hunt4k-120-4",
+      "kind": "search",
+      "handler": "NetworkVIP4K",
+      "group": 120,
+      "site": 4,
+      "siteName": "Hunt4K",
+      "searchTerms": [
+        "Larisa"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "Hunt4K.26.08.06.Larisa.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-jacquieetmicheltv-162-0",
+      "kind": "search",
+      "handler": "SiteJacquieEtMichel",
+      "group": 162,
+      "site": 0,
+      "siteName": "JacquieEtMichelTV",
+      "searchTerms": [
+        "Jolly"
+      ],
+      "expectMinResults": 1,
+      "source": [
+        "ProbeTests"
+      ],
+      "note": "TV 站重写：域名 jacquieetmicheltv.net + label=scene"
+    },
+    {
+      "id": "search-jesseloadsmonsterfacials-164-0",
+      "kind": "search",
+      "handler": "SiteJesseLoadsMonsterFacials",
+      "group": 164,
+      "site": 0,
+      "siteName": "JesseLoadsMonsterFacials",
+      "searchTerms": [
+        "Carly Kiss",
+        "Carly"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "JesseLoadsMonsterFacials.26.08.09.Carly.Kiss.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-verified-julesjordan-25-0",
+      "kind": "search",
+      "handler": "SiteJulesJordan",
+      "group": 25,
+      "site": 0,
+      "siteName": "JulesJordan",
+      "searchTerms": [
+        "Vanessa Blake Takes A Bbc Up Her Ass"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "JulesJordan.26.02.17.Vanessa.Blake.Takes.A.Bbc.Up.Her.Ass.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsRegressionTests",
+        "JulesJordanProbeTests"
+      ],
+      "note": "改版修复回归：Search→Update→GetImages 全链路",
+      "chain": true,
+      "expectName": true,
+      "expectMinActors": 1,
+      "expectImages": true,
+      "expectedFirstHint": "Thick & Bootylicious"
+    },
+    {
+      "id": "knownzero-legalporno-26-0",
+      "kind": "search",
+      "handler": "SiteLegalPorno",
+      "group": 26,
+      "site": 0,
+      "siteName": "LegalPorno",
+      "searchTerms": [
+        "Hari Stark"
+      ],
+      "expectMinResults": 0,
+      "allowZero": true,
+      "rssTitle": "LegalPorno.26.05.24.Hari.Stark.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsRegressionTests"
+      ],
+      "note": "已知 0 结果：不崩溃即通过"
+    },
+    {
+      "id": "search-milfaf-118-0",
+      "kind": "search",
+      "handler": "NetworkThickCashOther",
+      "group": 118,
+      "site": 0,
+      "siteName": "MilfAF",
+      "searchTerms": [
+        "Harlie Hotwife",
+        "Harlie"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "MilfAF.26.07.30.Harlie.Hotwife.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-missax-176-0",
+      "kind": "search",
+      "handler": "SiteMissaX",
+      "group": 176,
+      "site": 0,
+      "siteName": "MissaX",
+      "searchTerms": [
+        "Hazel Heart And Kell Fire The Tea Party",
+        "Hazel Heart",
+        "Hazel"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "MissaX.26.01.16.Hazel.Heart.And.Kell.Fire.The.Tea.Party.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-momishorny-22-35",
+      "kind": "search",
+      "handler": "Network1service",
+      "group": 22,
+      "site": 35,
+      "siteName": "MomIsHorny",
+      "searchTerms": [
+        "Melissa Moore",
+        "Melissa"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "MomIsHorny.26.08.07.Melissa.Moore.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-mrluckypov-202-8",
+      "kind": "search",
+      "handler": "SiteSpizoo",
+      "group": 202,
+      "site": 8,
+      "siteName": "MrLuckyPOV",
+      "searchTerms": [
+        "Kathryn Mae Petite Blonde Slut Drains Cock",
+        "Kathryn Mae",
+        "Kathryn"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "MrLuckyPOV.26.07.31.Kathryn.Mae.Petite.Blonde.Slut.Drains.Cock.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-myfriendshotgirl-10-22",
+      "kind": "search",
+      "handler": "SiteNaughtyAmerica",
+      "group": 10,
+      "site": 22,
+      "siteName": "MyFriendsHotGirl",
+      "searchTerms": [
+        "JoJo Austin",
+        "JoJo"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "MyFriendsHotGirl.26.08.10.JoJo.Austin.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests",
+        "ProbeTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）"
+    },
+    {
+      "id": "search-newsensations-55-0",
+      "kind": "search",
+      "handler": "SiteNewSensations",
+      "group": 55,
+      "site": 0,
+      "siteName": "NewSensations",
+      "searchTerms": [
+        "Summer Stevens",
+        "Summer"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "NewSensations.26.08.08.Summer.Stevens.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests",
+        "P1PaginateTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；分页浏览命中 Summer Stevens"
+    },
+    {
+      "id": "search-nubiles-28-1",
+      "kind": "search",
+      "handler": "NetworkNubiles",
+      "group": 28,
+      "site": 1,
+      "siteName": "Nubiles",
+      "searchTerms": [
+        "Maia Spir Make Me Sweat",
+        "Maia Spir",
+        "Maia"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "Nubiles.26.08.10.Maia.Spir.Make.Me.Sweat.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-penthousegold-183-0",
+      "kind": "search",
+      "handler": "SitePenthouseGold",
+      "group": 183,
+      "site": 0,
+      "siteName": "PenthouseGold",
+      "searchTerms": [
+        "Angel Golightly",
+        "Angel"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "PenthouseGold.26.08.08.Angel.Golightly.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-verified-perfect18-72-47",
+      "kind": "search",
+      "handler": "NetworkAdultPrime",
+      "group": 72,
+      "site": 47,
+      "siteName": "Perfect18",
+      "searchTerms": [
+        "Erika Fox"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "Perfect18.26.07.20.Erika.Fox.XXX.1080p.HEVC.x265.PRT",
+      "source": [
+        "PornripsRegressionTests"
+      ],
+      "note": "pornrips 已验证站点：必须仍能搜到结果",
+      "expectedFirstHint": "Dropping my sheer lingerie"
+    },
+    {
+      "id": "search-verified-pervmom-24-32",
+      "kind": "search",
+      "handler": "NetworkMylf",
+      "group": 24,
+      "site": 32,
+      "siteName": "PervMom",
+      "searchTerms": [
+        "Tiffani Time"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "PervMom.26.08.09.Tiffani.Time.XXX.1080p.HEVC.x265.PRT",
+      "source": [
+        "PornripsRegressionTests"
+      ],
+      "note": "pornrips 已验证站点：必须仍能搜到结果",
+      "expectedFirstHint": "Practice Time"
+    },
+    {
+      "id": "search-playboyplus-185-0",
+      "kind": "search",
+      "handler": "SitePlayboyPlus",
+      "group": 185,
+      "site": 0,
+      "siteName": "PlayboyPlus",
+      "searchTerms": [
+        "Sunlit Allure",
+        "Sunlit"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "PlayboyPlus.26.08.08.Sunlit.Allure.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests",
+        "ProbeTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；Algolia API 重写；全链路 Search→Update→GetImages",
+      "expectedFirstContains": "Sunlit Allure",
+      "chain": true,
+      "expectName": true,
+      "expectPremiereDate": true,
+      "expectImages": true
+    },
+    {
+      "id": "search-pornfidelity-97-0",
+      "kind": "search",
+      "handler": "NetworkKellyMadison",
+      "group": 97,
+      "site": 0,
+      "siteName": "PornFidelity",
+      "searchTerms": [
+        "E1168 Serena Sterling",
+        "E1168 Serena",
+        "E1168"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "PornFidelity.E1168.Serena.Sterling.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-pornworld-106-16",
+      "kind": "search",
+      "handler": "NetworkPornWorld",
+      "group": 106,
+      "site": 16,
+      "siteName": "PornWorld",
+      "searchTerms": [
+        "Jena Larose",
+        "Jena"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "PornWorld.26.08.09.Jena.Larose.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-private-190-0",
+      "kind": "search",
+      "handler": "SitePrivate",
+      "group": 190,
+      "site": 0,
+      "siteName": "Private",
+      "searchTerms": [
+        "Renata Fox",
+        "Renata"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "Private.26.08.08.Renata.Fox.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-publicagent-8-3",
+      "kind": "search",
+      "handler": "Network1service",
+      "group": 8,
+      "site": 3,
+      "siteName": "PublicAgent",
+      "searchTerms": [
+        "Violet Viper",
+        "Violet"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "PublicAgent.26.08.06.Violet.Viper.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-purecfnm-108-1",
+      "kind": "search",
+      "handler": "NetworkPureCFNM",
+      "group": 108,
+      "site": 1,
+      "siteName": "PureCFNM",
+      "searchTerms": [
+        "Charlotte Rose Jasmine Fine And Robyn Quinn Hazmat Facial",
+        "Charlotte Rose",
+        "Charlotte"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "PureCFNM.26.08.07.Charlotte.Rose.Jasmine.Fine.And.Robyn.Quinn.Hazmat.Facial.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-purgatoryx-61-0",
+      "kind": "search",
+      "handler": "SitePurgatoryX",
+      "group": 61,
+      "site": 0,
+      "siteName": "PurgatoryX",
+      "searchTerms": [
+        "Audrey Reid",
+        "Audrey"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "PurgatoryX.26.07.31.Audrey.Reid.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests",
+        "ProbeTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；改版后新选择器 h1.title + div.meta/description/models-list"
+    },
+    {
+      "id": "search-seehimfuck-75-18",
+      "kind": "search",
+      "handler": "NetworkBellaPass",
+      "group": 75,
+      "site": 18,
+      "siteName": "SeeHimFuck",
+      "searchTerms": [
+        "Brayden Banks And Mira Luv",
+        "Brayden Banks",
+        "Brayden"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "SeeHimFuck.26.08.07.Brayden.Banks.And.Mira.Luv.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests",
+        "ProbeTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；search URL 修正后命中"
+    },
+    {
+      "id": "search-sexmex-199-0",
+      "kind": "search",
+      "handler": "SiteSexMex",
+      "group": 199,
+      "site": 0,
+      "siteName": "SexMex",
+      "searchTerms": [
+        "Gabriela Veracruz",
+        "Gabriela"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "SexMex.26.08.08.Gabriela.Veracruz.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-verified-sinfulxxx-72-61",
+      "kind": "search",
+      "handler": "NetworkAdultPrime",
+      "group": 72,
+      "site": 61,
+      "siteName": "SinfulXXX",
+      "searchTerms": [
+        "Gatita Veve"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "SinfulXXX.26.07.24.Gatita.Veve.XXX.1080p.HEVC.x265.PRT",
+      "source": [
+        "PornripsRegressionTests"
+      ],
+      "note": "pornrips 已验证站点：必须仍能搜到结果",
+      "expectedFirstHint": "Colors of Love"
+    },
+    {
+      "id": "search-slutinspection-100-18",
+      "kind": "search",
+      "handler": "NetworkModelCentro",
+      "group": 100,
+      "site": 18,
+      "siteName": "SlutInspection",
+      "searchTerms": [
+        "Luna Lark Thick Sluts Do It Better",
+        "Luna Lark",
+        "Luna"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "SlutInspection.26.07.31.Luna.Lark.Thick.Sluts.Do.It.Better.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests",
+        "P1PaginateTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；分页兜底命中 Luna Lark"
+    },
+    {
+      "id": "search-spankmonster-71-1",
+      "kind": "search",
+      "handler": "NetworkAdultEmpireCash",
+      "group": 71,
+      "site": 1,
+      "siteName": "SpankMonster",
+      "searchTerms": [
+        "Kloe Love",
+        "Kloe"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "SpankMonster.26.08.06.Kloe.Love.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-tonightsgirlfriend-59-0",
+      "kind": "search",
+      "handler": "SiteTonightsGirlfriend",
+      "group": 59,
+      "site": 0,
+      "siteName": "TonightsGirlfriend",
+      "searchTerms": [
+        "Kate Dalia",
+        "Kate"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "TonightsGirlfriend.26.08.07.Kate.Dalia.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests",
+        "ProbeTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；Search 不崩溃即可（已知常 0 结果）",
+      "allowZero": true
+    },
+    {
+      "id": "search-verified-vixen-44-2",
+      "kind": "search",
+      "handler": "NetworkStrike3",
+      "group": 44,
+      "site": 2,
+      "siteName": "Vixen",
+      "searchTerms": [
+        "Ella Hughes And Audrey Reid Hotel Vixen Seaso"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "Vixen.26.08.10.Ella.Hughes.And.Audrey.Reid.Hotel.Vixen.Seaso.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsRegressionTests"
+      ],
+      "note": "pornrips 已验证站点：必须仍能搜到结果",
+      "expectedFirstHint": "Hotel Vixen"
+    },
+    {
+      "id": "search-watch4beauty-221-0",
+      "kind": "search",
+      "handler": "SiteWatch4Beauty",
+      "group": 221,
+      "site": 0,
+      "siteName": "Watch4Beauty",
+      "searchTerms": [
+        "Irene Rouse Flexible In Black",
+        "Irene Rouse",
+        "Irene"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "Watch4Beauty.26.08.10.Irene.Rouse.Flexible.In.Black.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-whippedass-16-29",
+      "kind": "search",
+      "handler": "NetworkKink",
+      "group": 16,
+      "site": 29,
+      "siteName": "WhippedAss",
+      "searchTerms": [
+        "Kasey Warner And Tessa Thomas",
+        "Kasey Warner",
+        "Kasey"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "WhippedAss.26.08.05.Kasey.Warner.And.Tessa.Thomas.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsNewSitesTests"
+      ],
+      "note": "pornrips RSS 标题批量验证（多级回退搜索词）；批量探测：0 结果不失败（不崩溃即通过）",
+      "allowZero": true
+    },
+    {
+      "id": "search-verified-wowgirls-123-0",
+      "kind": "search",
+      "handler": "NetworkWowNetwork",
+      "group": 123,
+      "site": 0,
+      "siteName": "WowGirls",
+      "searchTerms": [
+        "Toys For All",
+        "Liz Ocean And Tiffany Tatum Toys For All"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "WowGirls.24.12.27.Liz.Ocean.And.Tiffany.Tatum.Toys.For.All.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "PornripsRegressionTests"
+      ],
+      "note": "wowgirlsblog.com 受 Cloudflare 保护，经 FlareSolverr 接入后全链路（Search→Update→GetImages）",
+      "expectedFirstHint": "WowGirls",
+      "chain": true,
+      "expectName": true,
+      "expectImages": true
+    },
+    {
+      "id": "update-beauty-angels-116-7",
+      "kind": "update",
+      "handler": "NetworkTeenMegaWorld",
+      "group": 116,
+      "site": 7,
+      "siteName": "Beauty-Angels",
+      "sceneUrl": "https://teenmegaworld.net/trailers/Orgasming-after-a-trip.html",
+      "source": [
+        "ProbeTests"
+      ],
+      "expectName": true,
+      "note": "Update 场景页直抓"
+    },
+    {
+      "id": "update-jacquieetmicheltv-162-0",
+      "kind": "update",
+      "handler": "SiteJacquieEtMichel",
+      "group": 162,
+      "site": 0,
+      "siteName": "JacquieEtMichelTV",
+      "sceneUrl": "/en/content/6a612906060b77ef5809323e/jolly-finds-a-savior-and-thanks-him-with-her-ass",
+      "source": [
+        "ProbeTests"
+      ],
+      "expectName": true,
+      "expectMinActors": 1,
+      "note": "Update 场景页直抓（JSON-LD VideoObject 解析 name/date/actors）"
+    },
+    {
+      "id": "update-myfriendshotgirl-10-22",
+      "kind": "update",
+      "handler": "SiteNaughtyAmerica",
+      "group": 10,
+      "site": 22,
+      "siteName": "MyFriendsHotGirl",
+      "sceneUrl": "https://www.naughtyamerica.com/scene/the-ever-so-horny-jojo-austin-takes-the-new-roomate-for-a-ride-when-her-boyfriend-steps-out-33944",
+      "source": [
+        "ProbeTests"
+      ],
+      "expectName": true,
+      "note": "Update 直抓场景 URL"
+    },
+    {
+      "id": "update-tonightsgirlfriend-59-0",
+      "kind": "update",
+      "handler": "SiteTonightsGirlfriend",
+      "group": 59,
+      "site": 0,
+      "siteName": "TonightsGirlfriend",
+      "sceneUrl": "https://www.tonightsgirlfriend.com/scene/kate-dalia-happily-welcomes-her-new-stepdaughter-home",
+      "source": [
+        "ProbeTests"
+      ],
+      "expectName": false,
+      "allowZero": true,
+      "note": "Update 直抓不崩溃即可（演员/图片 NRE 回归）"
+    },
+    {
+      "id": "e2e-angelslove-angelslove-26-07-11-vixi-rafi-and-matty-mila-perez-too-late-not-quite",
+      "kind": "e2e",
+      "fileName": "AngelsLove.26.07.11.Vixi.Rafi.And.Matty.Mila.Perez.Too.Late.Not.Quite",
+      "siteName": "AngelsLove",
+      "expectDate": "2026-07-11",
+      "source": [
+        "VerifiedScenesRegressionTests"
+      ],
+      "note": "已验证场景全链路（MovieProvider Search→GetMetadata）",
+      "expectTitleContains": [
+        "Too Late"
+      ],
+      "expectActors": [
+        "Vixi Rafi",
+        "Matty"
+      ]
+    },
+    {
+      "id": "e2e-cum4k-cum4k-26-06-30-aubry-babcock-hot-handywoman",
+      "kind": "e2e",
+      "fileName": "Cum4K.26.06.30.Aubry.Babcock.Hot.Handywoman",
+      "siteName": "Cum4K",
+      "expectDate": "2026-06-30",
+      "source": [
+        "VerifiedScenesRegressionTests"
+      ],
+      "note": "已验证场景全链路（MovieProvider Search→GetMetadata）",
+      "expectTitleContains": [
+        "Hot Handywoman"
+      ],
+      "expectActors": [
+        "Aubry Babcock",
+        "Sam Shock"
+      ]
+    },
+    {
+      "id": "e2e-dirtywivesclub-dirtywivesclub-26-08-18-lucy-mochi",
+      "kind": "e2e",
+      "fileName": "DirtyWivesClub.26.08.18.Lucy.Mochi",
+      "siteName": "DirtyWivesClub",
+      "expectDate": "2026-08-18",
+      "source": [
+        "VerifiedScenesRegressionTests"
+      ],
+      "note": "已验证场景全链路（MovieProvider Search→GetMetadata）",
+      "expectTitleContains": [
+        "Hot and Married Lucy Mochi"
+      ],
+      "expectActors": [
+        "Lucy Mochi",
+        "Codey Steele"
+      ]
+    },
+    {
+      "id": "e2e-dorcelclub-dorcelclub-26-05-06-candee-licious-dakota-dove-alyssa-bounty-and-black-angel-lesbian-temptations-at-the-gym",
+      "kind": "e2e",
+      "fileName": "DorcelClub.26.05.06.Candee.Licious.Dakota.Dove.Alyssa.Bounty.And.Black.Angel.Lesbian.Temptations.At.The.Gym",
+      "siteName": "DorcelClub",
+      "expectDate": "2026-05-06",
+      "source": [
+        "VerifiedScenesRegressionTests"
+      ],
+      "note": "已验证场景全链路（MovieProvider Search→GetMetadata）",
+      "expectTitleContains": [
+        "Lesbian temptations at the gym"
+      ],
+      "expectActors": [
+        "Candee Licious",
+        "Black Angel"
+      ]
+    },
+    {
+      "id": "e2e-hegre-hegre-26-08-11-nyx-and-syrena-lesbian-leisure-part-1",
+      "kind": "e2e",
+      "fileName": "Hegre.26.08.11.Nyx.And.Syrena.Lesbian.Leisure.Part.1",
+      "siteName": "Hegre",
+      "expectDate": "2026-08-11",
+      "source": [
+        "VerifiedScenesRegressionTests"
+      ],
+      "note": "Hegre 匿名页按 IP 地理返回中文标题/演员，日期/演员受会员墙限制，仅断言日期 + HasMetadata"
+    },
+    {
+      "id": "e2e-homegrowneurope-homegrowneurope-26-05-16-shina-ryen",
+      "kind": "e2e",
+      "fileName": "HomeGrownEurope.26.05.16.Shina.Ryen",
+      "siteName": "HomeGrownEurope",
+      "expectDate": "2026-05-16",
+      "source": [
+        "VerifiedScenesRegressionTests"
+      ],
+      "note": "已验证场景全链路（MovieProvider Search→GetMetadata）",
+      "expectTitleContains": [
+        "Screw my skinny pussy now"
+      ],
+      "expectActors": [
+        "Shinaryen",
+        "Alex Ryen"
+      ]
+    },
+    {
+      "id": "e2e-julesjordan-julesjordan-26-06-19-lucy-mochi-glamorous-asian-beauty-mochis-passion-ignites-with-manuel-ferrara",
+      "kind": "e2e",
+      "fileName": "JulesJordan.26.06.19.Lucy.Mochi.Glamorous.Asian.Beauty.Mochis.Passion.Ignites.With.Manuel.Ferrara",
+      "siteName": "JulesJordan",
+      "expectDate": "2026-06-19",
+      "source": [
+        "VerifiedScenesRegressionTests"
+      ],
+      "note": "已验证场景全链路（MovieProvider Search→GetMetadata）",
+      "expectTitleContains": [
+        "Glamorous Asian Beauty"
+      ],
+      "expectActors": [
+        "Lucy Mochi",
+        "Manuel Ferrara"
+      ]
+    },
+    {
+      "id": "e2e-momswap-momswap-26-06-18-skylar-snow-and-penny-barber",
+      "kind": "e2e",
+      "fileName": "MomSwap.26.06.18.Skylar.Snow.And.Penny.Barber.",
+      "siteName": "MomSwap",
+      "expectDate": "2026-06-18",
+      "source": [
+        "VerifiedScenesRegressionTests"
+      ],
+      "note": "已验证场景全链路（MovieProvider Search→GetMetadata）",
+      "expectTitleContains": [
+        "Gold Star System"
+      ],
+      "expectActors": [
+        "Penny Barber",
+        "Skylar Snow"
+      ]
+    },
+    {
+      "id": "e2e-newsensations-newsensations-26-06-27-lucy-mochi",
+      "kind": "e2e",
+      "fileName": "NewSensations.26.06.27.Lucy.Mochi.",
+      "siteName": "NewSensations",
+      "expectDate": "2026-06-27",
+      "source": [
+        "VerifiedScenesRegressionTests"
+      ],
+      "note": "已验证场景全链路（MovieProvider Search→GetMetadata）",
+      "expectTitleContains": [
+        "Lucy Mochi Finds Out"
+      ],
+      "expectActors": [
+        "Lucy Mochi",
+        "Vince Karter"
+      ]
+    },
+    {
+      "id": "e2e-sindeluxe-sindeluxe-26-07-15-olivia-sparkle-prologue-chapter-6",
+      "kind": "e2e",
+      "fileName": "SinDeLuxe.26.07.15.Olivia.Sparkle.Prologue.Chapter.6",
+      "siteName": "SinDeLuxe",
+      "expectDate": "2026-07-15",
+      "source": [
+        "VerifiedScenesRegressionTests"
+      ],
+      "note": "已验证场景全链路（MovieProvider Search→GetMetadata）",
+      "expectTitleContains": [
+        "Prologue - Chapter 6"
+      ],
+      "expectActors": [
+        "Olivia Sparkle",
+        "Charlie Dean"
+      ]
+    },
+    {
+      "id": "e2e-transfixed-transfixed-26-07-01-ariel-demure-and-penny-barber-an-easy-prospect",
+      "kind": "e2e",
+      "fileName": "Transfixed.26.07.01.Ariel.Demure.and.Penny.Barber.An.Easy.Prospect.",
+      "siteName": "Transfixed",
+      "expectDate": "2026-07-01",
+      "source": [
+        "VerifiedScenesRegressionTests"
+      ],
+      "note": "已验证场景全链路（MovieProvider Search→GetMetadata）",
+      "expectTitleContains": [
+        "An Easy Prospect"
+      ],
+      "expectActors": [
+        "Ariel Demure",
+        "Penny Barber"
+      ]
+    },
+    {
+      "id": "e2e-wicked-wicked-26-07-03-blake-blossom-and-melissa-stratton",
+      "kind": "e2e",
+      "fileName": "Wicked.26.07.03.Blake.Blossom.And.Melissa.Stratton",
+      "siteName": "Wicked",
+      "expectDate": "2026-07-03",
+      "source": [
+        "VerifiedScenesRegressionTests"
+      ],
+      "note": "已验证场景全链路（MovieProvider Search→GetMetadata）",
+      "expectTitleContains": [
+        "Doctor Will See You Now"
+      ],
+      "expectActors": [
+        "Blake Blossom",
+        "Melissa Stratton"
+      ]
+    },
+    {
+      "id": "search-allanal-113-3",
+      "kind": "search",
+      "handler": "NetworkSteppedUp",
+      "group": 113,
+      "site": 3,
+      "siteName": "AllAnal",
+      "searchTerms": [
+        "River Lynn And Paris Lincoln",
+        "River Lynn"
+      ],
+      "expectMinResults": 1,
+      "source": [
+        "pornrips-discovery-2026-10-18"
+      ],
+      "note": "由 pornrips 标题反查并通过真实 Search 验证命中；全链路（Search→Update→GetImages 真实下载校验）",
+      "chain": true,
+      "expectName": true,
+      "expectImages": true
+    },
+    {
+      "id": "search-analvids-128-0",
+      "kind": "search",
+      "handler": "SiteAnalVids",
+      "group": 128,
+      "site": 0,
+      "siteName": "AnalVids",
+      "searchTerms": [
+        "Martina Smeraldi",
+        "Martina"
+      ],
+      "expectMinResults": 1,
+      "source": [
+        "pornrips-discovery-2026-10-18"
+      ],
+      "note": "由 pornrips 标题反查并通过真实 Search 验证命中；全链路（Search→Update→GetImages 真实下载校验）",
+      "chain": true,
+      "expectName": true,
+      "expectImages": true
+    },
+    {
+      "id": "search-dickdrainers-145-0",
+      "kind": "search",
+      "handler": "SiteDickDrainers",
+      "group": 145,
+      "site": 0,
+      "siteName": "DickDrainers",
+      "searchTerms": [
+        "Blake Blossom",
+        "Blake"
+      ],
+      "expectMinResults": 1,
+      "source": [
+        "pornrips-discovery-2026-10-18"
+      ],
+      "note": "由 pornrips 标题反查并通过真实 Search 验证命中；全链路（Search→Update→GetImages 真实下载校验）",
+      "chain": true,
+      "expectName": true,
+      "expectImages": true
+    },
+    {
+      "id": "search-hucows-159-0",
+      "kind": "search",
+      "handler": "SiteHucows",
+      "group": 159,
+      "site": 0,
+      "siteName": "Hucows",
+      "searchTerms": [
+        "Breeding Mila Amora",
+        "Breeding Mila"
+      ],
+      "expectMinResults": 1,
+      "source": [
+        "pornrips-discovery-2026-10-18"
+      ],
+      "note": "由 pornrips 标题反查并通过真实 Search 验证命中；全链路（Search→Update→GetImages 真实下载校验）",
+      "chain": true,
+      "expectName": true,
+      "expectImages": true
+    },
+    {
+      "id": "search-joybear-80-3",
+      "kind": "search",
+      "handler": "NetworkCouplesCinema",
+      "group": 80,
+      "site": 3,
+      "siteName": "JoyBear",
+      "searchTerms": [
+        "Calita Fire And Delphine Dahlia The Swing Of Things",
+        "Calita Fire"
+      ],
+      "expectMinResults": 1,
+      "source": [
+        "pornrips-discovery-2026-10-18"
+      ],
+      "note": "由 pornrips 标题反查并通过真实 Search 验证命中；全链路（Search→Update→GetImages 真实下载校验）",
+      "chain": true,
+      "expectName": true,
+      "expectImages": true
+    },
+    {
+      "id": "search-pornhub-27-0",
+      "kind": "search",
+      "handler": "SitePornhub",
+      "group": 27,
+      "site": 0,
+      "siteName": "Pornhub",
+      "searchTerms": [
+        "Anna Ralphs Fruits Of Paradise",
+        "Anna Ralphs"
+      ],
+      "expectMinResults": 1,
+      "source": [
+        "pornrips-discovery-2026-10-18"
+      ],
+      "note": "场景页必须用 GET（POST 返回 404）；Search→Update→GetImages 全链路，按 TPDB networkPornhub 选择器修正",
+      "chain": true,
+      "expectName": true,
+      "expectImages": true
+    },
+    {
+      "id": "search-ask-your-mother-68-154",
+      "kind": "search",
+      "handler": "NetworkReptyle",
+      "group": 68,
+      "site": 154,
+      "siteName": "Ask Your Mother",
+      "searchTerms": [
+        "Penny Barber"
+      ],
+      "expectMinResults": 1,
+      "source": [
+        "pornrips-discovery-2026-10-18"
+      ],
+      "note": "Ask Your Mother 归属 familystrokes.com/familybundle；Update 走 ES 详情（新游览站页面已无 __INITIAL_STATE__）",
+      "chain": true,
+      "expectName": true,
+      "expectImages": true
+    }
+  ]
+}
