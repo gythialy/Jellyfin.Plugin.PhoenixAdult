@@ -354,22 +354,44 @@ namespace PhoenixAdult.Helpers
         /// </summary>
         /// <param name="url">图片地址。</param>
         /// <returns>需要发送的 Referer；无需发送时返回 null。</returns>
-        private static string GetImageReferer(string url)
+        internal static string GetImageReferer(string url)
+            => ResolveImageReferer(url, Plugin.Instance?.Configuration?.ImageReferers);
+
+        /// <summary>
+        /// 解析 Referer 规则：用户规则优先（格式 "host=referer"，referer 为空表示显式禁用），
+        /// 其次回退到 <see cref="Consts.ImageReferers"/> 的内置表。
+        /// </summary>
+        /// <param name="url">图片地址。</param>
+        /// <param name="userRules">用户配置的规则行。</param>
+        /// <returns>需要发送的 Referer；无需发送时返回 null。</returns>
+        internal static string ResolveImageReferer(string url, IEnumerable<string> userRules)
         {
             if (string.IsNullOrEmpty(url))
             {
                 return null;
             }
 
-            // 配置项优先：用户可新增规则，或用空值显式关闭某条内置规则
-            var overrides = Plugin.Instance?.Configuration?.ImageReferers;
-            if (overrides != null)
+            if (userRules != null)
             {
-                foreach (var rule in overrides)
+                foreach (var line in userRules)
                 {
-                    if (!string.IsNullOrEmpty(rule.Key) && url.Contains(rule.Key, StringComparison.OrdinalIgnoreCase))
+                    if (string.IsNullOrWhiteSpace(line))
                     {
-                        return string.IsNullOrEmpty(rule.Value) ? null : rule.Value;
+                        continue;
+                    }
+
+                    var separator = line.IndexOf('=');
+                    if (separator <= 0)
+                    {
+                        continue;
+                    }
+
+                    var host = line.Substring(0, separator).Trim();
+                    var referer = line.Substring(separator + 1).Trim();
+
+                    if (host.Length > 0 && url.Contains(host, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return referer.Length == 0 ? null : referer;
                     }
                 }
             }
