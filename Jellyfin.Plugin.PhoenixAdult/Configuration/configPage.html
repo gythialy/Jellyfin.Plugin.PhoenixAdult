@@ -153,7 +153,7 @@
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(phoenixAdultConfig.pluginUniqueId).then(function (config) {
                     $('#FlareSolverrURL').val(config.FlareSolverrURL).change();
-                    $('#ImageReferers').val(Object.keys(config.ImageReferers || {}).map(function (k) { return k + '=' + config.ImageReferers[k]; }).join('\n'));
+                    $('#ImageReferers').val((config.ImageReferers || []).join('\n'));
                     $('#DisableCaching').prop('checked', config.DisableCaching);
                     $('#DisableSSLCheck').prop('checked', config.DisableSSLCheck);
                     $('#ProxyEnable').prop('checked', config.ProxyEnable);
@@ -181,13 +181,10 @@
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(phoenixAdultConfig.pluginUniqueId).then(function (config) {
                     config.FlareSolverrURL = $('#FlareSolverrURL').val();
-                    config.ImageReferers = {};
-                    $('#ImageReferers').val().split('\n').forEach(function (line) {
-                        var idx = line.indexOf('=');
-                        if (idx > 0) {
-                            config.ImageReferers[line.substring(0, idx).trim()] = line.substring(idx + 1).trim();
-                        }
-                    });
+                    // 规则以 "host=referer" 行列表存储：插件配置走 XML 序列化，不能使用字典对象
+                    config.ImageReferers = ($('#ImageReferers').val() || '').split('\n')
+                        .map(function (line) { return line.trim(); })
+                        .filter(function (line) { return line.indexOf('=') > 0; });
                     config.DisableCaching = $('#DisableCaching').prop('checked');
                     config.DisableSSLCheck = $('#DisableSSLCheck').prop('checked');
                     config.ProxyEnable = $('#ProxyEnable').prop('checked');

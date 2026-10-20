@@ -33,8 +33,8 @@
 - **Referer 防盗链**：CDN77（`phncdn.com`）对签名 URL 校验 Referer，缺失即 403。
   `Helper.GetImageResponse` 与 `ImageHelper` 校验路径必须带同一套请求头，否则"能取到图却下载不了"。
   **规则不要写死在逻辑里**：内置规则放 `Consts.ImageReferers`（主机 → Referer 表），
-  用户可在插件配置的 Image Referer rules（`PluginConfiguration.ImageReferers`）追加或覆盖，
-  CDN 变更时无需改代码发版。
+  用户可在插件配置的 Image Referer rules（`PluginConfiguration.ImageReferers`，每行一条
+  `host=referer`，referer 留空即禁用该主机）追加或覆盖，CDN 变更时无需改代码发版。
 
 ### 2.2 HTTP 方法 / 选择器
 - **场景页只接受 GET**：Pornhub 用 POST 请求 `view_video.php` 直接返回 404 "Page Not Found"。
@@ -51,6 +51,17 @@
 无守卫的链式访问是最高频崩溃源：`metadata.Name.EndsWith`（`metadata` 为 null）、
 `posterNode.Attributes["src"]`、`descriptionNodes[0]`、`SelectNodes(...)` 返回 null。
 约定：取不到就**返回空结果**，不要把异常抛给 Jellyfin。
+
+### 2.5 插件配置类里不能出现 IDictionary 成员
+Jellyfin/Emby 用 `System.Xml.Serialization.XmlSerializer` 把插件配置持久化成 XML。
+配置类里只要有一个 `Dictionary<,>` 之类实现 `IDictionary` 的成员，序列化器在反射配置类型时
+就抛 `Cannot serialize member ... because it implements IDictionary`（外层是
+`There was an error reflecting type ...PluginConfiguration`），于是**配置读取、配置保存、
+以及所有读 `Plugin.Instance.Configuration` 的代码（含图片下载）全部失败**。
+真实案例：`PluginConfiguration.ImageReferers` 曾用 `Dictionary<string, string>`，整插件配置报废。
+正确做法：需要的键值配置改成 `List<string>`（每项 `key=value`）在业务代码里解析。
+回归测试见 `Jellyfin.Plugin.PhoenixAdult.Tests/Configuration/PluginConfigurationSerializationTests.cs`
+（构造 `new XmlSerializer(typeof(PluginConfiguration))` 即可复现该异常）。
 
 ## 3. 反爬与 FlareSolverr
 
