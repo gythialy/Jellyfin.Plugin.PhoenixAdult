@@ -1207,6 +1207,27 @@
       ]
     },
     {
+      "id": "search-dorcelclub-dorcelclub-the-temple-of-desire",
+      "kind": "search",
+      "handler": "SiteDorcelClub",
+      "group": 146,
+      "site": 0,
+      "siteName": "DorcelClub",
+      "searchTerms": [
+        "The Temple Of Desire",
+        "Temple Of Desire"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "DorcelClub.26.09.09.The.Temple.Of.Desire",
+      "source": [
+        "UserReport"
+      ],
+      "note": "用户反馈搜索/下载均无图：图库 URL 的 _<hash> 段被旧逻辑当垃圾删掉 → CDN 500。chain 用例断言 Primary 可真实下载",
+      "chain": true,
+      "expectName": true,
+      "expectImages": true
+    },
+    {
       "id": "e2e-hegre-hegre-26-08-11-nyx-and-syrena-lesbian-leisure-part-1",
       "kind": "e2e",
       "fileName": "Hegre.26.08.11.Nyx.And.Syrena.Lesbian.Leisure.Part.1",

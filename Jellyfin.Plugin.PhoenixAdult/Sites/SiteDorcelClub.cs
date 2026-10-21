@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -21,6 +23,10 @@ namespace PhoenixAdult.Sites
 {
     public class SiteDorcelClub : IProviderBase
     {
+        // 站点图片都由 <picture><source data-srcset="…_360_240_hash.jpg 1x, …_720_480_hash.jpg 2x"> 提供，
+        // 文件名里的哈希是 CDN 必需的签名段：删掉后 CDN 直接返回 500（图库/封面全部取不到图）。
+        private static readonly Regex ImageSizeRegex = new Regex(@"_(\d{2,4})_(\d{2,4})_", RegexOptions.Compiled);
+
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
@@ -49,6 +55,7 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, curId } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}]",
+                        ImageUrl = GetLargestImage(node),
                         SearchProviderName = Plugin.Instance.Name,
                     });
                 }
@@ -66,6 +73,7 @@ namespace PhoenixAdult.Sites
                     {
                         ProviderIds = { { Plugin.Instance.Name, curId } },
                         Name = $"{titleNoFormatting} - Full Movie [{Helper.GetSearchSiteName(siteNum)}]",
+                        ImageUrl = GetLargestImage(node),
                         SearchProviderName = Plugin.Instance.Name,
                     });
                 }
@@ -172,24 +180,91 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
-            var imageNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'photos')]//source");
-            if (imageNodes != null)
+            // 场景主封面：player_container 里最大的一张（通常 1546×1030），优先作为 Primary
+            var coverUrl = GetLargestImage(detailsPageElements.SelectSingleNode("//div[contains(@class, 'player_container')]"));
+
+            // 图库照片：同一张照片有 6 档响应式尺寸，只取宽度最大的一档，避免几十条重复候选
+            var photoUrls = new List<string>();
+            var photoNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'photos')]//a[contains(@class, 'photo')]");
+            if (photoNodes != null)
             {
-                foreach (var img in imageNodes)
+                foreach (var photo in photoNodes)
                 {
-                    string imageUrl = img.GetAttributeValue("data-srcset", string.Empty).Split(',').Last().Split(' ').First();
-                    string trash = $"_{imageUrl.Split('_').Last().Split('.').First()}";
-                    imageUrl = imageUrl.Replace(trash, string.Empty);
-                    images.Add(new RemoteImageInfo { Url = imageUrl });
+                    var photoUrl = GetLargestImage(photo);
+                    if (!string.IsNullOrEmpty(photoUrl) && !photoUrls.Contains(photoUrl))
+                    {
+                        photoUrls.Add(photoUrl);
+                    }
                 }
             }
 
-            if (images.Any())
+            if (!string.IsNullOrEmpty(coverUrl))
             {
-                images.First().Type = ImageType.Primary;
+                images.Add(new RemoteImageInfo { Url = coverUrl, Type = ImageType.Primary });
+            }
+
+            foreach (var photoUrl in photoUrls)
+            {
+                // 没有封面时由第一张图库照片兜底 Primary，其余作为 Backdrop
+                images.Add(new RemoteImageInfo
+                {
+                    Url = photoUrl,
+                    Type = images.Any() ? ImageType.Backdrop : ImageType.Primary,
+                });
             }
 
             return images;
+        }
+
+        /// <summary>
+        /// 从节点内的 &lt;source data-srcset&gt; 中挑宽度最大的一张图。
+        /// srcset 形如 "…_1150_766_hash.jpg 1x, …_1546_1030_hash.jpg 2x"；URL 必须原样使用，
+        /// 文件名末尾的哈希是 CDN 校验段，改写（例如删掉）会让 CDN 返回 500.
+        /// </summary>
+        private static string GetLargestImage(HtmlNode node)
+        {
+            var sources = node?.SelectNodes(".//source");
+            if (sources == null)
+            {
+                return null;
+            }
+
+            string bestUrl = null;
+            int bestWidth = -1;
+            foreach (var source in sources)
+            {
+                var srcset = source.GetAttributeValue("data-srcset", string.Empty);
+                if (string.IsNullOrEmpty(srcset))
+                {
+                    continue;
+                }
+
+                foreach (var candidate in srcset.Split(','))
+                {
+                    var imageUrl = candidate.Trim().Split(' ').FirstOrDefault();
+                    if (string.IsNullOrEmpty(imageUrl) || !imageUrl.StartsWith("http", StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    var width = GetImageWidth(imageUrl);
+                    if (width > bestWidth)
+                    {
+                        bestWidth = width;
+                        bestUrl = imageUrl;
+                    }
+                }
+            }
+
+            return bestUrl;
+        }
+
+        /// <summary>从 CDN 文件名（…_1150_766_hash.jpg）解析宽度，解析不出时返回 0.</summary>
+        private static int GetImageWidth(string imageUrl)
+        {
+            var fileName = imageUrl.Split('?').First().Split('/').Last();
+            var match = ImageSizeRegex.Match(fileName);
+            return match.Success ? int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture) : 0;
         }
     }
 }
