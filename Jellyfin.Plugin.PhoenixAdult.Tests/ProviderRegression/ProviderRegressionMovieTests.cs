@@ -51,6 +51,37 @@ public class ProviderRegressionMovieTests
                     $"{c.Id}: 缺演员 '{actor}'，实际 [{string.Join(", ", meta.People.Select(p => p.Name))}]");
             }
 
+            // 识别对话框只渲染 Name/ProductionYear：搜索结果的 Name 带日期前缀（到日），
+            // 而 Apply 后的条目标题必须仍是站点原始标题（前缀不能泄漏）。
+            var firstResult = result.SearchResults.FirstOrDefault();
+            if (firstResult?.PremiereDate is not null && !string.IsNullOrEmpty(firstResult.Name))
+            {
+                var prefix = firstResult.PremiereDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " · ";
+                Assert.StartsWith(prefix, firstResult.Name, StringComparison.Ordinal);
+                Assert.False(
+                    title.StartsWith(prefix, StringComparison.Ordinal),
+                    $"{c.Id}: 日期前缀泄漏进条目标题 '{title}'");
+            }
+
+            if (c.MinSearchImageRatio > 0 && result.SearchResults.Count > 0)
+            {
+                var withImage = result.SearchResults.Count(r => !string.IsNullOrEmpty(r.ImageUrl));
+                var ratio = (double)withImage / result.SearchResults.Count;
+                Assert.True(
+                    ratio >= c.MinSearchImageRatio,
+                    $"{c.Id}: 搜索结果配图率 {withImage}/{result.SearchResults.Count} ({ratio:P0}) 低于 {c.MinSearchImageRatio:P0}");
+
+                // 识别对话框的缩略图由浏览器直连加载，样例图必须能裸取（无 Referer）才算真的会显示。
+                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+                foreach (var imageUrl in result.SearchResults.Where(r => !string.IsNullOrEmpty(r.ImageUrl)).Select(r => r.ImageUrl!).Take(5))
+                {
+                    using var response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, imageUrl), timeout.Token);
+                    Assert.True(response.IsSuccessStatusCode, $"{c.Id}: 搜索缩略图不可用 {(int)response.StatusCode} {imageUrl}");
+                }
+
+                Log($"🖼 {c.Id} :: 配图 {withImage}/{result.SearchResults.Count}");
+            }
+
             Log($"✅ {c.Id} :: '{title}' {actualDate} 演员 {meta.People.Count}");
         }
         catch (Exception ex) when (ProviderRegressionRunner.IsEnvironmentSkip(ex))

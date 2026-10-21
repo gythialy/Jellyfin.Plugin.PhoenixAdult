@@ -280,6 +280,35 @@
       "expectedFirstHint": "TS ANGEL HADASHIAN"
     },
     {
+      "id": "search-verified-evilangel-11-1-cherry-kiss",
+      "kind": "search",
+      "handler": "NetworkGammaEnt",
+      "group": 11,
+      "site": 1,
+      "siteName": "EvilAngel",
+      "searchTerms": [
+        "Cherry Kiss"
+      ],
+      "expectMinResults": 1,
+      "rssTitle": "EvilAngel.26.10.20.Cherry.Kiss.XXX.720p.HEVC.x265.PRT",
+      "source": [
+        "UserReport"
+      ],
+      "note": "用户反馈 2026-10-21：搜索 EvilAngel.26.10.20.Cherry.Kiss 时电影类结果没有封面图（all_movies 索引无 pictures 字段），要求每条结果都带可显示缩略图"
+    },
+    {
+      "id": "e2e-evilangel-26-10-20-cherry-kiss",
+      "kind": "e2e",
+      "fileName": "EvilAngel.26.10.20.Cherry.Kiss",
+      "siteName": "EvilAngel",
+      "expectDate": "2026-10-20",
+      "minSearchImageRatio": 0.8,
+      "source": [
+        "UserReport"
+      ],
+      "note": "用户反馈 2026-10-21：识别对话框日期只显示到年份；搜索结果名加日期前缀，条目标题仍取站点原始标题"
+    },
+    {
       "id": "search-exploitedcollegegirls-58-0",
       "kind": "search",
       "handler": "NetworkExploitedX",
@@ -639,6 +668,7 @@
         "JoJo"
       ],
       "expectMinResults": 1,
+      "minDialogImageRatio": 0.8,
       "rssTitle": "MyFriendsHotGirl.26.08.10.JoJo.Austin.XXX.720p.HEVC.x265.PRT",
       "source": [
         "PornripsNewSitesTests",
@@ -1396,6 +1426,7 @@
         "Martina"
       ],
       "expectMinResults": 1,
+      "minDialogImageRatio": 0.8,
       "source": [
         "pornrips-discovery-2026-10-18"
       ],

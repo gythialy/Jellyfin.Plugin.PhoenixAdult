@@ -63,6 +63,11 @@ namespace PhoenixAdult.Sites
                     string actors = string.Join(", ", actorList ?? new string[0]);
 
                     string poster = node.SelectSingleNode(".//div[@class='update_image']/a/img")?.GetAttributeValue("src", string.Empty);
+                    if (string.IsNullOrEmpty(poster))
+                    {
+                        poster = Helper.GetImageURL(node, Helper.GetSearchBaseURL(siteNum)) ?? string.Empty;
+                    }
+
                     string subSite = Helper.GetSearchSiteName(siteNum);
 
                     string curId = Helper.Encode(titleNoFormatting);
@@ -74,6 +79,7 @@ namespace PhoenixAdult.Sites
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{descriptionId}|{releaseDate}|{actors}|{posterId}" } },
                         Name = $"{titleNoFormatting} [PureCFNM/{subSite}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
+                        ImageUrl = poster,
                     });
                 }
             }

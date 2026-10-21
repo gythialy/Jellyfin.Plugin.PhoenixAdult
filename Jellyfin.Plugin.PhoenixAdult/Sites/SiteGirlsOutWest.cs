@@ -73,6 +73,7 @@ namespace PhoenixAdult.Sites
                         ProviderIds = { { Plugin.Instance.Name, Helper.Encode(sceneUrl) } },
                         Name = $"{cardTitle} [GirlsOutWest]",
                         SearchProviderName = Plugin.Instance.Name,
+                        ImageUrl = Helper.GetImageURL(card, Helper.GetSearchBaseURL(siteNum)),
                     });
                 }
 
@@ -179,12 +180,28 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
-            var imageNodes = detailsPageElements.SelectNodes("//div[@class='videoplayer']/img");
+            // TPDB siteGirlsOutWest.py 的选择器：//div[@class="player-thumb"]//img/@src0_3x（旧 videoplayer 已不存在）
+            var imageNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'player-thumb')]//img");
             if (imageNodes != null)
             {
                 foreach (var img in imageNodes)
                 {
-                    images.Add(new RemoteImageInfo { Url = Helper.GetSearchBaseURL(siteNum) + img.GetAttributeValue("src0_3x", string.Empty) });
+                    var imagePath = img.GetAttributeValue("src0_3x", null)
+                        ?? img.GetAttributeValue("src0_2x", null)
+                        ?? img.GetAttributeValue("src0_1x", null)
+                        ?? Helper.GetImageURL(img, null);
+                    if (string.IsNullOrEmpty(imagePath))
+                    {
+                        continue;
+                    }
+
+                    images.Add(new RemoteImageInfo
+                    {
+                        Url = imagePath.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                            ? imagePath
+                            : Helper.GetSearchBaseURL(siteNum) + imagePath,
+                        Type = ImageType.Primary,
+                    });
                 }
             }
 

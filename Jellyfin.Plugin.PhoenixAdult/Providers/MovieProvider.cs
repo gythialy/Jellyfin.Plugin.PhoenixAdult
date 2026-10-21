@@ -8,9 +8,11 @@ using System.Web;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
+using PhoenixAdult.Sites;
 
 #if __EMBY__
 using MediaBrowser.Common.Net;
@@ -23,6 +25,11 @@ namespace PhoenixAdult.Providers
 {
     public class MovieProvider : IRemoteMetadataProvider<Movie, MovieInfo>
     {
+        /// <summary>识别对话框补缩略图的上限（每条结果一次 GetImages，避免搜索结果过多时打爆站点）。</summary>
+        internal const int MaxThumbnailFillCount = 10;
+
+        private static readonly TimeSpan ThumbnailFillTimeout = TimeSpan.FromSeconds(8);
+
         public MovieProvider()
         {
             Database.LoadAll();
@@ -30,7 +37,14 @@ namespace PhoenixAdult.Providers
 
         public string Name => Plugin.Instance.Name;
 
-        public async Task<IEnumerable<RemoteSearchResult>> GetSearchResults(MovieInfo searchInfo, CancellationToken cancellationToken)
+        public Task<IEnumerable<RemoteSearchResult>> GetSearchResults(MovieInfo searchInfo, CancellationToken cancellationToken)
+            => this.GetSearchResults(searchInfo, true, cancellationToken);
+
+        /// <summary>
+        /// 搜索结果主体。<paramref name="fillThumbnails"/> 为 true 时（识别对话框发起的搜索）会给缺图结果补缩略图；
+        /// 自动识别（GetMetadata 内部调用）不补，避免扫描时为每个文件额外打一串请求。
+        /// </summary>
+        public async Task<IEnumerable<RemoteSearchResult>> GetSearchResults(MovieInfo searchInfo, bool fillThumbnails, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
 
@@ -177,6 +191,13 @@ namespace PhoenixAdult.Providers
                         result = result.OrderByDescending(o => 100 - LevenshteinDistance.Calculate(searchTitle, Helper.GetClearTitle(o.Name), StringComparison.OrdinalIgnoreCase)).ToList();
                     }
                 }
+
+                if (fillThumbnails && result.Any())
+                {
+                    await FillMissingThumbnails(site.siteNum, result, cancellationToken).ConfigureAwait(false);
+                }
+
+                AddDatePrefix(result);
             }
             else
             {
@@ -218,7 +239,7 @@ namespace PhoenixAdult.Providers
 
             if ((!sceneID.ContainsKey(this.Name) || curID == null || curID.Length < 3) && !Plugin.Instance.Configuration.DisableAutoIdentify)
             {
-                var searchResults = await this.GetSearchResults(info, cancellationToken).ConfigureAwait(false);
+                var searchResults = await this.GetSearchResults(info, false, cancellationToken).ConfigureAwait(false);
                 if (searchResults.Any())
                 {
                     var first = searchResults.First();
@@ -355,6 +376,107 @@ namespace PhoenixAdult.Providers
 #endif
         {
             return Helper.GetImageResponse(url, cancellationToken);
+        }
+
+        /// <summary>
+        /// Jellyfin/Emby 的识别对话框只渲染 Name + ProductionYear（客户端不渲染 PremiereDate），
+        /// 为把日期显示到日，把日期拼进展示名（"2026-10-20 · 标题"）。
+        /// 只在排序/补图之后调用：不影响匹配度排序，也不把日期带进补图用的搜索词。
+        /// Apply 时条目标题仍由 Update 返回的站点标题决定，前缀只影响对话框显示。
+        /// </summary>
+        internal static void AddDatePrefix(IList<RemoteSearchResult> results)
+        {
+            if (results == null)
+            {
+                return;
+            }
+
+            foreach (var scene in results)
+            {
+                if (scene == null || !scene.PremiereDate.HasValue || string.IsNullOrWhiteSpace(scene.Name))
+                {
+                    continue;
+                }
+
+                var datePrefix = scene.PremiereDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " · ";
+                if (!scene.Name.StartsWith(datePrefix, StringComparison.Ordinal))
+                {
+                    scene.Name = datePrefix + scene.Name;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 识别对话框只渲染 <see cref="RemoteSearchResult.ImageUrl"/>，但很多站点的 Search 结果里没有海报
+        /// （图片只在 GetImages 里）。这里对缺图结果并发取一张 Primary 图兜底，让对话框不再出现无图卡片。
+        /// 仅限用户发起的搜索（fillThumbnails=true）；自动识别走 GetMetadata 内部调用，不会触发。
+        /// 回归测试也复用它（ProviderRegressionRunner.FillDialogImagesAsync）。
+        /// </summary>
+        internal static async Task FillMissingThumbnails(int[] siteNum, List<RemoteSearchResult> results, CancellationToken cancellationToken)
+        {
+            var provider = Helper.GetProviderBySiteID(siteNum[0]);
+            if (provider == null)
+            {
+                return;
+            }
+
+            var targets = results.Where(o => string.IsNullOrEmpty(o.ImageUrl)).Take(MaxThumbnailFillCount).ToList();
+            if (targets.Count == 0)
+            {
+                return;
+            }
+
+            var item = new Movie();
+            await Task.WhenAll(targets.Select(o => FillThumbnail(provider, siteNum, o, item, cancellationToken))).ConfigureAwait(false);
+        }
+
+        private static async Task FillThumbnail(IProviderBase provider, int[] siteNum, RemoteSearchResult result, BaseItem item, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (!result.ProviderIds.TryGetValue(Plugin.Instance.Name, out var externalId) || string.IsNullOrEmpty(externalId))
+                {
+                    return;
+                }
+
+                // ProviderIds 形如 "group#site#<handler 自己的 sceneID 段>"
+                var sceneId = externalId.Split('#').Skip(2).ToArray();
+                if (sceneId.Length == 0)
+                {
+                    return;
+                }
+
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                cts.CancelAfter(ThumbnailFillTimeout);
+
+                var images = await provider.GetImages(siteNum, sceneId, item, cts.Token).ConfigureAwait(false);
+                var image = images?.FirstOrDefault(o => o.Type == ImageType.Primary) ?? images?.FirstOrDefault();
+                if (image == null || string.IsNullOrEmpty(image.Url))
+                {
+                    return;
+                }
+
+                // 识别对话框里的图片由浏览器直连加载（不带 Referer），需要 Referer 的 CDN（如 phncdn）
+                // 填进去只会显示破图，宁可不填，让客户端回退到标题卡片。
+                if (Helper.GetImageReferer(image.Url) != null)
+                {
+                    return;
+                }
+
+                // 兜底图常常是各站的电影封面，部分标题的封面并不存在（实测 404）。
+                // 这里用 HEAD 探一次，取不到就保持无图，避免对话框里出现破图。
+                if (!await HTTP.IsUrlLoadable(image.Url, cts.Token).ConfigureAwait(false))
+                {
+                    return;
+                }
+
+                // 少数站点给的是协议相对地址（//host/path），补全成 https
+                result.ImageUrl = image.Url.StartsWith("//", StringComparison.Ordinal) ? "https:" + image.Url : image.Url;
+            }
+            catch (Exception e)
+            {
+                Logger.Debug($"Search thumbnail fill skipped: {e.GetType().Name}: {e.Message}");
+            }
         }
     }
 }

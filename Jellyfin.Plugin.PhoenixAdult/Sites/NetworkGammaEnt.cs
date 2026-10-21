@@ -126,6 +126,9 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
+            // all_movies 索引恒无 pictures，需要按 movie_id 回 scenes 索引取一张场景预览图（见循环后的批量查询）
+            var moviesWithoutImage = new List<KeyValuePair<RemoteSearchResult, string>>();
+
             var searchSceneID = searchTitle.Split()[0];
             if (!int.TryParse(searchSceneID, out _))
             {
@@ -177,8 +180,15 @@ namespace PhoenixAdult.Sites
                     }
                     else
                     {
-                        var dateField = searchResult["last_modified"] != null ? "last_modified" : "date_created";
-                        sceneDateObj = (DateTime?)searchResult[dateField];
+                        // all_movies 的 last_modified 字段恒为 JSON null（ContainsKey 为 true 但值为 null），
+                        // 必须回退到 date_created，否则电影结果既没有首播日期、也拿不到日期排序/日期前缀。
+                        var dateToken = searchResult["last_modified"];
+                        if (dateToken == null || dateToken.Type == JTokenType.Null)
+                        {
+                            dateToken = searchResult["date_created"];
+                        }
+
+                        sceneDateObj = dateToken == null || dateToken.Type == JTokenType.Null ? null : (DateTime?)dateToken;
                         sceneID = (string)searchResult["movie_id"];
                     }
 
@@ -198,17 +208,29 @@ namespace PhoenixAdult.Sites
 
                     res.ProviderIds.Add(Plugin.Instance.Name, curID);
 
-                    if (searchResult.ContainsKey("pictures"))
+                    if (searchResult["pictures"] is JObject pictures)
                     {
-                        var pictureURL = GetBestPictureURL((JObject)searchResult["pictures"]);
+                        var pictureURL = GetBestPictureURL(pictures);
                         if (!string.IsNullOrEmpty(pictureURL))
                         {
                             res.ImageUrl = "https://images-fame.gammacdn.com/movies" + pictureURL;
                         }
                     }
 
+                    if (string.IsNullOrEmpty(res.ImageUrl) && sceneType != "scenes")
+                    {
+                        // 电影封面（_front_400x625.jpg）只对部分影片存在，缺失时会变成破图；
+                        // 这里留着空，稍后统一按 movie_id 取该片第一个场景的预览图。
+                        moviesWithoutImage.Add(new KeyValuePair<RemoteSearchResult, string>(res, sceneID));
+                    }
+
                     result.Add(res);
                 }
+            }
+
+            if (moviesWithoutImage.Count > 0)
+            {
+                await FillMoviePreviewImages(siteNum, apiKEY, moviesWithoutImage, cancellationToken).ConfigureAwait(false);
             }
 
             return result;
@@ -347,7 +369,7 @@ namespace PhoenixAdult.Sites
             sceneData = (JObject)sceneData["results"].First["hits"].First;
 
             var ignore = false;
-            string image, imageURL;
+            string imageURL;
 
             if (sceneID[1].Equals("scenes", StringComparison.OrdinalIgnoreCase))
             {
@@ -372,19 +394,21 @@ namespace PhoenixAdult.Sites
 
             if (!ignore)
             {
-                image = (sceneData.ContainsKey("url_movie_title") ? sceneData["url_movie_title"] : sceneData["url_title"]).ToString().ToLowerInvariant().Replace('-', '_');
-                imageURL = $"https://images-fame.gammacdn.com/movies/{sceneData["movie_id"]}/{sceneData["movie_id"]}_{image}_front_400x625.jpg";
+                imageURL = GetMovieCoverURL(sceneData);
 
-                result.Add(new RemoteImageInfo
+                if (!string.IsNullOrEmpty(imageURL))
                 {
-                    Url = imageURL,
-                    Type = ImageType.Primary,
-                });
+                    result.Add(new RemoteImageInfo
+                    {
+                        Url = imageURL,
+                        Type = ImageType.Primary,
+                    });
+                }
             }
 
-            if (sceneData.ContainsKey("pictures"))
+            if (sceneData["pictures"] is JObject pictures)
             {
-                var pictureURL = GetBestPictureURL((JObject)sceneData["pictures"]);
+                var pictureURL = GetBestPictureURL(pictures);
                 if (!string.IsNullOrEmpty(pictureURL))
                 {
                     imageURL = "https://images-fame.gammacdn.com/movies" + pictureURL;
@@ -403,6 +427,30 @@ namespace PhoenixAdult.Sites
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// 构造电影封面前端图 URL（scenes 索引的 pictures 是场景预览图，movies 索引只有这两个字段）。
+        /// 形如 https://images-fame.gammacdn.com/movies/165967/165967_cherry_kiss_anal_a2m_squirting_front_400x625.jpg，
+        /// 已实测对 EvilAngel/AdultTime 家族的 movies 记录全部可达（200 image/jpeg）。
+        /// </summary>
+        internal static string GetMovieCoverURL(JObject movie)
+        {
+            if (movie == null)
+            {
+                return null;
+            }
+
+            var movieID = (string)(movie["movie_id"] ?? movie["movieId"]);
+            var title = (string)(movie["url_movie_title"] ?? movie["url_title"]);
+            if (string.IsNullOrEmpty(movieID) || string.IsNullOrEmpty(title))
+            {
+                return null;
+            }
+
+            var slug = title.ToLowerInvariant().Replace('-', '_');
+
+            return $"https://images-fame.gammacdn.com/movies/{movieID}/{movieID}_{slug}_front_400x625.jpg";
         }
 
         /// <summary>
@@ -447,6 +495,51 @@ namespace PhoenixAdult.Sites
             }
 
             return best ?? fallback;
+        }
+
+        /// <summary>
+        /// all_movies 索引没有 pictures 字段，用一次批量查询回到 all_scenes 索引按 movie_id 取预览图。
+        /// 相比电影封面 {id}_{slug}_front_400x625.jpg（大量 404），场景预览图实测稳定可达。
+        /// </summary>
+        private static async Task FillMoviePreviewImages(int[] siteNum, string apiKEY, List<KeyValuePair<RemoteSearchResult, string>> movies, CancellationToken cancellationToken)
+        {
+            var movieIDs = movies.Select(o => o.Value).Where(o => !string.IsNullOrEmpty(o)).Distinct().Take(20).ToList();
+            if (movieIDs.Count == 0)
+            {
+                return;
+            }
+
+            var searchParams = $"filters={string.Join(" OR ", movieIDs.Select(o => $"movie_id={o}"))}&hitsPerPage={movieIDs.Count * 2}&attributesToRetrieve=movie_id,pictures";
+            var url = $"{Helper.GetSearchSearchURL(siteNum)}?x-algolia-application-id=TSMKFA364Q&x-algolia-api-key={apiKEY}";
+            var data = await GetDataFromAPI(url, "all_scenes", Helper.GetSearchBaseURL(new[] { siteNum[0], 0 }), searchParams, cancellationToken).ConfigureAwait(false);
+            if (data == null)
+            {
+                return;
+            }
+
+            var pictures = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (JObject hit in data["results"].First["hits"])
+            {
+                var movieID = (string)hit["movie_id"];
+                if (string.IsNullOrEmpty(movieID) || pictures.ContainsKey(movieID) || hit["pictures"] is not JObject scenePictures)
+                {
+                    continue;
+                }
+
+                var pictureURL = GetBestPictureURL(scenePictures);
+                if (!string.IsNullOrEmpty(pictureURL))
+                {
+                    pictures[movieID] = "https://images-fame.gammacdn.com/movies" + pictureURL;
+                }
+            }
+
+            foreach (var movie in movies)
+            {
+                if (!string.IsNullOrEmpty(movie.Value) && pictures.TryGetValue(movie.Value, out var imageURL))
+                {
+                    movie.Key.ImageUrl = imageURL;
+                }
+            }
         }
     }
 }

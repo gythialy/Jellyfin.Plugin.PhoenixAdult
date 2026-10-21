@@ -215,36 +215,78 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            var promo = sceneData["promo_video_data"] is JObject promoObj
-                ? (string)promoObj["aff_16mp4"]
-                : null; // promo_video_data 可能是 JArray（空）不能按 aff_16mp4 索引
-            var trailer = (string)sceneData["trailers"]?["trailer_720"];
-            var videoUrl = promo ?? trailer;
-            if (string.IsNullOrEmpty(videoUrl))
+            // og:image 拿不到（场景页对无 Cookie 请求常返回空 202）时，按 TPDB networkNaughtyAmericaAPI 的推导：
+            // 从 promo_video_data / trailers.trailer_720 里取 "abbrev/title"，再拼
+            // https://images{cdn}.naughtycdn.com/cms/nacmscontent/v1/scenes/{abbrev}/{title}/scene/horizontal/{size}c.{ext}
+            // 并用 HEAD 逐个校验（CDN 序号、尺寸、扩展名都不固定，光拼不验会 404）。
+            var imageInsert = string.Empty;
+            if (sceneData["promo_video_data"] is JObject promoObj)
+            {
+                foreach (var property in promoObj.Properties())
+                {
+                    var promoUrl = (string)property.Value;
+                    if (string.IsNullOrEmpty(promoUrl))
+                    {
+                        continue;
+                    }
+
+                    var promoMatch = Regex.Match(promoUrl, @"promo/(.*?/.*?)/");
+                    if (promoMatch.Success)
+                    {
+                        imageInsert = promoMatch.Groups[1].Value;
+                        break;
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(imageInsert))
+            {
+                var trailer = (string)sceneData["trailers"]?["trailer_720"];
+                if (!string.IsNullOrEmpty(trailer))
+                {
+                    var trailerMatch = Regex.Match(trailer, @"\.com/(\w+)/trailers/(\w+)_");
+                    if (trailerMatch.Success)
+                    {
+                        var abbrev = trailerMatch.Groups[1].Value;
+                        var title = trailerMatch.Groups[2].Value;
+                        if (title.Contains("trailer", StringComparison.OrdinalIgnoreCase))
+                        {
+                            title = Regex.Match(title, @"(.*)trailer").Groups[1].Value;
+                        }
+
+                        if (title.StartsWith(abbrev, StringComparison.OrdinalIgnoreCase))
+                        {
+                            title = title.Substring(abbrev.Length);
+                        }
+
+                        imageInsert = $"{abbrev}/{title}";
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(imageInsert))
             {
                 return result;
             }
 
-            var match = Regex.Match(videoUrl, @"/(\w+)/(\w+)/[^/]*\.mp4$");
-            if (!match.Success)
+            foreach (var cdn in Enumerable.Range(1, 5))
             {
-                return result;
+                foreach (var ext in new[] { "jpg", "webp" })
+                {
+                    foreach (var size in new[] { "1499x944c", "1279x852c" })
+                    {
+                        var candidate = $"https://images{cdn}.naughtycdn.com/cms/nacmscontent/v1/scenes/{imageInsert}/scene/horizontal/{size}.{ext}";
+                        if (!await HTTP.IsUrlLoadable(candidate, cancellationToken).ConfigureAwait(false))
+                        {
+                            continue;
+                        }
+
+                        result.Add(new RemoteImageInfo { Url = candidate, Type = ImageType.Primary });
+                        result.Add(new RemoteImageInfo { Url = candidate, Type = ImageType.Backdrop });
+                        return result;
+                    }
+                }
             }
-
-            var prefix = match.Groups[1].Value;
-            var name = match.Groups[2].Value;
-            var imageUrl = $"{ApiBase.Replace("api.naughtyapi.com", "images4.naughtycdn.com")}/scenes/{prefix}/{name}/scene/horizontal/1279x852c.jpg";
-
-            result.Add(new RemoteImageInfo
-            {
-                Url = imageUrl,
-                Type = ImageType.Primary,
-            });
-            result.Add(new RemoteImageInfo
-            {
-                Url = imageUrl,
-                Type = ImageType.Backdrop,
-            });
 
             return result;
         }

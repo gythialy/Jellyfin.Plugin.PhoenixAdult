@@ -83,6 +83,7 @@ namespace PhoenixAdult.Sites
                                 Name = title,
                                 PremiereDate = releaseDateObj,
                                 SearchProviderName = Plugin.Instance.Name,
+                                ImageUrl = Helper.GetImageURL(node, Helper.GetSearchBaseURL(siteNum)),
                             });
                         }
                     }

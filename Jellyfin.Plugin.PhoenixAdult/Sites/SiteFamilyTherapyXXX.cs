@@ -40,8 +40,9 @@ namespace PhoenixAdult.Sites
                 var sceneURL = sceneLink.Attributes["href"]?.Value ?? string.Empty;
                 var sceneName = sceneLink.InnerText.Trim();
                 var curID = Helper.Encode(sceneURL);
-                var image = searchResult.SelectSingleNode(".//a[@class='entry-featured-image-url']/img");
-                var scenePoster = image?.Attributes["src"]?.Value ?? string.Empty;
+
+                // 站点改版：海报常在 img 的 data-src 里，src 只是占位图，交给统一提取器处理
+                var scenePoster = Helper.GetImageURL(searchResult, Helper.GetSearchBaseURL(siteNum)) ?? string.Empty;
                 var date = searchResult.SelectSingleNode(".//p[@class='post-meta']//span[@class='published']");
                 var sceneDate = date?.InnerText.Trim() ?? string.Empty;
 

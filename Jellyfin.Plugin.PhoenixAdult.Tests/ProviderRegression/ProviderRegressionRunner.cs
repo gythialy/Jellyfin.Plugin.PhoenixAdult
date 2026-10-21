@@ -18,7 +18,7 @@ namespace Jellyfin.Plugin.PhoenixAdult.Tests.ProviderRegression;
 public sealed record SearchOutcome(List<RemoteSearchResult> Results, string UsedTerm, IReadOnlyList<string> Terms);
 
 /// <summary>MovieProvider 全链路执行结果。</summary>
-public sealed record E2eOutcome(int SearchCount, MovieInfo Info, MetadataResult<Movie>? Meta);
+public sealed record E2eOutcome(int SearchCount, IReadOnlyList<RemoteSearchResult> SearchResults, MovieInfo Info, MetadataResult<Movie>? Meta);
 
 /// <summary>
 /// Provider 统一回归执行器：解析 handler、按多级搜索词回退执行 Search、
@@ -59,6 +59,45 @@ internal static class ProviderRegressionRunner
         }
 
         return new SearchOutcome(results, used, terms);
+    }
+
+    /// <summary>
+    /// 复跑识别对话框的补图路径（MovieProvider.FillMissingThumbnails），返回补图后的结果。
+    /// 用于验证"列表页没有海报"的站点在对话框里仍然有图。
+    /// </summary>
+    internal static async Task<List<RemoteSearchResult>> FillDialogImagesAsync(int[] siteNum, List<RemoteSearchResult> results, CancellationToken cancellationToken)
+    {
+        TestInitializer.Init();
+
+        // 补图依赖 ProviderIds 的 "group#site#<handler 自己的 sceneID>" 格式；
+        // 直接调 provider.Search 时没有这层前缀（MovieProvider.GetSearchResults 才加），这里补上。
+        // 注意：必须操作副本——用例后面的 chain（Update/GetImages）依赖原始的 sceneID 分段。
+        var copies = results.Select(r => new RemoteSearchResult
+        {
+            Name = r.Name,
+            ImageUrl = r.ImageUrl,
+            PremiereDate = r.PremiereDate,
+            ProductionYear = r.ProductionYear,
+            IndexNumber = r.IndexNumber,
+            IndexNumberEnd = r.IndexNumberEnd,
+            ParentIndexNumber = r.ParentIndexNumber,
+            SearchProviderName = r.SearchProviderName,
+            Overview = r.Overview,
+            ProviderIds = new Dictionary<string, string>(r.ProviderIds),
+        }).ToList();
+
+        var providerName = global::PhoenixAdult.Plugin.Instance.Name;
+        foreach (var result in copies)
+        {
+            if (result.ProviderIds.TryGetValue(providerName, out var externalId) && !string.IsNullOrEmpty(externalId)
+                && !externalId.StartsWith($"{siteNum[0]}#{siteNum[1]}#", StringComparison.Ordinal))
+            {
+                result.ProviderIds[providerName] = $"{siteNum[0]}#{siteNum[1]}#{externalId}";
+            }
+        }
+
+        await MovieProvider.FillMissingThumbnails(siteNum, copies, cancellationToken).ConfigureAwait(false);
+        return copies;
     }
 
     /// <summary>用 Search 结果里的 sceneID 执行 Update（全链路用例）。</summary>
@@ -121,14 +160,14 @@ internal static class ProviderRegressionRunner
         var search = (await provider.GetSearchResults(info, cancellationToken).ConfigureAwait(false)).ToList();
         if (search.Count == 0)
         {
-            return new E2eOutcome(0, info, null);
+            return new E2eOutcome(0, search, info, null);
         }
 
         var first = search[0];
         info.ProviderIds = first.ProviderIds;
         info.PremiereDate = first.PremiereDate;
         var meta = await provider.GetMetadata(info, cancellationToken).ConfigureAwait(false);
-        return new E2eOutcome(search.Count, info, meta);
+        return new E2eOutcome(search.Count, search, info, meta);
     }
 
     /// <summary>

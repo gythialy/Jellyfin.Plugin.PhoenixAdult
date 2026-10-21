@@ -68,6 +68,18 @@ public sealed class ProviderCase
     /// <summary>GetImages 必须至少返回 1 张图。</summary>
     public bool ExpectImages { get; init; }
 
+    /// <summary>
+    /// search 用例：经 MovieProvider 的对话框补图（FillMissingThumbnails）后，前 10 条结果的带图占比下限（0 表示不检查）。
+    /// 用于钉住"handler 列表页没有海报、只能靠 GetImages 兜底"的站点。
+    /// </summary>
+    public double MinDialogImageRatio { get; init; }
+
+    /// <summary>
+    /// e2e 用例：经 MovieProvider 搜索后，带 ImageUrl 的结果占比下限（0 表示不检查）。
+    /// 识别对话框只渲染 ImageUrl，缺图会退化成纯文字卡；同时样例图会做 HEAD 可达性校验。
+    /// </summary>
+    public double MinSearchImageRatio { get; init; }
+
     /// <summary>Update 结果必须有首播日期。</summary>
     public bool ExpectPremiereDate { get; init; }
 

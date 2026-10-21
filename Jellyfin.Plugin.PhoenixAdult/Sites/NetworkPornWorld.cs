@@ -54,6 +54,7 @@ namespace PhoenixAdult.Sites
                                         ProviderIds = { { Plugin.Instance.Name, curId } },
                                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {sceneDateStr}",
                                         SearchProviderName = Plugin.Instance.Name,
+                                        ImageUrl = Helper.GetImageURL(node, Helper.GetSearchBaseURL(siteNum)),
                                     });
                                 }
                             }
@@ -84,6 +85,7 @@ namespace PhoenixAdult.Sites
                             ProviderIds = { { Plugin.Instance.Name, curId } },
                             Name = titleNoFormatting,
                             SearchProviderName = Plugin.Instance.Name,
+                            ImageUrl = detailsPageElements.SelectSingleNode("//meta[@property='og:image']")?.GetAttributeValue("content", string.Empty),
                         });
                     }
                 }
@@ -137,6 +139,7 @@ namespace PhoenixAdult.Sites
                                     ProviderIds = { { Plugin.Instance.Name, curId } },
                                     Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}".Trim(),
                                     SearchProviderName = Plugin.Instance.Name,
+                                    ImageUrl = Helper.GetImageURL(node, Helper.GetSearchBaseURL(siteNum)),
                                 });
                             }
                         }

@@ -45,6 +45,24 @@ docker run --rm phoenixadult-tests
 HEAD 可达 → 拉取字节 → 解析尺寸（>100px）→ backdrop 宽 1280 过滤。
 断言 Primary ≥1 张且有可解析尺寸，等价于“在 Jellyfin 里能下载到正确图片”。
 
+### 搜索结果配图（识别对话框）
+
+识别对话框只渲染 `RemoteSearchResult.ImageUrl`（浏览器直连加载，不带 Referer）。两层保障：
+
+1. **handler 级**：`Search` 里尽量直出 `ImageUrl`（`Helper.GetImageURL` 统一提取，零额外请求）。
+   回归日志每条 search 用例都会打印 `图片 x/y`，就是站点级覆盖率审计。
+2. **对话框级**：handler 列表页没有海报的站点，由 `MovieProvider.FillMissingThumbnails` 兜底
+   （对缺图结果并发取 `GetImages` 首图，上限 10 条 / 单条 8s，且经 HEAD 裸探测 + Referer 规则过滤）。
+   用例加 `minDialogImageRatio`（如 `0.8`）即会复跑这条兜底路径，断言前 10 条结果的带图占比，
+   并对样例图做 HEAD 可达性校验。
+
+用例里的相关字段：
+
+| 字段 | 作用 |
+|---|---|
+| `minDialogImageRatio` | search 用例：补图后前 10 条结果的带图占比下限 |
+| `minSearchImageRatio` | e2e 用例：`MovieProvider` 搜索结果（补图后）带图占比下限 |
+| `expectSearchImages`（已移除） | 旧字段，改为上面两个比例断言 |
 未覆盖的 handler 清单见 [provider-regression-uncovered.md](../docs/provider-regression-uncovered.md)。
 
 ```bash
