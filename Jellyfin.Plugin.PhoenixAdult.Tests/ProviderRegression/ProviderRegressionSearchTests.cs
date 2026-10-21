@@ -1,5 +1,7 @@
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using PhoenixAdult.Providers;
 using Xunit;
 using Xunit.Sdk;
 
@@ -37,6 +39,40 @@ public class ProviderRegressionSearchTests
                 }
 
                 Assert.Fail($"{c.Id}: 期望 ≥{c.ExpectMinResults} 结果，实际 {outcome.Results.Count} | 搜索词 {terms}");
+            }
+
+            // Handler 级 Search 只统计本实现能直接给出的图（部分站点的图只有在 GetImages 里，
+            // 由 MovieProvider 的补图兜底覆盖），这里作为站点图片覆盖率的审计输出。
+            var withImage = outcome.Results.Count(r => !string.IsNullOrEmpty(r.ImageUrl));
+
+            if (c.MinDialogImageRatio > 0)
+            {
+                // 复跑识别对话框的补图路径：列表页没有海报的站点靠 GetImages 兜底
+                var filled = await ProviderRegressionRunner.FillDialogImagesAsync(c.SiteNum, outcome.Results, timeout.Token).ConfigureAwait(false);
+                var targets = filled.Take(MovieProvider.MaxThumbnailFillCount).ToList();
+                var withDialogImage = targets.Count(r => !string.IsNullOrEmpty(r.ImageUrl));
+                var dialogRatio = targets.Count == 0 ? 0 : (double)withDialogImage / targets.Count;
+                Assert.True(
+                    dialogRatio >= c.MinDialogImageRatio,
+                    $"{c.Id}: 对话框补图率 {withDialogImage}/{targets.Count} ({dialogRatio:P0}) 低于 {c.MinDialogImageRatio:P0}");
+
+                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+                foreach (var imageUrl in targets.Where(r => !string.IsNullOrEmpty(r.ImageUrl)).Select(r => r.ImageUrl!).Take(3))
+                {
+                    Assert.True(Uri.TryCreate(imageUrl, UriKind.Absolute, out var imageUri), $"{c.Id}: 补图 URL 不是绝对地址 {imageUrl}");
+                    try
+                    {
+                        using var response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, imageUri), timeout.Token);
+                        Assert.True(response.IsSuccessStatusCode, $"{c.Id}: 补图 URL 不可用 {(int)response.StatusCode} {imageUrl}");
+                    }
+                    catch (HttpRequestException ex)
+                    {
+                        Assert.Fail($"{c.Id}: 补图 URL 请求失败 {imageUrl} ({ex.Message})");
+                    }
+                }
+
+                withImage = filled.Count(r => !string.IsNullOrEmpty(r.ImageUrl));
+                Log($"🖼 {c.Id} :: 对话框补图 {withDialogImage}/{targets.Count}");
             }
 
             var first = outcome.Results[0].Name ?? string.Empty;
@@ -84,7 +120,7 @@ public class ProviderRegressionSearchTests
                 }
             }
 
-            Log($"✅ {c.Id} :: {outcome.Results.Count} 结果 | 首 '{first}'" + (c.Chain ? $" | 图 {images}" : string.Empty));
+            Log($"✅ {c.Id} :: {outcome.Results.Count} 结果 | 首 '{first}' | 图片 {withImage}/{outcome.Results.Count}" + (c.Chain ? $" | GetImages {images}" : string.Empty));
         }
         catch (Exception ex) when (ProviderRegressionRunner.IsEnvironmentSkip(ex))
         {

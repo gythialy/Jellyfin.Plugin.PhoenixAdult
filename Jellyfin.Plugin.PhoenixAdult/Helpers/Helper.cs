@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using HtmlAgilityPack;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers.Utils;
@@ -402,6 +403,156 @@ namespace PhoenixAdult.Helpers
                 {
                     return rule.Value;
                 }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 从 HTML 列表节点提取海报地址（识别对话框只渲染 RemoteSearchResult.ImageUrl）。
+        /// 懒加载站点的真实地址常在 data-src / data-original 里，src 可能是占位图，故按优先级尝试；
+        /// 同时兼容节点自身的 data-poster 与 style="background-image:url(...)"。相对地址用 baseUrl 补全。
+        /// </summary>
+        /// <param name="node">列表节点。</param>
+        /// <param name="baseUrl">站点根地址（如 https://www.example.com）。</param>
+        /// <returns>可直接给客户端加载的绝对地址；取不到返回 null。</returns>
+        internal static string GetImageURL(HtmlNode node, string baseUrl = null)
+        {
+            if (node == null)
+            {
+                return null;
+            }
+
+            var candidates = new List<string>();
+            var image = string.Equals(node.Name, "img", StringComparison.OrdinalIgnoreCase) ? node : node.SelectSingleNode(".//img");
+            if (image != null)
+            {
+                foreach (var attribute in new[] { "data-src", "data-original", "data-lazy-src", "data-lazy", "data-echo", "data-thumb", "data-srcset", "srcset", "src" })
+                {
+                    var value = image.GetAttributeValue(attribute, null);
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        candidates.Add(value);
+                    }
+                }
+            }
+
+            if (image != null)
+            {
+                // 部分站点用自定义属性存图（如 AuntJudys 的 src0_1x / src0_2x），
+                // 兜底扫描所有“像图片地址”的属性值。
+                foreach (var attribute in image.Attributes)
+                {
+                    var value = attribute.Value;
+                    if (string.IsNullOrWhiteSpace(value))
+                    {
+                        continue;
+                    }
+
+                    var looksLikeImage = (attribute.Name.Contains("src", StringComparison.OrdinalIgnoreCase)
+                        || attribute.Name.Contains("image", StringComparison.OrdinalIgnoreCase))
+                        && (value.Contains(".jpg", StringComparison.OrdinalIgnoreCase)
+                            || value.Contains(".jpeg", StringComparison.OrdinalIgnoreCase)
+                            || value.Contains(".png", StringComparison.OrdinalIgnoreCase)
+                            || value.Contains(".webp", StringComparison.OrdinalIgnoreCase));
+                    if (looksLikeImage && !candidates.Contains(value))
+                    {
+                        candidates.Add(value);
+                    }
+                }
+            }
+
+            foreach (var attribute in new[] { "data-poster", "data-image", "data-bg", "data-background", "data-background-image", "data-thumb" })
+            {
+                var value = node.GetAttributeValue(attribute, null);
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    candidates.Add(value);
+                }
+            }
+
+            var style = node.GetAttributeValue("style", null);
+            if (!string.IsNullOrWhiteSpace(style))
+            {
+                var match = Regex.Match(style, @"url\(['""]?(.*?)['""]?\)");
+                if (match.Success)
+                {
+                    candidates.Add(match.Groups[1].Value);
+                }
+            }
+
+            // 有些站点的缩略图是子元素的 CSS 背景图（div style="background-image:url(...)"）
+            // 或挂在 data-bg / data-src 上，这里再扫一遍子元素。
+            foreach (var element in node.Descendants().Take(64))
+            {
+                var elementStyle = element.GetAttributeValue("style", null);
+                if (!string.IsNullOrWhiteSpace(elementStyle))
+                {
+                    var match = Regex.Match(elementStyle, @"url\(['""]?(.*?)['""]?\)");
+                    if (match.Success)
+                    {
+                        candidates.Add(match.Groups[1].Value);
+                    }
+                }
+
+                foreach (var attribute in new[] { "data-bg", "data-background-image", "data-src", "data-poster" })
+                {
+                    var value = element.GetAttributeValue(attribute, null);
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        candidates.Add(value);
+                    }
+                }
+            }
+
+            foreach (var candidate in candidates)
+            {
+                var url = candidate.Split(' ')[0].Split(',')[0].Trim().Trim('"', '\'');
+                if (string.IsNullOrEmpty(url) || url.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                // 列表页里常有站点头图/图标在同一节点内，命中这些关键词的多半不是海报
+                // 有些站点的预览是视频文件（preview_320.mp4），不能当缩略图
+                if (url.Contains(".mp4", StringComparison.OrdinalIgnoreCase)
+                    || url.Contains(".webm", StringComparison.OrdinalIgnoreCase)
+                    || url.Contains(".m3u8", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (url.Contains("logo", StringComparison.OrdinalIgnoreCase)
+                    || url.Contains("favicon", StringComparison.OrdinalIgnoreCase)
+                    || url.Contains("/icons/", StringComparison.OrdinalIgnoreCase)
+                    || url.Contains("/icon/", StringComparison.OrdinalIgnoreCase)
+                    || url.Contains("sprite", StringComparison.OrdinalIgnoreCase)
+                    || url.Contains("placeholder", StringComparison.OrdinalIgnoreCase)
+                    || url.Contains("horizontalline", StringComparison.OrdinalIgnoreCase)
+                    || url.Contains("spacer", StringComparison.OrdinalIgnoreCase)
+                    || url.Contains("divider", StringComparison.OrdinalIgnoreCase)
+                    || url.Contains("bullet", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (url.StartsWith("//", StringComparison.Ordinal))
+                {
+                    return "https:" + url;
+                }
+
+                if (url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                {
+                    return url;
+                }
+
+                if (string.IsNullOrEmpty(baseUrl))
+                {
+                    continue;
+                }
+
+                var root = baseUrl.TrimEnd('/');
+                return url.StartsWith("/", StringComparison.Ordinal) ? root + url : root + "/" + url;
             }
 
             return null;

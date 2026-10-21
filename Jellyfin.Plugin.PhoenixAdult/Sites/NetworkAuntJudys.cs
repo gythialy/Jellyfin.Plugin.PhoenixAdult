@@ -62,6 +62,7 @@ namespace PhoenixAdult.Sites
                                 ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                                 Name = $"{titleNoFormatting} [Aunt Judy's] {releaseDate}",
                                 SearchProviderName = Plugin.Instance.Name,
+                                ImageUrl = Helper.GetImageURL(node, Helper.GetSearchBaseURL(siteNum)),
                             });
                         }
                     }

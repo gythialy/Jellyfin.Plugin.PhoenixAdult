@@ -65,6 +65,7 @@ namespace PhoenixAdult.Sites
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
+                        ImageUrl = Helper.GetImageURL(node, Helper.GetSearchBaseURL(siteNum)),
                     });
                 }
             }
@@ -96,6 +97,7 @@ namespace PhoenixAdult.Sites
                             ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
+                            ImageUrl = detailsPageElements.SelectSingleNode("//meta[@property='og:image']")?.GetAttributeValue("content", string.Empty),
                         });
                     }
                 }

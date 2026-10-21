@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -141,6 +142,7 @@ namespace PhoenixAdult.Sites
                                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                                         Name = $"{titleNoFormatting} [Adult Prime] {releaseDate}",
                                         SearchProviderName = Plugin.Instance.Name,
+                                        ImageUrl = GetPosterUrl(node, siteNum),
                                         PremiereDate = string.IsNullOrEmpty(releaseDate) ? null : (DateTime.TryParseExact(releaseDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var releaseDateObj) ? releaseDateObj : (DateTime?)null),
                                     });
                                 }
@@ -267,6 +269,32 @@ namespace PhoenixAdult.Sites
             }
 
             return images;
+        }
+
+        /// <summary>
+        /// 列表项海报：优先 TPDB 的 update-video-wrapper 背景图 / video@poster（分辨率高于 img），
+        /// 取不到再回落到统一提取器。
+        /// </summary>
+        private static string GetPosterUrl(HtmlNode node, int[] siteNum)
+        {
+            var styleNode = node.SelectSingleNode(".//div[contains(@class, 'update-video-wrapper')]/a/div");
+            var style = styleNode?.GetAttributeValue("style", string.Empty);
+            if (!string.IsNullOrEmpty(style))
+            {
+                var match = Regex.Match(style, @"url\(['""]?(http[^'"")]+)");
+                if (match.Success)
+                {
+                    return match.Groups[1].Value;
+                }
+            }
+
+            var poster = node.SelectSingleNode(".//video")?.GetAttributeValue("poster", string.Empty);
+            if (!string.IsNullOrEmpty(poster))
+            {
+                return poster;
+            }
+
+            return Helper.GetImageURL(node, Helper.GetSearchBaseURL(siteNum));
         }
     }
 }

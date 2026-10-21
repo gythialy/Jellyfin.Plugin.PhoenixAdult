@@ -53,11 +53,24 @@ namespace PhoenixAdult.Sites
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
                     }
 
+                    // 同 TPDB networkSteppedUpJSON：优先 trailer_screencap，其次 thumb
+                    string posterUrl = (string)searchResult["trailer_screencap"];
+                    if (string.IsNullOrEmpty(posterUrl))
+                    {
+                        posterUrl = (string)searchResult["thumb"];
+                    }
+
+                    if (!string.IsNullOrEmpty(posterUrl) && posterUrl.StartsWith("//", StringComparison.Ordinal))
+                    {
+                        posterUrl = "https:" + posterUrl;
+                    }
+
                     result.Add(new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                         Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                         SearchProviderName = Plugin.Instance.Name,
+                        ImageUrl = posterUrl,
                     });
                 }
             }

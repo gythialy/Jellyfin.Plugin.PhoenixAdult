@@ -51,7 +51,15 @@ namespace PhoenixAdult.Sites
                         var cleanActorName = ActorsDB.FirstOrDefault(a => a.Value.Any(v => v.ToLower().Contains(actorName.ToLower()))).Key ?? actorName;
                         string titleNoFormatting = string.Join(" and ", cleanActorName);
 
+                        // imageUrl 参与 curId（历史 ID 不能变），展示用图另算绝对地址
                         string imageUrl = sceneResult.SelectSingleNode(".//img[contains(@src, 'tour')][@width='400']")?.GetAttributeValue("src", string.Empty);
+                        string posterUrl = string.IsNullOrEmpty(imageUrl)
+                            ? null
+                            : (imageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                                ? imageUrl
+                                : Helper.GetSearchBaseURL(siteNum) + "/" + imageUrl.TrimStart('/'));
+                        posterUrl ??= Helper.GetImageURL(sceneResult, Helper.GetSearchBaseURL(siteNum));
+
                         string curId = Helper.Encode(imageUrl);
 
                         string releaseDate = string.Empty;
@@ -66,6 +74,7 @@ namespace PhoenixAdult.Sites
                             ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}|{Helper.Encode(string.Join("|", cleanActorName))}|{summaryId}" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
+                            ImageUrl = posterUrl,
                         });
                     }
                 }

@@ -91,6 +91,7 @@ namespace PhoenixAdult.Sites
                             ProviderIds = { { Plugin.Instance.Name, $"{curId}" } },
                             Name = $"{titleNoFormatting} [{Helper.GetSearchSiteName(siteNum)}] {releaseDate}",
                             SearchProviderName = Plugin.Instance.Name,
+                            ImageUrl = detailsPageElements.SelectSingleNode("//meta[@property='og:image']")?.GetAttributeValue("content", string.Empty),
                         });
                     }
                 }

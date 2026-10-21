@@ -63,6 +63,46 @@ Jellyfin/Emby 用 `System.Xml.Serialization.XmlSerializer` 把插件配置持久
 回归测试见 `Jellyfin.Plugin.PhoenixAdult.Tests/Configuration/PluginConfigurationSerializationTests.cs`
 （构造 `new XmlSerializer(typeof(PluginConfiguration))` 即可复现该异常）。
 
+### 2.6 识别对话框（搜索结果展示）的限制
+
+识别对话框由客户端渲染，服务端能控制的只有 RemoteSearchResult 的几个字段：
+
+- 只显示 **Name + SearchProviderName + ProductionYear**，**不渲染 PremiereDate**；
+  SearchProviderName 还会被服务端覆盖成 provider 名（ProviderManager.GetSearchResults）。
+  → 想在对话框里显示到日，只能把日期拼进 Name：MovieProvider.AddDatePrefix
+  （"2026-10-20 · 标题"，排序/补图之后执行；Apply 后条目标题仍取 Update 返回的站点标题，
+  因为 Jellyfin 只把 RemoteSearchResult.Name 传给 ItemLookupInfo.Name 当搜索输入）。
+- 对话框里的图片是**浏览器直连** ImageUrl 加载的（不经过服务端代理、不带站点 Referer）。
+  需要 Referer 的 CDN（如 phncdn.com）填进去只会显示破图，所以补图前用
+  Helper.GetImageReferer(url) 过滤，命中规则就放弃补图（客户端回退到标题卡片）。
+- 很多 handler 的 Search 里根本没有海报（图片只在 GetImages 里）。MovieProvider 对
+  **用户发起**的搜索会给缺图结果并发取 GetImages 首图兜底（上限 10 条、单条 8s 超时、失败静默）；
+  自动识别走 GetMetadata 内部调用（fillThumbnails: false），不会额外打请求。
+
+**列表页直出海报（首选，零额外请求）**：
+
+- 统一用 `Helper.GetImageURL(node, baseUrl)`：按 data-src / data-original / srcset / src 优先取，
+  再兜底扫描 img 的自定义属性（AuntJudys/BrandNewAmateurs 用 `src0_1x`）、子元素 CSS 背景图与
+  data-bg；自动补全相对地址，并过滤掉 logo / icon / sprite / placeholder / 装饰线 / `.mp4` 预览。
+- handler 的 Search 里能直接拿到节点时，尽量给 `ImageUrl` 赋值（搜索结果图零成本）。
+- 以下站点的列表数据本身没有图片，只能靠上面的 GetImages 兜底（不要硬造假 URL）：
+  NaughtyAmerica（api.naughtyapi.com 的 JSON 只有 trailers/promo_video_data）、
+  Pornhub（phncdn 的签名图必须带 Referer，对话框里是浏览器直连 → 主动跳过）、
+  AnalVids / NetworkSteppedUp（Next.js JSON 无海报字段）、SitePurgatoryX（走 GetSearchResultsFromUpdate）。
+
+**GammaEnt / AdultTime 家族（NetworkGammaEnt）的坑**：
+
+- all_scenes 索引有 pictures，但 **all_movies 索引恒无 pictures**（只有
+  movie_id / url_title / cover_path / first_clip）→ 电影类结果没有海报。
+  修法：Search 结束后用一次批量 Algolia 查询（filters=movie_id=A OR movie_id=B ...）回
+  all_scenes 索引，按 movie_id 取该片第一个场景的 pictures 预览图（FillMoviePreviewImages）。
+- 电影封面 {movie_id}/{movie_id}_{slug}_front_400x625.jpg 只对部分影片存在
+  （实测 20 部里 8 部 404），**不要**直接塞进 ImageUrl；GetImages 里仍可用它做 Primary，
+  因为下载链路会校验尺寸/字节，取不到就当没有海报。
+- 同一份 movies 记录里 **last_modified 恒为 JSON null**（键存在、值为 null），
+  直接判断 != null 会误判成"有值"，导致电影结果没有日期；
+  必须先判断 JTokenType.Null 再回退 date_created。
+
 ## 3. 反爬与 FlareSolverr
 
 站点评测：
@@ -100,6 +140,17 @@ docker run -d --name flaresolverr -p 8191:8191 ghcr.io/gythialy/flaresolverr:lat
 - **选择器**：`selector_map` 里的 title/date/image/external_id 可直接对照。
 - **放弃决策**：某些站点 TPDB 官方也标注不可爬（如 NetworkVNA），此时 0 结果是合理结论。
 
+### 4.1 海报字段对照（2026-10 实测）
+
+| 站点 | TPDB 取图方式 | 我们的做法 |
+|---|---|---|
+| AllAnal / NetworkSteppedUp | `networkSteppedUpJSON.py`：`scene["trailer_screencap"]`，空则 `scene["thumb"]`（同一份 `_next/data` JSON） | 已照抄（列表 JSON 直出，零额外请求） |
+| AdultPrime | `networkAdultPrime.py`：`//div[contains(@class,"update-video-wrapper")]/a/div/@style` 或 `//video/@poster`，regex 取 `http…jpg` | 已照抄优先级，`<img>` 仅兜底（`img` 抓到的是 `image_midi_9.jpg`，偏小） |
+| NaughtyAmerica | `networkNaughtyAmericaAPI.py`：从 `promo_video_data`/`trailers.trailer_720` 正则取 `abbrev/title`，拼 `images{1..5}.naughtycdn.com/cms/nacmscontent/v1/scenes/{abbrev}/{title}/scene/horizontal/1499x944c.{jpg,webp}` 并 HEAD 校验 | **已照抄**（2026-10-21）：原先"从 trailer 路径推 scenes/{prefix}/{name}"拼出的 URL 恒 404，场景页 `og:image` 对无 Cookie 请求返回空 202，两头都不通；现改为 TPDB 的 `cms/nacmscontent/v1` 形式 + HEAD 校验，实测 200 |
+| Pornhub | `networkPornhub_*.py`：场景页 `og:image` | 相同；但 phncdn 强制 Referer，浏览器直连必 403，故对话框不填图 |
+| GirlsOutWest | `siteGirlsOutWest.py`：场景页 `//div[@class="player-thumb"]//img/@src0_3x` | 列表页无图，靠补图 |
+| AnalVids / MilfAF / SlutInspection | TPDB 无 scraper；实测 AnalVids 的 `/api/autocomplete/search` `terms` 只有 `type/name/url/source_id`，无图片字段 | 只能靠补图 |
+
 ## 5. 已知的"设计如此"与"站点侧问题"
 
 | 情况 | 说明 |
@@ -108,6 +159,7 @@ docker run -d --name flaresolverr -p 8191:8191 ghcr.io/gythialy/flaresolverr:lat
 | 子站下线 | 如 `askyourmother.com` 整站跳 `/lander`，需改走主站域名 |
 | 站点改版导致搜索词无效 | 旧 slug/旧 viewkey 失效，需用新标题刷新用例 |
 | 网络抖动 | 瞬时失败会伪装成"实现 bug"——**复测一次再下结论**（JacquieEtMichel 曾因此误判） |
+| GetImages 本身失效（待修） | PurgatoryX（`//video[@id='main-player']` 选择器已变）、GirlsOutWest（场景页 403）、MilfAF（场景页取不到图）、SlutInspection（分页兜底分支无图）：这四个站点的**补图兜底也拿不到图**，列表页与场景页都需单独排查；回归里它们的搜索用例因此只断言"能搜到" |
 
 ## 6. 排查方法论
 

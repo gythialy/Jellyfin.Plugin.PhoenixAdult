@@ -79,10 +79,38 @@ namespace PhoenixAdult.Providers
                         }, cancellationToken).ConfigureAwait(false);
                 }
 
+                // 少数站点给的是协议相对地址（//host/path），ImageHelper 里的 Uri 解析会直接抛 UriFormatException
+                images = NormalizeUrls(images);
                 images = await ImageHelper.GetImagesSizeAndValidate(images, cancellationToken).ConfigureAwait(false);
             }
 
             return images;
+        }
+
+        private static IEnumerable<RemoteImageInfo> NormalizeUrls(IEnumerable<RemoteImageInfo> images)
+        {
+            if (images == null)
+            {
+                return Array.Empty<RemoteImageInfo>();
+            }
+
+            var normalized = new List<RemoteImageInfo>();
+            foreach (var image in images)
+            {
+                if (image == null || string.IsNullOrEmpty(image.Url))
+                {
+                    continue;
+                }
+
+                if (image.Url.StartsWith("//", StringComparison.Ordinal))
+                {
+                    image.Url = "https:" + image.Url;
+                }
+
+                normalized.Add(image);
+            }
+
+            return normalized;
         }
 
 #if __EMBY__

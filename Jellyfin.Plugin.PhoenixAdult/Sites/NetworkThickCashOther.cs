@@ -47,6 +47,7 @@ namespace PhoenixAdult.Sites
                             ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                             Name = $"{titleNoFormatting} [Thick Cash/{Helper.GetSearchSiteName(siteNum)}]",
                             SearchProviderName = Plugin.Instance.Name,
+                            ImageUrl = Helper.GetImageURL(scenePageElements, Helper.GetSearchBaseURL(siteNum)),
                         });
                     }
                 }
@@ -70,7 +71,9 @@ namespace PhoenixAdult.Sites
             if (modelHttp.IsOK)
             {
                 var modelPageElements = HTML.ElementFromString(modelHttp.Content);
-                var modelNodes = modelPageElements.SelectNodes("//div[@class='model-grid']//a");
+
+                // 老模板是 div.model-grid//a；MilfAF 新模板把场景卡片放在 div.hover-video > a
+                var modelNodes = modelPageElements.SelectNodes("//div[@class='model-grid']//a | //div[contains(@class, 'hover-video')]/a");
                 if (modelNodes != null)
                 {
                     foreach (var node in modelNodes)
@@ -86,6 +89,10 @@ namespace PhoenixAdult.Sites
                                 ProviderIds = { { Plugin.Instance.Name, $"{curId}|{releaseDate}" } },
                                 Name = $"{titleNoFormatting} [Thick Cash/{Helper.GetSearchSiteName(siteNum)}]",
                                 SearchProviderName = Plugin.Instance.Name,
+
+                                // 缩略图常在卡片的兄弟节点里（<a> 只在标题上），先看自身再看父节点
+                                ImageUrl = Helper.GetImageURL(node, Helper.GetSearchBaseURL(siteNum))
+                                    ?? Helper.GetImageURL(node.ParentNode, Helper.GetSearchBaseURL(siteNum)),
                             });
                         }
                     }
@@ -165,9 +172,22 @@ namespace PhoenixAdult.Sites
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
             var posterNode = detailsPageElements.SelectSingleNode("//video");
-            if (posterNode != null)
+            var posterUrl = posterNode?.GetAttributeValue("poster", string.Empty);
+
+            if (string.IsNullOrEmpty(posterUrl))
             {
-                images.Add(new RemoteImageInfo { Url = posterNode.GetAttributeValue("poster", string.Empty), Type = ImageType.Primary });
+                // MilfAF 新模板：场景封面在 og:image（https://nookies.com/tour-content/.../main.jpg），
+                // 站点自己的 /images/yearly.webp 之类是通用图，要跳过
+                var ogImage = detailsPageElements.SelectSingleNode("//meta[@property='og:image']")?.GetAttributeValue("content", string.Empty);
+                if (!string.IsNullOrEmpty(ogImage) && ogImage.Contains("tour-content", StringComparison.OrdinalIgnoreCase))
+                {
+                    posterUrl = ogImage;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(posterUrl))
+            {
+                images.Add(new RemoteImageInfo { Url = posterUrl, Type = ImageType.Primary });
             }
 
             return images;
