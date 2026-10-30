@@ -180,3 +180,16 @@ SiteList 已用组号：231 Babepedia / 232 AV-LEAGUE / 233 ThePornDB。
 - 校验：Release 与 Release.Emby 构建通过、离线 69/69、移植站点冒烟 30/30、dotnet format（测试项目 0 变更；插件项目仅剩仓库既有 SA 警告）。
 - 环境：不再使用工作区内 .dotnet-home，改用 mise 提供的 dotnet 10.0.403（DOTNET_CLI_HOME 指向系统临时目录）。
 
+## 番号路由数据化（2026-10-30，参考 sqzw-x/amane）
+
+问题：多源检索的"番号 → 站点"绑定原先写死在 SearchRouter.cs 里，新增站点或调整优先级要改代码。
+
+现在：规则全部放进 data/IdRoutes.json，代码只负责解析与匹配（第一个命中生效，最后一条是兜底）。
+
+- 结构：Routes[] = { Id, Note, IdPrefix, LabelRegex, Sites: [[组号, 站点号], ...] }；Sites 引用 data/SiteList.json。
+- 匹配：IdPrefix 匹配规范化番号前缀，LabelRegex 匹配厂牌（如 ^(?:MD|MTVQ)[A-Z0-9]*$），两者都为空即兜底。
+- 本地覆盖：data/IdRoutes.local.json（Update Database 不会覆盖），按路由 Id 整条替换或追加。
+- Database 增加 IdRoutesStructure/IdRouteEntry 与 IdRoutes 属性；SearchRouter.GetSources(id)/GetFamily(id) 改为查表。
+- 测试：IdRoutesDataTests 校验结构与站点引用（组号/站点号都必须在 SiteList 中存在）、正则可编译、最后一条必须是兜底；SearchRouterTests 用内存路由表校验 prefix/正则优先级与无表降级。
+- 配置页去掉原来的 overrides 文本框（路由改数据文件维护），保留 MultiSourceSearch 开关与单站超时。
+

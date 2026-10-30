@@ -61,7 +61,6 @@ namespace PhoenixAdult.Configuration
 
             this.MultiSourceSearch = true;
             this.MultiSourceSearchTimeoutSeconds = 30;
-            this.MultiSourceSearchSources = string.Empty;
 
             this.JAVActorNamingStyle = JAVActorNamingStyle.WesternStyle;
             this.GenresSortingStyle = GenresSortingStyle.Alphabetical;
@@ -138,12 +137,6 @@ namespace PhoenixAdult.Configuration
         /// 多源检索的单站超时（秒），默认 30。
         /// </summary>
         public int MultiSourceSearchTimeoutSeconds { get; set; }
-
-        /// <summary>
-        /// 可选：覆盖多源清单，格式 family=group:site|group:site;family=...
-        /// family 取值 madou / jav / fc2，未列出的 family 使用内置默认。
-        /// </summary>
-        public string MultiSourceSearchSources { get; set; }
 
         public JAVActorNamingStyle JAVActorNamingStyle { get; set; }
 

@@ -73,10 +73,6 @@
                         <label class="inputLabel inputLabelUnfocused" for="MultiSourceSearchTimeoutSeconds">Multi-source per-site timeout (seconds)</label>
                         <input id="MultiSourceSearchTimeoutSeconds" name="MultiSourceSearchTimeoutSeconds" type="number" min="5" max="120" is="emby-input" />
                     </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="MultiSourceSearchSources">Multi-source overrides (family=group:site|group:site;...)</label>
-                        <input id="MultiSourceSearchSources" name="MultiSourceSearchSources" type="text" is="emby-input" />
-                    </div>
                     <div class="checkboxContainer checkboxContainer-withDescripton">
                         <label class="emby-checkbox-label">
                             <input id="UseMetadataAPI" name="UseMetadataAPI" type="checkbox" is="emby-checkbox" />
@@ -179,7 +175,6 @@
                     $('#DefaultSiteName').val(config.DefaultSiteName).change();
                     $('#MultiSourceSearch').prop('checked', config.MultiSourceSearch !== false);
                     $('#MultiSourceSearchTimeoutSeconds').val(config.MultiSourceSearchTimeoutSeconds || 30).change();
-                    $('#MultiSourceSearchSources').val(config.MultiSourceSearchSources || '').change();
                     $('#UseMetadataAPI').prop('checked', config.UseMetadataAPI);
                     $('#MetadataAPIToken').val(config.MetadataAPIToken).change();
                     $('#DisableActors').prop('checked', config.DisableActors);
@@ -213,7 +208,6 @@
                     config.DefaultSiteName = $('#DefaultSiteName').val();
                     config.MultiSourceSearch = $('#MultiSourceSearch').prop('checked');
                     config.MultiSourceSearchTimeoutSeconds = parseInt($('#MultiSourceSearchTimeoutSeconds').val(), 10) || 30;
-                    config.MultiSourceSearchSources = $('#MultiSourceSearchSources').val();
                     config.MetadataAPIToken = $('#MetadataAPIToken').val();
                     config.UseMetadataAPI = $('#UseMetadataAPI').prop('checked');
                     config.DisableActors = $('#DisableActors').prop('checked');
