@@ -267,6 +267,9 @@ namespace PhoenixAdult.Helpers.Utils
             /// <summary>规范化番号前缀匹配（如 FC2-PPV-），为空表示不按前缀匹配。</summary>
             public string IdPrefix { get; set; }
 
+            /// <summary>厂牌白名单（精确匹配，忽略大小写），为空表示不按名单匹配。</summary>
+            public string[] Labels { get; set; }
+
             /// <summary>厂牌（番号前半段）正则匹配，为空表示不按正则匹配。</summary>
             public string LabelRegex { get; set; }
 

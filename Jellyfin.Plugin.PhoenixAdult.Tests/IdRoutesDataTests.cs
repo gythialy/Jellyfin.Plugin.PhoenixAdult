@@ -89,6 +89,44 @@ public class IdRoutesDataTests
     }
 
     [Fact]
+    public void IdRoutes_厂牌名单合法且不重复()
+    {
+        using var doc = LoadRoutes();
+        foreach (var route in doc.RootElement.GetProperty("Routes").EnumerateArray())
+        {
+            if (!route.TryGetProperty("Labels", out var labels))
+            {
+                continue;
+            }
+
+            var routeId = route.GetProperty("Id").GetString();
+            var values = labels.EnumerateArray().Select(o => o.GetString() ?? string.Empty).ToList();
+
+            Assert.Equal(values.Count, values.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+            foreach (var label in values)
+            {
+                Assert.Matches("^[a-z0-9]+$", label);
+            }
+        }
+    }
+
+    [Fact]
+    public void IdRoutes_麻豆路涵盖大量厂牌()
+    {
+        using var doc = LoadRoutes();
+        var madou = doc.RootElement.GetProperty("Routes").EnumerateArray()
+            .First(o => o.GetProperty("Id").GetString() == "madou");
+
+        var labels = madou.GetProperty("Labels").EnumerateArray().Select(o => o.GetString()).ToList();
+
+        // MadouQu 上实际存在的厂牌远超 MD*/MTVQ*，名单由 scripts/harvest-madou-labels.sh 采集
+        Assert.True(labels.Count >= 200, $"madou 路由的厂牌名单过少（{labels.Count}）");
+        Assert.Contains("mdx", labels);
+        Assert.Contains("mdsr", labels);
+        Assert.Contains("mtvq", labels);
+    }
+
+    [Fact]
     public void IdRoutes_最后一条是兜底路由()
     {
         using var doc = LoadRoutes();

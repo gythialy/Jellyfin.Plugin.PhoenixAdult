@@ -180,6 +180,19 @@ SiteList 已用组号：231 Babepedia / 232 AV-LEAGUE / 233 ThePornDB。
 - 校验：Release 与 Release.Emby 构建通过、离线 69/69、移植站点冒烟 30/30、dotnet format（测试项目 0 变更；插件项目仅剩仓库既有 SA 警告）。
 - 环境：不再使用工作区内 .dotnet-home，改用 mise 提供的 dotnet 10.0.403（DOTNET_CLI_HOME 指向系统临时目录）。
 
+## 番号路由准确性调研（2026-10-30）
+
+调研对象：sqzw-x/amane 与 metatube-sdk-go(gythialy fork)。
+
+结论：
+
+- **amane** 是 JAV 向抓取器，站点清单在 `src/amane/crawlers/sites/*.py`，每个 crawler 用 `profile()` 声明能力，`site_roles.py` 由注册表推导角色；它没有 madouqu/中文站的 site，也没有"厂牌 → 站点"的静态表（番号规范化在 `parsing.number_variants`，按站点容忍度逐个试）。可借鉴的是"声明式 + 注册表"的组织方式，厂牌数据仍需自己维护。
+- **metatube-sdk-go** 的 `provider/madouqu/madouqu.go` 也是从页面文本解析"番號："字段，没有厂牌清单；因此外部仓库都拿不到 MadouQu 的完整厂牌集合。
+- 唯一可靠的来源是 **MadouQu 自身**：`sitemap-posts-1/2.xml.gz` 共 24,423 条 /video/ URL，按 slug 前缀归一（mdsr0005 / mdx-0149 / 91cm-255）得到 **301 个厂牌**（xb、tx、xjx、jdsy、pmc、md、mdx、mdsr、mtvq、91cm… 远超原先只有 MD*/MTVQ 的覆盖）。
+- 采集脚本：`scripts/harvest-madou-labels.sh`（输出 JSON 数组或 --stats 计数），结果写入 `data/IdRoutes.json` 的 madou 路由 `Labels`。
+- 因为部分厂牌（如 pme、sat、ras）也可能是 JAV 厂牌，madou 路由的 `Sites` 取**并集**（MadouQu/ModelMediaAsia + AVBase/JavBus/JAVLibrary/R18/JAVDatabase/DUGA/FANZA）；误判只会多几个并行请求，不会漏结果。
+- 维护：新增厂牌 → 重跑采集脚本 → 替换 `Labels` 数组；未采集到的新 MD*/MTVQ* 由 `LabelRegex` 兜底。
+
 ## 番号路由数据化（2026-10-30，参考 sqzw-x/amane）
 
 问题：多源检索的"番号 → 站点"绑定原先写死在 SearchRouter.cs 里，新增站点或调整优先级要改代码。

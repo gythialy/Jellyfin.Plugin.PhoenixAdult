@@ -20,6 +20,7 @@ public class MultiSourceSearchTests
     {
         // 查询词, 期望命中来源里的 group（任一结果带该 group 前缀即可）
         new object[] { "MDSR-0005", 234 },        // 麻豆系：MadouQu
+        new object[] { "XJX-0813", 234 },         // 麻豆系：sitemap 采集到的非 MD 厂牌
         new object[] { "SSIS-354", 239 },         // JAV 系：AVBase
         new object[] { "FC2-PPV-4680562", 238 },  // FC2：官方
     };

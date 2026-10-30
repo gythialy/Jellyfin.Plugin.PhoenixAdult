@@ -66,16 +66,26 @@ namespace PhoenixAdult.Helpers.Utils
                     continue;
                 }
 
-                if (!string.IsNullOrEmpty(route.LabelRegex))
+                var hasLabelList = route.Labels != null && route.Labels.Length > 0;
+                var hasLabelRegex = !string.IsNullOrEmpty(route.LabelRegex);
+                if (hasLabelList || hasLabelRegex)
                 {
-                    try
+                    var matched = hasLabelList
+                        && route.Labels.Any(o => string.Equals(o, label, StringComparison.OrdinalIgnoreCase));
+
+                    if (!matched && hasLabelRegex)
                     {
-                        if (!Regex.IsMatch(label, route.LabelRegex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                        try
                         {
-                            continue;
+                            matched = Regex.IsMatch(label, route.LabelRegex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                        }
+                        catch (ArgumentException)
+                        {
+                            matched = false;
                         }
                     }
-                    catch (ArgumentException)
+
+                    if (!matched)
                     {
                         continue;
                     }
