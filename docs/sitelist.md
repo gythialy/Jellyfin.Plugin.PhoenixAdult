@@ -2728,3 +2728,34 @@ _由 `data/SiteList.json` 生成：218 个网络，2285 个站点条目。_
 
 + #### XVirtual | Matching type: *[Enhanced](./manualsearch.md#enhanced-search)*
   <sub>group 230 · `SiteXVirtual`</sub>
+
+## MetaTube ported networks (2026-10-30)
+
+| group | handler | sites |
+|---|---|---|
+| 231 | ActorBabepedia | Babepedia |
+| 232 | ActorAvLeague | AV-LEAGUE |
+| 233 | ActorThePornDB | ThePornDB |
+| 234 | SiteMadouQu | MadouQu |
+| 235 | SiteModelMediaAsia | ModelMediaAsia |
+| 236 | NetworkPondo | 10musume, 1Pondo, MuraMura, PacoPacomama |
+| 237 | NetworkFaleno | Dahlia, Faleno |
+| 238 | SiteFC2 | FC2 |
+| 239 | SiteAVBase | AVBase |
+| 240 | SiteDuga | DUGA |
+| 241 | SiteMyWife | MyWife |
+| 242 | SiteJavFree | JavFree |
+| 243 | SiteMgsStage | MGSStage |
+| 244 | SiteSOD | SOD |
+| 245 | SiteTokyoHot | Tokyo-Hot |
+| 246 | SiteGetchu | Getchu |
+| 247 | SitePcolle | PColle |
+| 248 | SiteFC2Hub | FC2Hub |
+| 249 | SiteFC2PPVDB | FC2PPVDB |
+| 250 | SiteAVEntertainments | AVEntertainments |
+| 251 | SiteFanza | FANZA |
+| 252 | SiteGcolle | Gcolle |
+| 253 | SiteHeyDouga | HeyDouga |
+| 254 | NetworkD2Pass | c0930, h0930, h4610 |
+
+Babepedia / AV-LEAGUE / ThePornDB are actor sources. ModelMediaAsia, Gcolle, HeyDouga and the D2Pass family are currently down or redesigned; their regression cases use allowZero.

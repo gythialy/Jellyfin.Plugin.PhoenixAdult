@@ -60,6 +60,13 @@ public static class TestInitializer
                 throw new InvalidOperationException("global::PhoenixAdult.Plugin.Instance 初始化失败");
             }
 
+            // 可选：从环境变量注入 FlareSolverr（CF 站点在线测试需要）
+            var flareSolverrUrl = Environment.GetEnvironmentVariable("PHOENIX_FLARESOLVERR_URL");
+            if (!string.IsNullOrWhiteSpace(flareSolverrUrl))
+            {
+                global::PhoenixAdult.Plugin.Instance.Configuration.FlareSolverrURL = flareSolverrUrl;
+            }
+
             // 直接加载本地 data 目录的 JSON（不依赖 DataFolderPath 下下载）
             LoadDatabaseDirect(dataDir);
 
