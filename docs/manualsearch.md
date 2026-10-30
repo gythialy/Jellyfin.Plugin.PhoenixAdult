@@ -87,3 +87,10 @@ Here are some examples for each type of search:
       - `Mylf` - `2019-01-01` - `1809 manicured-milf-masturbation` (taken from the URL [https://www.mylf.com/movies/**1809/manicured-milf-masturbation**](https://dereferer.me/?https%3A//www.mylf.com/movies/1809/manicured-milf-masturbation))
       - `Wicked` - `2019-10-10` - `Stranger-Than-Fiction 77675` (taken from the URL [https://www.wicked.com/en/movie/**Stranger-Than-Fiction/77675**](https://dereferer.me/?https%3A//www.wicked.com/en/movie/Stranger-Than-Fiction/77675))
       - `Wicked` - `2019-10-10` - `Stranger Than Fiction Scene 1 167063` (taken from the URL [https://www.wicked.com/en/video/**Stranger-Than-Fiction-Scene-1/167063**](https://dereferer.me/?https%3A//www.wicked.com/en/video/Stranger-Than-Fiction-Scene-1/167063))
+
+## JAV Number and Chinese Site Search (2026-10-30)
+
+- JAV numbers accept ABP-123, ABP 123, abp123 and ssis277; the plugin normalizes them to the dashed form (ABP-123) before searching.
+- When the file name has no site prefix, the plugin tries to extract an id from the title (including FC2-PPV-1234567 and MDX-0267) and routes to the matching JAV / Madou site.
+- MadouQu supports searching by number or by Chinese title; Chinese titles rely on GetClearTitle preserving CJK characters.
+- Actor name substitution is driven by data/Actors.json plus the optional Actors.local.json in the plugin data folder; aliases (including kanji spellings) resolve to the canonical romaji name.

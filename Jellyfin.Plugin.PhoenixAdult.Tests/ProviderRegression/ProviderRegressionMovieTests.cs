@@ -27,6 +27,13 @@ public class ProviderRegressionMovieTests
         {
             var result = await ProviderRegressionRunner.RunE2eAsync(c, timeout.Token);
 
+            if (result.SearchCount == 0 && c.AllowZero)
+            {
+                // 站点整站不可达（地域封锁/维护）时允许 0 结果，不判失败
+                Console.WriteLine($"⚠️ {c.Id}: 0 结果（allowZero：站点不可达）");
+                return;
+            }
+
             Assert.True(result.SearchCount > 0, $"{c.Id}: Search 0 结果（{c.FileName}）");
             Assert.NotNull(result.Meta);
             var meta = result.Meta!;
