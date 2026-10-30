@@ -93,30 +93,9 @@ namespace PhoenixAdult.Sites
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            var searchJavId = string.Empty;
-            var splitSearchTitle = searchTitle.Split(' ');
-
-            if (splitSearchTitle[0].StartsWith("3dsvr"))
-            {
-                splitSearchTitle[0] = splitSearchTitle[0].Replace("3dsvr", "dsvr");
-            }
-            else if (splitSearchTitle[0].StartsWith("13dsvr"))
-            {
-                splitSearchTitle[0] = splitSearchTitle[0].Replace("13dsvr", "dsvr");
-            }
-
-            if (splitSearchTitle.Length > 1)
-            {
-                if (int.TryParse(splitSearchTitle[1], out _))
-                {
-                    searchJavId = $"{splitSearchTitle[0]}-{splitSearchTitle[1]}";
-                }
-            }
-
-            if (!string.IsNullOrEmpty(searchJavId))
-            {
-                searchTitle = searchJavId;
-            }
+            searchTitle = JavId.Normalize(searchTitle)
+                .Replace("13DSVR-", "DSVR-", StringComparison.OrdinalIgnoreCase)
+                .Replace("3DSVR-", "DSVR-", StringComparison.OrdinalIgnoreCase);
 
             var searchUrl = $"{BaseUrl}/movies/{searchTitle.Replace(" ", "-").ToLower()}/";
             var doc = await HTML.ElementFromURL(searchUrl, cancellationToken);
@@ -145,7 +124,7 @@ namespace PhoenixAdult.Sites
 
                     var displayDate = !string.IsNullOrEmpty(releaseDate) ? releaseDate : string.Empty;
 
-                    var score = 100 - LevenshteinDistance(searchJavId.ToLower(), javId.ToLower());
+                    var score = 100 - LevenshteinDistance(searchTitle.ToLowerInvariant(), javId.ToLowerInvariant());
 
                     searchResults.Add(new RemoteSearchResult
                     {

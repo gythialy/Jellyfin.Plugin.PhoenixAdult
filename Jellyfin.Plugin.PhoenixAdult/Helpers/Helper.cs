@@ -144,7 +144,9 @@ namespace PhoenixAdult.Helpers
 
             clearName = clearName.Replace(".com", string.Empty, StringComparison.OrdinalIgnoreCase);
 
-            clearName = Regex.Replace(clearName, @"[^a-zA-Z0-9 ']", " ");
+            // \p{L}/\p{N}：保留中日文等非 ASCII 字母数字（ASCII 行为与旧正则一致），
+            // 否则中文标题会被清成空串，麻豆等中文站点永远搜不到。
+            clearName = Regex.Replace(clearName, @"[^\p{L}\p{N} ']", " ");
             clearSite = Regex.Replace(clearSite, @"\W", string.Empty);
 
             var matched = false;
@@ -308,22 +310,74 @@ namespace PhoenixAdult.Helpers
 
         public static string GetSiteNameFromTitle(string searchTitle)
         {
-            searchTitle = GetClearTitle(searchTitle, string.Empty);
-
-            var splitedTitle = searchTitle.Split();
-            if (splitedTitle.Length == 2 && int.TryParse(splitedTitle[1], out _) && splitedTitle[0].Length <= 7)
+            if (TryExtractJavId(searchTitle, out var javId))
             {
-                searchTitle = $"JAV {splitedTitle[0]}-{splitedTitle[1]}";
-            }
-            else
-            {
-                if (Plugin.Instance.Configuration.UseMetadataAPI && !string.IsNullOrEmpty(Plugin.Instance.Configuration.MetadataAPIToken))
+                // 麻豆系（MadouQu / ModelMediaAsia）使用自家番号前缀
+                if (Regex.IsMatch(javId, @"^(?:MD|MTVQ)[A-Z0-9]*-", RegexOptions.IgnoreCase))
                 {
-                    searchTitle = $"MetadataAPI {searchTitle}";
+                    return $"MadouQu {javId}";
+                }
+
+                return $"JAV {javId}";
+            }
+
+            var clearedTitle = GetClearTitle(searchTitle, string.Empty);
+            if (Plugin.Instance.Configuration.UseMetadataAPI && !string.IsNullOrEmpty(Plugin.Instance.Configuration.MetadataAPIToken))
+            {
+                return $"MetadataAPI {clearedTitle}";
+            }
+
+            return clearedTitle;
+        }
+
+        /// <summary>
+        /// 从文件名/标题中提取 JAV 番号（保留 '-'）。支持三种形态：
+        /// 1. 直接带连字符（ABP-123，任意位置，排除日期片段 blacked-24.01.14）；
+        /// 2. 清理后形如 "ABP 123 ..."（前两段标签+数字，排除日期序列 26 10 20）；
+        /// 3. 纯标签+数字（ssis277）。
+        /// </summary>
+        public static bool TryExtractJavId(string title, out string javId)
+        {
+            javId = null;
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                return false;
+            }
+
+            var direct = Regex.Match(title, @"(?<![A-Za-z0-9])([A-Za-z][A-Za-z0-9]{1,9})-([0-9]{2,5})(?![0-9]|[.-][0-9]{2})");
+            if (direct.Success)
+            {
+                javId = $"{direct.Groups[1].Value.ToUpperInvariant()}-{direct.Groups[2].Value}";
+                return true;
+            }
+
+            var words = GetClearTitle(title, string.Empty).Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length >= 2
+                && words[0].Length is >= 2 and <= 8
+                && words[0].Any(char.IsLetter)
+                && words[1].All(char.IsDigit)
+                && words[1].Length is >= 2 and <= 5)
+            {
+                var dateLike = words.Length >= 3
+                    && words[1].Length <= 2
+                    && words[2].Length <= 2
+                    && int.TryParse(words[1], out _)
+                    && int.TryParse(words[2], out _);
+                if (!dateLike && JavId.TryParse($"{words[0]}-{words[1]}", out var candidate))
+                {
+                    javId = candidate;
+                    return true;
                 }
             }
 
-            return searchTitle;
+            if (JavId.TryParse(title.Trim(), out var single))
+            {
+                javId = single;
+                return true;
+            }
+
+            javId = null;
+            return false;
         }
 
         public static byte[] ConvertFromBase64String(string input)
