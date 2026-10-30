@@ -6,6 +6,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using HtmlAgilityPack;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
@@ -32,6 +33,15 @@ namespace PhoenixAdult.Sites
 
         private static readonly Regex ActressRegex = new Regex(@"女郎[：:]\s*(.+?)(?=\s+[^\s：:]{1,10}[：:]|$)", RegexOptions.CultureInvariant);
 
+        /// <summary>
+        /// 番号形态（MD-0218 / MD0218 / MD_0334 / MD 0218）。站内标题对同一番号的写法混用——
+        /// 有的写 MD0218、有的写 MDHT-0021，而 WordPress 站内搜索不做番号归一化，只认标题里
+        /// 实际出现的那一种，所以番号检索必须按形态逐个试。
+        /// </summary>
+        private static readonly Regex CodeRegex = new Regex(
+            @"^(?<label>[A-Za-z0-9]*?[A-Za-z])[-_ ]?(?<number>[0-9]{2,6})$",
+            RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
@@ -40,46 +50,26 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            var url = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
-            var searchData = await Fetcher.Html(url, cancellationToken).ConfigureAwait(false);
-
-            // 2026-10 起列表改用 resource-card 卡片（article 无 id，post-<id> 在 class 上），旧模板仍兼容。
-            foreach (var node in searchData.SelectNodesSafe("//article[contains(@class, 'resource-card') or starts-with(@id, 'post-')]"))
+            var searchUrl = Helper.GetSearchSearchURL(siteNum);
+            var seenIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var variant in GetSearchVariants(searchTitle))
             {
-                var href = node.SelectSingleText(".//h2//a/@href");
-                if (string.IsNullOrEmpty(href))
+                var searchData = await Fetcher.Html(searchUrl + Uri.EscapeDataString(variant), cancellationToken).ConfigureAwait(false);
+
+                foreach (var item in ParseSearchResults(searchData))
                 {
-                    href = node.SelectSingleText(".//a[contains(@class, 'cover-link')]/@href");
+                    var sceneId = item.ProviderIds.TryGetValue(Plugin.Instance.Name, out var value) ? value : null;
+                    if (string.IsNullOrEmpty(sceneId) || seenIds.Add(sceneId))
+                    {
+                        result.Add(item);
+                    }
                 }
 
-                if (string.IsNullOrEmpty(href))
+                if (result.Count > 0)
                 {
-                    href = node.SelectSingleText(".//div[contains(@class, 'entry-media')]//a/@href");
+                    // 一个番号只有一条条目，两种写法只是标题差异：任一形态命中就没必要再发下一个请求。
+                    break;
                 }
-
-                if (string.IsNullOrEmpty(href))
-                {
-                    continue;
-                }
-
-                var name = WebUtility.HtmlDecode(node.SelectSingleText(".//img/@alt")).Trim();
-                if (string.IsNullOrEmpty(name))
-                {
-                    name = WebUtility.HtmlDecode(node.SelectSingleText(".//h2//a")).Trim();
-                }
-
-                var img = node.SelectSingleText(".//img/@src");
-                if (string.IsNullOrEmpty(img))
-                {
-                    img = node.SelectSingleText(".//img/@data-src");
-                }
-
-                result.Add(new RemoteSearchResult
-                {
-                    ProviderIds = { { Plugin.Instance.Name, Helper.Encode(new Uri(href).AbsolutePath) } },
-                    Name = name,
-                    ImageUrl = img,
-                });
             }
 
             return result;
@@ -190,6 +180,89 @@ namespace PhoenixAdult.Sites
             {
                 result.Add(new RemoteImageInfo { Type = ImageType.Primary, Url = cover });
                 result.Add(new RemoteImageInfo { Type = ImageType.Backdrop, Url = cover });
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 番号类搜索词要试的形态：紧凑（MD0218）在前、带连字符（MD-0218）在后，最后兜底原样。
+        /// 非番号（纯标题）只有一个候选，行为与改动前一致。
+        /// </summary>
+        /// <param name="searchTitle">调用方给的搜索词，形如 MD-0218 / Md 0218 / 标题。</param>
+        /// <returns>按优先级排列、已去重的搜索词。</returns>
+        internal static IReadOnlyList<string> GetSearchVariants(string searchTitle)
+        {
+            var variants = new List<string>();
+            if (string.IsNullOrWhiteSpace(searchTitle))
+            {
+                return variants;
+            }
+
+            var trimmed = searchTitle.Trim();
+            var code = CodeRegex.Match(trimmed);
+            if (code.Success && code.Groups["label"].Value.Length <= 10)
+            {
+                var label = code.Groups["label"].Value;
+                var number = code.Groups["number"].Value;
+                variants.Add($"{label}{number}");
+                variants.Add($"{label}-{number}");
+            }
+
+            variants.Add(trimmed);
+            return variants.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        /// <summary>
+        /// 解析站内搜索结果列表页。2026-10 起列表改用 resource-card 卡片
+        /// （article 无 id，post-&lt;id&gt; 在 class 上），旧模板仍兼容。
+        /// </summary>
+        /// <param name="searchData">站内搜索列表页 DOM。</param>
+        /// <returns>搜索结果条目。</returns>
+        private static List<RemoteSearchResult> ParseSearchResults(HtmlNode searchData)
+        {
+            var result = new List<RemoteSearchResult>();
+            if (searchData == null)
+            {
+                return result;
+            }
+
+            foreach (var node in searchData.SelectNodesSafe("//article[contains(@class, 'resource-card') or starts-with(@id, 'post-')]"))
+            {
+                var href = node.SelectSingleText(".//h2//a/@href");
+                if (string.IsNullOrEmpty(href))
+                {
+                    href = node.SelectSingleText(".//a[contains(@class, 'cover-link')]/@href");
+                }
+
+                if (string.IsNullOrEmpty(href))
+                {
+                    href = node.SelectSingleText(".//div[contains(@class, 'entry-media')]//a/@href");
+                }
+
+                if (string.IsNullOrEmpty(href))
+                {
+                    continue;
+                }
+
+                var name = WebUtility.HtmlDecode(node.SelectSingleText(".//img/@alt")).Trim();
+                if (string.IsNullOrEmpty(name))
+                {
+                    name = WebUtility.HtmlDecode(node.SelectSingleText(".//h2//a")).Trim();
+                }
+
+                var img = node.SelectSingleText(".//img/@src");
+                if (string.IsNullOrEmpty(img))
+                {
+                    img = node.SelectSingleText(".//img/@data-src");
+                }
+
+                result.Add(new RemoteSearchResult
+                {
+                    ProviderIds = { { Plugin.Instance.Name, Helper.Encode(new Uri(href).AbsolutePath) } },
+                    Name = name,
+                    ImageUrl = img,
+                });
             }
 
             return result;

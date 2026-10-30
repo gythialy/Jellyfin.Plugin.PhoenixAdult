@@ -1557,6 +1557,43 @@
       "expectPremiereDate": true
     },
     {
+      "id": "search-madouqu-234-1",
+      "kind": "search",
+      "handler": "SiteMadouQu",
+      "group": 234,
+      "site": 0,
+      "siteName": "MadouQu",
+      "searchTerms": [
+        "MD-0218"
+      ],
+      "expectMinResults": 1,
+      "source": [
+        "issue-md-0218"
+      ],
+      "note": "麻豆区：站内标题写作 MD0218（紧凑），带连字符的 MD-0218 站内搜不到；番号搜索要两种写法都试",
+      "chain": true,
+      "expectName": true,
+      "expectMinActors": 1,
+      "expectImages": true
+    },
+    {
+      "id": "search-madouqu-234-2",
+      "kind": "search",
+      "handler": "SiteMadouQu",
+      "group": 234,
+      "site": 0,
+      "siteName": "MadouQu",
+      "searchTerms": [
+        "MDHT-0021"
+      ],
+      "expectMinResults": 1,
+      "source": [
+        "issue-md-0218"
+      ],
+      "note": "麻豆区：站内标题写作 MDHT-0021（连字符），紧凑写法 MDHT0021 搜不到；验证紧凑失败后回退连字符",
+      "expectedFirstContains": "MDHT"
+    },
+    {
       "id": "update-madouqu-234-0",
       "kind": "update",
       "handler": "SiteMadouQu",

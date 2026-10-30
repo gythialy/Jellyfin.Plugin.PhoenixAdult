@@ -1,0 +1,41 @@
+using PhoenixAdult.Sites;
+
+namespace Jellyfin.Plugin.PhoenixAdult.Tests;
+
+/// <summary>
+/// 麻豆区搜索词形态的离线测试：站内标题对同一番号存在紧凑（MD0218）与连字符（MDHT-0021）
+/// 两种写法，WordPress 站内搜索不做归一化，必须两种都试，否则番号搜不到（md-0218 就是这么丢的）。
+/// </summary>
+public class SiteMadouQuSearchVariantTests
+{
+    [Theory]
+    [InlineData("MD-0218", new[] { "MD0218", "MD-0218" })]
+    [InlineData("md-0218", new[] { "md0218", "md-0218" })]
+    [InlineData("MDHT-0021", new[] { "MDHT0021", "MDHT-0021" })]
+    [InlineData("91CM-230", new[] { "91CM230", "91CM-230" })]
+    [InlineData("MDSR-0005", new[] { "MDSR0005", "MDSR-0005" })]
+    [InlineData("Md 0218", new[] { "Md0218", "Md-0218", "Md 0218" })]
+    [InlineData("MD_0334", new[] { "MD0334", "MD-0334", "MD_0334" })]
+    public void 番号_先紧凑后连字符_原样兜底(string searchTitle, string[] expected)
+    {
+        Assert.Equal(expected, SiteMadouQu.GetSearchVariants(searchTitle));
+    }
+
+    [Theory]
+    [InlineData("中文标题示例")]
+    [InlineData("Remi Raw")]
+    [InlineData("MD0165-1")]
+    [InlineData("MDSR-0005-1")]
+    [InlineData("Interracial 24")]
+    public void 非番号_保持单个候选(string searchTitle)
+    {
+        Assert.Equal(new[] { searchTitle }, SiteMadouQu.GetSearchVariants(searchTitle));
+    }
+
+    [Fact]
+    public void 空输入_无候选()
+    {
+        Assert.Empty(SiteMadouQu.GetSearchVariants(string.Empty));
+        Assert.Empty(SiteMadouQu.GetSearchVariants("   "));
+    }
+}
