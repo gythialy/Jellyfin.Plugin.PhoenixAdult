@@ -222,6 +222,7 @@ docker run --rm phoenixadult-tests dotnet test -c Release --no-build \
 - [Scraper lessons](./docs/scraper-lessons.md) — recurring defect patterns and debugging notes
 - [Provider regression coverage](./docs/provider-regression-uncovered.md) — handlers still missing test cases
 - [allowZero sites](./docs/allowzero-sites.md) — sites kept in the regression suite as "no result is not a failure" (geo/Cloudflare blocks, maintenance, redesigns) and how to re-verify them
+- [Local overrides](./docs/local-overrides.md) — `Actors.local.json` / `IdRoutes.local.json`: where they live, their JSON shape, merge semantics and how to apply them
 
 ## Contributing
 
