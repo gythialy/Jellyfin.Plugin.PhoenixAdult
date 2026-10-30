@@ -62,6 +62,8 @@ namespace PhoenixAdult.Configuration
             this.MultiSourceSearch = true;
             this.MultiSourceSearchTimeoutSeconds = 30;
 
+            this.EnableFrameGrabMenu = true;
+
             this.JAVActorNamingStyle = JAVActorNamingStyle.WesternStyle;
             this.GenresSortingStyle = GenresSortingStyle.Alphabetical;
             this.PreferedActorNameSource = PreferedActorNameSource.LocalDatabase;
@@ -137,6 +139,11 @@ namespace PhoenixAdult.Configuration
         /// 多源检索的单站超时（秒），默认 30。
         /// </summary>
         public int MultiSourceSearchTimeoutSeconds { get; set; }
+
+        /// <summary>
+        /// 条目「⋯」菜单里是否显示「抽帧」入口（仅 Jellyfin；且只在启用了本插件的库里出现）。
+        /// </summary>
+        public bool EnableFrameGrabMenu { get; set; }
 
         public JAVActorNamingStyle JAVActorNamingStyle { get; set; }
 

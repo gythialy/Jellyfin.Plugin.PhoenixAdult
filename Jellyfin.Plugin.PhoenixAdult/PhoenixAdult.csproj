@@ -79,6 +79,8 @@
   <ItemGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">
     <PackageReference Include="Jellyfin.Controller" Version="12.4.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.11" />
+    <!-- 抽帧入口需要往 web 客户端注入脚本：IPluginServiceRegistrator + IStartupFilter 依赖 ASP.NET Core 共享框架 -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug.Emby' or '$(Configuration)'=='Release.Emby'">
@@ -107,6 +109,8 @@
   <ItemGroup>
     <None Remove="Configuration\configPage.html" />
     <EmbeddedResource Include="Configuration\configPage.html" />
+    <None Remove="Web\frameGrab.js" />
+    <EmbeddedResource Include="Web\frameGrab.js" />
   </ItemGroup>
 
   <!-- PackageIcon above names "thumb.png"; NuGet resolves it against the package root,
