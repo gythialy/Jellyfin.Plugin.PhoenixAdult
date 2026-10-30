@@ -59,6 +59,10 @@ namespace PhoenixAdult.Configuration
             this.DisableImageSize = false;
             this.DisableAutoIdentify = false;
 
+            this.MultiSourceSearch = true;
+            this.MultiSourceSearchTimeoutSeconds = 30;
+            this.MultiSourceSearchSources = string.Empty;
+
             this.JAVActorNamingStyle = JAVActorNamingStyle.WesternStyle;
             this.GenresSortingStyle = GenresSortingStyle.Alphabetical;
             this.PreferedActorNameSource = PreferedActorNameSource.LocalDatabase;
@@ -124,6 +128,22 @@ namespace PhoenixAdult.Configuration
         public bool DisableImageSize { get; set; }
 
         public bool DisableAutoIdentify { get; set; }
+
+        /// <summary>
+        /// 番号检索时并发查询多个站点（不勾选则只查路由命中的单一站点）。
+        /// </summary>
+        public bool MultiSourceSearch { get; set; }
+
+        /// <summary>
+        /// 多源检索的单站超时（秒），默认 30。
+        /// </summary>
+        public int MultiSourceSearchTimeoutSeconds { get; set; }
+
+        /// <summary>
+        /// 可选：覆盖多源清单，格式 family=group:site|group:site;family=...
+        /// family 取值 madou / jav / fc2，未列出的 family 使用内置默认。
+        /// </summary>
+        public string MultiSourceSearchSources { get; set; }
 
         public JAVActorNamingStyle JAVActorNamingStyle { get; set; }
 

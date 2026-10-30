@@ -57,6 +57,7 @@ namespace PhoenixAdult.Providers
 
             var title = string.Empty;
             (int[] siteNum, string siteName) site = (null, null);
+            var explicitSite = false;
 
 #if __EMBY__
 #else
@@ -70,6 +71,7 @@ namespace PhoenixAdult.Providers
                     site = Helper.GetSiteFromTitle(name);
                     if (site.siteNum != null)
                     {
+                        explicitSite = true;
                         break;
                     }
                 }
@@ -80,6 +82,7 @@ namespace PhoenixAdult.Providers
             {
                 title = Helper.ReplaceAbbrieviation(searchInfo.Name);
                 site = Helper.GetSiteFromTitle(title);
+                explicitSite = site.siteNum != null;
             }
 
             if (site.siteNum == null)
@@ -135,6 +138,21 @@ namespace PhoenixAdult.Providers
             if (string.IsNullOrEmpty(searchTitle))
             {
                 return result;
+            }
+
+            // 番号检索的多源并发：用户没有显式指定站点时，按番号类型并发查多个源并合并，
+            // 避免"一个番号只绑一个站点"（如 MDSR-0005 同时存在于 MadouQu / ModelMediaAsia 等）。
+            var multiSearchConfig = Plugin.Instance.Configuration;
+            if (!explicitSite && multiSearchConfig.MultiSourceSearch && Helper.TryExtractJavId(searchInfo.Name, out var detectedId))
+            {
+                var sources = SearchRouter.GetSources(detectedId, multiSearchConfig.MultiSourceSearchSources);
+                if (sources.Count > 0)
+                {
+                    var timeoutSeconds = Math.Clamp(multiSearchConfig.MultiSourceSearchTimeoutSeconds, 5, 120);
+                    result = await this.SearchMultipleSourcesAsync(sources, searchTitle, searchDateObj, searchInfo.Name, detectedId, fillThumbnails, timeoutSeconds, cancellationToken).ConfigureAwait(false);
+                    AddDatePrefix(result);
+                    return result;
+                }
             }
 
             Logger.Info($"site: {site.siteNum[0]}:{site.siteNum[1]} ({site.siteName})");
@@ -477,6 +495,129 @@ namespace PhoenixAdult.Providers
             {
                 Logger.Debug($"Search thumbnail fill skipped: {e.GetType().Name}: {e.Message}");
             }
+        }
+
+        /// <summary>
+        /// 按番号并发检索多个站点并合并结果。
+        /// 单站失败/超时不影晌其它站点；结果按"命中番号 → IndexNumber → 相似度"排序。
+        /// </summary>
+        private async Task<List<RemoteSearchResult>> SearchMultipleSourcesAsync(
+            IReadOnlyList<(int Group, int Site)> sources,
+            string searchTitle,
+            DateTime? searchDate,
+            string originalName,
+            string detectedId,
+            bool fillThumbnails,
+            int timeoutSeconds,
+            CancellationToken cancellationToken)
+        {
+            var perSource = await Task.WhenAll(sources.Select(async source =>
+            {
+                var siteNum = new[] { source.Group, source.Site };
+                var provider = Helper.GetProviderBySiteID(source.Group);
+                if (provider == null)
+                {
+                    return (SiteNum: siteNum, Results: new List<RemoteSearchResult>());
+                }
+
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                cts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
+
+                try
+                {
+                    Logger.Info($"multi-search {source.Group}:{source.Site} -> {detectedId}");
+                    var results = await provider.Search(siteNum, detectedId, searchDate, cts.Token).ConfigureAwait(false)
+                        ?? new List<RemoteSearchResult>();
+
+                    foreach (var scene in results)
+                    {
+                        if (scene.ProviderIds.TryGetValue(this.Name, out var id) && !string.IsNullOrEmpty(id))
+                        {
+                            scene.ProviderIds[this.Name] = $"{source.Group}#{source.Site}#{id}";
+                        }
+
+                        scene.Name = (scene.Name ?? string.Empty).Trim();
+                        if (scene.PremiereDate.HasValue)
+                        {
+                            scene.ProductionYear = scene.PremiereDate.Value.Year;
+                        }
+
+                        if (string.IsNullOrEmpty(scene.SearchProviderName))
+                        {
+                            scene.SearchProviderName = Helper.GetSearchSiteName(siteNum);
+                        }
+                    }
+
+                    return (SiteNum: siteNum, Results: results);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"multi-search failed {source.Group}:{source.Site}: {e.Message}");
+                    await Analytics.Send(
+                        new AnalyticsExeption
+                        {
+                            Request = originalName,
+                            SiteNum = siteNum,
+                            SearchTitle = detectedId,
+                            SearchDate = searchDate,
+                            ProviderName = provider.ToString(),
+                            Exception = e,
+                        }, cancellationToken).ConfigureAwait(false);
+
+                    return (SiteNum: siteNum, Results: new List<RemoteSearchResult>());
+                }
+            })).ConfigureAwait(false);
+
+            var merged = perSource
+                .SelectMany(o => o.Results)
+                .GroupBy(
+                    o => $"{o.ProviderIds.GetValueOrDefault(this.Name)}|{o.Name}",
+                    StringComparer.OrdinalIgnoreCase)
+                .Select(o => o.First())
+                .ToList();
+
+            if (merged.Count == 0)
+            {
+                return merged;
+            }
+
+            merged = merged
+                .OrderByDescending(o => o.Name != null && o.Name.Contains(detectedId, StringComparison.OrdinalIgnoreCase))
+                .ThenByDescending(o => o.IndexNumber ?? 0)
+                .ThenByDescending(o => 100 - LevenshteinDistance.Calculate(searchTitle, Helper.GetClearTitle(o.Name ?? string.Empty), StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (fillThumbnails)
+            {
+                foreach (var group in merged.GroupBy(o =>
+                {
+                    var split = (o.ProviderIds.GetValueOrDefault(this.Name) ?? string.Empty).Split('#');
+                    return split.Length >= 2 ? $"{split[0]}#{split[1]}" : string.Empty;
+                }))
+                {
+                    var parts = group.Key.Split('#');
+                    if (parts.Length != 2
+                        || !int.TryParse(parts[0], CultureInfo.InvariantCulture, out var grp)
+                        || !int.TryParse(parts[1], CultureInfo.InvariantCulture, out var siteId))
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        await FillMissingThumbnails(
+                            new[] { grp, siteId },
+                            group.Where(o => string.IsNullOrEmpty(o.ImageUrl)).ToList(),
+                            cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error($"multi-search thumbnail fill failed {group.Key}: {e.Message}");
+                    }
+                }
+            }
+
+            return merged;
         }
     }
 }
