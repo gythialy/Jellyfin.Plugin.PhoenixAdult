@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,10 +56,18 @@ namespace PhoenixAdult.Sites
             var http = await HTTP.Request(url, cancellationToken).ConfigureAwait(false);
             if (http.IsOK)
             {
-                var regEx = new Regex(@"window\.__INITIAL_STATE__ = (.*);").Match(http.Content);
-                if (regEx.Groups.Count > 0)
+                // 注意：Match 未命中时 Groups.Count 仍 > 0，必须用 Success 判断，否则会去 Parse 空串。
+                var match = new Regex(@"window\.__INITIAL_STATE__ = (.*?);", RegexOptions.Singleline).Match(http.Content);
+                if (match.Success)
                 {
-                    json = (JObject)JObject.Parse(regEx.Groups[1].Value)["content"];
+                    try
+                    {
+                        json = (JObject)JObject.Parse(match.Groups[1].Value)["content"];
+                    }
+                    catch (Newtonsoft.Json.JsonException e)
+                    {
+                        Logger.Info($"No usable INITIAL_STATE on {url}: {e.Message}");
+                    }
                 }
             }
             else
@@ -161,7 +170,8 @@ namespace PhoenixAdult.Sites
             var sceneData = await GetJSONfromPage(sceneURL, cancellationToken).ConfigureAwait(false);
             if (sceneData == null)
             {
-                return result;
+                // 站点已不再输出 window.__INITIAL_STATE__，回退到页面 JSON-LD（schema.org VideoObject）
+                return await this.UpdateFromJsonLd(result, sceneURL, sceneDate, siteNum, cancellationToken).ConfigureAwait(false);
             }
 
             var contentName = string.Empty;
@@ -176,7 +186,7 @@ namespace PhoenixAdult.Sites
 
             if (string.IsNullOrEmpty(contentName))
             {
-                return result;
+                return await this.UpdateFromJsonLd(result, sceneURL, sceneDate, siteNum, cancellationToken).ConfigureAwait(false);
             }
 
             sceneData = (JObject)sceneData[contentName];
@@ -289,7 +299,7 @@ namespace PhoenixAdult.Sites
             var sceneData = await GetJSONfromPage(sceneURL, cancellationToken).ConfigureAwait(false);
             if (sceneData == null)
             {
-                return result;
+                return await this.GetImagesFromJsonLd(sceneURL, cancellationToken).ConfigureAwait(false);
             }
 
             var contentName = string.Empty;
@@ -304,7 +314,7 @@ namespace PhoenixAdult.Sites
 
             if (string.IsNullOrEmpty(contentName))
             {
-                return result;
+                return await this.GetImagesFromJsonLd(sceneURL, cancellationToken).ConfigureAwait(false);
             }
 
             sceneData = (JObject)sceneData[contentName];
@@ -322,6 +332,132 @@ namespace PhoenixAdult.Sites
                 Url = img,
                 Type = ImageType.Backdrop,
             });
+
+            return result;
+        }
+
+        /// <summary>
+        /// 取页面里的 schema.org VideoObject（站点 2026-09 起改用 JSON-LD，页面不再输出 window.__INITIAL_STATE__）。
+        /// </summary>
+        private static async Task<JObject> GetVideoObjectJsonLd(string url, CancellationToken cancellationToken)
+        {
+            var http = await HTTP.Request(url, cancellationToken).ConfigureAwait(false);
+            if (!http.IsOK || string.IsNullOrEmpty(http.Content))
+            {
+                return null;
+            }
+
+            foreach (Match match in Regex.Matches(http.Content, "<script[^>]*type=\"application/ld\\+json\"[^>]*>(.*?)</script>", RegexOptions.Singleline))
+            {
+                try
+                {
+                    var token = JToken.Parse(match.Groups[1].Value.Trim());
+                    if (token is JArray array)
+                    {
+                        var hit = array.OfType<JObject>().FirstOrDefault(IsVideoObject);
+                        if (hit != null)
+                        {
+                            return hit;
+                        }
+                    }
+                    else if (token is JObject obj && IsVideoObject(obj))
+                    {
+                        return obj;
+                    }
+                }
+                catch (Newtonsoft.Json.JsonException)
+                {
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsVideoObject(JObject item)
+            => string.Equals((string)item["@type"], "VideoObject", StringComparison.OrdinalIgnoreCase);
+
+        private async Task<MetadataResult<BaseItem>> UpdateFromJsonLd(MetadataResult<BaseItem> result, string sceneURL, string sceneDate, int[] siteNum, CancellationToken cancellationToken)
+        {
+            var ld = await GetVideoObjectJsonLd(sceneURL, cancellationToken).ConfigureAwait(false);
+            if (ld == null)
+            {
+                Logger.Error($"No JSON-LD VideoObject found on {sceneURL}");
+                return result;
+            }
+
+            result.Item.ExternalId = sceneURL;
+            result.Item.Name = WebUtility.HtmlDecode((string)ld["name"] ?? string.Empty);
+
+            var overview = (string)ld["description"];
+            if (!string.IsNullOrEmpty(overview))
+            {
+                result.Item.Overview = WebUtility.HtmlDecode(Regex.Replace(overview, "<[^>]+>", string.Empty)).Trim();
+            }
+
+            DateTime? releaseDate = null;
+            if (DateTime.TryParse((string)ld["uploadDate"], CultureInfo.InvariantCulture, DateTimeStyles.None, out var uploadDate))
+            {
+                releaseDate = uploadDate;
+            }
+            else if (DateTime.TryParseExact(sceneDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateFromID))
+            {
+                releaseDate = dateFromID;
+            }
+
+            if (releaseDate.HasValue)
+            {
+                result.Item.PremiereDate = releaseDate.Value;
+            }
+
+            switch (siteNum[0])
+            {
+                case 23:
+                    result.Item.AddStudio("Mylf");
+                    break;
+                case 24:
+                    result.Item.AddStudio("TeamSkeet");
+                    break;
+            }
+
+            foreach (var genre in ld["genre"] as JArray ?? new JArray())
+            {
+                var genreName = (string)genre;
+                if (!string.IsNullOrEmpty(genreName))
+                {
+                    result.Item.AddGenre(genreName);
+                }
+            }
+
+            foreach (var actor in ld["actor"] as JArray ?? new JArray())
+            {
+                var actorName = (string)actor["name"];
+                if (string.IsNullOrEmpty(actorName))
+                {
+                    continue;
+                }
+
+                result.AddPerson(new PersonInfo { Name = actorName });
+            }
+
+            var thumb = (string)ld["thumbnailUrl"];
+            if (!string.IsNullOrEmpty(thumb))
+            {
+                result.Item.SetImage(new ItemImageInfo { Path = thumb, Type = ImageType.Primary }, 0);
+            }
+
+            return result;
+        }
+
+        private async Task<List<RemoteImageInfo>> GetImagesFromJsonLd(string sceneURL, CancellationToken cancellationToken)
+        {
+            var result = new List<RemoteImageInfo>();
+            var ld = await GetVideoObjectJsonLd(sceneURL, cancellationToken).ConfigureAwait(false);
+            var thumb = (string)ld?["thumbnailUrl"];
+            if (!string.IsNullOrEmpty(thumb))
+            {
+                result.Add(new RemoteImageInfo { Url = thumb, Type = ImageType.Primary });
+                result.Add(new RemoteImageInfo { Url = thumb, Type = ImageType.Backdrop });
+            }
 
             return result;
         }

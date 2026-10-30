@@ -179,6 +179,43 @@ namespace PhoenixAdult.Helpers.Utils
         /// <exception cref="Exception">Thrown when FlareSolverr itself fails (after one retry).</exception>
         public static async Task<string> GetHtml(string url, CancellationToken cancellationToken = default)
         {
+            var solution = await GetSolution(url, cancellationToken).ConfigureAwait(false);
+            var response = (string)solution?["response"];
+            if (string.IsNullOrEmpty(response))
+            {
+                Logger.Error($"FlareSolverr empty response for {url}");
+                return null;
+            }
+
+            return response;
+        }
+
+        /// <summary>
+        /// 通过浏览器上下文取站点 Cookie（Cloudflare 挑战通过后的 Set-Cookie），
+        /// 用于需要特定 Cookie 才能访问 API 的站点（如 aylo 的 instance_token）。
+        /// </summary>
+        public static async Task<IReadOnlyDictionary<string, string>> GetCookies(string url, CancellationToken cancellationToken = default)
+        {
+            var cookies = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var solution = await GetSolution(url, cancellationToken).ConfigureAwait(false);
+            if (solution?["cookies"] is JArray list)
+            {
+                foreach (var item in list)
+                {
+                    var name = (string)item["name"];
+                    var value = (string)item["value"];
+                    if (!string.IsNullOrEmpty(name) && value != null)
+                    {
+                        cookies[name] = value;
+                    }
+                }
+            }
+
+            return cookies;
+        }
+
+        private static async Task<JObject> GetSolution(string url, CancellationToken cancellationToken)
+        {
             if (!IsConfigured)
             {
                 return null;
@@ -205,14 +242,7 @@ namespace PhoenixAdult.Helpers.Utils
                         };
 
                         var result = await SendCommand(flareSolverrUrl, request, cancellationToken).ConfigureAwait(false);
-                        var response = (string)result?["solution"]?["response"];
-                        if (string.IsNullOrEmpty(response))
-                        {
-                            Logger.Error($"FlareSolverr empty response for {url}");
-                            return null;
-                        }
-
-                        return response;
+                        return (JObject)result?["solution"];
                     }
                     catch (Exception e)
                     {
