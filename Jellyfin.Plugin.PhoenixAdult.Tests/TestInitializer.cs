@@ -95,6 +95,16 @@ public static class TestInitializer
         var genres = Newtonsoft.Json.JsonConvert.DeserializeObject<global::PhoenixAdult.Helpers.Utils.Database.GenresStructure>(
             File.ReadAllText(Path.Combine(dataDir, "Genres.json")), serializer);
         genresProp!.SetValue(null, genres);
+
+        // 番号 → 站点 路由表（多源检索用）
+        var idRoutesPath = Path.Combine(dataDir, "IdRoutes.json");
+        if (File.Exists(idRoutesPath))
+        {
+            var idRoutesProp = dbType.GetProperty("IdRoutes", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            var idRoutes = Newtonsoft.Json.JsonConvert.DeserializeObject<global::PhoenixAdult.Helpers.Utils.Database.IdRoutesStructure>(
+                File.ReadAllText(idRoutesPath), serializer);
+            idRoutesProp!.SetValue(null, idRoutes);
+        }
     }
 
     private sealed class MockAppPaths : IApplicationPaths

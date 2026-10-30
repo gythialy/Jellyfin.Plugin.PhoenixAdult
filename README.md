@@ -139,7 +139,7 @@ Plugin settings are on **Dashboard → Plugins → PhoenixAdult**. Defaults are 
 | Disable Auto Identify | `false` | Do not auto-match items that have no PhoenixAdult ID yet. |
 | Multi-source search for ID queries | `true` | When a file name contains a JAV / Madou / FC2 number and no site name, query several matching sites in parallel and merge the results instead of binding to one site. |
 | Multi-source per-site timeout | `30` | Per-site timeout in seconds (5–120) for the fan-out above. |
-| Multi-source overrides | *(empty)* | Optional source list, e.g. `jav=239:0|96:0;madou=234:0|235:0;fc2=238:0`. Families: `madou`, `jav`, `fc2`. |
+| Multi-source routing | `data/IdRoutes.json` | Which sites a number is searched on is data, not code. Edit `data/IdRoutes.json` (or add `data/IdRoutes.local.json`, which the Update Database task never overwrites) to change routes; the first matching route wins and the fallback route stays last. |
 | Actor Name Source | `Local Database` | Prefer names from the bundled actor database, or keep names exactly as the site provides them. |
 | JAV Actor Naming Style | `Western Style` | Order JAV performer names Western-style or Japanese-style. |
 | Genre Sorting Style | `Alphabetical` | Sort genres alphabetically, or move position-based genres (e.g. `Position: ...`) to the end. |
@@ -209,7 +209,7 @@ docker run --rm phoenixadult-tests dotnet test -c Release --no-build \
 |---|---|
 | `Jellyfin.Plugin.PhoenixAdult/` | Plugin assembly: `Sites/` (one handler per network/site), `Providers/`, `Helpers/`, `Configuration/`, `ScheduledTasks/`, `ExternalIds/` |
 | `Jellyfin.Plugin.PhoenixAdult.Tests/` | xUnit tests: offline data checks, provider regression suite |
-| `data/` | `SiteList.json` (networks, base URLs, search URLs), `Actors.json`, `Genres.json` |
+| `data/` | `SiteList.json` (networks, base URLs, search URLs), `IdRoutes.json` (number -> sites routing), `Actors.json`, `Genres.json` |
 | `docs/` | User and maintainer docs (see below) |
 | `scripts/` | `manifest.sh` (manifest entry generation), `provider-regression.sh` |
 | `.github/workflows/` | CI (both build configurations + offline tests), release, nightly, CodeQL |

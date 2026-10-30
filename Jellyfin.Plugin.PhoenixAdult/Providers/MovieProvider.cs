@@ -145,7 +145,7 @@ namespace PhoenixAdult.Providers
             var multiSearchConfig = Plugin.Instance.Configuration;
             if (!explicitSite && multiSearchConfig.MultiSourceSearch && Helper.TryExtractJavId(searchInfo.Name, out var detectedId))
             {
-                var sources = SearchRouter.GetSources(detectedId, multiSearchConfig.MultiSourceSearchSources);
+                var sources = SearchRouter.GetSources(detectedId);
                 if (sources.Count > 0)
                 {
                     var timeoutSeconds = Math.Clamp(multiSearchConfig.MultiSourceSearchTimeoutSeconds, 5, 120);
