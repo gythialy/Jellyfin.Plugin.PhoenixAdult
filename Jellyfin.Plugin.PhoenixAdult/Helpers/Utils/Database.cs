@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -49,11 +51,95 @@ namespace PhoenixAdult.Helpers.Utils
                     Load(fileName);
                 }
             }
+
+            MergeActorsLocal();
         }
 
         public static bool IsExist(string fileName)
         {
             return File.Exists(Path.Combine(DatabasePath, fileName));
+        }
+
+        /// <summary>
+        /// 合并用户本地覆盖文件 Actors.local.json（该文件不会被 "Update Database" 任务覆盖）。
+        /// 结构与 Actors.json 相同；与远端数据取并集：同名 key 追加别名，本地新增条目直接加入。
+        /// </summary>
+        private static void MergeActorsLocal()
+        {
+            var filePath = Path.Combine(DatabasePath, "Actors.local.json");
+            if (!File.Exists(filePath))
+            {
+                return;
+            }
+
+            try
+            {
+                var encoding = new UTF8Encoding(false);
+                var local = JsonConvert.DeserializeObject<ActorsStructure>(File.ReadAllText(filePath, encoding));
+                var merged = Actors;
+
+                if (local.ActorsReplace != null)
+                {
+                    merged.ActorsReplace ??= new Dictionary<string, string[]>();
+                    foreach (var pair in local.ActorsReplace)
+                    {
+                        if (merged.ActorsReplace.TryGetValue(pair.Key, out var existing) && existing != null)
+                        {
+                            merged.ActorsReplace[pair.Key] = existing
+                                .Union(pair.Value ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase)
+                                .ToArray();
+                        }
+                        else
+                        {
+                            merged.ActorsReplace[pair.Key] = pair.Value;
+                        }
+                    }
+                }
+
+                if (local.ActorsStudioIndexes != null)
+                {
+                    merged.ActorsStudioIndexes ??= new Dictionary<int, string[]>();
+                    foreach (var pair in local.ActorsStudioIndexes)
+                    {
+                        merged.ActorsStudioIndexes[pair.Key] = pair.Value;
+                    }
+                }
+
+                if (local.ActorsReplaceStudios != null)
+                {
+                    merged.ActorsReplaceStudios ??= new Dictionary<int, Dictionary<string, string[]>>();
+                    foreach (var site in local.ActorsReplaceStudios)
+                    {
+                        if (merged.ActorsReplaceStudios.TryGetValue(site.Key, out var existingStudios) && existingStudios != null)
+                        {
+                            foreach (var pair in site.Value)
+                            {
+                                if (existingStudios.TryGetValue(pair.Key, out var existing) && existing != null)
+                                {
+                                    existingStudios[pair.Key] = existing
+                                        .Union(pair.Value ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase)
+                                        .ToArray();
+                                }
+                                else
+                                {
+                                    existingStudios[pair.Key] = pair.Value;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            merged.ActorsReplaceStudios[site.Key] = site.Value;
+                        }
+                    }
+                }
+
+                Actors = merged;
+                Logger.Info("Actors.local.json merged");
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"Failed to merge Actors.local.json: \"{e.Message}\"");
+            }
         }
 
         private static void Load(string fileName)

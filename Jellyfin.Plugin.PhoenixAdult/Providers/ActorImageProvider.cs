@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+using Newtonsoft.Json.Linq;
 using PhoenixAdult.Configuration;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
@@ -24,6 +26,11 @@ namespace PhoenixAdult.Providers
 {
     public class ActorImageProvider : IRemoteImageProvider
     {
+        private static readonly TimeSpan GFriendsCacheTtl = TimeSpan.FromHours(2);
+        private static readonly SemaphoreSlim GFriendsLock = new SemaphoreSlim(1, 1);
+        private static JObject gFriendsTree;
+        private static DateTime gFriendsTreeTime = DateTime.MinValue;
+
         public string Name => Plugin.Instance.Name;
 
         public static async Task<List<RemoteImageInfo>> GetActorPhotos(string name, CancellationToken cancellationToken)
@@ -36,12 +43,18 @@ namespace PhoenixAdult.Providers
                 return imageList;
             }
 
+            if (Plugin.Instance.Configuration.PreferedActorNameSource == PreferedActorNameSource.LocalDatabase)
+            {
+                name = Actors.ResolveWithJapaneseStyle(name);
+            }
+
             Logger.Info($"Searching actor images for \"{name}\"");
 
             tasks.Add("AdultDVDEmpire", GetFromAdultDVDEmpire(name, cancellationToken));
             tasks.Add("Boobpedia", GetFromBoobpedia(name, cancellationToken));
             tasks.Add("Babepedia", GetFromBabepedia(name, cancellationToken));
             tasks.Add("IAFD", GetFromIAFD(name, cancellationToken));
+            tasks.Add("Gfriends", GetFromGFriends(name, cancellationToken));
 
             var splitedName = name.Split();
             switch (Plugin.Instance.Configuration.JAVActorNamingStyle)
@@ -274,6 +287,80 @@ namespace PhoenixAdult.Providers
             }
 
             return image;
+        }
+
+        /// <summary>
+        /// gfriends：GitHub 上的演员头像仓库（Filetree.json 索引 + raw 图片）。
+        /// 文件名即演员名，按目录顺序遍历后取最后一个命中（与上游一致）。
+        /// </summary>
+        private static async Task<string> GetFromGFriends(string name, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return null;
+            }
+
+            var tree = await GetGFriendsTree(cancellationToken).ConfigureAwait(false);
+            var content = tree?["Content"];
+            if (content == null)
+            {
+                return null;
+            }
+
+            string image = null;
+            foreach (var folder in content.Children<JProperty>())
+            {
+                if (folder.Value is not JObject files)
+                {
+                    continue;
+                }
+
+                foreach (var file in files.Properties())
+                {
+                    if (string.Equals(Path.GetFileNameWithoutExtension(file.Name), name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        image = $"https://raw.githubusercontent.com/gfriends/gfriends/master/Content/{folder.Name}/{file.Value}";
+                    }
+                }
+            }
+
+            return image;
+        }
+
+        private static async Task<JObject> GetGFriendsTree(CancellationToken cancellationToken)
+        {
+            var now = DateTime.UtcNow;
+            if (gFriendsTree != null && now - gFriendsTreeTime < GFriendsCacheTtl)
+            {
+                return gFriendsTree;
+            }
+
+            await GFriendsLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                now = DateTime.UtcNow;
+                if (gFriendsTree != null && now - gFriendsTreeTime < GFriendsCacheTtl)
+                {
+                    return gFriendsTree;
+                }
+
+                var http = await HTTP.Request("https://raw.githubusercontent.com/gfriends/gfriends/master/Filetree.json", cancellationToken).ConfigureAwait(false);
+                if (http.IsOK)
+                {
+                    gFriendsTree = JObject.Parse(http.Content);
+                    gFriendsTreeTime = DateTime.UtcNow;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"Gfriends filetree error: \"{e.Message}\"");
+            }
+            finally
+            {
+                GFriendsLock.Release();
+            }
+
+            return gFriendsTree;
         }
 
         private static async Task<string> GetFromIAFD(string name, CancellationToken cancellationToken)

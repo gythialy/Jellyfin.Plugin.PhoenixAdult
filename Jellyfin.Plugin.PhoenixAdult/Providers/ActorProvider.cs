@@ -9,6 +9,7 @@ using System.Web;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
+using PhoenixAdult.Configuration;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
 
@@ -22,6 +23,12 @@ namespace PhoenixAdult.Providers
 {
     public class ActorProvider : IRemoteMetadataProvider<Person, PersonLookupInfo>
     {
+        /// <summary>
+        /// 演员元数据来源，按优先级排列。Freeones 字段最全，Babepedia 覆盖日系/欧系，
+        /// ThePornDB 依赖 MetadataAPI Token（未配置时返回空，不产生请求失败）。
+        /// </summary>
+        private static readonly string[] ActorProviders = { "Freeones", "Babepedia", "AV-LEAGUE", "ThePornDB" };
+
         public string Name => Plugin.Instance.Name;
 
         public async Task<IEnumerable<RemoteSearchResult>> GetSearchResults(PersonLookupInfo searchInfo, CancellationToken cancellationToken)
@@ -33,12 +40,23 @@ namespace PhoenixAdult.Providers
                 return result;
             }
 
-            var providerList = new List<string> { "Freeones" };
-
-            foreach (var siteName in providerList)
+            var searchName = searchInfo.Name;
+            if (Plugin.Instance.Configuration.PreferedActorNameSource == PreferedActorNameSource.LocalDatabase)
             {
-                var title = $"{siteName} {searchInfo.Name}";
+                searchName = Actors.ResolveWithJapaneseStyle(searchName);
+            }
+
+            var collected = new List<RemoteSearchResult>();
+
+            foreach (var siteName in ActorProviders)
+            {
+                var title = $"{siteName} {searchName}";
                 var site = Helper.GetSiteFromTitle(title);
+                if (site.siteNum == null)
+                {
+                    continue;
+                }
+
                 string actorName = Helper.GetClearTitle(title, site.siteName);
 
                 Logger.Info($"site: {site.siteNum[0]}:{site.siteNum[1]} ({site.siteName})");
@@ -55,43 +73,55 @@ namespace PhoenixAdult.Providers
                 }
 
                 var provider = Helper.GetProviderBySiteID(site.siteNum[0]);
-                if (provider != null)
+                if (provider == null)
                 {
-                    Logger.Info($"provider: {provider}");
-
-                    try
-                    {
-                        result = await provider.Search(site.siteNum, actorName, searchDateObj, cancellationToken).ConfigureAwait(false);
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.Error($"Actor Search error: \"{e}\"");
-
-                        await Analytics.Send(
-                            new AnalyticsExeption
-                            {
-                                Request = title,
-                                SiteNum = site.siteNum,
-                                SearchTitle = actorName,
-                                ProviderName = provider.ToString(),
-                                Exception = e,
-                            }, cancellationToken).ConfigureAwait(false);
-                    }
-
-                    if (result.Any())
-                    {
-                        foreach (var scene in result)
-                        {
-                            scene.ProviderIds[this.Name] = $"{site.siteNum[0]}#{site.siteNum[1]}#" + scene.ProviderIds[this.Name];
-                            scene.Name = scene.Name.Trim();
-                        }
-
-                        result = result.OrderByDescending(o => 100 - LevenshteinDistance.Calculate(searchInfo.Name, o.Name, StringComparison.OrdinalIgnoreCase)).ToList();
-                    }
-
-                    break;
+                    continue;
                 }
+
+                Logger.Info($"provider: {provider}");
+
+                List<RemoteSearchResult> providerResults;
+                try
+                {
+                    providerResults = await provider.Search(site.siteNum, actorName, searchDateObj, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"Actor Search error: \"{e}\"");
+
+                    await Analytics.Send(
+                        new AnalyticsExeption
+                        {
+                            Request = title,
+                            SiteNum = site.siteNum,
+                            SearchTitle = actorName,
+                            ProviderName = provider.ToString(),
+                            Exception = e,
+                        }, cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
+                if (providerResults == null || !providerResults.Any())
+                {
+                    continue;
+                }
+
+                foreach (var scene in providerResults)
+                {
+                    scene.ProviderIds[this.Name] = $"{site.siteNum[0]}#{site.siteNum[1]}#" + scene.ProviderIds[this.Name];
+                    scene.Name = scene.Name.Trim();
+                }
+
+                collected.AddRange(providerResults);
             }
+
+            // 多源合并：同名去重（保留先命中的来源），再按与查询名的相似度排序。
+            // OrderBy 是稳定排序，因此同分时仍保持 ActorProviders 的优先级顺序。
+            result = collected
+                .GroupBy(o => o.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(o => o.First())
+                .OrderByDescending(o => 100 - LevenshteinDistance.Calculate(searchName, o.Name, StringComparison.OrdinalIgnoreCase))
+                .ToList();
 
             return result;
         }
@@ -128,7 +158,7 @@ namespace PhoenixAdult.Providers
                 }
             }
 
-            if (curID == null)
+            if (curID == null || curID.Length < 3)
             {
                 return result;
             }
@@ -170,8 +200,14 @@ namespace PhoenixAdult.Providers
                     result.Item.ProviderIds.Update(this.Name, sceneID[this.Name]);
                     result.Item.ProviderIds.Update(this.Name + "URL", result.Item.ExternalId);
 
+                    var canonicalName = info.Name;
+                    if (Plugin.Instance.Configuration.PreferedActorNameSource == PreferedActorNameSource.LocalDatabase)
+                    {
+                        canonicalName = Actors.ResolveWithJapaneseStyle(info.Name);
+                    }
+
                     result.Item.OriginalTitle = WebUtility.HtmlDecode(result.Item.OriginalTitle);
-                    var aliases = result.Item.OriginalTitle.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                    var aliases = (result.Item.OriginalTitle ?? string.Empty).Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                     var newAliases = new List<string>();
                     foreach (var name in aliases)
                     {
@@ -184,7 +220,7 @@ namespace PhoenixAdult.Providers
                     }
 
                     var bornPlaceList = new List<string>();
-                    if (result.Item.ProductionLocations.Any())
+                    if (result.Item.ProductionLocations != null && result.Item.ProductionLocations.Any())
                     {
                         foreach (var bornPlace in result.Item.ProductionLocations[0].Split(","))
                         {
@@ -195,9 +231,16 @@ namespace PhoenixAdult.Providers
                                 bornPlaceList.Add(location);
                             }
                         }
+
+                        result.Item.ProductionLocations = new string[] { string.Join(", ", bornPlaceList) };
                     }
 
-                    result.Item.ProductionLocations = new string[] { string.Join(", ", bornPlaceList) };
+                    if (!string.IsNullOrEmpty(canonicalName)
+                        && !newAliases.Contains(canonicalName, StringComparer.OrdinalIgnoreCase)
+                        && !string.Equals(canonicalName, info.Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        newAliases.Add(canonicalName);
+                    }
 
                     if (!newAliases.Contains(info.Name, StringComparer.OrdinalIgnoreCase))
                     {

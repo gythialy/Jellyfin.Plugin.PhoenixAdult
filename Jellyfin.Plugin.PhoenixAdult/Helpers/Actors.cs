@@ -78,6 +78,48 @@ namespace PhoenixAdult.Helpers
             });
         }
 
+        /// <summary>
+        /// 把演员名解析成规范名（ActorsReplace 的 key）。
+        /// 供影片演员清洗、演员搜索（ActorProvider）、演员头像（ActorImageProvider）三处共用，
+        /// 保证同一演员在影片与 person 实体上得到同一个规范名。
+        /// </summary>
+        public static string Resolve(string actorName, string[] studios = null)
+        {
+            if (string.IsNullOrWhiteSpace(actorName))
+            {
+                return actorName;
+            }
+
+            return ReplaceFromDatabase(actorName, studios);
+        }
+
+        /// <summary>
+        /// 按 Java 风格（姓在前）解析：先直接解析，失败时把词序倒过来再解析一次。
+        /// </summary>
+        public static string ResolveWithJapaneseStyle(string actorName, string[] studios = null)
+        {
+            var resolved = Resolve(actorName, studios);
+            if (!string.Equals(resolved, actorName, StringComparison.Ordinal))
+            {
+                return resolved;
+            }
+
+            var splitedName = actorName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (splitedName.Length < 2)
+            {
+                return resolved;
+            }
+
+            var reversedName = string.Join(" ", splitedName.Reverse());
+            var reversedResolved = Resolve(reversedName, studios);
+            if (string.Equals(reversedResolved, reversedName, StringComparison.Ordinal))
+            {
+                return resolved;
+            }
+
+            return string.Join(" ", reversedResolved.Split(' ').Reverse());
+        }
+
         public static List<PersonInfo> CleanupFromDatabase(List<PersonInfo> peoples, BaseItem item)
         {
             var newPeoples = new List<PersonInfo>();
@@ -124,14 +166,29 @@ namespace PhoenixAdult.Helpers
 
         private static string ReplaceFromDatabase(string actorName, string[] studios)
         {
-            var siteIndex = -1;
-            foreach (var studio in studios)
+            if (string.IsNullOrWhiteSpace(actorName))
             {
+                return actorName;
+            }
+
+            var siteIndex = -1;
+            foreach (var studio in studios ?? Array.Empty<string>())
+            {
+                if (string.IsNullOrEmpty(studio))
+                {
+                    continue;
+                }
+
                 var studioName = studio.Split('!').First().Trim();
+
+                if (Database.Actors.ActorsStudioIndexes == null)
+                {
+                    break;
+                }
 
                 foreach (var studioIndex in Database.Actors.ActorsStudioIndexes)
                 {
-                    if (studioIndex.Value.Contains(studioName))
+                    if (studioIndex.Value != null && studioIndex.Value.Contains(studioName))
                     {
                         siteIndex = studioIndex.Key;
                         break;
@@ -145,16 +202,24 @@ namespace PhoenixAdult.Helpers
             }
 
             var newActorName = string.Empty;
-            if (siteIndex > -1)
+            if (siteIndex > -1
+                && Database.Actors.ActorsReplaceStudios != null
+                && Database.Actors.ActorsReplaceStudios.TryGetValue(siteIndex, out var studioReplace)
+                && studioReplace != null)
             {
-                newActorName = Database.Actors.ActorsReplaceStudios[siteIndex].FirstOrDefault(o => o.Value.Contains(actorName, StringComparer.OrdinalIgnoreCase)).Key;
+                newActorName = studioReplace.FirstOrDefault(o => o.Value != null && o.Value.Contains(actorName, StringComparer.OrdinalIgnoreCase)).Key;
                 if (!string.IsNullOrEmpty(newActorName))
                 {
                     actorName = newActorName;
                 }
             }
 
-            newActorName = Database.Actors.ActorsReplace.FirstOrDefault(o => o.Key.Equals(actorName, StringComparison.OrdinalIgnoreCase) || o.Value.Contains(actorName, StringComparer.OrdinalIgnoreCase)).Key;
+            if (Database.Actors.ActorsReplace == null)
+            {
+                return actorName;
+            }
+
+            newActorName = Database.Actors.ActorsReplace.FirstOrDefault(o => o.Key.Equals(actorName, StringComparison.OrdinalIgnoreCase) || (o.Value != null && o.Value.Contains(actorName, StringComparer.OrdinalIgnoreCase))).Key;
             if (!string.IsNullOrEmpty(newActorName))
             {
                 actorName = newActorName;

@@ -9147,6 +9147,20 @@
                 "https://www.h4610.com"
             ]
         },
+        "231": {
+            "0": [
+                "Babepedia",
+                "https://www.babepedia.com",
+                "/search/"
+            ]
+        },
+        "232": {
+            "0": [
+                "AV-LEAGUE",
+                "https://www.av-league.com",
+                "/search/search.php?k="
+            ]
+        },
         "233": {
             "0": [
                 "ThePornDB",
@@ -9374,6 +9388,8 @@
         "228": "SiteXillimite",
         "229": "SiteXSinsVR",
         "230": "SiteXVirtual",
+        "231": "ActorBabepedia",
+        "232": "ActorAvLeague",
         "233": "ActorThePornDB",
         "234": "SiteMadouQu",
         "235": "SiteModelMediaAsia",
