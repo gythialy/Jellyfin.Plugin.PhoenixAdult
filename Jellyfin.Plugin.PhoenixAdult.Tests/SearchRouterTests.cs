@@ -21,6 +21,7 @@ public class SearchRouterTests : IDisposable
             {
                 Id = "madou",
                 Note = "麻豆系",
+                Labels = new[] { "mdx", "mdsr", "xjx", "jdsy" },
                 LabelRegex = "^(?:MD|MTVQ)[A-Z0-9]*$",
                 Sites = new[] { new[] { 234, 0 }, new[] { 96, 0 } },
             },
@@ -55,6 +56,8 @@ public class SearchRouterTests : IDisposable
     [Theory]
     [InlineData("MDSR-0005", "madou", 234)]
     [InlineData("MDX-0267", "madou", 234)]
+    [InlineData("XJX-0813", "madou", 234)]
+    [InlineData("jdsy-0123", "madou", 96)]
     [InlineData("MTVQ18-EP1-AV", "madou", 96)]
     [InlineData("FC2-PPV-1234567", "fc2", 238)]
     [InlineData("ABP-123", "jav", 239)]
