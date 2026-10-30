@@ -33,11 +33,14 @@ namespace PhoenixAdult.Sites
 
             string searchJAVID = null;
             string directJAVID = null;
-            var splitSearchTitle = searchTitle.Split(' ');
-            if (splitSearchTitle.Length > 1 && int.TryParse(splitSearchTitle[1], out _))
+            if (JavId.TryParse(searchTitle, out var javId))
             {
-                searchJAVID = $"{splitSearchTitle[0]}%2B{splitSearchTitle[1]}";
-                directJAVID = $"{splitSearchTitle[0]}-{splitSearchTitle[1]}";
+                var javIdParts = JavId.Split(javId);
+                directJAVID = javId;
+                if (javIdParts.Length == 2)
+                {
+                    searchJAVID = $"{javIdParts[0]}%2B{javIdParts[1]}";
+                }
             }
 
             string encodedSearchTitle = searchJAVID ?? Uri.EscapeDataString(searchTitle);
@@ -244,7 +247,8 @@ namespace PhoenixAdult.Sites
 
         private IDictionary<string, string> GetCookies()
         {
-            return new Dictionary<string, string> { { "existmag", "all" }, { "dv", "1" } };
+            // age=verified：JavBus 新版年龄验证，缺失时搜索页只返回年龄门（0 结果）
+            return new Dictionary<string, string> { { "existmag", "all" }, { "dv", "1" }, { "age", "verified" } };
         }
     }
 }

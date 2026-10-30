@@ -25,14 +25,8 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            string searchJAVID = null;
-            var splitedTitle = searchTitle.Split();
-            if (splitedTitle.Length > 1 && int.TryParse(splitedTitle[1], out _))
-            {
-                searchJAVID = $"{splitedTitle[0]}-{splitedTitle[1]}";
-            }
-
-            if (!string.IsNullOrEmpty(searchJAVID))
+            var searchJAVID = JavId.TryParse(searchTitle, out var javIdValue) ? javIdValue : null;
+            if (searchJAVID != null)
             {
                 searchTitle = searchJAVID;
             }

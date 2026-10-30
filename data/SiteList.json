@@ -8980,6 +8980,179 @@
                 "https://xvirtual.com",
                 "/tour/search/?q="
             ]
+        },
+        "234": {
+            "0": [
+                "MadouQu",
+                "https://madouqu.com",
+                "https://madouqu.com/?s="
+            ]
+        },
+        "235": {
+            "0": [
+                "ModelMediaAsia",
+                "https://modelmediaasia.com",
+                "https://model-api.bvncmsldo.com/api/v2/search?keyword="
+            ]
+        },
+        "236": {
+            "0": [
+                "10musume",
+                "https://www.10musume.com"
+            ],
+            "1": [
+                "1Pondo",
+                "https://www.1pondo.tv"
+            ],
+            "2": [
+                "MuraMura",
+                "https://www.muramura.tv"
+            ],
+            "3": [
+                "PacoPacomama",
+                "https://www.pacopacomama.com"
+            ]
+        },
+        "237": {
+            "0": [
+                "Dahlia",
+                "https://dahlia-av.jp",
+                "/?s="
+            ],
+            "1": [
+                "Faleno",
+                "https://faleno.jp/top",
+                "/?s="
+            ]
+        },
+        "238": {
+            "0": [
+                "FC2",
+                "https://adult.contents.fc2.com"
+            ]
+        },
+        "239": {
+            "0": [
+                "AVBase",
+                "https://www.avbase.net"
+            ]
+        },
+        "240": {
+            "0": [
+                "DUGA",
+                "https://duga.jp",
+                "/search/=/q="
+            ]
+        },
+        "241": {
+            "0": [
+                "MyWife",
+                "https://mywife.cc"
+            ]
+        },
+        "242": {
+            "0": [
+                "JavFree",
+                "https://javfree.me",
+                "/?s="
+            ]
+        },
+        "243": {
+            "0": [
+                "MGSStage",
+                "https://www.mgstage.com",
+                "/search/cSearch.php?search_word="
+            ]
+        },
+        "244": {
+            "0": [
+                "SOD",
+                "https://ec.sod.co.jp/prime",
+                "/videos/genre/?search_type=1&sodsearch="
+            ]
+        },
+        "245": {
+            "0": [
+                "Tokyo-Hot",
+                "https://my.tokyo-hot.com",
+                "/product/?q="
+            ]
+        },
+        "246": {
+            "0": [
+                "Getchu",
+                "https://dl.getchu.com",
+                "/i/item"
+            ]
+        },
+        "247": {
+            "0": [
+                "PColle",
+                "https://www.pcolle.com",
+                "/product/detail/?product_id="
+            ]
+        },
+        "248": {
+            "0": [
+                "FC2Hub",
+                "https://javten.com",
+                "/search?kw="
+            ]
+        },
+        "249": {
+            "0": [
+                "FC2PPVDB",
+                "https://fc2ppvdb.com",
+                "/articles/"
+            ]
+        },
+        "250": {
+            "0": [
+                "AVEntertainments",
+                "https://www.aventertainments.com",
+                "https://www.aventertainments.com/dvd/search"
+            ]
+        },
+        "251": {
+            "0": [
+                "FANZA",
+                "https://www.dmm.co.jp",
+                "/search/=/searchstr="
+            ]
+        },
+        "252": {
+            "0": [
+                "Gcolle",
+                "https://gcolle.net"
+            ]
+        },
+        "253": {
+            "0": [
+                "HeyDouga",
+                "https://www.heydouga.com",
+                "/moviepages/"
+            ]
+        },
+        "254": {
+            "0": [
+                "c0930",
+                "https://www.c0930.com"
+            ],
+            "1": [
+                "h0930",
+                "https://www.h0930.com"
+            ],
+            "2": [
+                "h4610",
+                "https://www.h4610.com"
+            ]
+        },
+        "233": {
+            "0": [
+                "ThePornDB",
+                "https://theporndb.net",
+                "https://api.theporndb.net"
+            ]
         }
     },
     "SiteIDList": {
@@ -9200,7 +9373,29 @@
         "227": "SiteXevUnleashed",
         "228": "SiteXillimite",
         "229": "SiteXSinsVR",
-        "230": "SiteXVirtual"
+        "230": "SiteXVirtual",
+        "233": "ActorThePornDB",
+        "234": "SiteMadouQu",
+        "235": "SiteModelMediaAsia",
+        "236": "NetworkPondo",
+        "237": "NetworkFaleno",
+        "238": "SiteFC2",
+        "239": "SiteAVBase",
+        "240": "SiteDuga",
+        "241": "SiteMyWife",
+        "242": "SiteJavFree",
+        "243": "SiteMgsStage",
+        "244": "SiteSOD",
+        "245": "SiteTokyoHot",
+        "246": "SiteGetchu",
+        "247": "SitePcolle",
+        "248": "SiteFC2Hub",
+        "249": "SiteFC2PPVDB",
+        "250": "SiteAVEntertainments",
+        "251": "SiteFanza",
+        "252": "SiteGcolle",
+        "253": "SiteHeyDouga",
+        "254": "NetworkD2Pass"
     },
     "Abbrieviations": {
         "^18og": "18OnlyGirls",
