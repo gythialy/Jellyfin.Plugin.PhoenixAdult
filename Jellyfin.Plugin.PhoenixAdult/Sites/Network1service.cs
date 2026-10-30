@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -19,7 +20,10 @@ namespace PhoenixAdult.Sites
 {
     public class Network1service : IProviderBase
     {
-        public static async Task<string> GetToken(int[] siteNum, CancellationToken cancellationToken)
+        public static Task<string> GetToken(int[] siteNum, CancellationToken cancellationToken)
+            => GetToken(siteNum, false, cancellationToken);
+
+        public static async Task<string> GetToken(int[] siteNum, bool forceRefresh, CancellationToken cancellationToken)
         {
             var result = string.Empty;
 
@@ -35,46 +39,59 @@ namespace PhoenixAdult.Sites
             }
 
             var keyName = new Uri(Helper.GetSearchBaseURL(siteNum)).Host;
-            if (db.ContainsKey(keyName))
+            if (!forceRefresh && db.ContainsKey(keyName))
             {
-                string token = (string)db[keyName];
-                var tokenParts = token?.Split('.');
-                if (tokenParts != null && tokenParts.Length > 1)
+                var token = (string)db[keyName];
+                if (IsTokenValid(token))
                 {
-                    var res = Encoding.UTF8.GetString(Helper.ConvertFromBase64String(tokenParts[1]) ?? Array.Empty<byte>());
-                    var tokenData = JObject.Parse(res);
-                    if (tokenData["exp"] != null && (long)tokenData["exp"] > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                    {
-                        result = token;
-                    }
+                    return token;
                 }
             }
 
+            result = await FetchTokenFromSite(siteNum, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrEmpty(result))
             {
-                var http = await HTTP.Request(Helper.GetSearchBaseURL(siteNum), HttpMethod.Head, cancellationToken).ConfigureAwait(false);
-                var instanceToken = http.Cookies?.Where(o => o.Name == "instance_token");
-                if (instanceToken == null || !instanceToken.Any())
-                {
-                    return result;
-                }
-
-                result = instanceToken.First().Value;
-
-                if (db.ContainsKey(keyName))
-                {
-                    db[keyName] = result;
-                }
-                else
-                {
-                    db.Add(keyName, result);
-                }
-
-                Plugin.Instance.Configuration.TokenStorage = JsonConvert.SerializeObject(db);
-                Plugin.Instance.SaveConfiguration();
+                return string.Empty;
             }
 
+            if (db.ContainsKey(keyName))
+            {
+                db[keyName] = result;
+            }
+            else
+            {
+                db.Add(keyName, result);
+            }
+
+            Plugin.Instance.Configuration.TokenStorage = JsonConvert.SerializeObject(db);
+            Plugin.Instance.SaveConfiguration();
+
             return result;
+        }
+
+        /// <summary>清掉某站点的缓存 token（API 返回鉴权失败时调用）。</summary>
+        public static void InvalidateToken(int[] siteNum)
+        {
+            if (siteNum == null || string.IsNullOrEmpty(Plugin.Instance.Configuration.TokenStorage))
+            {
+                return;
+            }
+
+            try
+            {
+                var db = JObject.Parse(Plugin.Instance.Configuration.TokenStorage);
+                var keyName = new Uri(Helper.GetSearchBaseURL(siteNum)).Host;
+                if (db.ContainsKey(keyName))
+                {
+                    db.Remove(keyName);
+                    Plugin.Instance.Configuration.TokenStorage = JsonConvert.SerializeObject(db);
+                    Plugin.Instance.SaveConfiguration();
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"Failed to invalidate token: {e.Message}");
+            }
         }
 
         public static async Task<JObject> GetDataFromAPI(string url, string instance, CancellationToken cancellationToken)
@@ -133,6 +150,18 @@ namespace PhoenixAdult.Sites
                 }
 
                 var searchResults = await GetDataFromAPI(Helper.GetSearchSearchURL(siteNum) + url, instanceToken, cancellationToken).ConfigureAwait(false);
+                if (searchResults == null)
+                {
+                    // token 可能已失效：强制刷新后重试一次
+                    instanceToken = await GetToken(siteNum, true, cancellationToken).ConfigureAwait(false);
+                    if (string.IsNullOrEmpty(instanceToken))
+                    {
+                        break;
+                    }
+
+                    searchResults = await GetDataFromAPI(Helper.GetSearchSearchURL(siteNum) + url, instanceToken, cancellationToken).ConfigureAwait(false);
+                }
+
                 if (searchResults == null)
                 {
                     break;
@@ -205,7 +234,17 @@ namespace PhoenixAdult.Sites
             var sceneData = await GetDataFromAPI(url, instanceToken, cancellationToken).ConfigureAwait(false);
             if (sceneData == null)
             {
-                return result;
+                instanceToken = await GetToken(siteNum, true, cancellationToken).ConfigureAwait(false);
+                if (string.IsNullOrEmpty(instanceToken))
+                {
+                    return result;
+                }
+
+                sceneData = await GetDataFromAPI(url, instanceToken, cancellationToken).ConfigureAwait(false);
+                if (sceneData == null)
+                {
+                    return result;
+                }
             }
 
             sceneData = (JObject)sceneData["result"].First;
@@ -297,7 +336,16 @@ namespace PhoenixAdult.Sites
             var sceneData = await GetDataFromAPI(url, instanceToken, cancellationToken).ConfigureAwait(false);
             if (sceneData == null)
             {
-                return result;
+                instanceToken = await GetToken(siteNum, true, cancellationToken).ConfigureAwait(false);
+                if (!string.IsNullOrEmpty(instanceToken))
+                {
+                    sceneData = await GetDataFromAPI(url, instanceToken, cancellationToken).ConfigureAwait(false);
+                }
+
+                if (sceneData == null)
+                {
+                    return result;
+                }
             }
 
             sceneData = (JObject)sceneData["result"].First;
@@ -327,6 +375,102 @@ namespace PhoenixAdult.Sites
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// 依次尝试 HEAD（部分站点头请求即下发 instance_token）、GET（浏览器头）、
+        /// FlareSolverr 浏览器上下文（Cloudflare 站点）三条路径。
+        /// </summary>
+        private static async Task<string> FetchTokenFromSite(int[] siteNum, CancellationToken cancellationToken)
+        {
+            var baseUrl = Helper.GetSearchBaseURL(siteNum);
+
+            try
+            {
+                var head = await HTTP.Request(baseUrl, HttpMethod.Head, cancellationToken).ConfigureAwait(false);
+                var token = FindInstanceToken(head.Cookies);
+                if (!string.IsNullOrEmpty(token))
+                {
+                    Logger.Info($"instance_token via HEAD: {baseUrl}");
+                    return token;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"Token HEAD request failed for {baseUrl}: {e.Message}");
+            }
+
+            var headers = new Dictionary<string, string>
+            {
+                ["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                ["Accept-Language"] = "en-US,en;q=0.9",
+            };
+
+            try
+            {
+                var get = await HTTP.Request(baseUrl, HttpMethod.Get, cancellationToken, headers).ConfigureAwait(false);
+                var token = FindInstanceToken(get.Cookies);
+                if (!string.IsNullOrEmpty(token))
+                {
+                    Logger.Info($"instance_token via GET: {baseUrl}");
+                    return token;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"Token GET request failed for {baseUrl}: {e.Message}");
+            }
+
+            if (FlareSolverr.IsConfigured)
+            {
+                try
+                {
+                    var cookies = await FlareSolverr.GetCookies(baseUrl, cancellationToken).ConfigureAwait(false);
+                    if (cookies != null && cookies.TryGetValue("instance_token", out var token) && !string.IsNullOrEmpty(token))
+                    {
+                        Logger.Info($"instance_token via FlareSolverr: {baseUrl}");
+                        return token;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"Token FlareSolverr request failed for {baseUrl}: {e.Message}");
+                }
+            }
+
+            Logger.Error($"instance_token not found for {baseUrl}");
+            return string.Empty;
+        }
+
+        private static string FindInstanceToken(IEnumerable<Cookie> cookies)
+        {
+            var cookie = cookies?.FirstOrDefault(o => string.Equals(o.Name, "instance_token", StringComparison.OrdinalIgnoreCase));
+            return cookie?.Value;
+        }
+
+        private static bool IsTokenValid(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                return false;
+            }
+
+            try
+            {
+                var tokenParts = token.Split('.');
+                if (tokenParts.Length < 2)
+                {
+                    return false;
+                }
+
+                var res = Encoding.UTF8.GetString(Helper.ConvertFromBase64String(tokenParts[1]) ?? Array.Empty<byte>());
+                var tokenData = JObject.Parse(res);
+                return tokenData["exp"] == null || (long)tokenData["exp"] > DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
     }
 }
