@@ -20,21 +20,13 @@ using PhoenixAdult.Helpers.Utils;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// JavDB（javdb.com）。条目 ID 是详情页绝对地址 https://javdb.com/v/{id}。
-    /// <para>
-    /// 走的是匿名可读的 HTML 页面，不依赖任何 token：
-    /// 搜索 /search?q={番号}&amp;f=all，详情 /v/{id}?locale=zh（?locale=zh 只切界面语言，
-    /// 面板标签固定成 番號/日期/時長/導演/片商/發行/系列/類別/演員）。
-    /// </para>
-    /// <para>
-    /// 限制：演员页与无码作品页要求登录（302 到 /login，回的是「登入 | JavDB …」标题页），
-    /// 未配置 Cookie 时这两类页面按「未取得」降级，不影响有码作品。
-    /// 站方按出口 IP 计配额，超了回 403 并封 3~7 天，所以本 handler 一次搜索只发一次请求。
-    /// </para>
+    /// JavDB (javdb.com); a scene id is the absolute /v/<id> URL.
+    /// Search and censored detail pages need no account; actor pages and uncensored titles need a session.
+    /// One search sends a single request, the site meters quota per IP.
     /// </summary>
     public class SiteJavDB : IProviderBase
     {
-        /// <summary>JavDB 图片 CDN（公开，无需 Referer/Cookie）。</summary>
+        /// <summary>JavDB image CDN (public).</summary>
         private const string CdnBaseUrl = "https://c0.jdbstatic.com";
 
         private const string DefaultBaseUrl = "https://javdb.com";
@@ -43,25 +35,25 @@ namespace PhoenixAdult.Sites
 
         private const string LocaleQuery = "locale=zh";
 
-        /// <summary>一次 GetImages 最多交出多少张（封面 1 张 + 样图若干）。</summary>
+        /// <summary>Max images per GetImages call.</summary>
         private const int MaxImages = 30;
 
-        /// <summary>片长只取「時長」一栏里的数字，站上写法形如 "180 分鍾" / "60分鐘" / "41:50"。</summary>
+        /// <summary>Runtime from the runtime row, e.g. "60 min" or "41:50".</summary>
         private static readonly Regex RuntimeRegex = new Regex(
             @"(?<min>[0-9]+)",
             RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-        /// <summary>发行日期 "2022-04-19"；站上偶有 "/" 分隔。</summary>
+        /// <summary>Release date as "2022-04-19".</summary>
         private static readonly Regex DateRegex = new Regex(
             @"(?<year>[0-9]{4})[-/.](?<mon>[0-9]{1,2})[-/.](?<day>[0-9]{1,2})",
             RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-        /// <summary>番号比较用：空格、连字符、下划线都不算区别（站上会写成 "MIAA -620"）。</summary>
+        /// <summary>Code comparison key: ignore spaces, hyphens and underscores.</summary>
         private static readonly Regex CodeSeparatorRegex = new Regex(
             @"[\s\-_]+",
             RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-        /// <summary>片商一栏并列英日两种写法（"PRESTIGE,プレステージ"），取含日文的那一段。</summary>
+        /// <summary>Studio row may list two spellings; keep the second.</summary>
         private static readonly Regex JapaneseRegex = new Regex(
             @"[\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF]",
             RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -90,14 +82,7 @@ namespace PhoenixAdult.Sites
                     return result;
                 }
 
-                // 结果卡片（2026-10-30 实测 /search?q=HEYZO-0924&f=all）：
-                //   <div class="movie-list …"><div class="item">
-                //     <a href="/v/xZMJQ" class="box" title="HAMEZO～… - 綾瀬まゆ">
-                //       <div class="cover "><img loading="lazy" src="https://c0.jdbstatic.com/covers/xz/xZMJQ.jpg" /></div>
-                //       <div class="video-title"><strong>HEYZO-0924</strong> HAMEZO～…</div>
-                //     </a>
-                //   </div></div>
-                // 演员卡也带 box 类（class="box actor-box"），靠 href 必须是 /v/ 排除。
+                // Card: a.box under /v/ with cover, title and meta date; actor cards (box actor-box) are filtered by the href test.
                 foreach (var card in searchData.SelectNodesSafe("//a[starts-with(@href, '/v/') and contains(@class, 'box')]"))
                 {
                     var href = card.GetAttributeValue("href", string.Empty);
@@ -123,8 +108,7 @@ namespace PhoenixAdult.Sites
                         ImageUrl = NormalizeUrl(FirstImageUrl(card), baseUrl),
                     };
 
-                    // 卡片里 <div class="meta">2015-08-23</div> 是发行日期：填进 PremiereDate，
-                    // 识别对话框才会显示日期、多源结果也能按日期排序（以前这条信息被直接丢掉了）。
+                    // Meta date maps to PremiereDate so the dialog shows it and results can be sorted.
                     var metaDate = card.SelectSingleNode(".//div[contains(@class, 'meta')]")?.InnerText.Trim();
                     if (!string.IsNullOrEmpty(metaDate)
                         && DateTime.TryParseExact(metaDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var metaDateValue))
@@ -133,8 +117,8 @@ namespace PhoenixAdult.Sites
                         res.ProductionYear = metaDateValue.Year;
                     }
 
-                    // 卡片结构偶尔没有 <img>（懒加载/无码条目），用 /v/<id> 反推 CDN 封面路径，
-                    // 与 JavDB 自己的 covers/<id 前两位小写>/<id>.jpg 规则一致。
+                    // A card occasionally has no <img> (lazy loading, uncensored rows); derive the CDN cover path from /v/<id>,
+                    // which matches the site's own covers/<first two id chars, lower case>/<id>.jpg rule.
                     if (string.IsNullOrEmpty(res.ImageUrl))
                     {
                         var movieId = href.Trim('/').Split('/').LastOrDefault();
@@ -146,7 +130,7 @@ namespace PhoenixAdult.Sites
 
                     result.Add(res);
 
-                    // 同号多条只取第一条：站上同一部片偶有重复条目，挑哪条都不比第一条更可信。
+                    // Keep only the first row for a code: duplicates exist on the site and none is more trustworthy than the first.
                     break;
                 }
             }
@@ -189,19 +173,13 @@ namespace PhoenixAdult.Sites
 
                 if (IsLoginWall(sceneData))
                 {
-                    // 演员页与无码作品页要求登录：记一笔就走，不抛异常，也不把登录页当作品页解析。
+                    // Actor pages and uncensored titles require a session: log it and return, do not throw, and never parse the login page as a title page.
                     Logger.Info($"[JavDB] Login wall hit for '{sceneURL}'.");
                     LogLoginWallHint();
                     return result;
                 }
 
-                // 详情面板（2026-10-30 实测 /v/ZXw5Jv?locale=zh）：
-                //   <div class="panel-block first-block"><strong>番號:</strong>&nbsp;<span class="value">ABW -358</span></div>
-                //   <div class="panel-block"><strong>片商:</strong>&nbsp;<span class="value">PRESTIGE,プレステージ</span></div>
-                //   <div class="panel-block"><strong>演員:</strong>&nbsp;<span class="value">
-                //       <a class="actor-female" href="/actors/a0bn">姫咲はな</a>, <a href="/actors/qDOVD">およよ中野</a>
-                //   </span></div>
-                // 男优挂的是同样的 /actors/ 链接，没有 actor-female 类，按类筛掉。
+                // Panel rows: <strong>label:</strong><span class="value">; actresses carry actor-female, male actors do not.
                 string shownCode = null;
                 string director = null;
                 var genres = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -316,7 +294,7 @@ namespace PhoenixAdult.Sites
 
                 if (string.IsNullOrWhiteSpace(title))
                 {
-                    // 面板与标题都没解析出来：当作未取得，别把空条目写进库里。
+                    // Neither the panel nor the title parsed: treat it as missing instead of writing an empty item.
                     Logger.Debug($"[JavDB] No usable metadata for '{sceneURL}'");
                     return result;
                 }
@@ -330,7 +308,7 @@ namespace PhoenixAdult.Sites
                     result.Item.OriginalTitle = normalizedCode;
                 }
 
-                // 片商为主，發行（label）与系列按本仓库 JAV handler 的惯例一并记进 Studio。
+                // Studio is primary; the publisher label and series are recorded into Studio as other JAV handlers in this repo do.
                 foreach (var studio in studios.Where(o => !string.IsNullOrEmpty(o)))
                 {
                     result.Item.AddStudio(studio);
@@ -407,9 +385,7 @@ namespace PhoenixAdult.Sites
                     result.Add(new RemoteImageInfo { Type = ImageType.Primary, Url = cover });
                 }
 
-                // 样图（2026-10-30 实测）：<a class="tile-item" href="https://c0.jdbstatic.com/samples/jr/JR4XW_l_0.jpg">
-                //   <img src="…/JR4XW_s_0.jpg" /></a>，href 就是 _l_ 全尺寸，缩略图 _s_ 不要。
-                // 都在 c0.jdbstatic.com 上，是公开 CDN，无需 Referer、无签名。
+                // Samples: the tile-item href is the full-size image on the public CDN.
                 foreach (var tile in sceneData.SelectNodesSafe("//a[contains(@class, 'tile-item')]"))
                 {
                     if (result.Count >= MaxImages)
@@ -439,7 +415,7 @@ namespace PhoenixAdult.Sites
             return result;
         }
 
-        /// <summary>站主域；未注册或取不到时回落到 https://javdb.com。</summary>
+        /// <summary>Site base URL, falling back to the built-in one.</summary>
         private static string GetBaseUrl(int[] siteNum)
         {
             var baseUrl = string.Empty;
@@ -449,7 +425,7 @@ namespace PhoenixAdult.Sites
             }
             catch (Exception)
             {
-                // 组 255 还没注册时取不到，用内置地址顶上，别让 Search 直接失败。
+                // Group 255 may be unregistered; use the built-in URL.
             }
 
             if (string.IsNullOrWhiteSpace(baseUrl))
@@ -460,7 +436,7 @@ namespace PhoenixAdult.Sites
             return baseUrl.TrimEnd('/');
         }
 
-        /// <summary>搜索地址：站点表里是相对路径（/search?q=），拼成绝对地址。</summary>
+        /// <summary>Absolute search URL built from the relative site path.</summary>
         private static string GetSearchUrl(int[] siteNum)
         {
             var searchUrl = string.Empty;
@@ -470,7 +446,7 @@ namespace PhoenixAdult.Sites
             }
             catch (Exception)
             {
-                // 同上：取不到就用内置路径。
+                // Same as above: use the built-in path when unavailable.
             }
 
             if (string.IsNullOrWhiteSpace(searchUrl))
@@ -496,8 +472,8 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// 把配置里整段粘贴的 Cookie 拆成字典："a=b; c=d"。空配置返回 null（不传 Cookie）。
-        /// 站上 "over18=1" 这类年龄门与登录态都在这一段里，由用户自己从浏览器复制。
+        /// Split the pasted cookie header into a dictionary; null when empty.
+        /// The age gate and the session both live in that header.
         /// </summary>
         private static IDictionary<string, string> GetCookies()
         {
@@ -543,14 +519,8 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// 取一页 HTML：先直连，只有真撞上 Cloudflare 验证页或直连失败时才交给 Fetcher 兜底
-        /// （Fetcher 会走 FlareSolverr）。
-        /// <para>
-        /// 不能直接调 Fetcher.Html 的原因：它的挑战判定把 "challenge-platform" 也算命中，而
-        /// javdb 的**正常页面**里就有这个脚本（2026-10-30 实测搜索页与详情页各出现 1 次），
-        /// 直接用它会让每一次请求都判成挑战：装了 FlareSolverr 的用户每次多付一趟无头浏览器，
-        /// 没装的每次多一条错误日志。这里按标题判挑战，正常页走最快的直连。
-        /// </para>
+        /// Direct request first; FlareSolverr only on a real challenge.
+        /// The title decides: the challenge-platform script also appears on normal pages.
         /// </summary>
         private static async Task<HtmlNode> FetchPage(string url, string baseUrl, CancellationToken cancellationToken)
         {
@@ -582,7 +552,7 @@ namespace PhoenixAdult.Sites
             }
         }
 
-        /// <summary>非 200 时 HTML.ElementFromURL 返回未挂载的 DocumentNode，OuterHtml 会抛异常。</summary>
+        /// <summary>OuterHtml throws on the detached node returned for non-200 responses.</summary>
         private static bool IsUsable(HtmlNode node)
         {
             if (node == null)
@@ -600,7 +570,7 @@ namespace PhoenixAdult.Sites
             }
         }
 
-        /// <summary>只按标题判 Cloudflare 验证页：正文里也注入 challenge-platform 脚本，按它判会误判。</summary>
+        /// <summary>Judge the challenge by title only: the body always carries the challenge script.</summary>
         private static bool LooksLikeChallenge(HtmlNode node)
         {
             var titleNode = node.SelectSingleNode("//title");
@@ -615,7 +585,7 @@ namespace PhoenixAdult.Sites
                 || title.StartsWith("Attention Required", StringComparison.OrdinalIgnoreCase);
         }
 
-        /// <summary>从 sceneID 还原详情页绝对地址；也兼容手工识别时直接传入的裸地址。</summary>
+        /// <summary>Absolute detail URL from a scene id, or a raw identify-dialog URL.</summary>
         private static string ResolveSceneUrl(int[] siteNum, string sceneID)
         {
             if (string.IsNullOrWhiteSpace(sceneID))
@@ -640,7 +610,7 @@ namespace PhoenixAdult.Sites
             return sceneURL;
         }
 
-        /// <summary>sceneID 由本 handler 编码；解码失败（手工 Identify 直接给 URL）时按裸值处理。</summary>
+        /// <summary>Decode the scene id; raw values pass through.</summary>
         private static string DecodeSafe(string value)
         {
             try
@@ -653,13 +623,13 @@ namespace PhoenixAdult.Sites
             }
             catch (Exception)
             {
-                // 非 Base58 输入会抛 FormatException，按裸值处理。
+                // Non-Base58 input throws FormatException; treat it as a raw value.
             }
 
             return value;
         }
 
-        /// <summary>番号的规范形态：JavId 认得出就用它的结果，否则去掉空白后大写。</summary>
+        /// <summary>Canonical code form via JavId, else trimmed and upper-cased.</summary>
         private static string NormalizeCode(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -673,8 +643,7 @@ namespace PhoenixAdult.Sites
                 return javId;
             }
 
-            // 输入带了标题（识别页手填 "ABW-358 涼森れむ…"）时，逐个词交给 JavId 试一次，
-            // 比在整串上做正则提取安全：不会把 "1080p" 之类当成番号。
+            // With a typed title, try JavId per token so "1080p" is not read as a code.
             foreach (var token in value.Split(new[] { ' ', '\t', '/', '|', '_' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 if (JavId.TryParse(token, out var tokenId) && !string.IsNullOrEmpty(tokenId))
@@ -686,7 +655,7 @@ namespace PhoenixAdult.Sites
             return CodeSeparatorRegex.Replace(value, "-").ToUpperInvariant();
         }
 
-        /// <summary>两个番号写法是否指同一部片：去掉空格与连字符后不区分大小写比较。</summary>
+        /// <summary>Same title when both codes match after removing spaces and hyphens.</summary>
         private static bool IsSameCode(string left, string right)
         {
             var first = CodeSeparatorRegex.Replace(left ?? string.Empty, string.Empty);
@@ -695,7 +664,7 @@ namespace PhoenixAdult.Sites
                 && first.Equals(second, StringComparison.OrdinalIgnoreCase);
         }
 
-        /// <summary>面板标签去掉尾部冒号（站上是全角 "："，个别镜像写成半角）。</summary>
+        /// <summary>Drop a trailing colon from a panel label.</summary>
         private static string NormalizeLabel(string raw)
         {
             if (string.IsNullOrEmpty(raw))
@@ -708,7 +677,7 @@ namespace PhoenixAdult.Sites
                 .Trim();
         }
 
-        /// <summary>片商并列英日两种写法时取日文那一段（"PRESTIGE,プレステージ" → "プレステージ"）。</summary>
+        /// <summary>Keep the second of two studio spellings.</summary>
         private static string PickMaker(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -730,7 +699,7 @@ namespace PhoenixAdult.Sites
             return japanese ?? parts[0];
         }
 
-        /// <summary>标题优先取 strong.current-title；缺失时退到 .origin-title（日文原标题）。</summary>
+        /// <summary>Prefer strong.current-title, else .origin-title.</summary>
         private static string PickTitle(HtmlNode sceneData)
         {
             foreach (var xpath in new[]
@@ -756,8 +725,7 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// 封面：详情页第一张 img.video-cover（第二张同类图在「預告片」入口里，src 与它相同）。
-        /// 都取不到时退到 og:image。
+        /// Cover: first img.video-cover, else og:image.
         /// </summary>
         private static string PickCover(HtmlNode sceneData)
         {
@@ -770,7 +738,7 @@ namespace PhoenixAdult.Sites
             return NormalizeUrl(sceneData.SelectSingleText("//meta[@property='og:image']/@content"), DefaultBaseUrl);
         }
 
-        /// <summary>卡片封面：第一张 img 的 src，懒加载站点可能写在 data-src。</summary>
+        /// <summary>Card cover from src, or data-src when lazy loaded.</summary>
         private static string FirstImageUrl(HtmlNode card)
         {
             var image = card.SelectSingleNode(".//img");
@@ -783,10 +751,10 @@ namespace PhoenixAdult.Sites
             return src.Length > 0 ? src : image.GetAttributeValue("data-src", string.Empty).Trim();
         }
 
-        /// <summary>登录墙判定：登录页标题是「登入 | JavDB 成人影片數據庫」。</summary>
+        /// <summary>Login wall: the page title is the login page.</summary>
         /// <summary>
-        /// 登录墙提示：JavDB 的登录需要图形验证码（rucaptcha）与 CSRF token，插件无法自动登录/续期，
-        /// 所以只能在 Cookie 失效时把话说明白——配了 Cookie 就是「过期了，去换一个」，没配就是「这类页面本来就要登录」。
+        /// Explain the wall: signing in needs a captcha and a CSRF token,
+        /// so the plugin cannot renew the session.
         /// </summary>
         private static void LogLoginWallHint()
         {
@@ -821,14 +789,14 @@ namespace PhoenixAdult.Sites
             }
         }
 
-        /// <summary>详情页补 ?locale=zh（只切界面语言，不改任何数据字段）。</summary>
+        /// <summary>Append ?locale=zh (UI language only).</summary>
         private static string WithLocale(string url)
         {
             var clean = StripLocale(url);
             return clean + (clean.IndexOf('?') >= 0 ? "&" : "?") + LocaleQuery;
         }
 
-        /// <summary>去掉 URL 里的 locale 参数：ExternalId 记不带界面语言的地址。</summary>
+        /// <summary>Remove the locale parameter.</summary>
         private static string StripLocale(string url)
         {
             if (string.IsNullOrEmpty(url))
@@ -874,7 +842,7 @@ namespace PhoenixAdult.Sites
             return null;
         }
 
-        /// <summary>相对地址补成绝对地址；站上图片本来就是 https://c0.jdbstatic.com/... 绝对地址。</summary>
+        /// <summary>Make a relative URL absolute.</summary>
         private static string NormalizeUrl(string url, string baseURL)
         {
             if (string.IsNullOrWhiteSpace(url))

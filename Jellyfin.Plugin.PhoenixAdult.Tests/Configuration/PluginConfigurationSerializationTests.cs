@@ -6,19 +6,14 @@ using PhoenixAdult.Helpers;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 插件配置序列化回归测试。
-/// Jellyfin/Emby 用 System.Xml.Serialization.XmlSerializer 把插件配置存成 XML，
-/// 配置类里只要出现 IDictionary 成员，序列化器在反射类型时就会抛
-/// "Cannot serialize member ... because it implements IDictionary"，
-/// 导致整个配置的读取与保存全部失败（历史 bug：ImageReferers 曾是
-/// Dictionary&lt;string, string&gt;）。
+/// Serialization tests: XmlSerializer rejects IDictionary members, which used to break the whole configuration.
 /// </summary>
 public class PluginConfigurationSerializationTests
 {
     [Fact]
     public void XmlSerializer_可以反射配置类型()
     {
-        // 构造序列化器即会扫描全部成员，IDictionary 成员会在此抛 NotSupportedException
+        // Building the serializer scans every member; an IDictionary member throws here.
         var serializer = new XmlSerializer(typeof(PluginConfiguration));
 
         Assert.NotNull(serializer);
@@ -51,7 +46,7 @@ public class PluginConfigurationSerializationTests
             new[] { "phncdn.com=https://www.pornhub.com/", "javbus.com=https://www.javbus.com/" },
             ImageRefererDefaults.SeedIfEmpty(new[] { "   " })!.ToArray());
 
-        // 已经有有效规则时不再补，避免把用户删掉的条目又塞回去
+        // Existing rules are kept; deleted entries must not come back.
         Assert.Null(ImageRefererDefaults.SeedIfEmpty(new[] { "example.com=https://example/" }));
         Assert.Null(ImageRefererDefaults.SeedIfEmpty(new[] { "phncdn.com=" }));
     }

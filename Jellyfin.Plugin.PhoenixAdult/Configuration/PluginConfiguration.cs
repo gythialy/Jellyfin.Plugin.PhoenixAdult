@@ -44,8 +44,8 @@ namespace PhoenixAdult.Configuration
 
             this.FlareSolverrURL = "http://localhost:8191/";
 
-            // 默认值在插件启动时由 ImageRefererDefaults 补进配置（见 Plugin.EnsureImageRefererDefaults）：
-            // XmlSerializer 反序列化 List 是追加而不是替换，构造里给默认值会让每次读写都多出一份重复项。
+            // Defaults are seeded at startup: XmlSerializer appends list items on deserialize,
+            // so constructor defaults would duplicate on every read/write.
             this.ImageReferers = new List<string>();
 
             this.JavDBCookie = string.Empty;
@@ -102,27 +102,21 @@ namespace PhoenixAdult.Configuration
         public string FlareSolverrURL { get; set; }
 
         /// <summary>
-        /// 追加/覆盖图片 Referer 防盗链规则，每项一条 "host=referer"（host 可只写域名后缀）。
-        /// 内置规则见 <see cref="Consts.ImageReferers"/>，此项仅用于站点 CDN 变更时的免改版修正；
-        /// referer 留空表示显式关闭该 host 的内置规则。
+        /// Extra referer rules, one "host=referer" per line; an empty referer disables that host.
         /// </summary>
         /// <remarks>
-        /// 必须用 List&lt;string&gt; 而不是 Dictionary：Jellyfin/Emby 的插件配置由
-        /// System.Xml.Serialization.XmlSerializer 持久化为 XML，该序列化器在反射配置类型时
-        /// 直接拒绝任何 IDictionary 成员（"Cannot serialize member ... because it implements IDictionary"），
-        /// 会让整个配置的读取与保存都抛异常。
+        /// Must stay List&lt;string&gt;: XmlSerializer rejects IDictionary members,
+        /// which would break loading and saving the whole configuration.
         /// </remarks>
         public List<string> ImageReferers { get; set; }
 
         /// <summary>
-        /// JavDB 登录态 Cookie（浏览器登录 javdb.com 后整段粘贴，形如 "over18=1; _jdb_session=..."）。
-        /// JavDB 的演员页与无码作品页要求登录，未配置时这些页面按「不可用」降级，不影响有码作品。
+        /// JavDB session cookie; without it actor pages and uncensored titles are unavailable.
         /// </summary>
         public string JavDBCookie { get; set; }
 
         /// <summary>
-        /// 演员头像源为空时的兜底：用其作品封面（JavDB 海报）充当人物照片。
-        /// 默认开启；关掉后没有头像的演员就是「没有照片」，不再用封面顶替。
+        /// Use a work cover when an actor has no portrait. Default on.
         /// </summary>
         public bool ActorPhotoCoverFallback { get; set; }
 
@@ -149,17 +143,17 @@ namespace PhoenixAdult.Configuration
         public bool DisableAutoIdentify { get; set; }
 
         /// <summary>
-        /// 番号检索时并发查询多个站点（不勾选则只查路由命中的单一站点）。
+        /// Query several sites in parallel for a code instead of the routed one only.
         /// </summary>
         public bool MultiSourceSearch { get; set; }
 
         /// <summary>
-        /// 多源检索的单站超时（秒），默认 30。
+        /// Per-site timeout for a multi-source search, in seconds.
         /// </summary>
         public int MultiSourceSearchTimeoutSeconds { get; set; }
 
         /// <summary>
-        /// 条目「⋯」菜单里是否显示「抽帧」入口（仅 Jellyfin；且只在启用了本插件的库里出现）。
+        /// Show the frame grab entry in the item menu (Jellyfin only, libraries using this plugin).
         /// </summary>
         public bool EnableFrameGrabMenu { get; set; }
 

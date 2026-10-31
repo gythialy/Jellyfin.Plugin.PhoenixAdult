@@ -12,11 +12,9 @@ using PhoenixAdult.Helpers.Utils;
 namespace PhoenixAdult.Web
 {
     /// <summary>
-    /// 图片代理端点：JavBus 封面、phncdn 签名图这类图片要求 Referer，而 Jellyfin 下载远程图片时不带 Referer、
-    /// 浏览器直连也只带本站 Referer，两者都会 403，最终表现为「元数据抓到了，但海报/背景图一张都没有」。
+    /// Proxy for images that require a Referer: neither the Jellyfin downloader nor a browser sends one.
     ///
-    /// 插件把这类地址改写成 <c>/PhoenixAdult/image?u=&lt;base64url&gt;</c>：本端点按 Referer 规则取回图片字节再回传，
-    /// 服务端下载与浏览器显示都能拿到图。只代理命中 Referer 规则的主机，避免变成通用代理。
+    /// Only hosts with a referer rule are proxied (others get 400).
     /// </summary>
     [ApiController]
     [Route("PhoenixAdult")]
@@ -25,11 +23,8 @@ namespace PhoenixAdult.Web
         private const int TimeoutSeconds = 30;
 
         /// <summary>
-        /// 代理一张需要 Referer 的图片。
+        /// Proxy one image.
         /// </summary>
-        /// <param name="u">Base64Url 编码的原始图片地址。</param>
-        /// <param name="cancellationToken">取消令牌。</param>
-        /// <returns>图片字节。</returns>
         [HttpGet("image")]
         [AllowAnonymous]
         public async Task<IActionResult> GetImage([FromQuery] string u, CancellationToken cancellationToken)
@@ -37,7 +32,7 @@ namespace PhoenixAdult.Web
             var url = ImageProxyUrl.Decode(u);
             if (string.IsNullOrEmpty(url) || !ImageProxyUrl.NeedsProxy(url))
             {
-                // 只代理命中 Referer 规则的主机；其他地址一律拒绝，避免被当作开放代理使用
+                // Reject hosts without a rule so this cannot become an open proxy.
                 return BadRequest();
             }
 
@@ -84,8 +79,7 @@ namespace PhoenixAdult.Web
         }
 
         /// <summary>
-        /// 读取响应头里的 Content-Type（System.Net.Http 把内容头放在 HttpContentHeaders 上，
-        /// 这里只能按名字取）。
+        /// Read the declared content type by name (it lives on the content headers).
         /// </summary>
         private static string GetDeclaredType(System.Net.Http.Headers.HttpResponseHeaders headers)
         {
@@ -98,7 +92,7 @@ namespace PhoenixAdult.Web
         }
 
         /// <summary>
-        /// 判断图片真实类型：先看魔数，再用响应头兜底（部分 CDN 会把图片当 octet-stream 返回）。
+        /// Prefer the magic bytes; fall back to the declared type.
         /// </summary>
         private static string DetectContentType(byte[] bytes, string declared)
         {

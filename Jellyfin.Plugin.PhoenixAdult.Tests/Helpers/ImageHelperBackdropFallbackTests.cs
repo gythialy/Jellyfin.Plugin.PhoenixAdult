@@ -6,9 +6,7 @@ using PhoenixAdult.Helpers.Utils;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 海报兜底成横幅的回归测试。
-/// 背景：JavBus 无码页只有一张封面，没有截图集；插件同时用同一 URL 报 Primary 与 Backdrop 时，
-/// Jellyfin 会按 URL 去重，横幅就地消失。兜底实现给横幅 URL 加 #backdrop 片段（片段不会发送到服务器）。
+/// Backdrop fallback: a shared URL is deduplicated by the client, so the banner URL carries a #backdrop fragment.
 /// </summary>
 public class ImageHelperBackdropFallbackTests
 {
@@ -29,7 +27,7 @@ public class ImageHelperBackdropFallbackTests
         var backdrop = Assert.Single(images, o => o.Type == ImageType.Backdrop);
         Assert.Equal(CoverUrl + "#backdrop", backdrop.Url);
 
-        // 800 宽 < 1280（Jellyfin 自动下载横幅的 MinWidth），不能填尺寸，否则会被静默过滤
+        // Below the 1280 minimum the size must stay unset, otherwise Jellyfin skips it.
         Assert.Null(backdrop.Width);
         Assert.Null(backdrop.Height);
     }
@@ -63,7 +61,7 @@ public class ImageHelperBackdropFallbackTests
     }
 
     /// <summary>
-    /// 关掉图片尺寸校验再调用，测试不触网。
+    /// Disable image validation so the test stays offline.
     /// </summary>
     private static async Task<List<RemoteImageInfo>> Validate(params RemoteImageInfo[] images)
     {

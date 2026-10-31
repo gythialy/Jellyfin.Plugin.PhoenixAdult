@@ -65,9 +65,7 @@ namespace PhoenixAdult
         public static ILogger Log { get; set; }
 
         /// <summary>
-        /// 老配置存下来的是裸的 &lt;ImageReferers /&gt;（空列表），这里在启动时把
-        /// <see cref="ImageRefererDefaults.Rules"/> 补进去并落盘，设置页里就能直接看到并修改这些默认规则。
-        /// 要禁用某条规则请写成 "host="（等号后留空），而不是把整行删掉。
+        /// Seed the built-in referer rules into an empty configuration so they appear in the settings page.
         /// </summary>
         private void EnsureImageRefererDefaults()
         {
