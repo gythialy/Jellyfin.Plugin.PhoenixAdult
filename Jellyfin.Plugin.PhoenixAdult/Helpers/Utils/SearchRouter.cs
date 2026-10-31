@@ -6,22 +6,22 @@ using System.Text.RegularExpressions;
 namespace PhoenixAdult.Helpers.Utils
 {
     /// <summary>
-    /// 番号 → 站点 的路由表解析：规则全部来自 data/IdRoutes.json（可被 IdRoutes.local.json 覆盖），
-    /// 代码里不再写死站点清单。第一个命中的路由生效，兜底路由放最后。
+    /// Code to site routing from data/IdRoutes.json (overridable by IdRoutes.local.json);
+    /// no site list in code. The first match wins, the fallback goes last.
     /// </summary>
     internal static class SearchRouter
     {
         public static bool IsFc2Id(string id)
             => id != null && id.StartsWith("FC2-PPV-", StringComparison.OrdinalIgnoreCase);
 
-        /// <summary>命中路由的名字（madou / jav / fc2 / 自定义），未命中返回 null。</summary>
-        /// <param name="id">规范化后的番号。</param>
-        /// <returns>路由名或 null。</returns>
+        /// <summary>Matched route name, or null.</summary>
+        /// <param name="id">Normalised code.</param>
+        /// <returns>Route name, or null.</returns>
         public static string GetFamily(string id) => Match(id)?.Id;
 
-        /// <summary>按路由表返回该番号需要并发检索的站点（[组号, 站点号]）。</summary>
-        /// <param name="id">规范化后的番号。</param>
-        /// <returns>需要并发检索的站点集合。</returns>
+        /// <summary>Sites to query in parallel for this code, as [group, site].</summary>
+        /// <param name="id">Normalised code.</param>
+        /// <returns>Sites to query.</returns>
         public static IReadOnlyList<(int Group, int Site)> GetSources(string id)
         {
             var route = Match(id);
@@ -36,9 +36,9 @@ namespace PhoenixAdult.Helpers.Utils
                 .ToList();
         }
 
-        /// <summary>按路由表顺序匹配 prefix 与 label 正则，返回第一条命中的路由。</summary>
-        /// <param name="id">规范化后的番号。</param>
-        /// <returns>命中的路由，未命中返回 null。</returns>
+        /// <summary>First route whose prefix and label regex match.</summary>
+        /// <param name="id">Normalised code.</param>
+        /// <returns>Matched route, or null.</returns>
         public static Database.IdRouteEntry Match(string id)
         {
             if (string.IsNullOrWhiteSpace(id))

@@ -86,8 +86,8 @@ namespace PhoenixAdult.Sites
                 ? null
                 : JsonConvert.DeserializeObject<ManyVidsMetadata>(applicationLD);
 
-            // 场景页不存在/被拦截时 applicationLD 缺失，反序列化结果为 null。
-            // 原实现在这里直接 metadata.Name.EndsWith 会抛 NullReferenceException 给 Jellyfin。
+            // When the scene page is gone or blocked, applicationLD is null
+            // and the old code threw a NullReferenceException.
             if (metadata == null || string.IsNullOrEmpty(metadata.Name))
             {
                 result.Item.ExternalId = sceneURL;

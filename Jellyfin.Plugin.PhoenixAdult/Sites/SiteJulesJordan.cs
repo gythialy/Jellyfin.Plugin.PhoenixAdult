@@ -25,14 +25,14 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            // 站内搜索按词 AND 匹配，完整 searchTitle（文件名 SEO 标题串）与站点标题不同 → 0 结果。
-            // 文件名 Site.YY.MM.DD.Actors.Title 的演员在开头 → 用前 2 词（演员名）搜索。
+            // Site search ANDs the words and the SEO file name differs from site titles,
+            // so search the first two words, which are the actors.
             var searchQuery = Helper.GetSearchTitle(searchTitle, 2);
 
             var url = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchQuery);
             var data = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
 
-            // 新版页面: 场景卡片 div.jj-content-card, 链接 a.jj-card-thumb, 标题 .jj-card-title, 日期 .jj-card-date
+            // Current template: div.jj-content-card with a.jj-card-thumb, .jj-card-title and .jj-card-date.
             var searchResults = data.SelectNodesSafe("//div[contains(@class, 'jj-content-card')]");
             foreach (var searchResult in searchResults)
             {
@@ -113,11 +113,11 @@ namespace PhoenixAdult.Sites
             result.Item.ExternalId = sceneURL;
             result.HasMetadata = true;
 
-            // 新版页面: 标题在 h1
+            // Current template: the title is in h1.
             var titleNode = sceneData.SelectSingleNode("//h1");
             result.Item.Name = System.Net.WebUtility.HtmlDecode(titleNode?.InnerText?.Trim());
 
-            // 描述: Categories 区块之前的场景描述
+            // Description: the scene description before the Categories block.
             var descNode = sceneData.SelectSingleNode("//div[contains(@class, 'scene-cats')]/preceding-sibling::div[1]");
             result.Item.Overview = descNode?.InnerText?.Trim();
 
@@ -131,8 +131,8 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            // sceneDate 只在外部传入 sceneID 时才有（Search 结果不含日期）。
-            // 场景页内嵌 JSON 带 uploadDate，缺失时用它兜底，避免首播日期为空。
+            // sceneDate is only set when a scene id is passed in;
+            // fall back to the embedded uploadDate.
             if (!result.Item.PremiereDate.HasValue)
             {
                 var uploadDateMatch = System.Text.RegularExpressions.Regex.Match(
@@ -145,7 +145,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            // 流派: 新版 .scene-cats a.cat-tag
+            // Genres: .scene-cats a.cat-tag.
             var genreNode = sceneData.SelectNodesSafe("//div[contains(@class, 'scene-cats')]//a[contains(@class, 'cat-tag')]");
             foreach (var genreLink in genreNode)
             {
@@ -156,7 +156,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            // 演员: 主演员区在 .scene-meta（相关视频卡片里也有 update_models，需限定）
+            // Actors: the main block in .scene-meta (related cards also carry update_models).
             var actorsNode = sceneData.SelectNodesSafe("//div[contains(@class, 'scene-meta')]//span[contains(@class, 'update_models')]//a");
             foreach (var actorLink in actorsNode)
             {
@@ -224,7 +224,7 @@ namespace PhoenixAdult.Sites
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
-            // 封面: og:image
+            // Cover: og:image.
             var ogImage = sceneData.SelectSingleText("//meta[@property='og:image']/@content");
             if (!string.IsNullOrEmpty(ogImage))
             {
@@ -235,9 +235,8 @@ namespace PhoenixAdult.Sites
                 });
             }
 
-            // Backdrop: 播放器海报。原实现按 img 的 stdimage/thumbs class 取图，
-            // 但本场景图集的 img 无 class，带该 class 的反而是页面底部相关视频卡片，
-            // 导致 backdrop 取到别的场景。播放器 poster 才是本场景的全尺寸静止帧（1920x1080）。
+            // Backdrop: the player poster, a full-size still of this scene;
+            // the stdimage/thumbs classes belong to related cards at the bottom.
             var backdropUrl = sceneData.SelectSingleText("//video[@id='video-player']/@poster");
             if (string.IsNullOrEmpty(backdropUrl))
             {

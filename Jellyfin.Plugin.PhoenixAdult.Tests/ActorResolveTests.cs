@@ -4,8 +4,8 @@ using PhoenixAdult.Helpers.Utils;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 演员名规范化（Actor substitution）离线测试：
-/// 数据来自 data/Actors.json，验证 CJK→罗马字、日式倒序与未知名字原样返回。
+/// Offline tests for actress name normalisation from data/Actors.json:
+/// CJK to romaji, reversed order, unknown names unchanged.
 /// </summary>
 public class ActorResolveTests
 {

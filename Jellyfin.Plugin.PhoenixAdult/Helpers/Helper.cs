@@ -33,7 +33,7 @@ namespace PhoenixAdult.Helpers
             string siteName = Database.SiteList.Sites[siteNum[0]][siteNum[1]][0];
             if (string.IsNullOrEmpty(siteName))
             {
-                // 组内第一个存在的站（组删除站0后不能固定访问 [0]）
+                // First site that exists in the group (site 0 may have been removed).
                 siteName = Database.SiteList.Sites[siteNum[0]].First().Value[0];
             }
 
@@ -55,7 +55,7 @@ namespace PhoenixAdult.Helpers
             }
             else
             {
-                // 组内第一个带 URL 的站
+                // First site in the group that has a URL.
                 var fallback = Database.SiteList.Sites[siteNum[0]].FirstOrDefault(o => o.Value.ElementAtOrDefault(1) != null);
                 url = fallback.Value?.ElementAtOrDefault(1) ?? string.Empty;
             }
@@ -78,7 +78,7 @@ namespace PhoenixAdult.Helpers
             }
             else
             {
-                // 组内第一个带 search URL 的站（不能固定 First()——站0可能已被删除）
+                // First site that has a search URL (site 0 may be gone, so no First()).
                 var fallback = Database.SiteList.Sites[siteNum[0]].FirstOrDefault(o => !string.IsNullOrEmpty(o.Value.ElementAtOrDefault(2)));
                 url = fallback.Value?.ElementAtOrDefault(2) ?? string.Empty;
             }
@@ -144,8 +144,8 @@ namespace PhoenixAdult.Helpers
 
             clearName = clearName.Replace(".com", string.Empty, StringComparison.OrdinalIgnoreCase);
 
-            // \p{L}/\p{N}：保留中日文等非 ASCII 字母数字（ASCII 行为与旧正则一致），
-            // 否则中文标题会被清成空串，麻豆等中文站点永远搜不到。
+            // \p{L} and \p{N} keep non-ASCII letters and digits;
+            // without them CJK titles are stripped and CJK sites never match.
             clearName = Regex.Replace(clearName, @"[^\p{L}\p{N} ']", " ");
             clearSite = Regex.Replace(clearSite, @"\W", string.Empty);
 
@@ -174,9 +174,9 @@ namespace PhoenixAdult.Helpers
         }
 
         /// <summary>
-        /// 截取搜索词：文件名 Site.YY.MM.DD.Actors.Title 中演员/标题位置因站而异，
-        /// 取前 N 词（演员）或后 N 词（标题）作为站内搜索词。
-        /// 长搜索串（演员名+标题混串）会被按词 AND 匹配的站内搜索全部过滤掉，需截短。
+        /// Cut the search term down: file names carry actors and title in site-specific order,
+        /// so keep the first or last few words.
+        /// Long mixed strings are filtered out by sites that AND the words.
         /// </summary>
         public static string GetSearchTitle(string title, int maxWords, bool fromEnd = false)
         {
@@ -312,7 +312,7 @@ namespace PhoenixAdult.Helpers
         {
             if (TryExtractJavId(searchTitle, out var javId))
             {
-                // 麻豆系（MadouQu / ModelMediaAsia）使用自家番号前缀
+                // Madou sites use their own code prefixes.
                 if (Regex.IsMatch(javId, @"^(?:MD|MTVQ)[A-Z0-9]*-", RegexOptions.IgnoreCase))
                 {
                     return $"MadouQu {javId}";
@@ -331,10 +331,10 @@ namespace PhoenixAdult.Helpers
         }
 
         /// <summary>
-        /// 从文件名/标题中提取 JAV 番号（保留 '-'）。支持三种形态：
-        /// 1. 直接带连字符（ABP-123，任意位置，排除日期片段 blacked-24.01.14）；
-        /// 2. 清理后形如 "ABP 123 ..."（前两段标签+数字，排除日期序列 26 10 20）；
-        /// 3. 纯标签+数字（ssis277）。
+        /// Extract a JAV code (hyphen kept). Three shapes:
+        /// 1. hyphenated anywhere, excluding date fragments;
+        /// 2. "ABC 123" after cleaning, excluding date sequences;
+        /// 3. bare label plus digits.
         /// </summary>
         public static bool TryExtractJavId(string title, out string javId)
         {
@@ -404,21 +404,21 @@ namespace PhoenixAdult.Helpers
         }
 
         /// <summary>
-        /// 部分图片 CDN 对签名 URL 做 Referer 防盗链，缺少 Referer 时直接 403。
-        /// 仅对已知需要 Referer 的主机补上，避免影响其他站点的图片代理。
+        /// Some image CDNs reject requests without a Referer.
+        /// Only known hosts get one, so other sites are unaffected.
         /// </summary>
-        /// <param name="url">图片地址。</param>
-        /// <returns>需要发送的 Referer；无需发送时返回 null。</returns>
+        /// <param name="url">Image URL.</param>
+        /// <returns>Referer to send, or null.</returns>
         internal static string GetImageReferer(string url)
             => ResolveImageReferer(url, Plugin.Instance?.Configuration?.ImageReferers);
 
         /// <summary>
-        /// 解析 Referer 规则：用户规则优先（格式 "host=referer"，referer 为空表示显式禁用），
-        /// 其次回退到 <see cref="Consts.ImageReferers"/> 的内置表。
+        /// Resolve a Referer: user rules first ("host=referer", empty value disables),
+        /// then the built-in table.
         /// </summary>
-        /// <param name="url">图片地址。</param>
-        /// <param name="userRules">用户配置的规则行。</param>
-        /// <returns>需要发送的 Referer；无需发送时返回 null。</returns>
+        /// <param name="url">Image URL.</param>
+        /// <param name="userRules">Configured rule lines.</param>
+        /// <returns>Referer to send, or null.</returns>
         internal static string ResolveImageReferer(string url, IEnumerable<string> userRules)
         {
             if (string.IsNullOrEmpty(url))
@@ -463,13 +463,13 @@ namespace PhoenixAdult.Helpers
         }
 
         /// <summary>
-        /// 从 HTML 列表节点提取海报地址（识别对话框只渲染 RemoteSearchResult.ImageUrl）。
-        /// 懒加载站点的真实地址常在 data-src / data-original 里，src 可能是占位图，故按优先级尝试；
-        /// 同时兼容节点自身的 data-poster 与 style="background-image:url(...)"。相对地址用 baseUrl 补全。
+        /// Poster URL from a list node (the dialog renders ImageUrl only):
+        /// try data-src/data-original before src, since lazy loaded sites put a placeholder in src.
+        /// data-poster and background-image are accepted too; baseUrl makes the result absolute.
         /// </summary>
-        /// <param name="node">列表节点。</param>
-        /// <param name="baseUrl">站点根地址（如 https://www.example.com）。</param>
-        /// <returns>可直接给客户端加载的绝对地址；取不到返回 null。</returns>
+        /// <param name="node">List node.</param>
+        /// <param name="baseUrl">Site root URL.</param>
+        /// <returns>Absolute URL, or null.</returns>
         internal static string GetImageURL(HtmlNode node, string baseUrl = null)
         {
             if (node == null)
@@ -493,8 +493,8 @@ namespace PhoenixAdult.Helpers
 
             if (image != null)
             {
-                // 部分站点用自定义属性存图（如 AuntJudys 的 src0_1x / src0_2x），
-                // 兜底扫描所有“像图片地址”的属性值。
+                // Some sites keep images in custom attributes (src0_1x, src0_2x),
+                // so scan every image-like attribute value.
                 foreach (var attribute in image.Attributes)
                 {
                     var value = attribute.Value;
@@ -535,8 +535,8 @@ namespace PhoenixAdult.Helpers
                 }
             }
 
-            // 有些站点的缩略图是子元素的 CSS 背景图（div style="background-image:url(...)"）
-            // 或挂在 data-bg / data-src 上，这里再扫一遍子元素。
+            // Thumbnails may be a child's CSS background image
+            // or sit on data-bg/data-src, so scan children too.
             foreach (var element in node.Descendants().Take(64))
             {
                 var elementStyle = element.GetAttributeValue("style", null);
@@ -567,8 +567,8 @@ namespace PhoenixAdult.Helpers
                     continue;
                 }
 
-                // 列表页里常有站点头图/图标在同一节点内，命中这些关键词的多半不是海报
-                // 有些站点的预览是视频文件（preview_320.mp4），不能当缩略图
+                // Site logos and icons sit in the same node; skip them,
+                // and skip video previews.
                 if (url.Contains(".mp4", StringComparison.OrdinalIgnoreCase)
                     || url.Contains(".webm", StringComparison.OrdinalIgnoreCase)
                     || url.Contains(".m3u8", StringComparison.OrdinalIgnoreCase))
@@ -613,10 +613,10 @@ namespace PhoenixAdult.Helpers
         }
 
         /// <summary>
-        /// 图片请求所需的额外请求头（当前仅 Referer）；无需附加时返回 null。
+        /// Extra request headers for an image (Referer only); null when none are needed.
         /// </summary>
-        /// <param name="url">图片地址。</param>
-        /// <returns>请求头字典或 null。</returns>
+        /// <param name="url">Image URL.</param>
+        /// <returns>Header dictionary, or null.</returns>
         internal static IDictionary<string, string> GetImageRefererHeaders(string url)
         {
             var referer = GetImageReferer(url);
@@ -637,7 +637,7 @@ namespace PhoenixAdult.Helpers
             var referer = GetImageReferer(url);
             if (referer != null)
             {
-                // Emby 的 HttpRequestOptions.RequestHeaders 为只读集合，只能逐项写入
+                // Emby exposes RequestHeaders as a read-only collection, so add items one by one.
                 options.RequestHeaders["Referer"] = referer;
             }
 

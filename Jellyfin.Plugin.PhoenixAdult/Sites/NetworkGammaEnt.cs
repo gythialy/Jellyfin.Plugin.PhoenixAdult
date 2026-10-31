@@ -53,7 +53,7 @@ namespace PhoenixAdult.Sites
 
             if (string.IsNullOrEmpty(result))
             {
-                // 从站点首页抓 Algolia apiKey（/en/login 有 429 限流，stash/TPDB 均从首页抓取）
+                // Algolia apiKey comes from the home page (/en/login rate-limits with 429).
                 var http = await HTTP.Request(Helper.GetSearchBaseURL(siteNum) + "/en", cancellationToken).ConfigureAwait(false);
                 if (http.IsOK)
                 {
@@ -64,7 +64,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
 
-                // 站点首页无 Algolia apiKey（如 My Pervy Family 独立模板）→ 用组内子站 0 的 key（Algolia 是共享索引）
+                // No key on the home page (standalone template): use sub-site 0, Algolia shares the index.
                 if (string.IsNullOrEmpty(result) && siteNum.Length > 1 && siteNum[1] != 0)
                 {
                     var groupBase = Helper.GetSearchBaseURL(new[] { siteNum[0], 0 });
@@ -126,7 +126,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            // all_movies 索引恒无 pictures，需要按 movie_id 回 scenes 索引取一张场景预览图（见循环后的批量查询）
+            // all_movies has no pictures; fetch one scene preview per movie_id from the scenes index.
             var moviesWithoutImage = new List<KeyValuePair<RemoteSearchResult, string>>();
 
             var searchSceneID = searchTitle.Split()[0];
@@ -180,8 +180,8 @@ namespace PhoenixAdult.Sites
                     }
                     else
                     {
-                        // all_movies 的 last_modified 字段恒为 JSON null（ContainsKey 为 true 但值为 null），
-                        // 必须回退到 date_created，否则电影结果既没有首播日期、也拿不到日期排序/日期前缀。
+                        // all_movies.last_modified is always JSON null, so fall back to date_created
+                        // for dates, sorting and the date prefix.
                         var dateToken = searchResult["last_modified"];
                         if (dateToken == null || dateToken.Type == JTokenType.Null)
                         {
@@ -219,8 +219,8 @@ namespace PhoenixAdult.Sites
 
                     if (string.IsNullOrEmpty(res.ImageUrl) && sceneType != "scenes")
                     {
-                        // 电影封面（_front_400x625.jpg）只对部分影片存在，缺失时会变成破图；
-                        // 这里留着空，稍后统一按 movie_id 取该片第一个场景的预览图。
+                        // The movie cover only exists for some titles, so leave it empty
+                        // and fill it from a scene preview later.
                         moviesWithoutImage.Add(new KeyValuePair<RemoteSearchResult, string>(res, sceneID));
                     }
 
@@ -430,9 +430,8 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// 构造电影封面前端图 URL（scenes 索引的 pictures 是场景预览图，movies 索引只有这两个字段）。
-        /// 形如 https://images-fame.gammacdn.com/movies/165967/165967_cherry_kiss_anal_a2m_squirting_front_400x625.jpg，
-        /// 已实测对 EvilAngel/AdultTime 家族的 movies 记录全部可达（200 image/jpeg）。
+        /// Front cover URL for a movie (the scenes index holds scene previews).
+        /// Reachable for the EvilAngel/AdultTime family.
         /// </summary>
         internal static string GetMovieCoverURL(JObject movie)
         {
@@ -454,10 +453,9 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// 从 Algolia pictures 对象中选取最高清的图片路径。
-        /// pictures 形如 { "nsfw": {...}, "76x55": "...", "1920x1080": "...", "resized": "..." }，
-        /// 键为 WxH 分辨率，resized 是低清缩略图，nsfw 是嵌套对象。
-        /// 解析所有 WxH 键取宽度最大者，避免写死某个分辨率；无 WxH 键时回退到任意字符串值。
+        /// Largest image path from an Algolia pictures object.
+        /// Keys are WxH resolutions; resized is a thumbnail and nsfw is nested,
+        /// so take the widest key and fall back to any string value.
         /// </summary>
         internal static string GetBestPictureURL(JObject pictures)
         {
@@ -498,8 +496,7 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// all_movies 索引没有 pictures 字段，用一次批量查询回到 all_scenes 索引按 movie_id 取预览图。
-        /// 相比电影封面 {id}_{slug}_front_400x625.jpg（大量 404），场景预览图实测稳定可达。
+        /// all_movies has no pictures, so one batch query against all_scenes fetches the preview.
         /// </summary>
         private static async Task FillMoviePreviewImages(int[] siteNum, string apiKEY, List<KeyValuePair<RemoteSearchResult, string>> movies, CancellationToken cancellationToken)
         {

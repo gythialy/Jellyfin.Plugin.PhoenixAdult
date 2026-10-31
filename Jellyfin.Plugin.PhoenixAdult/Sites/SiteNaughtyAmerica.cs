@@ -200,7 +200,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            // 从场景页 og:image 取图片（从 trailer 路径推 scenes/{prefix}/{name} 的 name 常错，如 DirtyWivesClub → lucycodey）
+            // Take og:image; deriving the path from the trailer often produces the wrong name.
             var sceneUrl = (string)sceneData["scene_url"];
             if (!string.IsNullOrEmpty(sceneUrl))
             {
@@ -215,10 +215,10 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            // og:image 拿不到（场景页对无 Cookie 请求常返回空 202）时，按 TPDB networkNaughtyAmericaAPI 的推导：
-            // 从 promo_video_data / trailers.trailer_720 里取 "abbrev/title"，再拼
+            // Without og:image (the page answers an empty 202 for cookie-less requests),
+            // build the path from promo_video_data and HEAD check it,
             // https://images{cdn}.naughtycdn.com/cms/nacmscontent/v1/scenes/{abbrev}/{title}/scene/horizontal/{size}c.{ext}
-            // 并用 HEAD 逐个校验（CDN 序号、尺寸、扩展名都不固定，光拼不验会 404）。
+            // since the CDN numbering and extension vary.
             var imageInsert = string.Empty;
             if (sceneData["promo_video_data"] is JObject promoObj)
             {

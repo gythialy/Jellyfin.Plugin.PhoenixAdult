@@ -6,13 +6,13 @@ using Xunit.Sdk;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests.ProviderRegression;
 
 /// <summary>
-/// 数据驱动的 provider Update 回归：逐条执行 ProviderCases.json 中 kind=update 的用例，
-/// 以场景 URL 直接抓取，验证站点改版后 URL 直抓链路不退化。
+/// Data-driven Update cases that fetch a scene by URL,
+/// covering the direct-link path.
 /// </summary>
 [Trait("Category", "Online")]
 public class ProviderRegressionUpdateTests
 {
-    /// <summary>xUnit Theory 参数源。</summary>
+    /// <summary>xUnit Theory source.</summary>
     public static IEnumerable<object[]> Cases
         => ProviderCaseCatalog.OfKind(ProviderCaseKind.Update).Select(c => new object[] { c });
 

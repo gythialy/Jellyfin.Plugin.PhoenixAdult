@@ -53,7 +53,7 @@ namespace PhoenixAdult.Sites
                         releaseDate = parsedDate.ToString("yyyy-MM-dd");
                     }
 
-                    // 同 TPDB networkSteppedUpJSON：优先 trailer_screencap，其次 thumb
+                    // Like TPDB: prefer trailer_screencap, then thumb.
                     string posterUrl = (string)searchResult["trailer_screencap"];
                     if (string.IsNullOrEmpty(posterUrl))
                     {

@@ -25,7 +25,7 @@ namespace PhoenixAdult.Providers
 {
     public class MovieProvider : IRemoteMetadataProvider<Movie, MovieInfo>
     {
-        /// <summary>识别对话框补缩略图的上限（每条结果一次 GetImages，避免搜索结果过多时打爆站点）。</summary>
+        /// <summary>Max dialog thumbnails (one GetImages per result).</summary>
         internal const int MaxThumbnailFillCount = 10;
 
         private static readonly TimeSpan ThumbnailFillTimeout = TimeSpan.FromSeconds(8);
@@ -41,8 +41,7 @@ namespace PhoenixAdult.Providers
             => this.GetSearchResults(searchInfo, true, cancellationToken);
 
         /// <summary>
-        /// 搜索结果主体。<paramref name="fillThumbnails"/> 为 true 时（识别对话框发起的搜索）会给缺图结果补缩略图；
-        /// 自动识别（GetMetadata 内部调用）不补，避免扫描时为每个文件额外打一串请求。
+        /// Search body. <paramref name="fillThumbnails"/> enables dialog thumbnails; automatic matching skips them.
         /// </summary>
         public async Task<IEnumerable<RemoteSearchResult>> GetSearchResults(MovieInfo searchInfo, bool fillThumbnails, CancellationToken cancellationToken)
         {
@@ -140,16 +139,28 @@ namespace PhoenixAdult.Providers
                 return result;
             }
 
-            // 番号检索的多源并发：用户没有显式指定站点时，按番号类型并发查多个源并合并，
-            // 避免"一个番号只绑一个站点"（如 MDSR-0005 同时存在于 MadouQu / ModelMediaAsia 等）。
+            // Code lookup: query every source of the code family in parallel and merge, unless a site is pinned.
             var multiSearchConfig = Plugin.Instance.Configuration;
-            if (!explicitSite && multiSearchConfig.MultiSourceSearch && Helper.TryExtractJavId(searchInfo.Name, out var detectedId))
+            var hasJavId = Helper.TryExtractJavId(searchInfo.Name, out var detectedId);
+            if (multiSearchConfig.MultiSourceSearch && hasJavId && (!explicitSite || IsIdLabelMatchingSite(detectedId, site.siteName)))
             {
-                var sources = SearchRouter.GetSources(detectedId);
+                // The detected site name may be the brand inside the code; keep it as a candidate but query the others too.
+                var sources = SearchRouter.GetSources(detectedId).ToList();
+                if (explicitSite && site.siteNum != null
+                    && !sources.Any(o => o.Group == site.siteNum[0] && o.Site == site.siteNum[1]))
+                {
+                    sources.Insert(0, (site.siteNum[0], site.siteNum[1]));
+                }
+
                 if (sources.Count > 0)
                 {
                     var timeoutSeconds = Math.Clamp(multiSearchConfig.MultiSourceSearchTimeoutSeconds, 5, 120);
                     result = await this.SearchMultipleSourcesAsync(sources, searchTitle, searchDateObj, searchInfo.Name, detectedId, fillThumbnails, timeoutSeconds, cancellationToken).ConfigureAwait(false);
+                    if (fillThumbnails)
+                    {
+                        AddSourcePrefix(result);
+                    }
+
                     AddDatePrefix(result);
                     return result;
                 }
@@ -213,6 +224,11 @@ namespace PhoenixAdult.Providers
                 if (fillThumbnails && result.Any())
                 {
                     await FillMissingThumbnails(site.siteNum, result, cancellationToken).ConfigureAwait(false);
+                }
+
+                if (fillThumbnails)
+                {
+                    AddSourcePrefix(result);
                 }
 
                 AddDatePrefix(result);
@@ -397,11 +413,53 @@ namespace PhoenixAdult.Providers
         }
 
         /// <summary>
-        /// Jellyfin/Emby 的识别对话框只渲染 Name + ProductionYear（客户端不渲染 PremiereDate），
-        /// 为把日期显示到日，把日期拼进展示名（"2026-10-20 · 标题"）。
-        /// 只在排序/补图之后调用：不影响匹配度排序，也不把日期带进补图用的搜索词。
-        /// Apply 时条目标题仍由 Update 返回的站点标题决定，前缀只影响对话框显示。
+        /// The dialog renders Name and ProductionYear only, so the date is prepended to the display name.
         /// </summary>
+        /// <summary>
+        /// Prefix each dialog result with its source site; the stored title is unaffected.
+        /// </summary>
+        /// <param name="results">Search results.</param>
+        internal static void AddSourcePrefix(IList<RemoteSearchResult> results)
+        {
+            if (results == null)
+            {
+                return;
+            }
+
+            foreach (var scene in results)
+            {
+                if (scene == null || string.IsNullOrWhiteSpace(scene.Name) || scene.ProviderIds == null)
+                {
+                    continue;
+                }
+
+                if (!scene.ProviderIds.TryGetValue(Plugin.Instance.Name, out var externalId) || string.IsNullOrEmpty(externalId))
+                {
+                    continue;
+                }
+
+                var parts = externalId.Split('#');
+                if (parts.Length < 2
+                    || !int.TryParse(parts[0], CultureInfo.InvariantCulture, out var group)
+                    || !int.TryParse(parts[1], CultureInfo.InvariantCulture, out var site))
+                {
+                    continue;
+                }
+
+                var siteName = Helper.GetSearchSiteName(new[] { group, site });
+                if (string.IsNullOrWhiteSpace(siteName))
+                {
+                    continue;
+                }
+
+                var label = $"[{siteName}] ";
+                if (!scene.Name.Contains(label, StringComparison.OrdinalIgnoreCase))
+                {
+                    scene.Name = label + scene.Name;
+                }
+            }
+        }
+
         internal static void AddDatePrefix(IList<RemoteSearchResult> results)
         {
             if (results == null)
@@ -425,10 +483,7 @@ namespace PhoenixAdult.Providers
         }
 
         /// <summary>
-        /// 识别对话框只渲染 <see cref="RemoteSearchResult.ImageUrl"/>，但很多站点的 Search 结果里没有海报
-        /// （图片只在 GetImages 里）。这里对缺图结果并发取一张 Primary 图兜底，让对话框不再出现无图卡片。
-        /// 仅限用户发起的搜索（fillThumbnails=true）；自动识别走 GetMetadata 内部调用，不会触发。
-        /// 回归测试也复用它（ProviderRegressionRunner.FillDialogImagesAsync）。
+        /// Fetch a Primary image for dialog results that have none.
         /// </summary>
         internal static async Task FillMissingThumbnails(int[] siteNum, List<RemoteSearchResult> results, CancellationToken cancellationToken)
         {
@@ -457,7 +512,7 @@ namespace PhoenixAdult.Providers
                     return;
                 }
 
-                // ProviderIds 形如 "group#site#<handler 自己的 sceneID 段>"
+                // ProviderIds look like group#site#<scene id parts>.
                 var sceneId = externalId.Split('#').Skip(2).ToArray();
                 if (sceneId.Length == 0)
                 {
@@ -474,22 +529,22 @@ namespace PhoenixAdult.Providers
                     return;
                 }
 
-                // 识别对话框里的图片由浏览器直连加载（不带 Referer），需要 Referer 的 CDN（如 phncdn）
-                // 填进去只会显示破图，宁可不填，让客户端回退到标题卡片。
-                if (Helper.GetImageReferer(image.Url) != null)
+                // Complete protocol relative URLs.
+                var thumbSource = image.Url.StartsWith("//", StringComparison.Ordinal) ? "https:" + image.Url : image.Url;
+
+                // The dialog loads images from the browser, so referer protected URLs must use the same-origin proxy.
+                if (ImageProxyUrl.NeedsProxy(thumbSource) && !ImageProxyUrl.IsAvailable)
                 {
                     return;
                 }
 
-                // 兜底图常常是各站的电影封面，部分标题的封面并不存在（实测 404）。
-                // 这里用 HEAD 探一次，取不到就保持无图，避免对话框里出现破图。
-                if (!await HTTP.IsUrlLoadable(image.Url, cts.Token).ConfigureAwait(false))
+                // Probe once and leave the card text-only when the image is gone.
+                if (!await HTTP.IsUrlLoadable(ImageProxyUrl.ForDownload(thumbSource), cts.Token).ConfigureAwait(false))
                 {
                     return;
                 }
 
-                // 少数站点给的是协议相对地址（//host/path），补全成 https
-                result.ImageUrl = image.Url.StartsWith("//", StringComparison.Ordinal) ? "https:" + image.Url : image.Url;
+                result.ImageUrl = ImageProxyUrl.ForBrowser(thumbSource);
             }
             catch (Exception e)
             {
@@ -498,8 +553,21 @@ namespace PhoenixAdult.Providers
         }
 
         /// <summary>
-        /// 按番号并发检索多个站点并合并结果。
-        /// 单站失败/超时不影晌其它站点；结果按"命中番号 → IndexNumber → 相似度"排序。
+        /// Whether a detected site name is actually the brand inside the code.
+        /// </summary>
+        private static bool IsIdLabelMatchingSite(string detectedId, string siteName)
+        {
+            if (string.IsNullOrEmpty(detectedId) || string.IsNullOrEmpty(siteName))
+            {
+                return false;
+            }
+
+            var label = JavId.GetLabel(detectedId);
+            return !string.IsNullOrEmpty(label) && string.Equals(label, siteName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Query several sites for one code in parallel; a slow site does not affect the others.
         /// </summary>
         private async Task<List<RemoteSearchResult>> SearchMultipleSourcesAsync(
             IReadOnlyList<(int Group, int Site)> sources,

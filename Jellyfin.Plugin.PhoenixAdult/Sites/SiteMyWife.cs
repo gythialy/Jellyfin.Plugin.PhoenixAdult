@@ -15,9 +15,7 @@ using PhoenixAdult.Helpers.Utils;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// セレブクラブ舞ワイフ (mywife.cc)。条目 ID 是纯数字的作品号（如 2320），
-    /// 详情页 https://mywife.cc/teigaku/model/no/{id}，页面很轻、无站内搜索，
-    /// 只能从标题里提取数字后直连详情。
+    /// mywife.cc, a light site with no search: the numeric work id comes from the title.
     /// </summary>
     public class SiteMyWife : IProviderBase
     {
@@ -106,7 +104,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            // 页面标题形如 "No.1689　真中 えりか|セレブクラブ舞ワイフ"，去掉站点后缀。
+            // The page title carries a site suffix; strip it.
             name = Regex.Replace(name, @"\s*[|｜].*$", string.Empty, RegexOptions.CultureInvariant).Trim();
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -178,7 +176,7 @@ namespace PhoenixAdult.Sites
             var cover = NormalizeUrl(sceneData.SelectSingleText("//video[@id='video']/@poster"), baseURL);
             if (string.IsNullOrEmpty(cover))
             {
-                // 兜底：头像缩略图（页面顶部 /common/thumb/02320/05/1.png）。
+                // Fallback: the avatar thumbnail.
                 cover = NormalizeUrl(sceneData.SelectSingleText("//div[contains(@class, 'modelwaku0')]/img/@src"), baseURL);
             }
 
@@ -218,7 +216,7 @@ namespace PhoenixAdult.Sites
                 var value = token.Groups["id"].Value;
                 if (int.TryParse(value, out var numericValue) && numericValue >= 1900 && numericValue <= 2099)
                 {
-                    // 年份，不是作品号。
+                    // A year, not a work id.
                     continue;
                 }
 

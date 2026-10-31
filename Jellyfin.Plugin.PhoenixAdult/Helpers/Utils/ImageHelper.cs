@@ -12,9 +12,11 @@ namespace PhoenixAdult.Helpers.Utils
 {
     internal static class ImageHelper
     {
-        // Jellyfin 默认对 Backdrop 的 MinWidth 过滤值（MediaBrowser.Model.Configuration.TypeOptions.DefaultImageOptions）
-        // 低于该宽度的 backdrop 在自动下载时会被静默跳过（手动设置不受此限制）
+        // Jellyfin skips backdrops narrower than this when downloading automatically.
         private const int BackdropMinWidth = 1280;
+
+        /// <summary>Fragment appended to a reused poster so both entries keep distinct URLs.</summary>
+        private const string PrimaryAsBackdropSuffix = "#backdrop";
 
         public static async Task<List<RemoteImageInfo>> GetImagesSizeAndValidate(IEnumerable<RemoteImageInfo> images, CancellationToken cancellationToken)
         {
@@ -92,8 +94,7 @@ namespace PhoenixAdult.Helpers.Utils
                             Type = ImageType.Backdrop,
                         };
 
-                        // 与 primary 同 URL 的 backdrop 复用其尺寸；同样受 Jellyfin MinWidth 过滤影响，
-                        // 宽度不足 1280 时不填尺寸，避免被自动下载流程跳过
+                        // A backdrop sharing the poster URL reuses its size, but stays size-less below the minimum.
                         if (!img.Width.HasValue || img.Width.Value >= BackdropMinWidth)
                         {
                             dublResult.Height = img.Height;
@@ -102,6 +103,31 @@ namespace PhoenixAdult.Helpers.Utils
 
                         result.Add(dublResult);
                     }
+                }
+            }
+
+            // Single-image sites have no backdrop: reuse the poster, distinguished by a fragment,
+            // because the client dedupes by URL.
+            if (result.Count > 0 && !result.Any(o => o.Type == ImageType.Backdrop))
+            {
+                var primary = result.FirstOrDefault(o => o.Type == ImageType.Primary);
+                if (primary != null && !string.IsNullOrEmpty(primary.Url))
+                {
+                    var backdrop = new RemoteImageInfo
+                    {
+                        ProviderName = primary.ProviderName,
+                        Url = primary.Url + PrimaryAsBackdropSuffix,
+                        Type = ImageType.Backdrop,
+                    };
+
+                    // Same image as the poster: reuse the size, and omit it below the minimum.
+                    if (!primary.Width.HasValue || primary.Width.Value >= BackdropMinWidth)
+                    {
+                        backdrop.Width = primary.Width;
+                        backdrop.Height = primary.Height;
+                    }
+
+                    result.Add(backdrop);
                 }
             }
 
@@ -125,15 +151,13 @@ namespace PhoenixAdult.Helpers.Utils
                 }
             }
 
-            var backdrops = clearImages.Where(o => o.Type == ImageType.Backdrop);
-            if (backdrops.Any())
+            // A site returning banners only used to throw here.
+            var backdrops = clearImages.Where(o => o.Type == ImageType.Backdrop).ToList();
+            var primaryUrl = clearImages.FirstOrDefault(o => o.Type == ImageType.Primary)?.Url;
+            if (backdrops.Count > 0 && primaryUrl != null && primaryUrl == backdrops[0].Url)
             {
-                var firstBackdrop = backdrops.First();
-                if (firstBackdrop != null && clearImages.Where(o => o.Type == ImageType.Primary).First().Url == firstBackdrop.Url)
-                {
-                    clearImages.Remove(firstBackdrop);
-                    clearImages.Add(firstBackdrop);
-                }
+                clearImages.Remove(backdrops[0]);
+                clearImages.Add(backdrops[0]);
             }
 
             return clearImages;
@@ -146,8 +170,8 @@ namespace PhoenixAdult.Helpers.Utils
                 return item;
             }
 
-            // 防盗链 CDN（如 phncdn.com）的签名 URL 缺少 Referer 会 403，
-            // 校验必须与最终下载使用同一套请求头，否则会把可用的图判为不可用。
+            // Referer protected CDNs must see the same headers as the final download,
+            // otherwise valid images look unusable.
             var headers = Helper.GetImageRefererHeaders(item.Url);
 
             var http = await HTTP.Request(item.Url, HttpMethod.Head, cancellationToken, headers).ConfigureAwait(false);
@@ -175,10 +199,8 @@ namespace PhoenixAdult.Helpers.Utils
                                 Type = item.Type,
                             };
 
-                            // Jellyfin 自动下载 backdrop 时按 MinWidth=1280 过滤（TypeOptions 默认值），
-                            // 宽度不足的图会被静默跳过，导致 backdrop 无法自动设置（手动设置无此限制）。
-                            // 对不满足尺寸的 backdrop 不填 Width/Height，Jellyfin 的过滤检查
-                            // (image.Width.HasValue && image.Width.Value < minWidth) 不成立，即可正常下载。
+                            // Backdrops below the minimum width must stay size-less,
+                            // otherwise Jellyfin skips them when downloading.
                             if (item.Type != ImageType.Backdrop || dimensions.Value.width >= BackdropMinWidth)
                             {
                                 result.Height = dimensions.Value.height;
@@ -261,7 +283,7 @@ namespace PhoenixAdult.Helpers.Utils
                     marker == 0xCF)
                 {
                     // We found a SOF (Start of Frame) marker
-                    // 段结构: FF C0 [2B segment length] [1B precision] [2B height] [2B width]
+                    // JPEG SOF0: FF C0, length, precision, height, width.
                     if (pos + 6 < bytes.Length)
                     {
                         int height = (bytes[pos + 3] << 8) | bytes[pos + 4];

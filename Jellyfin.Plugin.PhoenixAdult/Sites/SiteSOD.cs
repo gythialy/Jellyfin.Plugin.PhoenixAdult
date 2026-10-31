@@ -21,9 +21,9 @@ using Jellyfin.Data.Enums;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// SOD / ec.sod.co.jp。条目 ID 就是 JAV 番号（STAR-399 / DLDSS-077 / START-114-V），
-    /// 详情页为 /videos/?id={id}，字段在 #v_introduction 的表格里。
-    /// 页面先给一个年龄确认弹窗（#modal .pkg_age），点进去会种 cookie，随后重新取详情页。
+    /// SOD (ec.sod.co.jp); scene id is the JAV code.
+    /// Detail is /videos/?id={id} with fields in the #v_introduction table.
+    /// An age gate modal sets a cookie before the page loads.
     /// </summary>
     public class SiteSOD : IProviderBase
     {

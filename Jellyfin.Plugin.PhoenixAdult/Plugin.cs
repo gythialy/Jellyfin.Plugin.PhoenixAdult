@@ -48,6 +48,12 @@ namespace PhoenixAdult
             });
             */
 #endif
+
+            this.EnsureImageRefererDefaults();
+
+#if !__EMBY__
+            Helpers.Logger.Info($"Image proxy base URL: {Helpers.Utils.ImageProxyUrl.BaseUrl ?? "(unavailable)"}");
+#endif
         }
 
 #if __EMBY__
@@ -57,6 +63,32 @@ namespace PhoenixAdult
 #endif
 
         public static ILogger Log { get; set; }
+
+        /// <summary>
+        /// Seed the built-in referer rules into an empty configuration so they appear in the settings page.
+        /// </summary>
+        private void EnsureImageRefererDefaults()
+        {
+            var config = this.Configuration;
+            if (config == null)
+            {
+                return;
+            }
+
+            var seeded = ImageRefererDefaults.SeedIfEmpty(config.ImageReferers);
+            if (seeded == null)
+            {
+                return;
+            }
+
+            config.ImageReferers = seeded;
+            this.UpdateConfiguration(config);
+#if __EMBY__
+            Log?.Info($"Seeded default image referer rules: {string.Join(", ", config.ImageReferers)}");
+#else
+            Log?.LogInformation("Seeded default image referer rules: {Rules}", string.Join(", ", config.ImageReferers));
+#endif
+        }
 
         public static Plugin Instance { get; private set; }
 

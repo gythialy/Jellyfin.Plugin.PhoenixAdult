@@ -25,8 +25,8 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
 
-            // MetArt API 搜索按短语/AND 严格匹配：完整词（演员+标题混串）→ 0 结果。
-            // 文件名 Site.YY.MM.DD.Actors.Title 的演员在开头 → 取前 2 词搜索，日期排序选目标。
+            // MetArt ANDs the words, so a full mixed string returns nothing;
+            // search the first two words (actors) and pick by date.
             searchTitle = Helper.GetSearchTitle(searchTitle, 2);
 
             string searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}/search-results?query%5BcontentType%5D=movies&searchPhrase={Uri.EscapeDataString(searchTitle)}";
@@ -34,7 +34,7 @@ namespace PhoenixAdult.Sites
             JObject searchResults;
             if (PhoenixAdult.Helpers.Utils.FlareSolverr.IsConfigured)
             {
-                // sexart.com 等 MetArt 系列站被 Cloudflare 拦裸请求，走 FlareSolverr 浏览器上下文
+                // MetArt family sites block direct requests, so use FlareSolverr.
                 searchResults = await PhoenixAdult.Helpers.Utils.FlareSolverr.GetJson(searchUrl, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
             else
@@ -61,7 +61,7 @@ namespace PhoenixAdult.Sites
                     string titleNoFormatting = searchResult["item"]["name"].ToString();
                     var sceneUrlParts = searchResult["item"]["path"].ToString().Split('/').Skip(1).ToArray();
 
-                    // path 形如 /model/{模型}/movie/{日期}/{场景名}
+                    // path looks like /model/{model}/movie/{date}/{scene}.
                     string sceneUrl = $"{Helper.GetSearchSearchURL(siteNum)}/movie?name={sceneUrlParts[4]}&date={sceneUrlParts[3]}";
                     string curId = Helper.Encode(sceneUrl);
                     string releaseDate = string.Empty;

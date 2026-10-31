@@ -8,8 +8,8 @@ using RouteDb = PhoenixAdult.Helpers.Utils.Database;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 番号路由的离线测试：规则来自 data/IdRoutes.json（这里注入等价的内存路由表），
-/// 校验 prefix / label 正则的匹配优先级与站点解析。
+/// Offline routing tests with an in-memory route table:
+/// prefix and label matching order, and site resolution.
 /// </summary>
 public class SearchRouterTests : IDisposable
 {
@@ -43,7 +43,7 @@ public class SearchRouterTests : IDisposable
 
     public SearchRouterTests()
     {
-        // Database 的静态构造依赖 Plugin.Instance，先让宿主环境就绪
+        // Database's static constructor needs Plugin.Instance, so initialise the host first.
         TestInitializer.Init();
         RouteDb.IdRoutes = CreateSampleRoutes();
     }

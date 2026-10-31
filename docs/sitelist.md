@@ -2757,5 +2757,6 @@ _由 `data/SiteList.json` 生成：218 个网络，2285 个站点条目。_
 | 252 | SiteGcolle | Gcolle |
 | 253 | SiteHeyDouga | HeyDouga |
 | 254 | NetworkD2Pass | c0930, h0930, h4610 |
+| 255 | SiteJavDB | JavDB |
 
 Babepedia / AV-LEAGUE / ThePornDB are actor sources. ModelMediaAsia, Gcolle, HeyDouga and the D2Pass family are currently down or redesigned; their regression cases use allowZero.

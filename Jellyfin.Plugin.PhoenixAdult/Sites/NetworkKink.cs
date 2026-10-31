@@ -90,14 +90,14 @@ namespace PhoenixAdult.Sites
             {
                 var url = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle) + "&ageverified=g";
 
-                // kink.com 被 Cloudflare 拦裸请求，需 FlareSolverr 浏览器上下文；无配置时直连兜底
+                // kink.com blocks direct requests, so use FlareSolverr.
                 var data = await this.GetSearchPage(url, cancellationToken);
                 if (data == null)
                 {
                     return result;
                 }
 
-                // 新版页面: div.card.shoot-thumbnail, 链接 a[href^=/shoot/], 标题 a[title]
+                // Current template: div.card.shoot-thumbnail with a[href^=/shoot/] and a[title].
                 var searchResults = data.SelectNodesSafe("//div[contains(concat(' ', normalize-space(@class), ' '), ' shoot-thumbnail ')]");
                 foreach (var searchResult in searchResults)
                 {

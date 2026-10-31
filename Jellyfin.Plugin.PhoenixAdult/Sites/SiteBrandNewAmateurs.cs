@@ -28,7 +28,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            // BrandNewAmateurs 无站内搜索，按分页浏览 /categories/movies/{page}/latest/ 再按标题过滤
+            // No site search: browse /categories/movies/{page}/latest/ and filter by title.
             var searchTerms = searchTitle.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
                 .Where(t => t.Length >= 3)
                 .Select(t => t.ToLowerInvariant())
@@ -65,7 +65,7 @@ namespace PhoenixAdult.Sites
                         continue;
                     }
 
-                    // 标题过滤（场景名通常含搜索词；演员名场景则匹配标题）
+                    // Title filter: scene titles usually contain the term.
                     var haystack = titleNoFormatting.ToLowerInvariant();
                     if (searchTerms.Any() && !searchTerms.All(haystack.Contains))
                     {
@@ -87,7 +87,7 @@ namespace PhoenixAdult.Sites
                     result.Add(item);
                 }
 
-                // 如果本页已匹配到结果，继续翻页意义不大
+                // Once a page has matches, further pages rarely help.
                 if (result.Count > 0 && page >= 2)
                 {
                     break;

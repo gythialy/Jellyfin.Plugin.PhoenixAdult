@@ -84,8 +84,7 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
-            // 场景页只接受 GET：POST https://www.pornhub.com/view_video.php?viewkey=...
-            // 会被站点直接返回 404 "Page Not Found"，导致标题/演员/日期/图片全部为空。
+            // The scene page accepts GET only; a POST answers 404 and leaves every field empty.
             var http = await HTTP.Request(sceneURL, HttpMethod.Get, cancellationToken).ConfigureAwait(false);
             if (!http.IsOK)
             {
@@ -102,9 +101,8 @@ namespace PhoenixAdult.Sites
 
             result.Item.ExternalId = sceneURL;
 
-            // 标题文本位于 h1 的子节点：<h1 class="title"><span class="inlineFree">…</span></h1>，
-            // 直接取 h1 的文本会得到空串。与 TPDB networkPornhub 的
-            // '//h1[@class="title"]/span/text()' 选择器保持一致，并保留回退。
+            // The title sits in an h1 child span (same selector as TPDB), not in the h1 text,
+            // so reading the h1 alone returns an empty string.
             result.Item.Name = sceneData.SelectSingleText("//h1[@class='title']/span");
             if (string.IsNullOrEmpty(result.Item.Name))
             {
@@ -170,8 +168,7 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
-            // 场景页只接受 GET：POST https://www.pornhub.com/view_video.php?viewkey=...
-            // 会被站点直接返回 404 "Page Not Found"，导致标题/演员/日期/图片全部为空。
+            // The scene page accepts GET only; a POST answers 404 and leaves every field empty.
             var http = await HTTP.Request(sceneURL, HttpMethod.Get, cancellationToken).ConfigureAwait(false);
             if (!http.IsOK)
             {
@@ -180,8 +177,7 @@ namespace PhoenixAdult.Sites
 
             var sceneData = HTML.ElementFromStream(http.ContentStream);
 
-            // 场景页新版已移除 div#player 内的 <img>，改为读取社交卡片元数据。
-            // 与 TPDB networkPornhub 的 '//meta[@property="og:image"]/@content|//meta[@name="twitter:image"]/@content' 一致。
+            // The current player has no <img>, so read the social card meta.
             var img = sceneData.SelectSingleText("//meta[@property='og:image']/@content");
             if (string.IsNullOrEmpty(img))
             {

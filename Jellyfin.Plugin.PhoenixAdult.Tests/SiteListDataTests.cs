@@ -4,8 +4,8 @@ using System.Text.RegularExpressions;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 离线数据完整性测试：验证 data/SiteList.json 与实现类的映射关系，
-/// 不发起任何网络请求，可在任意环境运行。
+/// Offline data tests for the SiteList.json to handler mapping;
+/// no network requests.
 /// </summary>
 public class SiteListDataTests
 {
@@ -82,7 +82,7 @@ public class SiteListDataTests
     [Fact]
     public void SiteIDList_Handler能被TypeGetType解析()
     {
-        // 与运行时 Helper.GetBaseSiteByName 行为一致：Type.GetType(name, ignoreCase: true)
+        // Same lookup as Helper.GetBaseSiteByName: Type.GetType(name, ignoreCase: true).
         using var doc = LoadSiteList();
         var root = doc.RootElement;
         var sid = root.GetProperty("SiteIDList");
@@ -114,7 +114,7 @@ public class SiteListDataTests
 
         foreach (var group in sites.EnumerateObject())
         {
-            // 同名且同 URL 才算重复（同名不同 URL 是网络入口+独立站的正常组合）
+            // Duplicate means same name and same URL.
             var seen = new Dictionary<(string Name, string Url), string>(new NameUrlComparer());
             foreach (var site in group.Value.EnumerateObject())
             {
@@ -217,7 +217,7 @@ public class SiteListDataTests
     [Fact]
     public void 合并的andrer站点_已在SiteList中()
     {
-        // 验证 andrer 独有的一些代表性站点已合并进来
+        // A few representative andrer sites must be merged in.
         var expectedUrls = new[]
         {
             "https://www.metart.com",
@@ -251,7 +251,7 @@ public class SiteListDataTests
     [Fact]
     public void 本地原有站点_未被覆盖()
     {
-        // 本地自研站点（组 52-62 附近）必须保留
+        // Locally added sites must stay.
         using var doc = LoadSiteList();
         var root = doc.RootElement;
         var sites = root.GetProperty("Sites");

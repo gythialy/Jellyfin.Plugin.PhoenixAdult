@@ -124,7 +124,9 @@ Plugin settings are on **Dashboard → Plugins → PhoenixAdult**. Defaults are 
 | Disable Caching | `false` | Turn off HTTP response caching. Useful while debugging a site, but slower and heavier on the site. |
 | Disable SSL Certificate Check | `false` | Accept invalid TLS certificates. Only for broken/MITM'ing setups. |
 | FlareSolverr URL | `http://localhost:8191/` | Address of a FlareSolverr instance. Empty disables FlareSolverr; a JSON-capable build (e.g. the fork with `contentType: json` support) is required for protected APIs. |
-| Image Referer rules | *(empty)* | One `host=referer` per line. Appends to or overrides the built-in rules; an empty referer disables a built-in rule for that host. |
+| Image Referer rules | `phncdn.com=https://www.pornhub.com/`<br>`javbus.com=https://www.javbus.com/` | One `host=referer` per line. The defaults above are pre-filled on upgrade and can be edited; an empty referer (`host=`) disables that host. |
+| JavDB Cookie | *(empty)* | Optional `javdb.com` session cookie (paste the whole `Cookie:` request header). Only needed for actor pages and uncensored titles, which JavDB gates behind a login; censored titles, covers and samples work without it. See [JavDB](./docs/javdb.md#21-javdb-cookie可选). |
+| Use a work cover when an actor has no portrait | `true` | When every portrait source is empty, use the cover of one of the actor's JavDB titles instead (labelled `JavDB (cover)`). Turn off to keep a missing photo instead. |
 | Proxy Enable / Host / Port / Login / Password | `false` / — | Route provider traffic through an HTTP or SOCKS5 proxy, optionally with credentials. |
 | Use FilePath for matching | `false` | Search using the full file path (folders included) instead of the bare file name. |
 | Default SiteName | *(empty)* | Site name prepended to every search when filenames do not contain one. |
@@ -222,6 +224,7 @@ docker run --rm phoenixadult-tests dotnet test -c Release --no-build \
 - [Scraper lessons](./docs/scraper-lessons.md) — recurring defect patterns and debugging notes
 - [Provider regression coverage](./docs/provider-regression-uncovered.md) — handlers still missing test cases
 - [allowZero sites](./docs/allowzero-sites.md) — sites kept in the regression suite as "no result is not a failure" (geo/Cloudflare blocks, maintenance, redesigns) and how to re-verify them
+- [JavDB](./docs/javdb.md) — JavDB source: what it scrapes, the optional login cookie (how to get it, expiry, security), the actor cover fallback and its failure semantics
 - [Local overrides](./docs/local-overrides.md) — `Actors.local.json` / `IdRoutes.local.json`: where they live, their JSON shape, merge semantics and how to apply them
 
 ## Contributing

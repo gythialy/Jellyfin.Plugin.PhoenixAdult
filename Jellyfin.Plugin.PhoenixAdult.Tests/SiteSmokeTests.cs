@@ -8,9 +8,9 @@ using PhoenixAdult.Helpers.Utils;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 在线冒烟测试：对每个 SiteIDList handler 实例化并执行一次真实 Search 请求，
-/// 验证实现类能正常解析站点页面。需要网络访问。
-/// 默认跳过（[Trait("Category", "Online")]），在 docker 测试环境中执行。
+/// Online smoke test: instantiate every SiteIDList handler and run one real Search.
+/// Needs network access.
+/// Skipped by default (Category=Online).
 /// </summary>
 [Trait("Category", "Online")]
 public class SiteSmokeTests
@@ -42,7 +42,7 @@ public class SiteSmokeTests
             return (group, 0, string.Empty, string.Empty);
         }
 
-        // 组内第一个站点作为探测目标（base URL 拥有者）
+        // The first site of the group owns the base URL.
         var first = groupSites.EnumerateObject().First();
         var rec = first.Value;
         var url = rec.GetArrayLength() >= 2 ? rec[1].GetString() : string.Empty;
@@ -118,7 +118,7 @@ public class SiteSmokeTests
         var timeout = results.Count(r => r.Value == "TIMEOUT");
         var err = results.Count(r => r.Value.StartsWith("ERR"));
 
-        // 输出完整结果到控制台（TestOutput 模式）
+        // Print the full result to the console.
         var lines = new List<string> { $"总 handler: {handlers.Count} | OK: {ok} | SKIP: {skip} | TIMEOUT: {timeout} | ERR: {err}" };
         foreach (var r in results.OrderBy(r => r.Key))
         {
@@ -128,11 +128,11 @@ public class SiteSmokeTests
         var report = string.Join(Environment.NewLine, lines);
         Console.WriteLine(report);
 
-        // 报告写到仓库根（docker 挂载或 PHOENIX_REPO_ROOT 可见）
+        // The report goes to the repository root.
         var reportPath = Path.Combine(TestPaths.RepoRoot, "smoke-report.txt");
         File.WriteAllText(reportPath, report);
 
-        // 断言：所有有实现类的 handler 都必须能完成请求（OK 或 TIMEOUT 可接受，ERR 视为失败）
+        // Every handler with an implementation must finish (OK or TIMEOUT pass, ERR fails).
         var failed = results.Where(r => r.Value.StartsWith("ERR")).ToList();
         Assert.True(failed.Count == 0,
             $"以下 handler 搜索失败:{Environment.NewLine}{string.Join(Environment.NewLine, failed.Select(f => $"{f.Key}: {f.Value}"))}");

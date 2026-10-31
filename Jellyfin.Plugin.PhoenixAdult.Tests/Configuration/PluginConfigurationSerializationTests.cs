@@ -1,23 +1,19 @@
 using System.Xml.Serialization;
+using PhoenixAdult;
 using PhoenixAdult.Configuration;
 using PhoenixAdult.Helpers;
 
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 插件配置序列化回归测试。
-/// Jellyfin/Emby 用 System.Xml.Serialization.XmlSerializer 把插件配置存成 XML，
-/// 配置类里只要出现 IDictionary 成员，序列化器在反射类型时就会抛
-/// "Cannot serialize member ... because it implements IDictionary"，
-/// 导致整个配置的读取与保存全部失败（历史 bug：ImageReferers 曾是
-/// Dictionary&lt;string, string&gt;）。
+/// Serialization tests: XmlSerializer rejects IDictionary members, which used to break the whole configuration.
 /// </summary>
 public class PluginConfigurationSerializationTests
 {
     [Fact]
     public void XmlSerializer_可以反射配置类型()
     {
-        // 构造序列化器即会扫描全部成员，IDictionary 成员会在此抛 NotSupportedException
+        // Building the serializer scans every member; an IDictionary member throws here.
         var serializer = new XmlSerializer(typeof(PluginConfiguration));
 
         Assert.NotNull(serializer);
@@ -38,6 +34,31 @@ public class PluginConfigurationSerializationTests
         var roundTripped = (PluginConfiguration)serializer.Deserialize(reader)!;
 
         Assert.Equal(config.ImageReferers, roundTripped.ImageReferers);
+    }
+
+    [Fact]
+    public void 空配置会补上内置Referer规则()
+    {
+        Assert.Equal(
+            new[] { "phncdn.com=https://www.pornhub.com/", "javbus.com=https://www.javbus.com/" },
+            ImageRefererDefaults.SeedIfEmpty(null)!.ToArray());
+        Assert.Equal(
+            new[] { "phncdn.com=https://www.pornhub.com/", "javbus.com=https://www.javbus.com/" },
+            ImageRefererDefaults.SeedIfEmpty(new[] { "   " })!.ToArray());
+
+        // Existing rules are kept; deleted entries must not come back.
+        Assert.Null(ImageRefererDefaults.SeedIfEmpty(new[] { "example.com=https://example/" }));
+        Assert.Null(ImageRefererDefaults.SeedIfEmpty(new[] { "phncdn.com=" }));
+    }
+
+    [Fact]
+    public void 内置Referer表由默认规则派生()
+    {
+        TestInitializer.Init();
+
+        Assert.Equal("https://www.pornhub.com/", Consts.ImageReferers["phncdn.com"]);
+        Assert.Equal("https://www.javbus.com/", Consts.ImageReferers["javbus.com"]);
+        Assert.Equal(ImageRefererDefaults.Rules.Length, Consts.ImageReferers.Count);
     }
 
     [Fact]

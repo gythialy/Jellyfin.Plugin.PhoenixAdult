@@ -100,7 +100,7 @@ namespace PhoenixAdult.Sites
             }
             else
             {
-                // /studios/search 对长搜索串无结果（返回通用列表），文件名 Site.YY.MM.DD.Actors.Title 的演员在开头 → 取前 2 词
+                // Long search strings return the generic list, so search the first two words (the actors).
                 searchTitle = Helper.GetSearchTitle(searchTitle, 2);
 
                 string encodedTitle = Uri.EscapeDataString(searchTitle);
@@ -272,8 +272,8 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// 列表项海报：优先 TPDB 的 update-video-wrapper 背景图 / video@poster（分辨率高于 img），
-        /// 取不到再回落到统一提取器。
+        /// Poster: prefer the TPDB background image or video@poster (higher resolution),
+        /// then the shared extractor.
         /// </summary>
         private static string GetPosterUrl(HtmlNode node, int[] siteNum)
         {

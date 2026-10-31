@@ -15,8 +15,8 @@ using PhoenixAdult.Helpers.Utils;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// Babepedia 演员元数据源：姓名/别名（含汉字与罗马字互查）、简介、生日、出生地、国籍、头像。
-    /// 站点有 Cloudflare 挑战，统一走 Fetcher（自动回落 FlareSolverr）。
+    /// Babepedia actress source: names and aliases, summary, birthday, birthplace, nationality, portrait.
+    /// Cloudflare protected, so use Fetcher.
     /// </summary>
     public class ActorBabepedia : IProviderBase
     {
@@ -66,7 +66,7 @@ namespace PhoenixAdult.Sites
 
             if (result.Count == 0)
             {
-                // 精确姓名会 302 到个人资料页（没有 .results 卡片），直接取资料页姓名
+                // An exact name redirects to the profile page (no result card), so read the name there.
                 var profileName = actorData.SelectSingleText("//*[@id='babename']").Trim();
                 if (!string.IsNullOrEmpty(profileName))
                 {

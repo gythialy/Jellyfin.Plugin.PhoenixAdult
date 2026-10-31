@@ -48,7 +48,7 @@ namespace PhoenixAdult.Sites
             string apiUrl = await this.GetApiUrl(siteNum, "/videos/", cancellationToken);
             if (apiUrl == null)
             {
-                // /videos/ 页面改版拿不到 ah/aet token（2026-08-12）→ 分页浏览兜底（TPDB 同款）
+                // The /videos/ page no longer yields the token, so fall back to pagination.
                 return await this.SearchByPagination(siteNum, searchTitle, cancellationToken);
             }
 
@@ -196,7 +196,7 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// SAPI token 拿不到时的分页浏览兜底：翻页收集 /trailers/ 链接 + 标题分词过滤。
+        /// Pagination fallback without a token: collect /trailers/ links and filter by title words.
         /// </summary>
         private async Task<List<RemoteSearchResult>> SearchByPagination(int[] siteNum, string searchTitle, CancellationToken cancellationToken)
         {

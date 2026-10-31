@@ -4,7 +4,7 @@ using PhoenixAdult.Helpers.Utils;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// JAV 番号规范化离线测试：必须保留番号中间的 '-'，且不能把 slug 误切（dldss339 -> DLDSS-339）。
+/// Offline tests for code normalisation: the hyphen must survive and slugs must not be misread.
 /// </summary>
 public class JavIdTests
 {

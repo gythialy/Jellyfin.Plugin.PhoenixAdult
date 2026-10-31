@@ -62,7 +62,7 @@ namespace PhoenixAdult.Sites
 
                 if (searchResult.ContainsKey("pictures") && searchResult["pictures"] is JObject dogfartPics)
                 {
-                    // 与 NetworkGammaEnt 一致：pictures 值形如 "/{id}/..."，直接拼接
+                    // Like NetworkGammaEnt: pictures values look like "/{id}/...", concatenate directly.
                     var image = NetworkGammaEnt.GetBestPictureURL(dogfartPics);
                     if (!string.IsNullOrEmpty(image))
                     {

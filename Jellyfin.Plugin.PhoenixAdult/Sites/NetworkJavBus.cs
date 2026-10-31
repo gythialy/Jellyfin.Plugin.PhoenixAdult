@@ -65,38 +65,103 @@ namespace PhoenixAdult.Sites
 
                 foreach (var searchResult in searchResults)
                 {
-                    string titleNoFormatting = searchResult.SelectSingleNode(".//span[1]")?.InnerText.Replace("\t", string.Empty).Replace("\r\n", string.Empty).Trim();
+                    string titleNoFormatting = ParseSearchTitle(searchResult);
                     string javid = searchResult.SelectSingleNode(".//date[1]")?.InnerText.Trim();
                     string sceneURL = searchResult.GetAttributeValue("href", string.Empty);
                     string curID = Helper.Encode(sceneURL);
 
-                    result.Add(new RemoteSearchResult
+                    // <date>[1] is the code, <date>[2] the release date.
+                    // PremiereDate drives the dialog date and result ordering.
+                    var searchDateValue = searchResult.SelectSingleNode(".//date[2]")?.InnerText.Trim();
+
+                    // MovieProvider adds the site prefix; keep the type and the code here.
+                    var searchResultItem = new RemoteSearchResult
                     {
                         ProviderIds = { { Plugin.Instance.Name, curID } },
-                        Name = $"[{searchType}][{javid}] {titleNoFormatting}",
+                        Name = $"[{searchType}] {javid} {titleNoFormatting}",
                         SearchProviderName = Plugin.Instance.Name,
-                    });
+                    };
+
+                    if (!string.IsNullOrEmpty(searchDateValue)
+                        && DateTime.TryParseExact(searchDateValue, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var searchDateObj))
+                    {
+                        searchResultItem.PremiereDate = searchDateObj;
+                        searchResultItem.ProductionYear = searchDateObj.Year;
+                    }
+
+                    // The card thumbnail also needs a Referer, so the dialog URL must go through the proxy.
+                    var thumbSrc = searchResult.SelectSingleNode(".//div[contains(@class, 'photo-frame')]//img")?.GetAttributeValue("src", string.Empty)
+                        ?? searchResult.SelectSingleNode(".//img")?.GetAttributeValue("src", string.Empty);
+                    if (!string.IsNullOrEmpty(thumbSrc))
+                    {
+                        if (thumbSrc.StartsWith("//", StringComparison.Ordinal))
+                        {
+                            thumbSrc = "https:" + thumbSrc;
+                        }
+                        else if (!thumbSrc.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                        {
+                            thumbSrc = Helper.GetSearchBaseURL(siteNum) + thumbSrc;
+                        }
+
+                        searchResultItem.ImageUrl = ImageProxyUrl.ForBrowser(thumbSrc);
+                    }
+
+                    result.Add(searchResultItem);
                 }
             }
 
-            if (!string.IsNullOrEmpty(directJAVID))
+            // Search occasionally misses codes whose detail page still works: try the detail page,
+            // but only when both searches returned nothing and the page really is a title page
+            // (it has the info panel or bigImage), or a 404 title would become a result.
+            if (!string.IsNullOrEmpty(directJAVID) && result.Count == 0)
             {
                 string sceneURL = Helper.GetSearchSearchURL(siteNum) + directJAVID;
                 var searchResultNode = await HTML.ElementFromURL(sceneURL, cancellationToken, null, this.GetCookies());
-                if (searchResultNode != null)
+                if (searchResultNode != null
+                    && (searchResultNode.SelectSingleNode("//div[@class='col-md-3 info']") != null
+                        || searchResultNode.SelectSingleNode("//a[@class='bigImage']") != null))
                 {
                     string javTitle = searchResultNode.SelectSingleNode("//head/title")?.InnerText.Trim().Replace(" - JavBus", string.Empty);
-                    string curID = Helper.Encode(sceneURL);
-                    result.Add(new RemoteSearchResult
+                    if (!string.IsNullOrEmpty(javTitle))
                     {
-                        ProviderIds = { { Plugin.Instance.Name, curID } },
-                        Name = $"[Direct][{directJAVID}] {javTitle}",
-                        SearchProviderName = Plugin.Instance.Name,
-                    });
+                        string curID = Helper.Encode(sceneURL);
+                        result.Add(new RemoteSearchResult
+                        {
+                            ProviderIds = { { Plugin.Instance.Name, curID } },
+                            Name = $"[Direct][{directJAVID}] {javTitle}",
+                            SearchProviderName = Plugin.Instance.Name,
+                        });
+                    }
                 }
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Clean title of a search card.
+        /// The card span also holds a button, line breaks and two date nodes,
+        /// which would otherwise repeat the code and date inside the title.
+        /// </summary>
+        /// <returns>Title collapsed to single spaces.</returns>
+        internal static string ParseSearchTitle(HtmlNode searchResult)
+        {
+            var span = searchResult?.SelectSingleNode(".//span[1]");
+            if (span == null)
+            {
+                return string.Empty;
+            }
+
+            var clone = span.CloneNode(true);
+            foreach (var node in clone.SelectNodesSafe(".//date|.//button|.//br|.//script"))
+            {
+                node.Remove();
+            }
+
+            var text = Regex.Replace(clone.InnerText.Replace("\t", " ").Replace("\r", " ").Replace("\n", " "), @"\s{2,}", " ").Trim();
+
+            // Drop the leftover "/" between the two date nodes.
+            return text.TrimEnd(' ', '/', '\u00a0');
         }
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
@@ -145,8 +210,12 @@ namespace PhoenixAdult.Sites
             var dateNode = detailsPageElements.SelectSingleNode("//div[@class='col-md-3 info']/p[2]");
             if (dateNode != null)
             {
-                string dateStr = dateNode.InnerText.Replace("Release Date:", string.Empty).Trim();
-                if (dateStr != "0000-00-00" && DateTime.TryParseExact(dateStr, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                // Labels are localised per request language, so read the date itself
+                // with a regex instead of keeping a label list per language.
+                var dateMatch = Regex.Match(dateNode.InnerText, @"[0-9]{4}-[0-9]{2}-[0-9]{2}");
+                if (dateMatch.Success
+                    && dateMatch.Value != "0000-00-00"
+                    && DateTime.TryParseExact(dateMatch.Value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                 {
                     movie.PremiereDate = parsedDate;
                     movie.ProductionYear = parsedDate.Year;
@@ -207,7 +276,9 @@ namespace PhoenixAdult.Sites
                 return images;
             }
 
-            var posterNodes = detailsPageElements.SelectNodes("//a[contains(@href, '/cover/') or @class='sample-box']");
+            // Only sample-box links are screenshots; the cover would collide with Primary
+            // and be deduplicated away.
+            var posterNodes = detailsPageElements.SelectNodes("//a[@class='sample-box' or contains(@href, '/sample/')]");
             if (posterNodes != null)
             {
                 foreach (var poster in posterNodes)
@@ -226,28 +297,66 @@ namespace PhoenixAdult.Sites
             if (coverImageNode != null)
             {
                 string coverImageUrl = coverImageNode.GetAttributeValue("href", string.Empty);
-                string coverImageCode = coverImageUrl.Split('/').Last().Split('.').First().Split('_').First();
-                string imageHost = string.Join("/", coverImageUrl.Split('/').Take(coverImageUrl.Split('/').Length - 2));
-                string thumbUrl = $"{imageHost}/thumb/{coverImageCode}.jpg";
-                if (thumbUrl.Contains("/images."))
+
+                // Uncensored pages have no thumb directory (the derived path 404s),
+                // so the cover itself is used as Primary.
+                // Censored pages do have /pics/thumb/<code>.jpg.
+                string primaryUrl = coverImageUrl.StartsWith("/imgs/", StringComparison.OrdinalIgnoreCase)
+                    ? coverImageUrl
+                    : BuildCoverThumbUrl(coverImageUrl);
+
+                if (string.IsNullOrEmpty(primaryUrl))
                 {
-                    thumbUrl = thumbUrl.Replace("thumb", "thumbs");
+                    return images;
                 }
 
-                if (!thumbUrl.StartsWith("http"))
+                if (!primaryUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
-                    thumbUrl = Helper.GetSearchBaseURL(siteNum) + thumbUrl;
+                    primaryUrl = Helper.GetSearchBaseURL(siteNum) + primaryUrl;
                 }
 
-                images.Insert(0, new RemoteImageInfo { Url = thumbUrl, Type = ImageType.Primary });
+                images.Insert(0, new RemoteImageInfo { Url = primaryUrl, Type = ImageType.Primary });
             }
 
             return images;
         }
 
+        /// <summary>
+        /// Derive the thumbnail from the cover URL: /pics/cover/x_b.jpg -> /pics/thumb/x.jpg.
+        /// Returns null when the path cannot be derived.
+        /// </summary>
+        private static string BuildCoverThumbUrl(string coverImageUrl)
+        {
+            if (string.IsNullOrEmpty(coverImageUrl))
+            {
+                return null;
+            }
+
+            var parts = coverImageUrl.Split('/');
+            if (parts.Length < 3)
+            {
+                return null;
+            }
+
+            var coverImageCode = parts[parts.Length - 1].Split('.')[0].Split('_')[0];
+            if (string.IsNullOrEmpty(coverImageCode))
+            {
+                return null;
+            }
+
+            var imageHost = string.Join("/", parts.Take(parts.Length - 2));
+            var thumbUrl = $"{imageHost}/thumb/{coverImageCode}.jpg";
+            if (thumbUrl.Contains("/images."))
+            {
+                thumbUrl = thumbUrl.Replace("thumb", "thumbs");
+            }
+
+            return thumbUrl;
+        }
+
         private IDictionary<string, string> GetCookies()
         {
-            // age=verified：JavBus 新版年龄验证，缺失时搜索页只返回年龄门（0 结果）
+            // age=verified: without it the search page returns only the age gate.
             return new Dictionary<string, string> { { "existmag", "all" }, { "dv", "1" }, { "age", "verified" } };
         }
     }

@@ -18,27 +18,26 @@ using PhoenixAdult.Helpers.Utils;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// 一本道系四站共用实现：0=10musume、1=1Pondo、2=MuraMura、3=PacoPacomama。
-    /// 条目 ID 形如「6 位日期_2~3 位序号」（042922_01 / 071319_870），站点没有可用的站内搜索，
-    /// 只能由文件名里抽出的 ID 直取官方 JSON：
+    /// Shared implementation for the 10musume family: 0=10musume, 1=1Pondo, 2=MuraMura, 3=PacoPacomama.
+    /// The scene id is "date_sequence" (042922_01); there is no usable site search, so the id comes
+    /// from the file name and is used to fetch the official JSON directly.
     /// {base}/dyn/phpauto/movie_details/movie_id/{id}.json。
-    /// 封面/图集见 1pondo/core：
-    /// 新图集 {base}/dyn/dla/json/movie_gallery/{id}.json + /dyn/dla/images/{Img}；
-    /// 旧图集 {base}/dyn/phpauto/movie_galleries/movie_id/{id}.json + /assets/sample/{id}/popu/{Filename}。
+    /// Galleries: new {base}/dyn/dla/json/movie_gallery/{id}.json,
+    /// old {base}/dyn/phpauto/movie_galleries/movie_id/{id}.json.
     /// </summary>
     public class NetworkPondo : IProviderBase
     {
-        // 日期式番号：042922_01 / 071319-870 / 042922 01（文件名清洗后分隔符会变成空格）
+        // Date style code: 042922_01, 071319-870 or 042922 01.
         private static readonly Regex MovieIdRegex = new Regex(
             @"(?<![0-9])([0-9]{6})[_\- ]([0-9]{2,3})(?![0-9])",
             RegexOptions.CultureInvariant);
 
-        // 1pondo 的缩略图字段偶尔返回 https:///moviepages/... 这种缺 host 的病态 URL
+        // 1pondo occasionally returns a hostless thumbnail URL (https:///moviepages/...).
         private static readonly Regex BrokenSchemeRegex = new Regex(
             @"^https?:///",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
-        // 分辨率/帧率不是题材，从 UCNAME 里剔除
+        // Resolution and frame rate are not genres; drop them from UCNAME.
         private static readonly Regex SpecGenreRegex = new Regex(
             @"^(?:[0-9]{3,4}p|[0-9]{2,4}fps)$",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
@@ -68,7 +67,7 @@ namespace PhoenixAdult.Sites
                 LegacyGalleryPath = "/assets/sample/{0}/popu/{1}",
             },
 
-            // 2 = MuraMura（无图集接口）
+            // 2 = MuraMura, which has no gallery API.
             new PondoSite
             {
                 Maker = "ムラムラってくる素人",
@@ -225,7 +224,7 @@ namespace PhoenixAdult.Sites
             var cover = scene?.CoverUrl;
             if (string.IsNullOrEmpty(cover))
             {
-                // 详情 JSON 挂了也至少给出结构固定的封面
+                // Even with a broken detail JSON, return the deterministic cover.
                 cover = FixUrl(baseUrl, $"/moviepages/{movieID}/images/str.jpg");
             }
 
@@ -257,7 +256,7 @@ namespace PhoenixAdult.Sites
 
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { cover };
 
-            // 新图集（Gallery 分支）：Rows[].Img
+            // New gallery: Rows[].Img.
             if (scene.HasDlaGallery && !string.IsNullOrEmpty(site.GalleryPath))
             {
                 var gallery = await GetJson($"{baseUrl}/dyn/dla/json/movie_gallery/{movieID}.json", cancellationToken).ConfigureAwait(false);
@@ -278,7 +277,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            // 旧图集（HasGallery 分支）：Rows[].MovieID + Rows[].Filename
+            // Old gallery: Rows[].MovieID plus Rows[].Filename.
             if (!scene.HasDlaGallery && scene.HasLegacyGallery && !string.IsNullOrEmpty(site.LegacyGalleryPath))
             {
                 var gallery = await GetJson($"{baseUrl}/dyn/phpauto/movie_galleries/movie_id/{movieID}.json", cancellationToken).ConfigureAwait(false);
@@ -373,7 +372,7 @@ namespace PhoenixAdult.Sites
 
             foreach (var actor in actors)
             {
-                // 官方 JSON 里偶尔出现 "-" 占位
+                // The official JSON occasionally contains "-" placeholders.
                 var name = actor.Trim('-', ' ', '　');
                 if (!string.IsNullOrEmpty(name))
                 {
@@ -384,7 +383,7 @@ namespace PhoenixAdult.Sites
             return scene;
         }
 
-        // Fetcher 在异常页面（404/403）上可能抛，统一兜住，保证 Search/Update 永不炸
+        // Fetcher can throw on error pages; absorb it so Search and Update never crash.
         private static async Task<JObject> GetJson(string url, CancellationToken cancellationToken)
         {
             try
@@ -400,7 +399,7 @@ namespace PhoenixAdult.Sites
 
         private static string GetCoverUrl(string baseUrl, JObject data)
         {
-            // Go 版按 Ultra -> High -> Med -> Low 取第一个非空
+            // The Go version picks the first non-empty of Ultra, High, Med, Low.
             foreach (var key in new[] { "ThumbUltra", "ThumbHigh", "ThumbMed", "ThumbLow" })
             {
                 var url = FixUrl(baseUrl, GetStringValue(data, key));

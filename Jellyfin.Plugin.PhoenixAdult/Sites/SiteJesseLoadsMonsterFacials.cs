@@ -51,7 +51,7 @@ namespace PhoenixAdult.Sites
                         var cleanActorName = ActorsDB.FirstOrDefault(a => a.Value.Any(v => v.ToLower().Contains(actorName.ToLower()))).Key ?? actorName;
                         string titleNoFormatting = string.Join(" and ", cleanActorName);
 
-                        // imageUrl 参与 curId（历史 ID 不能变），展示用图另算绝对地址
+                        // imageUrl is part of the curId, so it must not change; the display image is resolved separately.
                         string imageUrl = sceneResult.SelectSingleNode(".//img[contains(@src, 'tour')][@width='400']")?.GetAttributeValue("src", string.Empty);
                         string posterUrl = string.IsNullOrEmpty(imageUrl)
                             ? null

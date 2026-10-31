@@ -15,7 +15,7 @@ using PhoenixAdult.Helpers.Utils;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// AV-LEAGUE 女优资料源：姓名（含假名）、别名、生日、出身、身高/三围、头像。
+    /// AV-LEAGUE actress source: name, aliases, birthday, birthplace, measurements, portrait.
     /// </summary>
     public class ActorAvLeague : IProviderBase
     {

@@ -21,9 +21,9 @@ using Jellyfin.Data.Enums;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// FANZA（DMM）数字内容：详情页是 Next.js SPA，实际数据来自官方 GraphQL
-    /// https://api.video.dmm.co.jp/graphql（查询语句移植自 metatube 的 ContentPageData.graphql）。
-    /// 条目 ID 为 dmm content_id（如 ssis00123），可由番号按 3/5 位补零推导。
+    /// FANZA (DMM) digital content: the detail page is a Next.js SPA backed by the official
+    /// GraphQL API. The scene id is the dmm content_id,
+    /// derived from the code by padding to three or five digits.
     /// </summary>
     public class SiteFanza : IProviderBase
     {
