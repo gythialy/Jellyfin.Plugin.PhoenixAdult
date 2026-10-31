@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
+using Xunit;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Model.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
@@ -126,6 +128,9 @@ internal static class ProviderRegressionRunner
     /// </summary>
     internal static async Task<List<RemoteImageInfo>> GetValidatedImagesAsync(ProviderCase c, string[] sceneId, CancellationToken cancellationToken = default)
     {
+        // images 用例可能单独运行（不经 e2e 初始化），这里确保 Plugin.Instance / 数据库就绪
+        TestInitializer.Init();
+
         var providerIds = new[] { c.Group.ToString(CultureInfo.InvariantCulture), c.Site.ToString(CultureInfo.InvariantCulture) }
             .Concat(sceneId);
 
@@ -136,7 +141,20 @@ internal static class ProviderRegressionRunner
         var images = await new MovieImageProvider().GetImages(movie, cancellationToken).ConfigureAwait(false);
 
         // 复跑插件官方校验，确保结论与 Jellyfin 自动下载完全一致
-        return await ImageHelper.GetImagesSizeAndValidate(images, cancellationToken).ConfigureAwait(false);
+        var validated = await ImageHelper.GetImagesSizeAndValidate(images, cancellationToken).ConfigureAwait(false);
+
+        // 回归不变量：只要有海报，就必须有横幅（真截图或"海报兜底"）。
+        // 单图站点（JavBus 无码页等）没有截图集，靠 ImageHelper 把 Primary 复制成 Backdrop；
+        // 这里钉住它，避免以后有人收紧 URL 去重又让横幅悄悄消失。
+        var primaries = validated.Where(o => o.Type == ImageType.Primary).ToList();
+        if (primaries.Count > 0)
+        {
+            Assert.True(
+                validated.Any(o => o.Type == ImageType.Backdrop),
+                $"{c.Id}: 有 Primary 但没有任何 Backdrop（海报兜底未生效）");
+        }
+
+        return validated;
     }
 
     /// <summary>

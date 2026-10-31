@@ -1,4 +1,5 @@
 using System.Xml.Serialization;
+using PhoenixAdult;
 using PhoenixAdult.Configuration;
 using PhoenixAdult.Helpers;
 
@@ -38,6 +39,31 @@ public class PluginConfigurationSerializationTests
         var roundTripped = (PluginConfiguration)serializer.Deserialize(reader)!;
 
         Assert.Equal(config.ImageReferers, roundTripped.ImageReferers);
+    }
+
+    [Fact]
+    public void 空配置会补上内置Referer规则()
+    {
+        Assert.Equal(
+            new[] { "phncdn.com=https://www.pornhub.com/", "javbus.com=https://www.javbus.com/" },
+            ImageRefererDefaults.SeedIfEmpty(null)!.ToArray());
+        Assert.Equal(
+            new[] { "phncdn.com=https://www.pornhub.com/", "javbus.com=https://www.javbus.com/" },
+            ImageRefererDefaults.SeedIfEmpty(new[] { "   " })!.ToArray());
+
+        // 已经有有效规则时不再补，避免把用户删掉的条目又塞回去
+        Assert.Null(ImageRefererDefaults.SeedIfEmpty(new[] { "example.com=https://example/" }));
+        Assert.Null(ImageRefererDefaults.SeedIfEmpty(new[] { "phncdn.com=" }));
+    }
+
+    [Fact]
+    public void 内置Referer表由默认规则派生()
+    {
+        TestInitializer.Init();
+
+        Assert.Equal("https://www.pornhub.com/", Consts.ImageReferers["phncdn.com"]);
+        Assert.Equal("https://www.javbus.com/", Consts.ImageReferers["javbus.com"]);
+        Assert.Equal(ImageRefererDefaults.Rules.Length, Consts.ImageReferers.Count);
     }
 
     [Fact]

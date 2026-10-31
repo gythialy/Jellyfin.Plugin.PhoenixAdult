@@ -26,7 +26,7 @@ public class MetatubePortSmokeTests
         // handler, group, site, searchTerm, minResults, allowZero
         new object[] { "SiteMadouQu", 234, 0, "MDX-0267", 1, false },
         new object[] { "ActorBabepedia", 231, 0, "Emiri Momota", 1, false },
-        new object[] { "ActorAvLeague", 232, 0, "三上悠亜", 1, false },
+        new object[] { "ActorAvLeague", 232, 0, "北条麻妃", 1, false },
         new object[] { "SiteModelMediaAsia", 235, 0, "MDCM-0013", 0, true },
         new object[] { "NetworkPondo", 236, 0, "042922_01", 1, false },
         new object[] { "NetworkPondo", 236, 1, "071319_870", 1, false },
@@ -56,6 +56,8 @@ public class MetatubePortSmokeTests
         new object[] { "NetworkJavBus", 96, 0, "ABP-123", 1, false },
         new object[] { "NetworkJAVLibrary", 38, 0, "ABP-123", 0, true },
         new object[] { "NetworkR18", 17, 0, "ABP-123", 0, true },
+        new object[] { "NetworkJavBus", 96, 0, "HEYZO-0929", 1, false },
+        new object[] { "SiteJavDB", 255, 0, "SSIS-354", 1, false },
     };
 
     [Theory(DisplayName = "移植站点冒烟")]

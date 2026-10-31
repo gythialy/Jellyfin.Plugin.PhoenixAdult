@@ -143,13 +143,28 @@ namespace PhoenixAdult.Providers
             // 番号检索的多源并发：用户没有显式指定站点时，按番号类型并发查多个源并合并，
             // 避免"一个番号只绑一个站点"（如 MDSR-0005 同时存在于 MadouQu / ModelMediaAsia 等）。
             var multiSearchConfig = Plugin.Instance.Configuration;
-            if (!explicitSite && multiSearchConfig.MultiSourceSearch && Helper.TryExtractJavId(searchInfo.Name, out var detectedId))
+            var hasJavId = Helper.TryExtractJavId(searchInfo.Name, out var detectedId);
+            if (multiSearchConfig.MultiSourceSearch && hasJavId && (!explicitSite || IsIdLabelMatchingSite(detectedId, site.siteName)))
             {
-                var sources = SearchRouter.GetSources(detectedId);
+                // 显式站点可能是「番号里的厂牌」被当成了站名（如 HEYZO-0929 命中站点名 Heyzo）：
+                // 这时不能只问那一个站点，否则该站维护/改版就整条番号 0 结果。
+                // 保留显式站点作为候补（例如 Heyzo 官方站恢复后仍可取官方数据），再并发其余番号源。
+                var sources = SearchRouter.GetSources(detectedId).ToList();
+                if (explicitSite && site.siteNum != null
+                    && !sources.Any(o => o.Group == site.siteNum[0] && o.Site == site.siteNum[1]))
+                {
+                    sources.Insert(0, (site.siteNum[0], site.siteNum[1]));
+                }
+
                 if (sources.Count > 0)
                 {
                     var timeoutSeconds = Math.Clamp(multiSearchConfig.MultiSourceSearchTimeoutSeconds, 5, 120);
                     result = await this.SearchMultipleSourcesAsync(sources, searchTitle, searchDateObj, searchInfo.Name, detectedId, fillThumbnails, timeoutSeconds, cancellationToken).ConfigureAwait(false);
+                    if (fillThumbnails)
+                    {
+                        AddSourcePrefix(result);
+                    }
+
                     AddDatePrefix(result);
                     return result;
                 }
@@ -213,6 +228,11 @@ namespace PhoenixAdult.Providers
                 if (fillThumbnails && result.Any())
                 {
                     await FillMissingThumbnails(site.siteNum, result, cancellationToken).ConfigureAwait(false);
+                }
+
+                if (fillThumbnails)
+                {
+                    AddSourcePrefix(result);
                 }
 
                 AddDatePrefix(result);
@@ -402,6 +422,52 @@ namespace PhoenixAdult.Providers
         /// 只在排序/补图之后调用：不影响匹配度排序，也不把日期带进补图用的搜索词。
         /// Apply 时条目标题仍由 Update 返回的站点标题决定，前缀只影响对话框显示。
         /// </summary>
+        /// <summary>
+        /// 给识别对话框的每条结果加上来源站点标记（" [JavBus] 标题"）：多源并发检索时用户才分得清
+        /// 同一条番号来自哪个站点。标记只加在展示名上，不影响匹配与 Update 取到的正式标题。
+        /// </summary>
+        /// <param name="results">搜索结果。</param>
+        internal static void AddSourcePrefix(IList<RemoteSearchResult> results)
+        {
+            if (results == null)
+            {
+                return;
+            }
+
+            foreach (var scene in results)
+            {
+                if (scene == null || string.IsNullOrWhiteSpace(scene.Name) || scene.ProviderIds == null)
+                {
+                    continue;
+                }
+
+                if (!scene.ProviderIds.TryGetValue(Plugin.Instance.Name, out var externalId) || string.IsNullOrEmpty(externalId))
+                {
+                    continue;
+                }
+
+                var parts = externalId.Split('#');
+                if (parts.Length < 2
+                    || !int.TryParse(parts[0], CultureInfo.InvariantCulture, out var group)
+                    || !int.TryParse(parts[1], CultureInfo.InvariantCulture, out var site))
+                {
+                    continue;
+                }
+
+                var siteName = Helper.GetSearchSiteName(new[] { group, site });
+                if (string.IsNullOrWhiteSpace(siteName))
+                {
+                    continue;
+                }
+
+                var label = $"[{siteName}] ";
+                if (!scene.Name.Contains(label, StringComparison.OrdinalIgnoreCase))
+                {
+                    scene.Name = label + scene.Name;
+                }
+            }
+        }
+
         internal static void AddDatePrefix(IList<RemoteSearchResult> results)
         {
             if (results == null)
@@ -474,27 +540,45 @@ namespace PhoenixAdult.Providers
                     return;
                 }
 
-                // 识别对话框里的图片由浏览器直连加载（不带 Referer），需要 Referer 的 CDN（如 phncdn）
-                // 填进去只会显示破图，宁可不填，让客户端回退到标题卡片。
-                if (Helper.GetImageReferer(image.Url) != null)
+                // 少数站点给的是协议相对地址（//host/path），补全成 https
+                var thumbSource = image.Url.StartsWith("//", StringComparison.Ordinal) ? "https:" + image.Url : image.Url;
+
+                // 识别对话框里的图片由浏览器直连加载：需要 Referer 的 CDN（JavBus 封面、phncdn 签名图）直接给原地址只会 403，
+                // 改用同源的插件代理地址（服务端补 Referer 后回传字节）；没有代理端点时保持旧行为——宁可不填，让客户端回退标题卡片。
+                if (ImageProxyUrl.NeedsProxy(thumbSource) && !ImageProxyUrl.IsAvailable)
                 {
                     return;
                 }
 
                 // 兜底图常常是各站的电影封面，部分标题的封面并不存在（实测 404）。
-                // 这里用 HEAD 探一次，取不到就保持无图，避免对话框里出现破图。
-                if (!await HTTP.IsUrlLoadable(image.Url, cts.Token).ConfigureAwait(false))
+                // 先探一次（服务端形态的地址），取不到就保持无图，避免对话框里出现破图。
+                if (!await HTTP.IsUrlLoadable(ImageProxyUrl.ForDownload(thumbSource), cts.Token).ConfigureAwait(false))
                 {
                     return;
                 }
 
-                // 少数站点给的是协议相对地址（//host/path），补全成 https
-                result.ImageUrl = image.Url.StartsWith("//", StringComparison.Ordinal) ? "https:" + image.Url : image.Url;
+                result.ImageUrl = ImageProxyUrl.ForBrowser(thumbSource);
             }
             catch (Exception e)
             {
                 Logger.Debug($"Search thumbnail fill skipped: {e.GetType().Name}: {e.Message}");
             }
+        }
+
+        /// <summary>
+        /// 显式命中的「站点名」是否其实是番号里的厂牌名（如 HEYZO-0929 命中站点 Heyzo）。
+        /// 这种情况下用户的输入是番号而不是「站点+标题」，不能按单站检索处理：
+        /// 该站一旦维护/改版，整条番号就 0 结果，而别的源（JavBus/JavDB）明明有数据。
+        /// </summary>
+        private static bool IsIdLabelMatchingSite(string detectedId, string siteName)
+        {
+            if (string.IsNullOrEmpty(detectedId) || string.IsNullOrEmpty(siteName))
+            {
+                return false;
+            }
+
+            var label = JavId.GetLabel(detectedId);
+            return !string.IsNullOrEmpty(label) && string.Equals(label, siteName, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
