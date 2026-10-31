@@ -3,6 +3,8 @@ using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using PhoenixAdult.Helpers.Utils;
 
 namespace PhoenixAdult.Web
 {
@@ -17,6 +19,10 @@ namespace PhoenixAdult.Web
         {
             serviceCollection.AddSingleton<IStartupFilter, ScriptInjectionStartupFilter>();
             serviceCollection.AddControllers().AddApplicationPart(typeof(FrameGrabController).Assembly);
+
+            // 需要 Referer 的图片走插件自己的代理端点：Jellyfin 下载图片时要绝对地址，这里记住服务端自己的 API 根地址
+            ImageProxyUrl.BaseUrl = applicationHost?.GetLocalApiUrl("127.0.0.1", null, null)
+                ?? applicationHost?.GetSmartApiUrl("localhost");
         }
     }
 }

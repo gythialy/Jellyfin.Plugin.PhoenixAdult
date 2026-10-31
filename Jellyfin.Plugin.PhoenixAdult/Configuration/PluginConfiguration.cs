@@ -43,7 +43,13 @@ namespace PhoenixAdult.Configuration
             this.ProxyPassword = string.Empty;
 
             this.FlareSolverrURL = "http://localhost:8191/";
+
+            // 默认值在插件启动时由 ImageRefererDefaults 补进配置（见 Plugin.EnsureImageRefererDefaults）：
+            // XmlSerializer 反序列化 List 是追加而不是替换，构造里给默认值会让每次读写都多出一份重复项。
             this.ImageReferers = new List<string>();
+
+            this.JavDBCookie = string.Empty;
+            this.ActorPhotoCoverFallback = true;
 
             this.DefaultSiteName = string.Empty;
             this.UseFilePath = false;
@@ -107,6 +113,18 @@ namespace PhoenixAdult.Configuration
         /// 会让整个配置的读取与保存都抛异常。
         /// </remarks>
         public List<string> ImageReferers { get; set; }
+
+        /// <summary>
+        /// JavDB 登录态 Cookie（浏览器登录 javdb.com 后整段粘贴，形如 "over18=1; _jdb_session=..."）。
+        /// JavDB 的演员页与无码作品页要求登录，未配置时这些页面按「不可用」降级，不影响有码作品。
+        /// </summary>
+        public string JavDBCookie { get; set; }
+
+        /// <summary>
+        /// 演员头像源为空时的兜底：用其作品封面（JavDB 海报）充当人物照片。
+        /// 默认开启；关掉后没有头像的演员就是「没有照片」，不再用封面顶替。
+        /// </summary>
+        public bool ActorPhotoCoverFallback { get; set; }
 
         public string DefaultSiteName { get; set; }
 
