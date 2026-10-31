@@ -1,4 +1,3 @@
-using HtmlAgilityPack;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Providers;
 using PhoenixAdult.Sites;
@@ -11,7 +10,7 @@ namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 public class SearchResultLabelTests
 {
     [Fact]
-    public void AddSourcePrefix_按ProviderId标记站点名()
+    public void AddSourcePrefix_MarksSiteFromProviderId()
     {
         TestInitializer.Init();
 
@@ -35,26 +34,18 @@ public class SearchResultLabelTests
     }
 
     [Fact]
-    public void ParseSearchTitle_去掉番号日期和按钮文字()
+    public void ParseSearchTitle_DropsCodeDateAndButtonText()
     {
-        const string Html = "<a class=\"movie-box\"><div class=\"photo-info\"><span>三上里穂 もしもし<br />"
-            + "<div style=\"white-space:normal;\"><button class=\"btn\" disabled=\"disabled\">高清</button></div> "
+        const string Html = "<a class=\"movie-box\"><div class=\"photo-info\"><span>Sample Title<br />"
+            + "<div style=\"white-space:normal;\"><button class=\"btn\" disabled=\"disabled\">HD</button></div> "
             + "<date>HEYZO-0929</date> / <date>2015-08-16</date></span></div></a>";
 
-        var document = new HtmlDocument();
-        document.LoadHtml(Html);
-
-        var title = NetworkJavBus.ParseSearchTitle(document.DocumentNode.SelectSingleNode("//a"));
-
-        Assert.Equal("三上里穂 もしもし", title);
+        Assert.Equal("Sample Title", NetworkJavBus.ParseSearchTitleFromHtml(Html));
     }
 
     [Fact]
-    public void ParseSearchTitle_没有span时返回空串()
+    public void ParseSearchTitle_ReturnsEmptyWithoutSpan()
     {
-        var document = new HtmlDocument();
-        document.LoadHtml("<a class=\"movie-box\"></a>");
-
-        Assert.Equal(string.Empty, NetworkJavBus.ParseSearchTitle(document.DocumentNode.SelectSingleNode("//a")));
+        Assert.Equal(string.Empty, NetworkJavBus.ParseSearchTitleFromHtml("<a class=\"movie-box\"></a>"));
     }
 }

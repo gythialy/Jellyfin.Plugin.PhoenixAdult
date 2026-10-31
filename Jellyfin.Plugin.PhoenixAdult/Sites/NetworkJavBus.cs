@@ -164,6 +164,28 @@ namespace PhoenixAdult.Sites
             return text.TrimEnd(' ', '/', '\u00a0');
         }
 
+        /// <summary>Parse a card title from its markup, the shape a regression case carries.</summary>
+        /// <remarks>
+        /// The node overload cannot be used from the test assembly: ILRepack internalizes
+        /// HtmlAgilityPack into the plugin assembly, so the merged HtmlNode is a different type and
+        /// the call fails with MissingMethodException in release builds.
+        /// </remarks>
+        /// <param name="cardHtml">Card markup.</param>
+        /// <returns>Title collapsed to single spaces, or an empty string.</returns>
+        internal static string ParseSearchTitleFromHtml(string cardHtml)
+        {
+            if (string.IsNullOrWhiteSpace(cardHtml))
+            {
+                return string.Empty;
+            }
+
+            var document = new HtmlDocument();
+            document.LoadHtml(cardHtml);
+            var card = document.DocumentNode.SelectSingleNode("//a");
+
+            return card == null ? string.Empty : ParseSearchTitle(card);
+        }
+
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
             var result = new MetadataResult<BaseItem>()
