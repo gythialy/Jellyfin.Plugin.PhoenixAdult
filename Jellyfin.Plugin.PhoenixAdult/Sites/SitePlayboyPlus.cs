@@ -62,7 +62,7 @@ namespace PhoenixAdult.Sites
 
                 if (searchResult.ContainsKey("pictures") && searchResult["pictures"] is JObject picObj)
                 {
-                    // 与 GetImages 一致：值为 "/{id}/..." 形式，需直接拼接而非 "movies/{image}"
+                    // Like GetImages: values look like "/{id}/...", so concatenate directly.
                     var image = NetworkGammaEnt.GetBestPictureURL(picObj);
                     if (!string.IsNullOrEmpty(image))
                     {
@@ -185,8 +185,8 @@ namespace PhoenixAdult.Sites
 
             if (sceneData.ContainsKey("pictures") && sceneData["pictures"] is JObject picObj2)
             {
-                // 与 NetworkGammaEnt 一致：pictures 的值为 "/{id}/{id}_01/previews/..." 形式，
-                // 已带前导斜杠；原实现用 "movies/{image}" 会拼出 "movies//165111/..." 导致 404。
+                // pictures values already start with a slash;
+                // prefixing "movies/" produced "movies//..." and 404s.
                 var image = NetworkGammaEnt.GetBestPictureURL(picObj2);
                 if (string.IsNullOrEmpty(image))
                 {

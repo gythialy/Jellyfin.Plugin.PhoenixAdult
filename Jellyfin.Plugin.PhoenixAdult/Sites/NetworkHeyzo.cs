@@ -27,9 +27,10 @@ namespace PhoenixAdult.Sites
 
             var splitedSearchTitle = searchTitle.Split();
             var movieID = string.Empty;
-            if (int.TryParse(splitedSearchTitle[0], out _))
+            if (int.TryParse(splitedSearchTitle[0], out var searchNumber))
             {
-                movieID = splitedSearchTitle[0];
+                // Detail pages use a four digit number (/moviepages/0929/), so pad three digit codes.
+                movieID = searchNumber.ToString(CultureInfo.InvariantCulture).PadLeft(4, '0');
             }
 
             if (!string.IsNullOrEmpty(movieID))
@@ -170,6 +171,13 @@ namespace PhoenixAdult.Sites
             }
 
             var movieID = sceneURL.Replace("/index.html", string.Empty, StringComparison.OrdinalIgnoreCase).Split("/").Last();
+
+            // Same padding for image URLs: file names often use three digits.
+            if (!string.IsNullOrEmpty(movieID) && int.TryParse(movieID, out var movieNumber))
+            {
+                movieID = movieNumber.ToString(CultureInfo.InvariantCulture).PadLeft(4, '0');
+            }
+
             if (!string.IsNullOrEmpty(movieID) && int.TryParse(movieID, out _))
             {
                 result.Add(new RemoteImageInfo

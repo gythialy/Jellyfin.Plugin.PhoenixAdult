@@ -24,8 +24,8 @@ namespace PhoenixAdult.Providers
     public class ActorProvider : IRemoteMetadataProvider<Person, PersonLookupInfo>
     {
         /// <summary>
-        /// 演员元数据来源，按优先级排列。Freeones 字段最全，Babepedia 覆盖日系/欧系，
-        /// ThePornDB 依赖 MetadataAPI Token（未配置时返回空，不产生请求失败）。
+        /// Actor metadata sources by priority: Freeones has the most fields,
+        /// ThePornDB needs a token and returns empty without one.
         /// </summary>
         private static readonly string[] ActorProviders = { "Freeones", "Babepedia", "AV-LEAGUE", "ThePornDB" };
 
@@ -115,8 +115,8 @@ namespace PhoenixAdult.Providers
                 collected.AddRange(providerResults);
             }
 
-            // 多源合并：同名去重（保留先命中的来源），再按与查询名的相似度排序。
-            // OrderBy 是稳定排序，因此同分时仍保持 ActorProviders 的优先级顺序。
+            // Merge: dedupe by name (first source wins), then sort by similarity;
+            // OrderBy is stable, so ties keep the source priority.
             result = collected
                 .GroupBy(o => o.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(o => o.First())

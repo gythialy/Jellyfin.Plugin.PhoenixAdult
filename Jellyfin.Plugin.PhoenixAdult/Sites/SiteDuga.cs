@@ -20,16 +20,15 @@ using PhoenixAdult.Helpers.Utils;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// DUGA (duga.jp)。条目 ID 是 DUGA 自家的厂牌 slug + 编号（如 glory-4262、waap-1294），
-    /// 全小写，并不是标准 JAV 番号；详情页 https://duga.jp/ppv/{id}/。
-    /// 站内搜索 /search/=/q={kw}/ 对机房 IP 会返回 503（JS challenge 后仍是 503），
-    /// 因此 Search 先用标题里的 slug 直连详情，直连不中再尽力尝试搜索页（失败静默返回空）。
+    /// DUGA (duga.jp). The scene id is DUGA's own studio slug plus number (glory-4262), not a JAV code.
+    /// The site search answers 503 to datacenter IPs, so Search tries the slug-based detail page first
+    /// and only then the search page (a failure returns an empty result).
     /// </summary>
     public class SiteDuga : IProviderBase
     {
         private const string MoviePath = "/ppv/";
 
-        // 标题里的候选 slug：厂牌 + 分隔符 + 编号（如 "Glory 4262"、"glory-4262"）。
+        // Candidate slug in a title: studio, separator, number.
         private static readonly Regex CandidateRegex = new Regex(
             @"(?<label>[A-Za-z][A-Za-z0-9]{1,9})[\s\-_]+(?<number>[0-9]{3,5})(?![0-9])",
             RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -46,7 +45,7 @@ namespace PhoenixAdult.Sites
             @"/ppv/(?<id>[A-Za-z0-9\-_]+)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
-        // 文件名里常见的非厂牌 token，避免把 "HD 1080" 之类当成 slug。
+        // Common non-studio tokens so "HD 1080" is not taken as a slug.
         private static readonly HashSet<string> IgnoredLabels = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "hd", "fhd", "uhd", "sd", "xxx", "mp4", "mkv", "avi", "wmv", "mov",
@@ -65,7 +64,7 @@ namespace PhoenixAdult.Sites
 
             var baseURL = Helper.GetSearchBaseURL(siteNum).TrimEnd('/');
 
-            // 1) 标题中能提取出 DUGA slug（glory-4262）时直接打详情页，绕开 503 的搜索页。
+            // 1) A slug in the title goes straight to the detail page, bypassing the 503-prone search.
             foreach (var movieId in ResolveMovieIds(searchTitle))
             {
                 try
@@ -84,7 +83,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            // 2) 关键词搜索兜底（该端点经常 503，失败就当没有结果）。
+            // 2) Keyword search as a fallback (often 503; a failure means no results).
             var searchURL = Helper.GetSearchSearchURL(siteNum);
             if (string.IsNullOrEmpty(searchURL))
             {
@@ -106,7 +105,7 @@ namespace PhoenixAdult.Sites
                     cards = searchData.SelectNodesSafe("//div[contains(@class, 'contentslist')]");
                 }
 
-                // 搜索页只取 ID，详情页补全字段（与上游 Go 实现一致，最多 3 条）。
+                // The search page only yields ids; the detail page fills the fields (at most three).
                 var ids = new List<string>();
                 foreach (var card in cards)
                 {
@@ -140,7 +139,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
 
-                // 详情补全全部失败但卡片还有标题时，至少把卡片本身当结果返回。
+                // Detail failed but the card has a title: return the card itself.
                 if (result.Count == 0 && cards.Count > 0)
                 {
                     foreach (var card in cards.Take(5))
@@ -303,7 +302,7 @@ namespace PhoenixAdult.Sites
                 result.Item.AddStudio(series);
             }
 
-            // メーカー品番 优先，缺失时回落到作品 ID（与上游 Go 一致）。
+            // Prefer the maker part number, fall back to the work id.
             if (string.IsNullOrEmpty(number))
             {
                 number = (movieId ?? string.Empty).ToUpperInvariant();
@@ -340,7 +339,7 @@ namespace PhoenixAdult.Sites
 
             foreach (var genreNode in sceneData.SelectNodesSafe("//ul[@class='categorylist']//li//a"))
             {
-                // 分类链的根节点 "アダルト" 不是有效标签。
+                // The category root "アダルト" is not a real tag.
                 var genre = genreNode.InnerText.Trim();
                 if (!string.IsNullOrEmpty(genre) && !string.Equals(genre, "アダルト", StringComparison.Ordinal))
                 {
@@ -551,7 +550,7 @@ namespace PhoenixAdult.Sites
                 : $"{baseURL}/{url}";
         }
 
-        /// <summary>从文件名/标题里提取所有可能的 DUGA slug（小写，去重，最多 3 个）。</summary>
+        /// <summary>All candidate DUGA slugs in a title (lower case, at most three).</summary>
         private static List<string> ResolveMovieIds(string searchTitle)
         {
             var ids = new List<string>();
@@ -572,7 +571,7 @@ namespace PhoenixAdult.Sites
                 if (int.TryParse(number, NumberStyles.Integer, CultureInfo.InvariantCulture, out var numericValue)
                     && (numericValue >= 1900 && numericValue <= 2099))
                 {
-                    // 年份，不是编号。
+                    // A year, not a number.
                     continue;
                 }
 

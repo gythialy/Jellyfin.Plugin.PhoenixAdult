@@ -32,9 +32,35 @@
   统一用 `WebUtility.HtmlDecode`。
 - **Referer 防盗链**：CDN77（`phncdn.com`）对签名 URL 校验 Referer，缺失即 403。
   `Helper.GetImageResponse` 与 `ImageHelper` 校验路径必须带同一套请求头，否则"能取到图却下载不了"。
-  **规则不要写死在逻辑里**：内置规则放 `Consts.ImageReferers`（主机 → Referer 表），
-  用户可在插件配置的 Image Referer rules（`PluginConfiguration.ImageReferers`，每行一条
-  `host=referer`，referer 留空即禁用该主机）追加或覆盖，CDN 变更时无需改代码发版。
+  **规则不要写死在逻辑里**：默认规则放 `ImageRefererDefaults.Rules`（每行一条 `host=referer`），
+  插件启动时补进 `PluginConfiguration.ImageReferers`，设置页的 Image Referer rules 里能直接看到并修改；
+  `Consts.ImageReferers` 由同一份默认规则派生，只在用户规则未命中时兜底。referer 留空（`host=`）即禁用该主机。
+  注意两点：① 别在 `PluginConfiguration` 构造函数里塞默认值——`XmlSerializer` 反序列化 List 是追加而非替换，
+  每次读写都会多出一份重复项；② 别在配置构造期间引用 `Consts`，会触发静态构造循环（`Consts` 里有 `Plugin.Instance`）。
+- **识别对话框要标来源**：多源并发检索后，同一条番号可能同时命中多个站点，用户分不清该选哪条。
+  `MovieProvider.AddSourcePrefix` 按 `ProviderIds` 里的 `group#site` 用 `Helper.GetSearchSiteName` 取站名，
+  在展示名前加 `[JavBus] `；只在用户发起的搜索（`fillThumbnails=true`）加，自动识别的内部搜索不加，
+  避免污染 Levenshtein 匹配。展示名最终形如 `2015-08-16 · [JavBus] [Uncensored] HEYZO-0929 标题`。
+- **卡片标题要剔除结构信息**：JavBus 搜索卡片的 `<span>` 里混着 `<button>`（"高清"）、`<br/>` 和两个 `<date>`
+  （番号、发行日期），直接取 `InnerText` 会让番号和日期重复进标题，对话框里出现多个时间标记。
+  `NetworkJavBus.ParseSearchTitle` 克隆节点后删除这些子节点再压空白；日期只通过 `PremiereDate` 走
+  `AddDatePrefix` 的前缀显示一次。
+- **单图站点要有横幅兜底**：JavBus 无码页只有一张封面、没有截图集，若把同一个 URL 同时当 Primary 和 Backdrop，
+  Jellyfin 会按 URL 去重，横幅直接消失。`ImageHelper.GetImagesSizeAndValidate` 在"没有任何 Backdrop"时
+  用海报兜底，URL 追加 `#backdrop` 片段（片段不会发到服务器，但客户端视作不同地址）；
+  宽度不足 1280 时不填尺寸，避开 Jellyfin 自动下载横幅的 MinWidth 过滤。
+  同一个函数里还修了 `Cleanup` 的老 bug：站点只返回横幅时 `clearImages.Where(Primary).First()` 会抛
+  "Sequence contains no elements"，整个 GetImages 直接失败（新测试 `只有横幅没有海报时不做任何兜底` 覆盖）。
+- **防盗链图片不能把原始地址交给 Jellyfin**：Jellyfin 下载远程图片时**不发送 Referer**（`ImageDownloader` 只带 UA），
+  浏览器直连也只带本站 Referer，所以 JavBus 封面这类图直接给 `https://www.javbus.com/imgs/cover/*.jpg`
+  必然 403 —— 表现是「元数据抓到了、番号也对了，但海报和背景图一格都没有」，日志里几乎没有痕迹（校验阶段是插件自己带 Referer 取的，是 200）。
+  解决：插件自带图片代理 `GET /PhoenixAdult/image?u=<base64url>`（`Web/ImageProxyController`），
+  只代理命中 Referer 规则的主机（其他地址直接 400），按规则补 Referer 取回字节再回传，响应带 `Cache-Control`。
+  `ImageProxyUrl` 提供两种形态：`ForDownload`（服务端下载，绝对地址 `<api 根>/PhoenixAdult/image?u=…`）
+  与 `ForBrowser`（识别对话框的 `<img src>`，同源相对地址）。API 根地址由 `PluginServiceRegistrator` 里的
+  `applicationHost.GetLocalApiUrl("127.0.0.1", null, null)` 注入；拿不到时（如 Emby 构建）自动退回原始地址。
+  接线点：`MovieImageProvider` / `ActorImageProvider` 在尺寸校验**之后**统一换地址（校验仍走原始 CDN + Referer），
+  `MovieProvider` 的对话框缩略图改用 `ForBrowser`，不再"跳过需要 Referer 的图"。
 
 ### 2.2 HTTP 方法 / 选择器
 - **场景页只接受 GET**：Pornhub 用 POST 请求 `view_video.php` 直接返回 404 "Page Not Found"。

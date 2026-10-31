@@ -4,8 +4,8 @@ using System.Text.RegularExpressions;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 离线数据完整性测试：data/IdRoutes.json 的番号 → 站点 路由表。
-/// 路由表是数据文件，代码里不再写死站点清单；这里保证它的结构、正则与站点引用都有效。
+/// Offline tests for the code to site routes in data/IdRoutes.json:
+/// structure, regexes and site references.
 /// </summary>
 public class IdRoutesDataTests
 {
@@ -119,7 +119,7 @@ public class IdRoutesDataTests
 
         var labels = madou.GetProperty("Labels").EnumerateArray().Select(o => o.GetString()).ToList();
 
-        // MadouQu 上实际存在的厂牌远超 MD*/MTVQ*，名单由 scripts/harvest-madou-labels.sh 采集
+        // Real labels go far beyond MD*/MTVQ*; scripts/harvest-madou-labels.sh collects them.
         Assert.True(labels.Count >= 200, $"madou 路由的厂牌名单过少（{labels.Count}）");
         Assert.Contains("mdx", labels);
         Assert.Contains("mdsr", labels);

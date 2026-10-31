@@ -6,8 +6,8 @@ using Xunit;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// Network1service（aylo / project1service）回归：instance_token 获取（HEAD → GET → FlareSolverr 兜底）
-/// 与 Search→Update→GetImages 全链路。
+/// Network1service regression: instance_token acquisition
+/// and the Search to GetImages pipeline.
 /// </summary>
 [Trait("Category", "Online")]
 public class Network1serviceTests

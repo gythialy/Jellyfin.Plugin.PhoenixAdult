@@ -18,13 +18,13 @@ using Jellyfin.Data.Enums;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// 麻豆傳媒（ModelMediaAsia）官方 API 源。
-    /// 该 provider 已被上游以 "remove deprecated provider" 删除，且官方 API 域名当前不可达；
-    /// 这里按归档接口实现并做优雅降级（返回空结果，不抛异常），域名恢复即可工作。
+    /// ModelMediaAsia official API source.
+    /// The upstream provider was removed and the API domain is unreachable,
+    /// so this returns an empty result instead of throwing until the domain is back.
     /// </summary>
     public class SiteModelMediaAsia : IProviderBase
     {
-        /// <summary>官方 API 基址（可由后续配置项覆盖）。</summary>
+        /// <summary>API base URL.</summary>
         public const string ApiBase = "https://model-api.bvncmsldo.com/api/v2";
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)

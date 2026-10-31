@@ -4,154 +4,295 @@
     <title>PhoenixAdult</title>
 </head>
 <body>
-    <div id="phoenixAdultConfigurationPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-button,emby-checkbox">
+    <div id="phoenixAdultConfigurationPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-button">
+        <style>
+            /* The 12.x loader injects the div[data-role="page"] subtree only, so styles in <head> are dropped.
+               Keep these rules self-contained: layout must hold without the theme classes. */
+            #phoenixAdultConfigurationPage { display: block; padding: .2em 0 1em; }
+            #phoenixAdultConfigurationPage .inputContainer { margin: 0 0 1.35em; }
+            #phoenixAdultConfigurationPage .inputContainer > label.inputLabel,
+            #phoenixAdultConfigurationPage .selectContainer > label.selectLabel {
+                display: block;
+                margin: 0 0 .3em;
+                font-size: .95em;
+                opacity: .85;
+            }
+            #phoenixAdultConfigurationPage .inputContainer > input.emby-input,
+            #phoenixAdultConfigurationPage .inputContainer > textarea.emby-textarea,
+            #phoenixAdultConfigurationPage .selectContainer > select.emby-select {
+                display: block;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+                font: inherit;
+                font-size: 1em;
+                color: inherit;
+                padding: .55em .65em;
+                border: 1px solid rgba(127, 127, 127, .45);
+                border-radius: .25em;
+                background: rgba(127, 127, 127, .12);
+            }
+            #phoenixAdultConfigurationPage .inputContainer > textarea.emby-textarea {
+                min-height: 4.4em;
+                line-height: 1.45;
+                resize: vertical;
+            }
+            #phoenixAdultConfigurationPage .selectContainer { margin: 0 0 1.35em; }
+            #phoenixAdultConfigurationPage .fieldDescription {
+                display: block;
+                margin: .4em 0 0;
+                font-size: .88em;
+                line-height: 1.45;
+                opacity: .8;
+            }
+            #phoenixAdultConfigurationPage .checkboxContainer {
+                display: block;
+                margin: 0 0 1.1em;
+            }
+            #phoenixAdultConfigurationPage label.phoenix-check {
+                display: flex;
+                align-items: center;
+                gap: .55em;
+                width: auto;
+                height: auto;
+                padding: 0;
+                margin: .3em 0;
+                cursor: pointer;
+            }
+            #phoenixAdultConfigurationPage label.phoenix-check > input[type=checkbox] {
+                flex: 0 0 auto;
+                width: 1.05em;
+                height: 1.05em;
+                margin: 0;
+                accent-color: #00a4dc;
+            }
+            #phoenixAdultConfigurationPage h2.sectionTitle {
+                margin: 1.8em 0 .4em;
+                font-size: 1.15em;
+                font-weight: 600;
+            }
+            #phoenixAdultConfigurationPage .raised.emby-button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font: inherit;
+                font-size: .95em;
+                padding: .55em 1.2em;
+                border: 0;
+                border-radius: .25em;
+                background: #00a4dc;
+                color: #fff;
+                cursor: pointer;
+            }
+            #phoenixAdultConfigurationPage .raised.emby-button[disabled] { opacity: .6; cursor: default; }
+            #phoenixAdultConfigurationPage button.button-submit {
+                display: flex;
+                width: 100%;
+                margin: 1.4em 0 0;
+            }
+            #phoenixAdultConfigurationPage details.fieldDescription > summary { cursor: pointer; }
+            #phoenixAdultConfigurationPage details.fieldDescription ol { margin: .4em 0 0; padding-left: 1.4em; }
+            #phoenixAdultConfigurationPage details.fieldDescription li { margin: .2em 0; }
+            #phoenixAdultConfigurationPage .javdb-test-row {
+                display: flex;
+                align-items: center;
+                gap: .8em;
+                flex-wrap: wrap;
+                margin: .6em 0 0;
+            }
+            #phoenixAdultConfigurationPage .javdb-status { margin: 0; }
+            #phoenixAdultConfigurationPage .javdb-status[data-state=valid] { color: #2e7d32; }
+            #phoenixAdultConfigurationPage .javdb-status[data-state=expired],
+            #phoenixAdultConfigurationPage .javdb-status[data-state=invalid],
+            #phoenixAdultConfigurationPage .javdb-status[data-state=error] { color: #c62828; }
+        </style>
         <div data-role="content">
             <div class="content-primary">
                 <h1>PhoenixAdult</h1>
-                <p>This metadata agent helps fill Jellyfin/Emby with information for your adult videos by pulling from the original site.</p>
+                <p data-i18n="pageDescription">This metadata agent helps fill Jellyfin/Emby with information for your adult videos by pulling from the original site.</p>
                 <form id="phoenixAdultConfigForm">
-                    <div class="checkboxContainer checkboxContainer-withDescripton">
-                        <label class="emby-checkbox-label">
-                            <input id="DisableCaching" name="DisableCaching" type="checkbox" is="emby-checkbox" />
-                            <span>Disable Caching</span>
+                    <div class="checkboxContainer">
+                        <label class="phoenix-check">
+                            <input id="DisableCaching" name="DisableCaching" type="checkbox" />
+                            <span data-i18n="disableCaching">Disable Caching</span>
                         </label>
                     </div>
-                    <div class="checkboxContainer checkboxContainer-withDescripton">
-                        <label class="emby-checkbox-label">
-                            <input id="DisableSSLCheck" name="DisableSSLCheck" type="checkbox" is="emby-checkbox" />
-                            <span>Disable SSL Certificate Check</span>
-                        </label>
-                    </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="FlareSolverrURL">FlareSolverr URL</label>
-                        <input id="FlareSolverrURL" name="FlareSolverrURL" type="text" is="emby-input" />
-                    </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="ImageReferers">Image Referer rules</label>
-                        <textarea id="ImageReferers" name="ImageReferers" is="emby-textarea" rows="3" placeholder="cdn.example.com=https://www.example.com/"></textarea>
-                        <div class="fieldDescription">One rule per line, format: <code>host=referer</code>. Some image CDNs (e.g. phncdn.com) reject signed URLs without a Referer; built-in rules apply automatically. Add a rule here to override or disable one (empty value disables it).</div>
-                    </div>
-                    <div class="checkboxContainer checkboxContainer-withDescripton">
-                        <label class="emby-checkbox-label">
-                            <input id="ProxyEnable" name="ProxyEnable" type="checkbox" is="emby-checkbox" />
-                            <span>Proxy Enable</span>
+                    <div class="checkboxContainer">
+                        <label class="phoenix-check">
+                            <input id="DisableSSLCheck" name="DisableSSLCheck" type="checkbox" />
+                            <span data-i18n="disableSslCheck">Disable SSL Certificate Check</span>
                         </label>
                     </div>
                     <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="ProxyHost">Proxy Host</label>
-                        <input id="ProxyHost" name="ProxyHost" type="text" is="emby-input" min="0" />
+                        <label class="inputLabel inputLabelUnfocused" for="FlareSolverrURL" data-i18n="flareSolverrUrl">FlareSolverr URL</label>
+                        <input class="emby-input" id="FlareSolverrURL" name="FlareSolverrURL" type="text"
+                               data-i18n-placeholder="flareSolverrUrlPlaceholder" placeholder="http://localhost:8191/" />
+                        <div class="fieldDescription" data-i18n="flareSolverrHelp">Sites behind Cloudflare (JAVLibrary, Babepedia, …) are fetched through FlareSolverr. Leave empty to disable the fallback.</div>
                     </div>
                     <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="ProxyPort">Proxy Port</label>
-                        <input id="ProxyPort" name="ProxyPort" type="number" is="emby-input" />
+                        <label class="inputLabel inputLabelUnfocused" for="ImageReferers" data-i18n="imageReferers">Image Referer rules</label>
+                        <textarea class="emby-textarea emby-input" id="ImageReferers" name="ImageReferers" rows="3"
+                                  data-i18n-placeholder="imageReferersPlaceholder" placeholder="cdn.example.com=https://www.example.com/"></textarea>
+                        <div class="fieldDescription" data-i18n="imageReferersHelp">One rule per line, format: host=referer. The plugin ships with defaults for image CDNs that reject requests without a Referer (phncdn.com, javbus.com) — they are present here by default, so you can edit them. Set the value after “=” to empty to disable a host.</div>
                     </div>
+
+                    <h2 class="sectionTitle" data-i18n="sectionJavdb">JavDB</h2>
+                    <p class="fieldDescription" data-i18n="sectionJavdbIntro">JavDB supplies movie metadata, covers and actor portraits. Censored titles work without an account; actor pages and uncensored titles require a logged-in session. See the JavDB guide in the plugin docs for details.</p>
+                    <p class="fieldDescription">
+                        <a href="https://github.com/gythialy/Jellyfin.Plugin.PhoenixAdult/blob/master/docs/javdb.md" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline" data-i18n="sectionJavdbDocs">JavDB guide (docs/javdb.md)</a>
+                    </p>
                     <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="ProxyLogin">Proxy Login</label>
-                        <input id="ProxyLogin" name="ProxyLogin" type="text" is="emby-input" />
+                        <label class="inputLabel inputLabelUnfocused" for="JavDBCookie" data-i18n="javdbCookie">JavDB Cookie (optional)</label>
+                        <textarea class="emby-textarea emby-input" id="JavDBCookie" name="JavDBCookie" rows="2"
+                                  data-i18n-placeholder="javdbCookiePlaceholder" placeholder="over18=1; _jdb_session=…; locale=zh"></textarea>
+                        <div class="fieldDescription" data-i18n="javdbCookieHelp">Paste the whole Cookie request header of a logged-in javdb.com session. Used only for actor pages and uncensored titles; without it those pages are skipped and censored titles keep working.</div>
+                        <div class="javdb-test-row">
+                            <button type="button" class="raised emby-button" id="TestJavDBCookie">
+                                <span data-i18n="javdbCookieTest">Test cookie</span>
+                            </button>
+                            <span class="fieldDescription javdb-status" id="JavDBCookieStatus" role="status" aria-live="polite"></span>
+                        </div>
+                        <details class="fieldDescription">
+                            <summary data-i18n="javdbCookieHowTo">How to get the cookie</summary>
+                            <ol>
+                                <li data-i18n="javdbCookieStep1">Sign in to javdb.com in a desktop browser and open any actor or uncensored movie page.</li>
+                                <li data-i18n="javdbCookieStep2">Open DevTools (F12) → Network, reload the page, select the HTML request (document type).</li>
+                                <li data-i18n="javdbCookieStep3">In Request Headers copy the value after Cookie: — it looks like the example above.</li>
+                                <li data-i18n="javdbCookieStep4">Paste it here, then press “Test cookie” to verify before saving.</li>
+                            </ol>
+                            <p data-i18n="javdbCookieNote">The session expires on the JavDB side (usually weeks). Signing in requires a captcha, so the plugin cannot renew it automatically — press “Test cookie” now and then, and paste a fresh value when it reports expired. The value is stored in the plugin configuration on this server, so treat this field as a credential and clear it when you no longer need it.</p>
+                        </details>
                     </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="ProxyPassword">Proxy Password</label>
-                        <input id="ProxyPassword" name="ProxyPassword" type="password" is="emby-input" />
-                    </div>
-                    <div class="checkboxContainer checkboxContainer-withDescripton">
-                        <label class="emby-checkbox-label">
-                            <input id="UseFilePath" name="UseFilePath" type="checkbox" is="emby-checkbox" />
-                            <span>Use FilePath for matching</span>
+                    <div class="checkboxContainer">
+                        <label class="phoenix-check">
+                            <input id="ActorPhotoCoverFallback" name="ActorPhotoCoverFallback" type="checkbox" />
+                            <span data-i18n="actorPhotoCoverFallback">Use a work cover when an actor has no portrait</span>
                         </label>
+                        <div class="fieldDescription" data-i18n="actorPhotoCoverFallbackHelp">Many Japanese actresses have no portrait in any public database. When every portrait source comes back empty, the cover of one of the actor's JavDB titles is used instead (labelled "JavDB (cover)"). Turn this off if you prefer a missing photo over a cover image.</div>
                     </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="DefaultSiteName">Default SiteName</label>
-                        <input id="DefaultSiteName" name="DefaultSiteName" type="text" is="emby-input" />
-                    </div>
-                    <div class="checkboxContainer checkboxContainer-withDescripton">
-                        <label class="emby-checkbox-label">
-                            <input id="MultiSourceSearch" name="MultiSourceSearch" type="checkbox" is="emby-checkbox" />
-                            <span>Multi-source search for ID queries (JAV / Madou / FC2)</span>
-                        </label>
-                    </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="MultiSourceSearchTimeoutSeconds">Multi-source per-site timeout (seconds)</label>
-                        <input id="MultiSourceSearchTimeoutSeconds" name="MultiSourceSearchTimeoutSeconds" type="number" min="5" max="120" is="emby-input" />
-                    </div>
-                    <div class="checkboxContainer checkboxContainer-withDescripton">
-                        <label class="emby-checkbox-label">
-                            <input id="EnableFrameGrabMenu" name="EnableFrameGrabMenu" type="checkbox" is="emby-checkbox" />
-                            <span>Show a "Frame grab" button on item detail pages (Jellyfin only, libraries using this plugin)</span>
-                        </label>
-                    </div>
-                    <div class="checkboxContainer checkboxContainer-withDescripton">
-                        <label class="emby-checkbox-label">
-                            <input id="UseMetadataAPI" name="UseMetadataAPI" type="checkbox" is="emby-checkbox" />
-                            <span>Use MetadataAPI for not supported sites</span>
-                        </label>
-                    </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="MetadataAPIToken">MetadataAPI Token</label>
-                        <input id="MetadataAPIToken" name="MetadataAPIToken" type="password" is="emby-input" />
-                    </div>
-                    <div class="checkboxContainer checkboxContainer-withDescripton">
-                        <label class="emby-checkbox-label">
-                            <input id="DisableActors" name="DisableActors" type="checkbox" is="emby-checkbox" />
-                            <span>Disable Actors Saving to Metadata</span>
-                        </label>
-                    </div>
-                    <div class="checkboxContainer checkboxContainer-withDescripton">
-                        <label class="emby-checkbox-label">
-                            <input id="TagActors" name="TagActors" type="checkbox" is="emby-checkbox" />
-                            <span>Tag Actors managed by PhoenixAdult</span>
+
+                    <div class="checkboxContainer">
+                        <label class="phoenix-check">
+                            <input id="ProxyEnable" name="ProxyEnable" type="checkbox" />
+                            <span data-i18n="proxyEnable">Proxy Enable</span>
                         </label>
                     </div>
                     <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="TagActorsValue">Actor Tag</label>
-                        <input id="TagActorsValue" name="TagActorsValue" type="text" is="emby-input" />
+                        <label class="inputLabel inputLabelUnfocused" for="ProxyHost" data-i18n="proxyHost">Proxy Host</label>
+                        <input class="emby-input" id="ProxyHost" name="ProxyHost" type="text" />
                     </div>
-                    <div class="checkboxContainer checkboxContainer-withDescripton">
-                        <label class="emby-checkbox-label">
-                            <input id="DisableGenres" name="DisableGenres" type="checkbox" is="emby-checkbox" />
-                            <span>Disable Genres Saving to Metadata</span>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="ProxyPort" data-i18n="proxyPort">Proxy Port</label>
+                        <input class="emby-input" id="ProxyPort" name="ProxyPort" type="number" />
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="ProxyLogin" data-i18n="proxyLogin">Proxy Login</label>
+                        <input class="emby-input" id="ProxyLogin" name="ProxyLogin" type="text" />
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="ProxyPassword" data-i18n="proxyPassword">Proxy Password</label>
+                        <input class="emby-input" id="ProxyPassword" name="ProxyPassword" type="password" />
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="phoenix-check">
+                            <input id="UseFilePath" name="UseFilePath" type="checkbox" />
+                            <span data-i18n="useFilePath">Use FilePath for matching</span>
                         </label>
                     </div>
-                    <div class="checkboxContainer checkboxContainer-withDescripton">
-                        <label class="emby-checkbox-label">
-                            <input id="DisableImageValidation" name="DisableImageValidation" type="checkbox" is="emby-checkbox" />
-                            <span>Disable Image Validation</span>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="DefaultSiteName" data-i18n="defaultSiteName">Default SiteName</label>
+                        <input class="emby-input" id="DefaultSiteName" name="DefaultSiteName" type="text" />
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="phoenix-check">
+                            <input id="MultiSourceSearch" name="MultiSourceSearch" type="checkbox" />
+                            <span data-i18n="multiSourceSearch">Multi-source search for ID queries (JAV / Madou / FC2)</span>
+                        </label>
+                        <div class="fieldDescription" data-i18n="multiSourceSearchHelp">When a file name contains an ID, every source registered for that ID family is queried in parallel and the results are merged. A site name that merely looks like an ID label (e.g. HEYZO-0929 and the site "Heyzo") does not restrict the search to that single site.</div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="MultiSourceSearchTimeoutSeconds" data-i18n="multiSourceTimeout">Multi-source per-site timeout (seconds)</label>
+                        <input class="emby-input" id="MultiSourceSearchTimeoutSeconds" name="MultiSourceSearchTimeoutSeconds" type="number" min="5" max="120" />
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="phoenix-check">
+                            <input id="EnableFrameGrabMenu" name="EnableFrameGrabMenu" type="checkbox" />
+                            <span data-i18n="enableFrameGrabMenu">Show a "Frame grab" button on item detail pages (Jellyfin only, libraries using this plugin)</span>
                         </label>
                     </div>
-                    <div class="checkboxContainer checkboxContainer-withDescripton">
-                        <label class="emby-checkbox-label">
-                            <input id="DisableImageSize" name="DisableImageSize" type="checkbox" is="emby-checkbox" />
-                            <span>Disable Image Size</span>
+                    <div class="checkboxContainer">
+                        <label class="phoenix-check">
+                            <input id="UseMetadataAPI" name="UseMetadataAPI" type="checkbox" />
+                            <span data-i18n="useMetadataApi">Use MetadataAPI for not supported sites</span>
                         </label>
                     </div>
-                    <div class="checkboxContainer checkboxContainer-withDescripton">
-                        <label class="emby-checkbox-label">
-                            <input id="DisableAutoIdentify" name="DisableAutoIdentify" type="checkbox" is="emby-checkbox" />
-                            <span>Disable Auto Identify</span>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="MetadataAPIToken" data-i18n="metadataApiToken">MetadataAPI Token</label>
+                        <input class="emby-input" id="MetadataAPIToken" name="MetadataAPIToken" type="password" />
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="phoenix-check">
+                            <input id="DisableActors" name="DisableActors" type="checkbox" />
+                            <span data-i18n="disableActors">Disable Actors Saving to Metadata</span>
+                        </label>
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="phoenix-check">
+                            <input id="TagActors" name="TagActors" type="checkbox" />
+                            <span data-i18n="tagActors">Tag Actors managed by PhoenixAdult</span>
+                        </label>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="TagActorsValue" data-i18n="tagActorsValue">Actor Tag</label>
+                        <input class="emby-input" id="TagActorsValue" name="TagActorsValue" type="text" />
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="phoenix-check">
+                            <input id="DisableGenres" name="DisableGenres" type="checkbox" />
+                            <span data-i18n="disableGenres">Disable Genres Saving to Metadata</span>
+                        </label>
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="phoenix-check">
+                            <input id="DisableImageValidation" name="DisableImageValidation" type="checkbox" />
+                            <span data-i18n="disableImageValidation">Disable Image Validation</span>
+                        </label>
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="phoenix-check">
+                            <input id="DisableImageSize" name="DisableImageSize" type="checkbox" />
+                            <span data-i18n="disableImageSize">Disable Image Size</span>
+                        </label>
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="phoenix-check">
+                            <input id="DisableAutoIdentify" name="DisableAutoIdentify" type="checkbox" />
+                            <span data-i18n="disableAutoIdentify">Disable Auto Identify</span>
                         </label>
                     </div>
                     <div class="selectContainer">
-                        <label class="selectLabel" for="PreferedActorNameSource">Actor Name Source</label>
-                        <select is="emby-select" id="PreferedActorNameSource" name="PreferedActorNameSource" class="emby-select-withcolor emby-select">
-                            <option value="LocalDatabase">Local Database</option>
-                            <option value="NoChange">As in Source</option>
+                        <label class="selectLabel" for="PreferedActorNameSource" data-i18n="actorNameSource">Actor Name Source</label>
+                        <select class="emby-select emby-select-withcolor" id="PreferedActorNameSource" name="PreferedActorNameSource">
+                            <option value="LocalDatabase" data-i18n="optionLocalDatabase">Local Database</option>
+                            <option value="NoChange" data-i18n="optionNoChange">As in Source</option>
                         </select>
                     </div>
                     <div class="selectContainer">
-                        <label class="selectLabel" for="JAVActorNamingStyle">JAV Actor Naming Style</label>
-                        <select is="emby-select" id="JAVActorNamingStyle" name="JAVActorNamingStyle" class="emby-select-withcolor emby-select">
-                            <option value="WesternStyle">Western Style</option>
-                            <option value="JapaneseStyle">Japanese Style</option>
+                        <label class="selectLabel" for="JAVActorNamingStyle" data-i18n="javActorNamingStyle">JAV Actor Naming Style</label>
+                        <select class="emby-select emby-select-withcolor" id="JAVActorNamingStyle" name="JAVActorNamingStyle">
+                            <option value="WesternStyle" data-i18n="optionWesternStyle">Western Style</option>
+                            <option value="JapaneseStyle" data-i18n="optionJapaneseStyle">Japanese Style</option>
                         </select>
                     </div>
                     <div class="selectContainer">
-                        <label class="selectLabel" for="GenresSortingStyle">Genre Sorting Style</label>
-                        <select is="emby-select" id="GenresSortingStyle" name="GenresSortingStyle" class="emby-select-withcolor emby-select">
-                            <option value="Alphabetical">Alphabetical</option>
-                            <option value="PositionsLast">Positions Last</option>
+                        <label class="selectLabel" for="GenresSortingStyle" data-i18n="genresSortingStyle">Genre Sorting Style</label>
+                        <select class="emby-select emby-select-withcolor" id="GenresSortingStyle" name="GenresSortingStyle">
+                            <option value="Alphabetical" data-i18n="optionAlphabetical">Alphabetical</option>
+                            <option value="PositionsLast" data-i18n="optionPositionsLast">Positions Last</option>
                         </select>
                     </div>
-                    <button is="emby-button" type="submit" class="raised button-submit block emby-button">
-                        <span>Save</span>
+                    <button class="raised button-submit block emby-button" type="submit">
+                        <span data-i18n="save">Save</span>
                     </button>
                 </form>
             </div>
@@ -161,15 +302,207 @@
                 pluginUniqueId: '8f97371f-8617-463c-9859-a33072182494'
             };
 
+            // i18n: data-i18n marks text and data-i18n-placeholder marks placeholders; the English original
+            // stays in the DOM as the fallback dictionary, so a new language only needs one more key.
+            var phoenixAdultI18n = {
+                en: {},
+                'zh-cn': {
+                    pageDescription: '本元数据插件从原始站点抓取信息，用来补全 Jellyfin/Emby 中的影片资料。',
+                    disableCaching: '禁用缓存',
+                    disableSslCheck: '禁用 SSL 证书校验',
+                    flareSolverrUrl: 'FlareSolverr 地址',
+                    flareSolverrUrlPlaceholder: 'http://localhost:8191/',
+                    flareSolverrHelp: '被 Cloudflare 拦截的站点（JAVLibrary、Babepedia 等）通过 FlareSolverr 抓取。留空表示不启用该兜底。',
+                    imageReferers: '图片 Referer 规则',
+                    imageReferersPlaceholder: 'cdn.example.com=https://www.example.com/',
+                    imageReferersHelp: '每行一条，格式为「主机=Referer」。插件内置了几条必须带 Referer 的图床规则（phncdn.com、javbus.com），已作为默认配置填在这里，可直接修改；把等号后面的值留空即禁用该主机。',
+                    sectionJavdb: 'JavDB',
+                    sectionJavdbIntro: 'JavDB 提供影片元数据、封面与演员头像。有码作品无需登录即可抓取；演员页与无码作品需要登录态。详细说明见插件文档的 JavDB 章节。',
+                    sectionJavdbDocs: 'JavDB 使用说明（docs/javdb.md）',
+                    javdbCookie: 'JavDB Cookie（可选）',
+                    javdbCookiePlaceholder: 'over18=1; _jdb_session=…; locale=zh',
+                    javdbCookieHelp: '把已登录 javdb.com 的浏览器 Cookie 请求头整段粘贴进来。仅用于演员页与无码作品；不填时这些页面按不可用跳过，有码作品不受影响。',
+                    javdbCookieTest: '检测 Cookie',
+                    javdbStatusTesting: '正在检测…',
+                    javdbStatusMissing: '还没有填写 Cookie。',
+                    javdbStatusValid: 'Cookie 有效：演员页与无码作品可以读取。',
+                    javdbStatusExpired: 'Cookie 已失效（过期或被注销），请重新粘贴。',
+                    javdbStatusInvalid: 'Cookie 格式不对，应为「名字=值; 名字=值」。',
+                    javdbStatusUnknown: '无法判定：资料页能通过，但受保护页面不像演员页，JavDB 可能改版了。',
+                    javdbStatusError: '检测失败：',
+                    javdbCookieHowTo: '如何获取 Cookie',
+                    javdbCookieStep1: '在桌面浏览器登录 javdb.com，打开任意演员页或无码作品页。',
+                    javdbCookieStep2: '按 F12 打开开发者工具 → Network（网络），刷新页面，选中类型为 document 的 HTML 请求。',
+                    javdbCookieStep3: '在 Request Headers（请求头）里找到 Cookie:，复制它后面的整段值（形如上方的示例）。',
+                    javdbCookieStep4: '粘贴到上面的输入框，先点「检测 Cookie」确认可用，再保存。',
+                    javdbCookieNote: '登录态会在 JavDB 侧过期（通常为数周）。JavDB 登录需要图形验证码，插件无法自动续期，所以请隔段时间点一次「检测 Cookie」，提示失效时再重新粘贴。该值以明文保存在本服务器的插件配置里，请当作凭据对待，不再需要时清空该字段。',
+                    actorPhotoCoverFallback: '演员没有头像时用作品封面兜底',
+                    actorPhotoCoverFallbackHelp: '不少日本女优在任何公开数据库里都没有头像。当所有头像源都为空时，改用她在 JavDB 某部作品的封面（来源标注为「JavDB (cover)」）。如果你宁可没有照片也不想看到封面图，可以关掉这个开关。',
+                    proxyEnable: '启用代理',
+                    proxyHost: '代理主机',
+                    proxyPort: '代理端口',
+                    proxyLogin: '代理用户名',
+                    proxyPassword: '代理密码',
+                    useFilePath: '使用文件路径参与匹配',
+                    defaultSiteName: '默认站点名',
+                    multiSourceSearch: '番号查询启用多源并发检索（JAV / 麻豆 / FC2）',
+                    multiSourceSearchHelp: '当文件名里包含番号时，并行检索该番号类型注册的所有源并合并结果。若站名与番号前缀重名（例如 HEYZO-0929 与站点 Heyzo），不会因此只查那一个站点。',
+                    multiSourceTimeout: '多源检索单站超时（秒）',
+                    enableFrameGrabMenu: '在条目详情页显示「截帧」按钮（仅 Jellyfin，且仅使用本插件的媒体库）',
+                    useMetadataApi: '不支持的站点使用 MetadataAPI',
+                    metadataApiToken: 'MetadataAPI Token',
+                    disableActors: '不写入演员信息',
+                    tagActors: '给本插件管理的演员打标签',
+                    tagActorsValue: '演员标签值',
+                    disableGenres: '不写入类型信息',
+                    disableImageValidation: '禁用图片校验',
+                    disableImageSize: '禁用图片尺寸校验',
+                    disableAutoIdentify: '禁用自动识别',
+                    actorNameSource: '演员名来源',
+                    optionLocalDatabase: '本地数据库',
+                    optionNoChange: '保持来源原样',
+                    javActorNamingStyle: 'JAV 演员姓名风格',
+                    optionWesternStyle: '欧美式（名前姓后）',
+                    optionJapaneseStyle: '日式（姓前名后）',
+                    genresSortingStyle: '类型排序方式',
+                    optionAlphabetical: '按字母序',
+                    optionPositionsLast: '体位类排最后',
+                    save: '保存'
+                }
+            };
+
+            var phoenixAdultActiveDictionary = null;
+
+            // The English dictionary is collected from the DOM; missing keys fall back to it.
+            function phoenixAdultCollectEnglish() {
+                $('[data-i18n]').each(function () {
+                    var key = this.getAttribute('data-i18n');
+                    if (key && !phoenixAdultI18n.en[key]) {
+                        phoenixAdultI18n.en[key] = this.textContent.trim();
+                    }
+                });
+                $('[data-i18n-placeholder]').each(function () {
+                    var key = this.getAttribute('data-i18n-placeholder');
+                    if (key && !phoenixAdultI18n.en[key]) {
+                        phoenixAdultI18n.en[key] = this.getAttribute('placeholder') || '';
+                    }
+                });
+            }
+
+            // Priority: Jellyfin user culture, browser languages, then en; zh-* maps to zh-cn.
+            function phoenixAdultApplyLanguage(locale) {
+                var languages = [];
+                if (locale) {
+                    languages.push(locale);
+                }
+                if (navigator.languages && navigator.languages.length) {
+                    languages = languages.concat(navigator.languages);
+                }
+                if (navigator.language) {
+                    languages.push(navigator.language);
+                }
+
+                var dictionary = null;
+                for (var i = 0; i < languages.length && !dictionary; i++) {
+                    var tag = String(languages[i] || '').toLowerCase();
+                    if (phoenixAdultI18n[tag]) {
+                        dictionary = phoenixAdultI18n[tag];
+                    } else if (tag.indexOf('zh') === 0) {
+                        dictionary = phoenixAdultI18n['zh-cn'];
+                    } else if (tag.indexOf('en') === 0) {
+                        dictionary = phoenixAdultI18n.en;
+                    }
+                }
+
+                dictionary = dictionary || phoenixAdultI18n.en;
+                phoenixAdultActiveDictionary = dictionary;
+
+                $('[data-i18n]').each(function () {
+                    var key = this.getAttribute('data-i18n');
+                    var text = dictionary[key] || phoenixAdultI18n.en[key];
+                    if (text) {
+                        this.textContent = text;
+                    }
+                });
+
+                $('[data-i18n-placeholder]').each(function () {
+                    var key = this.getAttribute('data-i18n-placeholder');
+                    var text = dictionary[key] || phoenixAdultI18n.en[key];
+                    if (text) {
+                        this.setAttribute('placeholder', text);
+                    }
+                });
+            }
+
+            function phoenixAdultT(key) {
+                var dictionary = phoenixAdultActiveDictionary || phoenixAdultI18n.en;
+                return dictionary[key] || phoenixAdultI18n.en[key] || key;
+            }
+
+            function phoenixAdultInitI18n() {
+                phoenixAdultCollectEnglish();
+                phoenixAdultApplyLanguage(null);
+                try {
+                    ApiClient.getCurrentUser().then(function (user) {
+                        var culture = user && user.Configuration && user.Configuration.Culture;
+                        if (culture) {
+                            phoenixAdultApplyLanguage(culture);
+                        }
+                    });
+                } catch (e) {
+                    // Keep the browser language when the user culture is unavailable.
+                }
+            }
+
+            function phoenixAdultSetJavDBStatus(state, text) {
+                var node = document.getElementById('JavDBCookieStatus');
+                if (!node) {
+                    return;
+                }
+                node.setAttribute('data-state', state || '');
+                node.textContent = text || '';
+            }
+
+            // Test cookie: send the current (possibly unsaved) value to the plugin for a real probe.
+            $('#TestJavDBCookie').on('click', function () {
+                var button = this;
+                var cookie = ($('#JavDBCookie').val() || '').trim();
+                button.disabled = true;
+                phoenixAdultSetJavDBStatus('', phoenixAdultT('javdbStatusTesting'));
+
+                ApiClient.ajax({
+                    type: 'POST',
+                    url: ApiClient.getUrl('PhoenixAdult/javdb/cookie-test'),
+                    data: JSON.stringify({ Cookie: cookie }),
+                    contentType: 'application/json',
+                    dataType: 'json'
+                }).then(function (result) {
+                    var status = (result && result.status) || 'error';
+                    var key = 'javdbStatus' + status.charAt(0).toUpperCase() + status.slice(1);
+                    var text = phoenixAdultT(key);
+                    if (status === 'error' && result && result.message) {
+                        text = phoenixAdultT('javdbStatusError') + ' ' + result.message;
+                    }
+                    phoenixAdultSetJavDBStatus(status, text);
+                }).catch(function (error) {
+                    phoenixAdultSetJavDBStatus('error', phoenixAdultT('javdbStatusError') + ' ' + (error && error.status ? error.status : ''));
+                }).then(function () {
+                    button.disabled = false;
+                });
+            });
+
             $('#DisableImageValidation').on('change', function () {
                 $('#DisableImageSize').prop('disabled', $('#DisableImageValidation').prop('checked'));
             });
 
             $('#phoenixAdultConfigurationPage').on('pageshow', function () {
+                phoenixAdultInitI18n();
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(phoenixAdultConfig.pluginUniqueId).then(function (config) {
                     $('#FlareSolverrURL').val(config.FlareSolverrURL).change();
                     $('#ImageReferers').val((config.ImageReferers || []).join('\n'));
+                    $('#JavDBCookie').val(config.JavDBCookie || '');
+                    $('#ActorPhotoCoverFallback').prop('checked', config.ActorPhotoCoverFallback !== false);
                     $('#DisableCaching').prop('checked', config.DisableCaching);
                     $('#DisableSSLCheck').prop('checked', config.DisableSSLCheck);
                     $('#ProxyEnable').prop('checked', config.ProxyEnable);
@@ -188,6 +521,7 @@
                     $('#DisableGenres').prop('checked', config.DisableGenres);
                     $('#DisableImageValidation').prop('checked', config.DisableImageValidation);
                     $('#DisableImageSize').prop('checked', config.DisableImageSize);
+                    $('#DisableImageSize').prop('disabled', config.DisableImageValidation);
                     $('#DisableAutoIdentify').prop('checked', config.DisableAutoIdentify);
                     $('#PreferedActorNameSource').val(config.PreferedActorNameSource).change();
                     $('#JAVActorNamingStyle').val(config.JAVActorNamingStyle).change();
@@ -200,10 +534,12 @@
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(phoenixAdultConfig.pluginUniqueId).then(function (config) {
                     config.FlareSolverrURL = $('#FlareSolverrURL').val();
-                    // 规则以 "host=referer" 行列表存储：插件配置走 XML 序列化，不能使用字典对象
+                    // Rules are stored as "host=referer" lines: the configuration is XML serialized, so no dictionaries.
                     config.ImageReferers = ($('#ImageReferers').val() || '').split('\n')
                         .map(function (line) { return line.trim(); })
                         .filter(function (line) { return line.indexOf('=') > 0; });
+                    config.JavDBCookie = ($('#JavDBCookie').val() || '').trim();
+                    config.ActorPhotoCoverFallback = $('#ActorPhotoCoverFallback').prop('checked');
                     config.DisableCaching = $('#DisableCaching').prop('checked');
                     config.DisableSSLCheck = $('#DisableSSLCheck').prop('checked');
                     config.ProxyEnable = $('#ProxyEnable').prop('checked');

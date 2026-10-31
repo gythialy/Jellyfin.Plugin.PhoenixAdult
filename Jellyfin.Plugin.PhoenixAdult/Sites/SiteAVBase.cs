@@ -18,11 +18,9 @@ using PhoenixAdult.Helpers.Utils;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// AVBASE（www.avbase.net）：站点是 Next.js，正文全在 __NEXT_DATA__ 里，
-    /// 因此走 /_next/data/{buildId}/works.json 数据接口而不是解析 HTML：
-    /// buildId 从首页缓存 2 小时，搜索 works.json?q=，详情 works/{id}.json。
-    /// work.work_id 就是番号（带 '-'，如 ABP-588），前缀（prestige/tameike/…）拼成
-    /// "prefix:work_id" 才是详情接口能接受的 id。
+    /// AVBASE runs Next.js, so the JSON API is used instead of HTML:
+    /// buildId (home page, cached two hours), search works.json?q=, detail works/{id}.json.
+    /// work.work_id is the code; the detail API needs "prefix:work_id".
     /// </summary>
     public class SiteAVBase : IProviderBase
     {
@@ -32,23 +30,23 @@ namespace PhoenixAdult.Sites
 
         private static readonly SemaphoreSlim BuildIdLock = new SemaphoreSlim(1, 1);
 
-        /// <summary>封面优先来源：mgstage 的图最稳（duga 的 pic.duga.jp 经常 404）。</summary>
+        /// <summary>Cover preference: mgstage images (pic.duga.jp often 404s).</summary>
         private static readonly string[] CoverSourcePriority = { "mgstage", "fanza", "duga", "getchu", "pcolle" };
 
-        /// <summary>剧照优先来源：fanza/dmm 的 samples 最全。</summary>
+        /// <summary>Sample preference: fanza/dmm.</summary>
         private static readonly string[] SampleSourcePriority = { "fanza", "mgstage", "duga", "getchu", "pcolle" };
 
-        /// <summary>Next.js 日期："Thu Apr 13 2017 09:00:00 GMT+0900 (Japan Standard Time)"。</summary>
+        /// <summary>Next.js date format, e.g. "Thu Apr 13 2017 09:00:00 GMT+0900".</summary>
         private static readonly Regex NextDateRegex = new Regex(
             @"(?<mon>[A-Za-z]{3})\s+(?<day>[0-9]{1,2})\s+(?<year>[0-9]{4})",
             RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-        /// <summary>AVBASE 不收录 FC2 / 无码番号。</summary>
+        /// <summary>AVBASE does not list FC2 or uncensored codes.</summary>
         private static readonly Regex Fc2Regex = new Regex(
             @"^(?i)FC2[-_\s]*(?:PPV)?[-_\s]*[0-9]{6,8}$",
             RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-        /// <summary>收录时长（分钟）："172" / "120分"。</summary>
+        /// <summary>Runtime in minutes: "172" or "120 min".</summary>
         private static readonly Regex VolumeRegex = new Regex(
             @"^(?<minutes>[0-9]{1,4})\s*分?$",
             RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -109,7 +107,7 @@ namespace PhoenixAdult.Sites
 
                     if (string.Equals(workId, wantedId, StringComparison.OrdinalIgnoreCase))
                     {
-                        // 精确命中排到最前（MovieProvider 会把带 IndexNumber 的结果按它排序）。
+                        // Exact hits sort first (MovieProvider orders by IndexNumber).
                         res.IndexNumber = 100;
                     }
 
@@ -143,7 +141,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            // 详情接口只认 "prefix:work_id"；只有番号时先用搜索补齐前缀。
+            // The detail API needs "prefix:work_id"; fill the prefix from search.
             if (!workId.Contains(':'))
             {
                 workId = await ResolvePrefixedWorkId(siteNum, workId, cancellationToken).ConfigureAwait(false);
@@ -403,7 +401,7 @@ namespace PhoenixAdult.Sites
 
                 if (json?["notFound"] != null)
                 {
-                    // 站点明确回了 notFound，换 buildId 也没用。
+                    // The site answered notFound; another buildId will not help.
                     return null;
                 }
             }
@@ -411,7 +409,7 @@ namespace PhoenixAdult.Sites
             return null;
         }
 
-        /// <summary>用搜索接口把裸番号补成 "prefix:work_id"（详情接口不接受裸番号）。</summary>
+        /// <summary>Turn a bare code into "prefix:work_id" through the search API.</summary>
         private static async Task<string> ResolvePrefixedWorkId(int[] siteNum, string workId, CancellationToken cancellationToken)
         {
             var json = await RequestSearch(siteNum, workId.ToUpperInvariant(), cancellationToken).ConfigureAwait(false);
@@ -462,7 +460,7 @@ namespace PhoenixAdult.Sites
             return Uri.UnescapeDataString(decoded).Trim();
         }
 
-        /// <summary>sceneID 由本 handler 编码；也兼容直接传入的裸 workId（手工 Identify）。</summary>
+        /// <summary>Decode the scene id; a raw work id passes through.</summary>
         private static string DecodeSafe(string value)
         {
             try
@@ -475,7 +473,7 @@ namespace PhoenixAdult.Sites
             }
             catch (Exception)
             {
-                // 非 Base58 输入（手工 Identify 直接给 workId）会抛 FormatException，按裸值处理。
+                // Non-Base58 input throws FormatException; treat it as a raw value.
             }
 
             return value;
@@ -531,7 +529,7 @@ namespace PhoenixAdult.Sites
             return string.Empty;
         }
 
-        /// <summary>iteminfo.volume 是收录时长（分钟），只在视频商品上使用。</summary>
+        /// <summary>iteminfo.volume is the runtime in minutes, video items only.</summary>
         private static TimeSpan? PickRuntime(JToken work)
         {
             foreach (var product in GetProducts(work, CoverSourcePriority))
@@ -589,7 +587,7 @@ namespace PhoenixAdult.Sites
             return new List<string>();
         }
 
-        /// <summary>按来源优先级取第一个非空字段（如 maker.name / iteminfo.description）。</summary>
+        /// <summary>First non-empty field by source priority.</summary>
         private static string PickField(JToken work, params string[] path)
         {
             foreach (var product in GetProducts(work, CoverSourcePriority))

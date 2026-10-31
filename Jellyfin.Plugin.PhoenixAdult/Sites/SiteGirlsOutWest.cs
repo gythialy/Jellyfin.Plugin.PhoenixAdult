@@ -29,7 +29,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            // 站内搜索不可用（无搜索接口），改分页浏览 + 标题过滤（TPDB 同款模式）
+            // No site search: pagination plus a title filter.
             var titleTokens = searchTitle.ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             for (var page = 1; page <= 5; page++)
             {
@@ -180,7 +180,7 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
-            // TPDB siteGirlsOutWest.py 的选择器：//div[@class="player-thumb"]//img/@src0_3x（旧 videoplayer 已不存在）
+            // Selector from the TPDB scraper: //div[@class="player-thumb"]//img/@src0_3x.
             var imageNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'player-thumb')]//img");
             if (imageNodes != null)
             {

@@ -22,12 +22,11 @@ using Jellyfin.Data.Enums;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// AVEntertainments（aventertainments.com）：面向海外的日系无修正 DVD/配信商店。
-    /// 条目 ID 为站内数字商品 id（详情 /dvd/detail?pro={id}）。
-    /// 字段用 div.single-info > span.title(标签) + span.value/value-category 读取；
-    /// 封面取 og:image，场景截图取 div.gallery-block a.lightbox。
-    /// 注意：站内 /dvd/search 会 302 到 /cart/verifybot（Google reCAPTCHA v2），
-    /// 无法程序化通过，因此搜索仅在未被拦截时可用，否则返回空列表。
+    /// AVEntertainments (aventertainments.com), a store for Japanese uncensored DVDs.
+    /// Scene id is the numeric product id (/dvd/detail?pro={id}); fields come from div.single-info,
+    /// cover from og:image and samples from div.gallery-block a.lightbox.
+    /// The site search redirects to a reCAPTCHA gate,
+    /// so search only works when it is not intercepted.
     /// </summary>
     public class SiteAVEntertainments : IProviderBase
     {
@@ -282,7 +281,7 @@ namespace PhoenixAdult.Sites
                 return href.Groups["id"].Value;
             }
 
-            // 纯数字才算站内商品 id（避免把 HEY-063 里的 063 当成 id）
+            // Only all-digit values are product ids, so the 063 in HEY-063 is not one.
             var trimmed = input.Trim();
             return Regex.IsMatch(trimmed, @"^[0-9]{4,8}$", RegexOptions.CultureInvariant) ? trimmed : string.Empty;
         }
@@ -420,7 +419,7 @@ namespace PhoenixAdult.Sites
             return MakeAbsolute(sceneURL, cover);
         }
 
-        /// <summary>读取 div.single-info 里的标签/值对（商品番号用 span.tag-title）。</summary>
+        /// <summary>Label/value pairs from div.single-info (the code uses span.tag-title).</summary>
         private static Dictionary<string, string> ReadFields(HtmlNode doc)
         {
             var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

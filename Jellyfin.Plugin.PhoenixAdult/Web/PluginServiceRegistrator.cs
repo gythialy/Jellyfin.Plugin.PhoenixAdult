@@ -3,12 +3,13 @@ using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using PhoenixAdult.Helpers.Utils;
 
 namespace PhoenixAdult.Web
 {
     /// <summary>
-    /// 注册抽帧功能需要的服务：脚本注入过滤器 + 插件自带的 API 控制器。
-    /// Emby 没有这套机制，整个 Web 目录在 Emby 构建里被排除。
+    /// Register the script injection filter and the plugin controllers (Jellyfin only).
     /// </summary>
     public class PluginServiceRegistrator : IPluginServiceRegistrator
     {
@@ -17,6 +18,10 @@ namespace PhoenixAdult.Web
         {
             serviceCollection.AddSingleton<IStartupFilter, ScriptInjectionStartupFilter>();
             serviceCollection.AddControllers().AddApplicationPart(typeof(FrameGrabController).Assembly);
+
+            // Remember the server API root for the image proxy.
+            ImageProxyUrl.BaseUrl = applicationHost?.GetLocalApiUrl("127.0.0.1", null, null)
+                ?? applicationHost?.GetSmartApiUrl("localhost");
         }
     }
 }

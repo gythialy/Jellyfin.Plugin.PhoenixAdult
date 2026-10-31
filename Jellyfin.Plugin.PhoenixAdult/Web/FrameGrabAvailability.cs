@@ -7,17 +7,17 @@ using MediaBrowser.Model.Configuration;
 namespace PhoenixAdult.Web
 {
     /// <summary>
-    /// 判定库/条目类型是否启用了本插件：元数据下载器或图片下载器里出现 PhoenixAdult 即为启用。
-    /// 条目菜单里的「抽帧」入口只在这种库上出现，避免对没在用本插件的库误操作。
+    /// Whether a library type enables this plugin (metadata or image provider).
+    /// The item menu entry only shows on such libraries.
     /// </summary>
     internal static class FrameGrabAvailability
     {
         /// <summary>
-        /// 判断给定的类型设置是否启用了本插件。
+        /// Whether the given type options enable the plugin.
         /// </summary>
-        /// <param name="typeOptions">库设置里该条目类型的选项（可为 null）。</param>
-        /// <param name="pluginName">插件显示名（<see cref="Plugin.Instance"/> 的 Name）。</param>
-        /// <returns>启用返回 true。</returns>
+        /// <param name="typeOptions">Type options, may be null.</param>
+        /// <param name="pluginName">Plugin display name.</param>
+        /// <returns>True when enabled.</returns>
         internal static bool IsEnabled(TypeOptions typeOptions, string pluginName)
         {
             if (typeOptions == null || string.IsNullOrEmpty(pluginName))

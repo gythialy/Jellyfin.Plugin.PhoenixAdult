@@ -23,11 +23,10 @@ using Jellyfin.Data.Enums;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// FC2Hub（javten.com）：FC2-PPV 的镜像聚合站。
-    /// 条目 ID 为双段 "javtenVideoId-fc2Number"（如 4680562-4680562），
-    /// 详情 /video/{a}/id{b}/；搜索 /search?kw={num}，命中时站点会 302 跳到视频页。
-    /// 元数据以详情页 JSON-LD（@type=Movie/CreativeWorkSeries）为主，HTML 选择器兜底。
-    /// 站点有 Cloudflare，统一走 Fetcher/FlareSolverr。
+    /// FC2Hub (javten.com), a mirror aggregator for FC2-PPV.
+    /// Scene id is "javtenVideoId-fc2Number";
+    /// detail /video/{a}/id{b}/. Metadata comes from JSON-LD, with HTML selectors as fallback.
+    /// The site is behind Cloudflare, so it goes through Fetcher.
     /// </summary>
     public class SiteFC2Hub : IProviderBase
     {
@@ -75,7 +74,7 @@ namespace PhoenixAdult.Sites
                     return result;
                 }
 
-                // 命中时 javten 会 302 到 /video/{a}/id{b}/，此时整页就是详情页。
+                // A hit redirects to the scene page, which is the detail page itself.
                 var finalUrl = page.Value.Url;
                 if (!string.IsNullOrEmpty(finalUrl) && VideoPathRegex.IsMatch(finalUrl))
                 {

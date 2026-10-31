@@ -81,12 +81,12 @@ namespace PhoenixAdult.Sites
         private static readonly Dictionary<string, string> AgeCookie = new Dictionary<string, string> { { "age_verified", "yes" } };
 
         /// <summary>
-        /// 站点名 → tours-store Elasticsearch 索引别名。
-        /// 映射依据 TPDB scrapers/scenes/networkTeamskeet2025.py 的 endpoints 表：
-        /// 每个别名只承载其背后域名的场景 id。
+        /// Site name to Elasticsearch index alias,
+        /// following the TPDB endpoint table:
+        /// each alias only holds scene ids of its own domain.
         /// </summary>
-        /// <param name="searchNetwork">子网络/站点名（如 "TeamSkeet"、"Family Strokes"）。</param>
-        /// <returns>ES 别名。</returns>
+        /// <param name="searchNetwork">Sub-network name, e.g. "TeamSkeet".</param>
+        /// <returns>ES alias.</returns>
         private string GetBundle(string searchNetwork)
             => (searchNetwork ?? string.Empty).ToLowerInvariant() switch
             {
@@ -97,9 +97,8 @@ namespace PhoenixAdult.Sites
                 "pervz" => "pervbundle",
                 "family strokes" => "familybundle",
 
-                // Ask Your Mother 属于 familystrokes.com（TPDB familybundle 端点包含
-                // ['Ask Your Mother', 'Family Strokes Features']）。落默认 reptyle_bundle
-                // 会跨站乱匹配，并拼出已下线的 askyourmother.com 场景页。
+                // Ask Your Mother belongs to familystrokes.com; the default bundle would match
+                // across sites and build scene URLs for a retired domain.
                 "ask your mother" => "familybundle",
                 _ => "reptyle_bundle",
             };
@@ -116,7 +115,7 @@ namespace PhoenixAdult.Sites
                 searchNetwork = "Reptyle";
             }
 
-            // Elasticsearch 搜索：按演员名稳定命中（WebSearch 依赖 Google/DDG，反爬下不稳定）
+            // Elasticsearch search hits reliably by actor name; WebSearch depends on Google/DDG.
             var bundle = this.GetBundle(searchNetwork);
             var nameTerms = searchTitle.ToLowerInvariant()
                 .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
@@ -273,9 +272,8 @@ namespace PhoenixAdult.Sites
                 People = new List<PersonInfo>(),
             };
 
-            // Search 产出的 sceneID 形如 "{id}|{date}|videosContent"，共 3 段：
-            // 索引 0=id、1=date、2=type。原实现用 Length > 2 / > 3 判断，
-            // 导致 date 永远为空、type 永远回退默认，Update 拿不到正确日期与内容节点。
+            // The scene id is "{id}|{date}|type": three parts.
+            // The old length checks left the date empty and the type at its default.
             string[] idParts = sceneID[0].Split('|');
             string sceneName = idParts[0];
             string sceneDate = idParts.Length > 1 ? idParts[1] : string.Empty;
@@ -283,9 +281,9 @@ namespace PhoenixAdult.Sites
                 ? idParts[2].Replace("content", "Content")
                 : "moviesContent";
 
-            // 新版游览站页面已不再内嵌 window.__INITIAL_STATE__（TPDB 为此另写了
-            // networkTeamskeet2025 并注明“较新旅游站页面拿不到详情”），但 tours-store 的
-            // Elasticsearch 仍保留完整场景元数据。优先用 ES，HTML 解析降级为回退。
+            // The newer tour pages no longer embed window.__INITIAL_STATE__,
+            // but Elasticsearch still holds the full metadata,
+            // so prefer ES and keep HTML parsing as the fallback.
             var esScene = await this.GetSceneFromElasticsearch(siteNum, sceneName, cancellationToken).ConfigureAwait(false);
             if (esScene != null)
             {
@@ -439,7 +437,7 @@ namespace PhoenixAdult.Sites
             string sceneName = idParts[0];
             string sceneType = idParts.Length > 2 ? idParts[2].Replace("content", "Content") : "moviesContent";
 
-            // 新版游览站页面已无 window.__INITIAL_STATE__，改从 ES 取封面（与 Update 同一数据源）
+            // Covers come from ES too (same source as Update).
             var esScene = await this.GetSceneFromElasticsearch(siteNum, sceneName, cancellationToken).ConfigureAwait(false);
             if (esScene != null)
             {
@@ -534,13 +532,13 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// 从 tours-store Elasticsearch 按场景 id 取完整场景文档（_source）。
-        /// 新版游览站场景页已不再内嵌元数据，ES 是唯一稳定的详情来源。
+        /// Full scene document (_source) from Elasticsearch;
+        /// the tour pages no longer embed the metadata.
         /// </summary>
-        /// <param name="siteNum">站点编号。</param>
-        /// <param name="sceneName">场景 id（slug）。</param>
+        /// <param name="siteNum">Site numbers.</param>
+        /// <param name="sceneName">Scene id (slug).</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>场景 _source，取不到时为 null。</returns>
+        /// <returns>Scene _source, or null.</returns>
         private async Task<JObject> GetSceneFromElasticsearch(int[] siteNum, string sceneName, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(sceneName))
@@ -580,14 +578,14 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// 用 ES 场景文档填充元数据（标题/描述/日期/站点/演员/标签/图片）。
+        /// Fill metadata from the ES document (title, description, date, site, actors, tags, images).
         /// </summary>
-        /// <param name="result">待填充的结果。</param>
-        /// <param name="siteNum">站点编号。</param>
+        /// <param name="result">Result to fill.</param>
+        /// <param name="siteNum">Site numbers.</param>
         /// <param name="scene">ES _source。</param>
         private void FillFromElasticsearch(MetadataResult<BaseItem> result, int[] siteNum, JObject scene)
         {
-            // ES 里的标题来自 HTML 源，可能带 &quot; 等实体，先解码再交给 ParseTitle
+            // ES titles come from HTML sources, so decode entities before ParseTitle.
             string title = Helper.ParseTitle(
                 System.Net.WebUtility.HtmlDecode(scene["title"]?.ToString() ?? string.Empty),
                 siteNum);

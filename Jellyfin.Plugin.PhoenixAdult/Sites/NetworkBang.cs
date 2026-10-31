@@ -48,7 +48,7 @@ namespace PhoenixAdult.Sites
 
                 var scenePoster = imgNode?.GetAttributeValue("src", string.Empty) ?? string.Empty;
 
-                // curID = 完整场景 URL（与 Update/GetImages 一致）
+                // curID is the full scene URL, as in Update and GetImages.
                 var curID = Helper.Encode(sceneURL.AbsolutePath);
 
                 var item = new RemoteSearchResult
@@ -105,7 +105,7 @@ namespace PhoenixAdult.Sites
                 result.Item.AddStudio(studio);
             }
 
-            // 日期: 场景页含 YYYY-MM-DD
+            // Date: the scene page carries YYYY-MM-DD.
             var dateText = sceneData.SelectSingleText("//script[contains(text(), 'uploadDate')]");
             var dateMatch = System.Text.RegularExpressions.Regex.Match(dateText, @"\d{4}-\d{2}-\d{2}");
             if (dateMatch.Success && DateTime.TryParseExact(dateMatch.Value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
@@ -113,7 +113,7 @@ namespace PhoenixAdult.Sites
                 result.Item.PremiereDate = sceneDateObj;
             }
 
-            // 流派: a.genres 链接
+            // Genres: a.genres links.
             var genreNode = sceneData.SelectNodesSafe("//a[contains(@class, 'genres')]");
             foreach (var genreLink in genreNode)
             {
@@ -124,7 +124,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            // 演员: /pornstar/ 链接
+            // Actors: /pornstar/ links.
             var actorsNode = sceneData.SelectNodesSafe("//a[starts-with(@href, '/pornstar/')]");
             foreach (var actorLink in actorsNode)
             {
@@ -179,7 +179,7 @@ namespace PhoenixAdult.Sites
 
             var sceneData = await HTML.ElementFromURL(scenePath, cancellationToken).ConfigureAwait(false);
 
-            // 封面: og:image
+            // Cover: og:image.
             var ogImage = sceneData.SelectSingleText("//meta[@property='og:image']/@content");
             if (!string.IsNullOrEmpty(ogImage))
             {
@@ -190,7 +190,7 @@ namespace PhoenixAdult.Sites
                 });
             }
 
-            // 截图: screenshots 图片
+            // Screenshots.
             var thumbs = sceneData.SelectNodes("//img[contains(@src, 'screenshots')]");
             if (thumbs != null)
             {
@@ -199,7 +199,7 @@ namespace PhoenixAdult.Sites
                 {
                     var url = img.GetAttributeValue("src", string.Empty);
 
-                    // 去掉尺寸参数，取原始大图
+                    // Drop the size parameters for the original image.
                     url = url.Split('?')[0];
                     if (string.IsNullOrEmpty(url) || !seen.Add(url))
                     {

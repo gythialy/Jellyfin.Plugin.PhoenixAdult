@@ -16,10 +16,9 @@ using PhoenixAdult.Helpers.Utils;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// JavFree (javfree.me)。条目 ID 是 "帖子ID-FC2编号"（如 243452-1151912），
-    /// 详情 URL https://javfree.me/{postID}/fc2-ppv-{num}；搜索 /?s={kw} 只接受
-    /// "FC2-PPV-{num}" 形态（纯数字会 403 "Invalid Search Parameter"），
-    /// 所以定位成 FC2 内容的补充源：只解析 FC2 番号，其它内容直接返回空。
+    /// JavFree. Scene id is "postID-FC2number".
+    /// The search only accepts "FC2-PPV-{num}",
+    /// so this is a supplementary source for FC2 codes only.
     /// </summary>
     public class SiteJavFree : IProviderBase
     {
@@ -56,7 +55,7 @@ namespace PhoenixAdult.Sites
             var number = ResolveFc2Number(searchTitle);
             if (string.IsNullOrEmpty(number))
             {
-                // 不是 FC2 内容，本 handler 不负责。
+                // Not FC2 content, so not handled here.
                 return result;
             }
 
@@ -261,7 +260,7 @@ namespace PhoenixAdult.Sites
 
             if (images.Count == 0)
             {
-                // 兜底：首页/详情页 og:image。
+                // Fallback: og:image.
                 var ogImage = NormalizeUrl(sceneData.SelectSingleText("//meta[@property='og:image']/@content"), baseURL);
                 if (!string.IsNullOrEmpty(ogImage))
                 {

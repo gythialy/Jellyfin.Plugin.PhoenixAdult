@@ -18,10 +18,10 @@ using PhoenixAdult.Helpers.Utils;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// Pcolle（ピーコレ）：个人投稿的付费流通站。
-    /// 条目 ID 为 21 位字母数字（如 2772796a0e98aba0a28），无 JAV 番号形态；
-    /// 详情 /product/detail/?product_id={id}，需要 Cookie AGE_CONF=1 才能过年龄确认。
-    /// 搜索入口 /product/result/?keyword=，结果链接同样是 product_id。
+    /// Pcolle, a paid self-published store.
+    /// Scene id is a 21 character alphanumeric value;
+    /// detail /product/detail/?product_id={id} needs the AGE_CONF=1 cookie.
+    /// Search entry /product/result/?keyword= yields the same ids.
     /// </summary>
     public class SitePcolle : IProviderBase
     {
@@ -242,7 +242,7 @@ namespace PhoenixAdult.Sites
                 return string.Empty;
             }
 
-            // 排除纯数字：纯数字更可能是别站番号的数字段，不是 pcolle 的 21 位商品 id
+            // Skip all-digit values: those are code numbers from other sites.
             var id = match.Groups["id"].Value.ToLowerInvariant();
             return id.Length >= 9 && id.Any(char.IsLetter) ? id : string.Empty;
         }
@@ -293,7 +293,7 @@ namespace PhoenixAdult.Sites
 
         private static string ExtractTitle(HtmlNode doc)
         {
-            // 详情页表格里的「商品名」最干净（og:title 会带 " by 作者 | Pcolle…" 尾巴）
+            // The product name in the detail table is the cleanest field.
             var fields = ReadFieldTable(doc);
             if (fields.TryGetValue("\u5546\u54c1\u540d", out var productName) && !string.IsNullOrWhiteSpace(productName))
             {

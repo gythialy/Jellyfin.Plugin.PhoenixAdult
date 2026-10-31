@@ -245,8 +245,8 @@
         return icon('photo_camera', size || 20);
     }
 
-    // SleekFin 的 --sleekfin-details-* 变量只定义在详情页容器上，我们的按钮挂在 body 下取不到，
-    // 会回退成 Jellyfin 的默认主色（蓝色）。这里把解析后的值复制到我们自己的元素上。
+    // The theme variables live on the details container, so copy the resolved
+    // values onto our own element instead of falling back to the default accent.
     var THEME_VARS = [
         '--sleekfin-details-primary-button-fill',
         '--sleekfin-details-primary-button-text-color',
@@ -298,7 +298,7 @@
         var style = document.createElement('style');
         style.id = STYLE_ID;
         style.textContent = ''
-            // 入口按钮：与主题详情页按钮同一套变量
+            // Entry button: same variables as the theme details page.
             + '.paFabButton{position:fixed;right:24px;bottom:24px;z-index:2147483000;display:inline-flex;align-items:center;justify-content:center;gap:8px;'
             + 'height:var(--sleekfin-details-button-height,40px);padding:0 20px;'
             + 'border-radius:var(--sleekfin-details-button-radius,999px);'
@@ -312,7 +312,7 @@
             + '.paFabButton:hover{background:var(--sleekfin-details-secondary-button-hover-fill,var(--jf-palette-action-hover,rgba(127,127,127,.18)));'
             + 'border-color:var(--sleekfin-border-hover,var(--jf-palette-action-selected,rgba(127,127,127,.5)));transform:translateY(-1px)}'
             + '.paFabButton:active{transform:none}'
-            // 弹窗
+            // Dialog.
             + '.paFgDialog{border:0;padding:0;border-radius:14px;max-width:min(960px,94vw);width:100%;'
             + 'background:var(--jf-palette-background-paper,var(--sleekfin-surface,#161618));'
             + 'color:var(--jf-palette-text-primary,var(--sleekfin-text,#f1f2f4));'
@@ -322,7 +322,7 @@
             + '.paFgTitle{font-size:1.05rem;font-weight:600;display:flex;align-items:center;gap:8px}'
             + '.paFgVideo{width:100%;max-height:56vh;background:#000;border-radius:10px}'
             + '.paFgBar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.85rem;opacity:.9}'
-            // 弹窗按钮：同样用主题变量
+            // Dialog buttons use the theme variables too.
             + '.paFgBtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 14px;'
             + 'border-radius:var(--sleekfin-details-button-radius,8px);'
             + 'background:var(--sleekfin-details-secondary-button-fill,var(--jf-palette-action-hover,rgba(127,127,127,.16)));'
@@ -336,7 +336,7 @@
             + '.paFgSavePrimary{background:var(--sleekfin-details-primary-button-fill,var(--jf-palette-primary-main,#00a4dc));'
             + 'color:var(--sleekfin-details-primary-button-text-color,var(--jf-palette-primary-contrastText,#fff));font-weight:600;'
             + 'border-color:var(--sleekfin-details-primary-button-fill,var(--jf-palette-primary-main,transparent))}'
-            // 主按钮 hover 必须留在自己的配色里（否则会套上次级的深色底 + 深色字 = 看不见）
+            // Keep the primary hover on its own colours, or it picks up the secondary background.
             + '.paFgSavePrimary:hover{background:var(--sleekfin-details-primary-button-hover-fill,'
             + 'var(--sleekfin-details-primary-button-fill,var(--jf-palette-primary-main,#00a4dc)));'
             + 'color:var(--sleekfin-details-primary-button-text-color,var(--jf-palette-primary-contrastText,#fff));'
@@ -656,7 +656,7 @@
         setTimeout(ensureFab, 500);
         setTimeout(ensureFab, 1500);
 
-        // 主题切换后重新解析主题变量，保证颜色跟随
+        // Re-resolve the variables after a theme switch.
         if (window.MutationObserver) {
             var themePending = null;
             new MutationObserver(function () {

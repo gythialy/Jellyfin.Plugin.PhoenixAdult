@@ -7,8 +7,8 @@ using Xunit;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 识别对话框只渲染 Name/ProductionYear，所以搜索结果名里要带"到日"的日期前缀；
-/// 这里离线守住前缀格式、幂等性与无日期结果不受影响。
+/// The dialog renders Name and ProductionYear, so the search name carries a date prefix;
+/// the tests pin its format, idempotence and results without a date.
 /// </summary>
 public class MovieProviderSearchResultTests
 {

@@ -69,7 +69,7 @@ namespace PhoenixAdult.Sites
             return result;
         }
 
-        /// <summary>清掉某站点的缓存 token（API 返回鉴权失败时调用）。</summary>
+        /// <summary>Drop the cached token for a site (called when the API rejects it).</summary>
         public static void InvalidateToken(int[] siteNum)
         {
             if (siteNum == null || string.IsNullOrEmpty(Plugin.Instance.Configuration.TokenStorage))
@@ -152,7 +152,7 @@ namespace PhoenixAdult.Sites
                 var searchResults = await GetDataFromAPI(Helper.GetSearchSearchURL(siteNum) + url, instanceToken, cancellationToken).ConfigureAwait(false);
                 if (searchResults == null)
                 {
-                    // token 可能已失效：强制刷新后重试一次
+                    // The token may be stale: refresh and retry once.
                     instanceToken = await GetToken(siteNum, true, cancellationToken).ConfigureAwait(false);
                     if (string.IsNullOrEmpty(instanceToken))
                     {
@@ -378,8 +378,8 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// 依次尝试 HEAD（部分站点头请求即下发 instance_token）、GET（浏览器头）、
-        /// FlareSolverr 浏览器上下文（Cloudflare 站点）三条路径。
+        /// Tries HEAD (some sites issue the token there), GET with browser headers,
+        /// and the FlareSolverr browser context.
         /// </summary>
         private static async Task<string> FetchTokenFromSite(int[] siteNum, CancellationToken cancellationToken)
         {

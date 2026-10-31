@@ -23,16 +23,16 @@ namespace PhoenixAdult.Sites
 {
     public class SiteDorcelClub : IProviderBase
     {
-        // 站点图片都由 <picture><source data-srcset="…_360_240_hash.jpg 1x, …_720_480_hash.jpg 2x"> 提供，
-        // 文件名里的哈希是 CDN 必需的签名段：删掉后 CDN 直接返回 500（图库/封面全部取不到图）。
+        // Images come from <source data-srcset>; the hash in the file name is a required CDN signature,
+        // removing it makes the CDN answer 500.
         private static readonly Regex ImageSizeRegex = new Regex(@"_(\d{2,4})_(\d{2,4})_", RegexOptions.Compiled);
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
 
-            // 站内搜索按词 AND 匹配，完整 searchTitle（文件名含多个演员名）→ 0 结果。
-            // 文件名 Site.YY.MM.DD.Actors.Title 的标题在末尾 → 取末尾 4 词搜索。
+            // Site search ANDs the words, so the full SEO title returns nothing;
+            // search the last four words, which are the title.
             searchTitle = Helper.GetSearchTitle(searchTitle, 4, fromEnd: true);
 
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
@@ -180,10 +180,10 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = HTML.ElementFromString(httpResult.Content);
 
-            // 场景主封面：player_container 里最大的一张（通常 1546×1030），优先作为 Primary
+            // Main cover: the largest image in player_container, used as Primary.
             var coverUrl = GetLargestImage(detailsPageElements.SelectSingleNode("//div[contains(@class, 'player_container')]"));
 
-            // 图库照片：同一张照片有 6 档响应式尺寸，只取宽度最大的一档，避免几十条重复候选
+            // Gallery photos exist in six sizes; keep the widest to avoid duplicates.
             var photoUrls = new List<string>();
             var photoNodes = detailsPageElements.SelectNodes("//div[contains(@class, 'photos')]//a[contains(@class, 'photo')]");
             if (photoNodes != null)
@@ -205,7 +205,7 @@ namespace PhoenixAdult.Sites
 
             foreach (var photoUrl in photoUrls)
             {
-                // 没有封面时由第一张图库照片兜底 Primary，其余作为 Backdrop
+                // Without a cover the first gallery photo becomes Primary, the rest Backdrops.
                 images.Add(new RemoteImageInfo
                 {
                     Url = photoUrl,
@@ -217,9 +217,8 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// 从节点内的 &lt;source data-srcset&gt; 中挑宽度最大的一张图。
-        /// srcset 形如 "…_1150_766_hash.jpg 1x, …_1546_1030_hash.jpg 2x"；URL 必须原样使用，
-        /// 文件名末尾的哈希是 CDN 校验段，改写（例如删掉）会让 CDN 返回 500.
+        /// Widest image from the node's <source data-srcset>.
+        /// The URL must be used verbatim: the hash is a CDN signature and editing it returns 500.
         /// </summary>
         private static string GetLargestImage(HtmlNode node)
         {
@@ -259,7 +258,7 @@ namespace PhoenixAdult.Sites
             return bestUrl;
         }
 
-        /// <summary>从 CDN 文件名（…_1150_766_hash.jpg）解析宽度，解析不出时返回 0.</summary>
+        /// <summary>Width parsed from a CDN file name; 0 when it cannot be parsed.</summary>
         private static int GetImageWidth(string imageUrl)
         {
             var fileName = imageUrl.Split('?').First().Split('/').Last();
