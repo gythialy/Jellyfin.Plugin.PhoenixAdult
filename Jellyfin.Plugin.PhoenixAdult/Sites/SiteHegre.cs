@@ -96,7 +96,7 @@ namespace PhoenixAdult.Sites
 
             result.Item.Name = sceneData.SelectSingleText("//meta[@property='og:title']/@content");
 
-            // 描述只取正文段落，跳过副标题/格式信息，避免混入运行时与清晰度列表
+            // Take the body paragraphs only, skipping the subtitle and format list.
             var descriptionNodes = sceneData.SelectNodesSafe("//div[contains(@class, 'record-description-content')]//p");
             var description = string.Join(Environment.NewLine, descriptionNodes.Select(o => o.InnerText.Trim()).Where(o => !string.IsNullOrEmpty(o)));
 

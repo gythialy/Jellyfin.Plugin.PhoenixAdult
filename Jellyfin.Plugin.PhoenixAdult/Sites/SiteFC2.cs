@@ -18,21 +18,21 @@ namespace PhoenixAdult.Sites
 {
     /// <summary>
     /// FC2 コンテンツマーケット（adult.contents.fc2.com）。
-    /// 站点没有搜索页（/search 直接 404），只能从标题/文件名里抽 6~8 位纯数字编号，
-    /// 再直连 /article/{id}/ 拿元数据；不存在的编号同样返回 HTTP 200（notfound 模板），
-    /// 所以必须靠页面结构做内容检测。标题里会随机插入反爬 &lt;span style="zoom:0.01"&gt;
-    /// 与 ** 掩码，需要清洗后再入库。
+    /// No search page (/search 404s): take the six to eight digit number from the title or file name
+    /// and fetch /article/{id}/. Missing ids answer 200 with a not-found template,
+    /// so the page structure is checked. Titles carry random anti-bot spans
+    /// and ** masks that must be cleaned before saving.
     /// </summary>
     public class SiteFC2 : IProviderBase
     {
         private const string DefaultBaseUrl = "https://adult.contents.fc2.com";
 
-        /// <summary>FC2-PPV-1234567 / FC2 PPV 1234567 / FC2_1234567 形式的强匹配。</summary>
+        /// <summary>FC2-PPV-1234567 and similar strong matches.</summary>
         private static readonly Regex PrefixedNumberRegex = new Regex(
             @"(?i)FC2[\s_\-]*(?:PPV)?[\s_\-]*(?<number>[0-9]{6,8})",
             RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-        /// <summary>裸数字编号（前后不能紧邻数字）。</summary>
+        /// <summary>Bare digits, not adjacent to other digits.</summary>
         private static readonly Regex BareNumberRegex = new Regex(
             @"(?<![0-9])(?<number>[0-9]{6,8})(?![0-9])",
             RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -41,17 +41,17 @@ namespace PhoenixAdult.Sites
             @"article/(?<number>[0-9]{4,9})",
             RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-        /// <summary>反爬垃圾 token：**ppqojxpos* 这类（星号 + 小写字母数字）。</summary>
+        /// <summary>Anti-bot token, e.g. **ppqojxpos*.</summary>
         private static readonly Regex MaskTokenRegex = new Regex(
             @"\*+[a-z0-9]{2,}\*?",
             RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-        /// <summary>标题里残留的 * 掩码。</summary>
+        /// <summary>Leftover * mask in the title.</summary>
         private static readonly Regex MaskStarRegex = new Regex(
             @"\*+",
             RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-        /// <summary>og:title 前缀 "FC2-PPV-1234567 "。</summary>
+        /// <summary>og:title prefix "FC2-PPV-1234567 ".</summary>
         private static readonly Regex TitlePrefixRegex = new Regex(
             @"^(?i)FC2[\s_\-]*(?:PPV)?[\s_\-]*[0-9]{6,8}\s*",
             RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -81,7 +81,7 @@ namespace PhoenixAdult.Sites
                 var number = ExtractNumber(searchTitle);
                 if (string.IsNullOrEmpty(number))
                 {
-                    // 站点没有搜索入口，抽不到编号就无法定位条目。
+                    // No search entry point, so a missing number means nothing to look up.
                     Logger.Debug($"FC2 search skipped (no article number): {searchTitle}");
                     return result;
                 }
@@ -125,7 +125,7 @@ namespace PhoenixAdult.Sites
             var sceneData = await Fetcher.Html(sceneURL, cancellationToken).ConfigureAwait(false);
             if (!IsArticlePage(sceneData, number))
             {
-                // 下架/不存在同样返回 200，缺 headerInfo 即视为未找到。
+                // Removed items answer 200 too; a missing headerInfo means not found.
                 Logger.Debug($"FC2 article not found: {number}");
                 return result;
             }
@@ -220,7 +220,7 @@ namespace PhoenixAdult.Sites
 
                 if (result.Count == 0)
                 {
-                    // 列表页之外的边界情况：至少把主缩略图当封面返回。
+                    // Outside the list page: fall back to the main thumbnail.
                     var thumb = AbsoluteUrl(GetBaseUrl(siteNum), sceneData?.SelectSingleText("//meta[@property='og:image']/@content"));
                     if (!string.IsNullOrEmpty(thumb))
                     {
@@ -265,7 +265,7 @@ namespace PhoenixAdult.Sites
                 return false;
             }
 
-            // 兜底：og:title 里带 FC2-PPV-{number} 说明条目仍然存在（模板小改版时 headerInfo 可能变）。
+            // og:title still carries the number when only the layout changed.
             var ogTitle = sceneData.SelectSingleText("//meta[@property='og:title']/@content");
             return ogTitle.Contains($"FC2-PPV-{number}", StringComparison.OrdinalIgnoreCase);
         }
@@ -297,7 +297,7 @@ namespace PhoenixAdult.Sites
             return string.Empty;
         }
 
-        /// <summary>yyyyMMdd 形态的 8 位数字是日期而不是番号。</summary>
+        /// <summary>An eight digit yyyyMMdd value is a date, not a code.</summary>
         private static bool IsDateLike(string value)
         {
             if (value == null || value.Length != 8)
@@ -343,7 +343,7 @@ namespace PhoenixAdult.Sites
             return ExtractNumber(decoded ?? sceneID);
         }
 
-        /// <summary>sceneID 由本 handler 编码；也兼容直接传入的裸编号/路径（手工 Identify）。</summary>
+        /// <summary>Decode the scene id; raw numbers and paths pass through.</summary>
         private static string DecodeSafe(string value)
         {
             if (string.IsNullOrEmpty(value))
@@ -361,7 +361,7 @@ namespace PhoenixAdult.Sites
             }
             catch (Exception)
             {
-                // 非 Base58 输入（手工 Identify 直接给番号）会抛 FormatException，按裸值处理。
+                // Non-Base58 input throws FormatException; treat it as a raw value.
             }
 
             return value.Trim();
@@ -384,7 +384,7 @@ namespace PhoenixAdult.Sites
             return TitlePrefixRegex.Replace(title ?? string.Empty, string.Empty).Trim();
         }
 
-        /// <summary>反爬 span 会在标题里插隐藏文本（zoom:0.01 / display:none），先摘掉。</summary>
+        /// <summary>Drop the hidden anti-bot spans before reading the title.</summary>
         private static string RemoveSpamNodes(HtmlNode node)
         {
             var clone = node.CloneNode(true);
@@ -452,7 +452,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            // 老模板才有 items_article_Releasedate。
+            // Only the old template has items_article_Releasedate.
             var released = sceneData.SelectSingleText("//div[@class='items_article_Releasedate']/p");
             if (!string.IsNullOrEmpty(released))
             {
@@ -520,9 +520,8 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// 商品説明是懒加载 iframe（/widget/article/{id}/description?ac=…），ac token 与
-        /// 访问主页时的会话绑定，所以必须带上 Cookie（HTTP 内共用 CookieContainer）。
-        /// 失败时重新抓一次文章页刷新会话再试，最后回落到 meta description。
+        /// The description is a lazy iframe whose token is bound to the session, so cookies are required;
+        /// retry once with a fresh article page, then fall back to the meta description.
         /// </summary>
         private static async Task<string> GetOverview(HtmlNode sceneData, string articleURL, string baseUrl, CancellationToken cancellationToken)
         {
@@ -534,7 +533,7 @@ namespace PhoenixAdult.Sites
 
             try
             {
-                // 带 cache-buster：插件 HTTP 缓存（60s）可能命中已消费过 ac 的旧文章页。
+                // Cache buster: the 60s HTTP cache may hold a page whose token was already used.
                 var freshURL = $"{articleURL}?_cb={DateTime.UtcNow.Ticks.ToString(CultureInfo.InvariantCulture)}";
                 var freshData = await Fetcher.Html(freshURL, cancellationToken).ConfigureAwait(false);
                 text = await TryGetDescription(freshData, baseUrl, cancellationToken).ConfigureAwait(false);
@@ -548,7 +547,7 @@ namespace PhoenixAdult.Sites
                 Logger.Debug($"FC2 description retry failed: {e.GetType().Name}: {e.Message}");
             }
 
-            // 回落：meta description（站点截断到 ~186 字）。
+            // Fallback: meta description (truncated by the site).
             var meta = CleanText(sceneData?.SelectSingleText("//meta[@name='description']/@content"));
             return TitlePrefixRegex.Replace(meta, string.Empty).Trim();
         }

@@ -170,7 +170,7 @@ namespace PhoenixAdult.Sites
             var video = sceneData.SelectSingleNode("//video[@id='main-player']");
             if (video == null)
             {
-                // 2026-10 改版：播放器不再是 <video id="main-player">，场景页只剩 og:image（thumb1-1200x0.jpg）
+                // The player is gone; the scene page only has og:image.
                 var ogImage = sceneData.SelectSingleNode("//meta[@property='og:image']")?.GetAttributeValue("content", string.Empty);
                 if (!string.IsNullOrEmpty(ogImage))
                 {

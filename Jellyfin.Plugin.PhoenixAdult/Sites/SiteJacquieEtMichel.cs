@@ -30,7 +30,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            // TV 站搜索。注意：不能加 label=scene 过滤，否则标题词会漏结果
+            // TV site search: no label=scene filter, which would drop title words.
             var searchUrl = $"{Helper.GetSearchSearchURL(siteNum)}{Uri.EscapeDataString(searchTitle)}";
             var doc = await HTML.ElementFromURL(searchUrl, cancellationToken);
             if (doc == null)
@@ -111,7 +111,7 @@ namespace PhoenixAdult.Sites
             result.Item.OfficialRating = "XXX";
             result.Item.AddStudio(SiteName);
 
-            // 场景页内嵌 JSON-LD VideoObject：标题/日期/描述/流派/演员最可靠
+            // JSON-LD VideoObject holds the title, date, description, genres and actors.
             var jsonLdNode = doc.SelectSingleNode("//script[@type='application/ld+json']");
             if (jsonLdNode != null)
             {
@@ -168,7 +168,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            // fallback: 无 JSON-LD 时用 HTML 选择器
+            // Fallback: HTML selectors when there is no JSON-LD.
             result.Item.Name = doc.SelectSingleNode("//h1[contains(@class, 'content-detail__title')]")?.InnerText.Trim() ?? string.Empty;
             if (string.IsNullOrEmpty(result.Item.Name))
             {

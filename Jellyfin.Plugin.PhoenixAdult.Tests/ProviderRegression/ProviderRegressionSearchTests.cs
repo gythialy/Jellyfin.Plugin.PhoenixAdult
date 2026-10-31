@@ -8,13 +8,13 @@ using Xunit.Sdk;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests.ProviderRegression;
 
 /// <summary>
-/// 数据驱动的 provider Search 回归：逐条执行 ProviderCases.json 中 kind=search 的用例，
-/// 支持多级搜索词回退；标记 chain 的用例在命中后继续 Update/GetImages 全链路。
+/// Data-driven Search cases with term fallback;
+/// cases marked chain also run Update and GetImages.
 /// </summary>
 [Trait("Category", "Online")]
 public class ProviderRegressionSearchTests
 {
-    /// <summary>xUnit Theory 参数源。</summary>
+    /// <summary>xUnit Theory source.</summary>
     public static IEnumerable<object[]> Cases
         => ProviderCaseCatalog.OfKind(ProviderCaseKind.Search).Select(c => new object[] { c });
 
@@ -41,13 +41,13 @@ public class ProviderRegressionSearchTests
                 Assert.Fail($"{c.Id}: 期望 ≥{c.ExpectMinResults} 结果，实际 {outcome.Results.Count} | 搜索词 {terms}");
             }
 
-            // Handler 级 Search 只统计本实现能直接给出的图（部分站点的图只有在 GetImages 里，
-            // 由 MovieProvider 的补图兜底覆盖），这里作为站点图片覆盖率的审计输出。
+            // Handler level Search only counts images it returns directly;
+            // the rest come from GetImages.
             var withImage = outcome.Results.Count(r => !string.IsNullOrEmpty(r.ImageUrl));
 
             if (c.MinDialogImageRatio > 0)
             {
-                // 复跑识别对话框的补图路径：列表页没有海报的站点靠 GetImages 兜底
+                // Re-run the dialog thumbnail path, which GetImages covers.
                 var filled = await ProviderRegressionRunner.FillDialogImagesAsync(c.SiteNum, outcome.Results, timeout.Token).ConfigureAwait(false);
                 var targets = filled.Take(MovieProvider.MaxThumbnailFillCount).ToList();
                 var withDialogImage = targets.Count(r => !string.IsNullOrEmpty(r.ImageUrl));
@@ -111,7 +111,7 @@ public class ProviderRegressionSearchTests
 
                 if (c.ExpectImages)
                 {
-                    // 真实下载校验：走 MovieImageProvider + ImageHelper 官方校验（与 Jellyfin 自动下载一致）
+                    // Real download check through MovieImageProvider and ImageHelper, the same path Jellyfin uses.
                     var validated = await ProviderRegressionRunner.GetValidatedImagesAsync(c, sceneId, timeout.Token);
                     var primaries = validated.Where(i => i.Type == MediaBrowser.Model.Entities.ImageType.Primary).ToList();
                     Assert.True(primaries.Count > 0, $"{c.Id}: GetImages 未返回可下载的 Primary 图片（通过校验 {validated.Count} 张）");

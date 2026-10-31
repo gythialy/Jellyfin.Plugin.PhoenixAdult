@@ -22,8 +22,8 @@ using Jellyfin.Data.Enums;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// 麻豆区（MadouQu）：中文站点，条目 ID 为 slug（如 mdx-0267），详情页 meta 里带
-    /// 番号 / 片名 / 女郎 / 封面 / 发布日期，比抓正文更稳。
+    /// MadouQu is a Chinese site; the scene id is the slug and the meta tags carry code, title,
+    /// actress, cover and release date, which is steadier than parsing the body.
     /// </summary>
     public class SiteMadouQu : IProviderBase
     {
@@ -34,9 +34,8 @@ namespace PhoenixAdult.Sites
         private static readonly Regex ActressRegex = new Regex(@"女郎[：:]\s*(.+?)(?=\s+[^\s：:]{1,10}[：:]|$)", RegexOptions.CultureInvariant);
 
         /// <summary>
-        /// 番号形态（MD-0218 / MD0218 / MD_0334 / MD 0218）。站内标题对同一番号的写法混用——
-        /// 有的写 MD0218、有的写 MDHT-0021，而 WordPress 站内搜索不做番号归一化，只认标题里
-        /// 实际出现的那一种，所以番号检索必须按形态逐个试。
+        /// Code shapes (MD-0218 / MD0218 / MD_0334 / MD 0218). Titles mix them and WordPress does not
+        /// normalise codes, so every shape has to be tried.
         /// </summary>
         private static readonly Regex CodeRegex = new Regex(
             @"^(?<label>[A-Za-z0-9]*?[A-Za-z])[-_ ]?(?<number>[0-9]{2,6})$",
@@ -67,7 +66,7 @@ namespace PhoenixAdult.Sites
 
                 if (result.Count > 0)
                 {
-                    // 一个番号只有一条条目，两种写法只是标题差异：任一形态命中就没必要再发下一个请求。
+                    // One code has one item, so any shape that hits ends the search.
                     break;
                 }
             }
@@ -186,11 +185,11 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// 番号类搜索词要试的形态：紧凑（MD0218）在前、带连字符（MD-0218）在后，最后兜底原样。
-        /// 非番号（纯标题）只有一个候选，行为与改动前一致。
+        /// Search term shapes for a code: compact first, hyphenated second, raw last;
+        /// a plain title has a single candidate.
         /// </summary>
-        /// <param name="searchTitle">调用方给的搜索词，形如 MD-0218 / Md 0218 / 标题。</param>
-        /// <returns>按优先级排列、已去重的搜索词。</returns>
+        /// <param name="searchTitle">Search term from the caller.</param>
+        /// <returns>Ordered, deduplicated terms.</returns>
         internal static IReadOnlyList<string> GetSearchVariants(string searchTitle)
         {
             var variants = new List<string>();
@@ -214,11 +213,11 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// 解析站内搜索结果列表页。2026-10 起列表改用 resource-card 卡片
-        /// （article 无 id，post-&lt;id&gt; 在 class 上），旧模板仍兼容。
+        /// Parse the search result list; the current template uses resource-card items
+        /// without an article id. The old template still parses.
         /// </summary>
-        /// <param name="searchData">站内搜索列表页 DOM。</param>
-        /// <returns>搜索结果条目。</returns>
+        /// <param name="searchData">Search result DOM.</param>
+        /// <returns>Result items.</returns>
         private static List<RemoteSearchResult> ParseSearchResults(HtmlNode searchData)
         {
             var result = new List<RemoteSearchResult>();

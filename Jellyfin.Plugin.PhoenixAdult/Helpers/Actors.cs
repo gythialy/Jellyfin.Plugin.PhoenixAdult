@@ -79,9 +79,8 @@ namespace PhoenixAdult.Helpers
         }
 
         /// <summary>
-        /// 把演员名解析成规范名（ActorsReplace 的 key）。
-        /// 供影片演员清洗、演员搜索（ActorProvider）、演员头像（ActorImageProvider）三处共用，
-        /// 保证同一演员在影片与 person 实体上得到同一个规范名。
+        /// Resolve an actress name to its canonical form,
+        /// shared by movie cleaning, actor search and portraits.
         /// </summary>
         public static string Resolve(string actorName, string[] studios = null)
         {
@@ -94,7 +93,7 @@ namespace PhoenixAdult.Helpers
         }
 
         /// <summary>
-        /// 按 Java 风格（姓在前）解析：先直接解析，失败时把词序倒过来再解析一次。
+        /// Parse a name; when direct parsing fails, swap the word order and retry.
         /// </summary>
         public static string ResolveWithJapaneseStyle(string actorName, string[] studios = null)
         {

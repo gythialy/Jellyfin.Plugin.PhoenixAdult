@@ -39,7 +39,7 @@ namespace PhoenixAdult.Sites
                 {
                     string curId = Helper.Encode(node.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty));
 
-                    // href 已含 /{prefix}/video... 完整路径，存绝对 URL 避免依赖固定 /iod/ 前缀
+                    // The href already holds the full path, so store the absolute URL.
                     var sceneHref = node.SelectSingleNode(".//a")?.GetAttributeValue("href", string.Empty);
 
                     if (!string.IsNullOrEmpty(sceneHref))
@@ -79,7 +79,7 @@ namespace PhoenixAdult.Sites
             string[] providerIds = sceneID[0].Split('|');
             string decodedScene = Helper.Decode(providerIds[0]);
 
-            // 兼容两种 ID：绝对 URL（新）与相对路径（旧缓存，拼 /iod/ 前缀）
+            // Accept both id shapes: absolute URL and relative path (old cache, add /iod/).
             string sceneUrl = decodedScene.StartsWith("http", StringComparison.OrdinalIgnoreCase)
                 ? decodedScene
                 : $"{Helper.GetSearchBaseURL(siteNum)}/iod/{decodedScene}";
@@ -183,7 +183,7 @@ namespace PhoenixAdult.Sites
             string[] providerIds = sceneID[0].Split('|');
             string decodedScene = Helper.Decode(providerIds[0]);
 
-            // 兼容两种 ID：绝对 URL（新）与相对路径（旧缓存，拼 /iod/ 前缀）
+            // Accept both id shapes: absolute URL and relative path (old cache, add /iod/).
             string sceneUrl = decodedScene.StartsWith("http", StringComparison.OrdinalIgnoreCase)
                 ? decodedScene
                 : $"{Helper.GetSearchBaseURL(siteNum)}/iod/{decodedScene}";

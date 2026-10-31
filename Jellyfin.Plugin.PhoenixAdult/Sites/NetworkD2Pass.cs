@@ -21,9 +21,9 @@ using Jellyfin.Data.Enums;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// D2Pass 0930 家族（c0930 / h0930 / h4610）：同一套 moviepages/{id}/index.html 模板，
-    /// JSON-LD + #movieInfo dl + #movieContent poster + #movieGallery 图集。
-    /// 注意：2026-10 起该家族整站 403 维护，恢复后需重新验证。
+    /// D2Pass family (c0930 / h0930 / h4610): one moviepages/{id}/index.html template
+    /// with JSON-LD, #movieInfo, #movieContent and #movieGallery.
+    /// The family answers 403 in maintenance; re-verify when it returns.
     /// </summary>
     public class NetworkD2Pass : IProviderBase
     {

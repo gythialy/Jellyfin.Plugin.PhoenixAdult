@@ -19,7 +19,7 @@ namespace PhoenixAdult.Helpers.Utils
 
         public static GenresStructure Genres { get; set; }
 
-        /// <summary>番号到站点的路由表（data/IdRoutes.json，可被 IdRoutes.local.json 覆盖）。</summary>
+        /// <summary>Code to site routes (data/IdRoutes.json, overridable by IdRoutes.local.json).</summary>
         public static IdRoutesStructure IdRoutes { get; set; }
 
         public static async Task<bool> Download(string url, string fileName, CancellationToken cancellationToken)
@@ -60,8 +60,8 @@ namespace PhoenixAdult.Helpers.Utils
         }
 
         /// <summary>
-        /// 合并用户本地覆盖文件 IdRoutes.local.json（该文件不会被 "Update Database" 任务覆盖）。
-        /// 与远端数据按路由 Id 合并：同名路由整条替换，本地新增路由追加到末尾。
+        /// Merge the local override IdRoutes.local.json (Update Database never touches it):
+        /// a route with the same id replaces the remote one, a new one is appended.
         /// </summary>
         private static void MergeIdRoutesLocal()
         {
@@ -115,8 +115,8 @@ namespace PhoenixAdult.Helpers.Utils
         }
 
         /// <summary>
-        /// 合并用户本地覆盖文件 Actors.local.json（该文件不会被 "Update Database" 任务覆盖）。
-        /// 结构与 Actors.json 相同；与远端数据取并集：同名 key 追加别名，本地新增条目直接加入。
+        /// Merge Actors.local.json the same way:
+        /// same key appends aliases, a new key is added.
         /// </summary>
         private static void MergeActorsLocal()
         {
@@ -252,28 +252,28 @@ namespace PhoenixAdult.Helpers.Utils
 
         public class IdRoutesStructure
         {
-            /// <summary>路由列表，顺序即匹配优先级（第一个命中生效，兜底路由放最后）。</summary>
+            /// <summary>Routes in match order; the fallback route goes last.</summary>
             public List<IdRouteEntry> Routes { get; set; }
         }
 
         public class IdRouteEntry
         {
-            /// <summary>路由名，同时也是 IdRoutes.local.json 覆盖时的键。</summary>
+            /// <summary>Route name, also the override key.</summary>
             public string Id { get; set; }
 
-            /// <summary>说明文字，仅用于维护。</summary>
+            /// <summary>Free-form note for maintainers.</summary>
             public string Note { get; set; }
 
-            /// <summary>规范化番号前缀匹配（如 FC2-PPV-），为空表示不按前缀匹配。</summary>
+            /// <summary>Normalised code prefix (FC2-PPV-); empty disables it.</summary>
             public string IdPrefix { get; set; }
 
-            /// <summary>厂牌白名单（精确匹配，忽略大小写），为空表示不按名单匹配。</summary>
+            /// <summary>Studio allow list (exact, case-insensitive); empty disables it.</summary>
             public string[] Labels { get; set; }
 
-            /// <summary>厂牌（番号前半段）正则匹配，为空表示不按正则匹配。</summary>
+            /// <summary>Studio regex on the code label; empty disables it.</summary>
             public string LabelRegex { get; set; }
 
-            /// <summary>命中后并发检索的站点，每项是 [组号, 站点号]，与 SiteList.json 对应。</summary>
+            /// <summary>Sites to query in parallel on a hit, as [group, site].</summary>
             public int[][] Sites { get; set; }
         }
 

@@ -40,8 +40,8 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            // Nuxt/API 站点：场景 URL = {base}/video/{标题slug}，slug 不含演员名。
-            // 文件名 Site.YY.MM.DD.Actors.Title 的标题在末尾 → 从末尾 4-1 词生成 slug 候选逐个试。
+            // Nuxt API site: scene URL is {base}/video/{title slug},
+            // so try slugs built from the title tail.
             var words = searchTitle.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             var candidates = new List<string> { searchTitle };
             for (var n = Math.Min(4, words.Length); n >= 1; n--)
@@ -49,7 +49,7 @@ namespace PhoenixAdult.Sites
                 candidates.Add(string.Join(" ", words.Skip(words.Length - n)));
             }
 
-            // API 只认无 www 域名 + x-site header
+            // The API wants the bare domain plus the x-site header.
             var baseUri = new Uri(Helper.GetSearchBaseURL(siteNum));
             var apiHost = baseUri.Host.StartsWith("www.", StringComparison.OrdinalIgnoreCase) ? baseUri.Host.Substring(4) : baseUri.Host;
 
@@ -128,7 +128,7 @@ namespace PhoenixAdult.Sites
 
             var subSite = Helper.GetSearchSiteName(siteNum);
 
-            // Nuxt/API 站点优先：/api/releases/{slug} 返回完整 JSON（标题/日期/演员/图片）
+            // Prefer the Nuxt API: /api/releases/{slug} returns the full JSON.
             var slug = new Uri(sceneURL).AbsolutePath.TrimEnd('/').Split('/').LastOrDefault();
             if (!string.IsNullOrEmpty(slug))
             {
@@ -304,7 +304,7 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
-            // Nuxt/API 站点优先：posterUrl + thumbUrls
+            // Prefer the Nuxt API: posterUrl plus thumbUrls.
             var slug = new Uri(sceneURL).AbsolutePath.TrimEnd('/').Split('/').LastOrDefault();
             if (!string.IsNullOrEmpty(slug))
             {

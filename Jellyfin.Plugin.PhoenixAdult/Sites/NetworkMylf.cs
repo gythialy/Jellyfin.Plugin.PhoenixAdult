@@ -56,7 +56,7 @@ namespace PhoenixAdult.Sites
             var http = await HTTP.Request(url, cancellationToken).ConfigureAwait(false);
             if (http.IsOK)
             {
-                // 注意：Match 未命中时 Groups.Count 仍 > 0，必须用 Success 判断，否则会去 Parse 空串。
+                // Groups.Count stays non-zero without a match, so check Success or an empty string is parsed.
                 var match = new Regex(@"window\.__INITIAL_STATE__ = (.*?);", RegexOptions.Singleline).Match(http.Content);
                 if (match.Success)
                 {
@@ -170,7 +170,7 @@ namespace PhoenixAdult.Sites
             var sceneData = await GetJSONfromPage(sceneURL, cancellationToken).ConfigureAwait(false);
             if (sceneData == null)
             {
-                // 站点已不再输出 window.__INITIAL_STATE__，回退到页面 JSON-LD（schema.org VideoObject）
+                // The site no longer embeds window.__INITIAL_STATE__, so use the JSON-LD.
                 return await this.UpdateFromJsonLd(result, sceneURL, sceneDate, siteNum, cancellationToken).ConfigureAwait(false);
             }
 
@@ -337,7 +337,7 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// 取页面里的 schema.org VideoObject（站点 2026-09 起改用 JSON-LD，页面不再输出 window.__INITIAL_STATE__）。
+        /// schema.org VideoObject from the page.
         /// </summary>
         private static async Task<JObject> GetVideoObjectJsonLd(string url, CancellationToken cancellationToken)
         {

@@ -3,8 +3,8 @@ using PhoenixAdult.Sites;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 麻豆区搜索词形态的离线测试：站内标题对同一番号存在紧凑（MD0218）与连字符（MDHT-0021）
-/// 两种写法，WordPress 站内搜索不做归一化，必须两种都试，否则番号搜不到（md-0218 就是这么丢的）。
+/// Offline tests for the search term shapes: titles mix compact and hyphenated forms
+/// and WordPress does not normalise, so both must be tried.
 /// </summary>
 public class SiteMadouQuSearchVariantTests
 {

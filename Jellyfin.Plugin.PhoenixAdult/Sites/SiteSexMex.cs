@@ -39,7 +39,7 @@ namespace PhoenixAdult.Sites
                 {
                     foreach (var node in nodes)
                     {
-                        // 新版页面: 标题在 a[title]，封面在 img[alt]
+                        // Current template: the title is in a[title] and the cover in img[alt].
                         var linkNode = node.SelectSingleNode(".//a");
                         var title = string.Empty;
                         if (linkNode != null)

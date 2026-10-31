@@ -7,12 +7,10 @@ using Xunit.Sdk;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests.ProviderRegression;
 
 /// <summary>
-/// 图片回归：执行 ProviderCases.json 中 kind=images 的用例。
-/// 走 MovieImageProvider.GetImages（Jellyfin 实际调用入口），其内部串联
-/// ImageHelper.GetImagesSizeAndValidate：HEAD 可达 → 拉字节 → 解析尺寸（>100px）→ backdrop 1280 宽过滤。
-/// 因此“返回 ≥1 张 Primary 且有尺寸”等价于“在 Jellyfin 里能下载到正确图片”。
-/// 注意：使用 [Fact] + 内部循环而非 [Theory]，因为 xUnit 对空 MemberData 会直接判失败；
-/// 目前图片校验主要由 search 用例的 chain 覆盖，本类为显式 sceneId 场景保留。
+/// Image cases (kind=images) run through MovieImageProvider.GetImages, which chains
+/// ImageHelper.GetImagesSizeAndValidate: HEAD, bytes, size, backdrop width filter.
+/// A Fact with a loop is used because xUnit fails on empty MemberData;
+/// the search chain covers most of the image checks.
 /// </summary>
 [Trait("Category", "Online")]
 public class ProviderRegressionImageTests

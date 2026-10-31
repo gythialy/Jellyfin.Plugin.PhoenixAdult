@@ -22,10 +22,10 @@ using Jellyfin.Data.Enums;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// FC2PPVDB（fc2ppvdb.com）：FC2-PPV 的作品数据库（女优/标签/收录时间）。
-    /// 条目 ID 为纯数字 FC2 号（FC2-PPV-1234567 → 1234567），详情 /articles/{id}。
-    /// 站点有 Cloudflare 强校验（直连 403，FlareSolverr 也可能被判 IP 封），
-    /// 因此解析同时保留 Go 原版位置选择器与"标签：值"文本兜底两套路径。
+    /// FC2PPVDB, a database of FC2-PPV works.
+    /// Scene id is the plain numeric FC2 number; detail /articles/{id}.
+    /// Strong Cloudflare protection, so both the original layout selectors
+    /// and a generic "label: value" scan are kept.
     /// </summary>
     public class SiteFC2PPVDB : IProviderBase
     {
@@ -354,8 +354,8 @@ namespace PhoenixAdult.Sites
         }
 
         /// <summary>
-        /// 字段解析：先按 Go 原版（container 内每个 div 的首个子文本节点为标签，值在 span 里）读取，
-        /// 再退回"任意元素文本以 '：' 结尾 + 同层 span/链接"的通用扫描。
+        /// Field parsing: the original layout first,
+        /// then a generic scan for labels ending with a colon.
         /// </summary>
         private static Dictionary<string, string> ReadFields(HtmlNode doc)
         {

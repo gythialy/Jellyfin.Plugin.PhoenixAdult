@@ -8,8 +8,7 @@ using Newtonsoft.Json.Linq;
 namespace PhoenixAdult.Helpers.Utils
 {
     /// <summary>
-    /// 统一的抓取入口：优先直连，命中 Cloudflare 挑战时自动回落到 FlareSolverr。
-    /// 新站点实现统一用它，避免每个 handler 重复写 CF 兜底。
+    /// Fetch entry point: direct request first, FlareSolverr on a Cloudflare challenge.
     /// </summary>
     internal static class Fetcher
     {
@@ -27,7 +26,7 @@ namespace PhoenixAdult.Helpers.Utils
             var html = await HTML.ElementFromURL(url, cancellationToken, headers, cookies).ConfigureAwait(false);
             var text = GetHtmlText(html);
 
-            // 直连失败（状态码错误/连接失败会得到未挂载的空 DocumentNode）或命中 CF 挑战时回落 FlareSolverr
+            // Direct request failed or hit the challenge: use FlareSolverr.
             if (string.IsNullOrEmpty(text) || IsCloudflareChallenge(text))
             {
                 var solved = await SafeFlareSolverr(url, cancellationToken).ConfigureAwait(false);
@@ -100,7 +99,7 @@ namespace PhoenixAdult.Helpers.Utils
             }
             catch (Exception)
             {
-                // 非 200 响应时 HtmlAgilityPack 返回未挂载的 DocumentNode，OuterHtml 会抛异常
+                // HtmlAgilityPack returns a detached node for non-200 responses; OuterHtml throws on it.
                 try
                 {
                     return node.InnerHtml;

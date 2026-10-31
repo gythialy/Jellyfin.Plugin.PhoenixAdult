@@ -15,10 +15,9 @@ using PhoenixAdult.Helpers.Utils;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// Gcolle（ジーコレ）：2026-10 起整站改为 Vite SPA（/adult），旧商品页
-    /// /product_info.php/products_id/{id} 全部 302 到 /adult/unavailable/content。
-    /// 本实现保留 ID 直连与搜索页解析能力：站点恢复服务端页面后即可工作；
-    /// 当前不可用时优雅返回空结果（不抛异常）。
+    /// Gcolle moved to a Vite SPA, so the old product pages redirect.
+    /// The id lookup and search parsing stay for when the server pages return;
+    /// for now an empty result is returned instead of throwing.
     /// </summary>
     public class SiteGcolle : IProviderBase
     {

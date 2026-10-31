@@ -32,7 +32,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            // 1. 搜索模型: /search?q= 返回内嵌 JSON models.byId（全量模型，需按搜索词过滤）
+            // 1. Search a model: /search?q= returns an embedded model index to filter.
             var searchUrl = $"{BaseUrl}/search?q={Uri.EscapeDataString(searchTitle)}";
             var searchHttp = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
             if (!searchHttp.IsOK)
@@ -46,7 +46,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            // 2. 对每个模型拉 issues（场景视频）
+            // 2. Fetch the issues (scenes) of each model.
             var seen = new HashSet<string>();
             foreach (var modelId in modelIds.Take(5))
             {
@@ -74,14 +74,14 @@ namespace PhoenixAdult.Sites
                             continue;
                         }
 
-                        // 模型已按演员名过滤，场景全部返回（场景标题通常不含演员名）
+                        // Models are filtered by name; every scene of a model is returned.
                         var releaseDate = string.Empty;
                         if (DateTime.TryParse(issue["issue_datetime"]?.ToString(), CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                         {
                             releaseDate = parsedDate.ToString("yyyy-MM-dd");
                         }
 
-                        // curID = issue_id，Update 时通过 API 反查
+                        // curID is the issue id; Update resolves it through the API.
                         var curID = Helper.Encode(issueId);
 
                         var res = new RemoteSearchResult
@@ -103,7 +103,7 @@ namespace PhoenixAdult.Sites
                 }
                 catch (Exception)
                 {
-                    // 单模型失败不影响其他
+                    // One failing model does not affect the others.
                 }
             }
 
@@ -173,7 +173,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
 
-                // 演员: 从 issue 的 models/actors 字段
+                // Actors: the models/actors field of an issue.
                 var actorNames = new List<string>();
                 if (issue["models"] is JArray actorArray)
                 {
@@ -327,8 +327,8 @@ namespace PhoenixAdult.Sites
                 return string.Empty;
             }
 
-            // 封面 URL 模式: /api/covers/{prefix}/000-cover-issue-text_320.jpg
-            // （302 重定向到 covers.watch4beauty.com，去掉 _320 取原图）
+            // Cover pattern: /api/covers/..._320.jpg redirects to the CDN;
+            // drop _320 for the original.
             return $"{BaseUrl}/api/covers/{prefix}/000-cover-issue-text.jpg";
         }
     }

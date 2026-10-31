@@ -24,11 +24,9 @@ using Jellyfin.Data.Enums;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// Getchu（DL.Getchu.com）：同人/个人撮影流通站，条目号为数字商品号（/i/item{num}）。
-    /// 页面为 EUC-JP 编码：响应头带 charset，HTTP.Content 已按 charset 解码，
-    /// 万一解成乱码再用原始字节按 EUC-JP 重解一次兜底。
-    /// 站内搜索（search_list.php）对非日本 IP 返回 403，因此 Search 只支持"标题里带条目号"直连。
-    /// 字段解析改用语义选择器 //td[@class='bluetext'] + following-sibling，不依赖颜色/背景色。
+    /// Getchu, a doujin store; the scene id is the numeric product id (/i/item{num}).
+    /// Pages are EUC-JP: decoded by charset already, and re-decoded from the raw bytes when that garbles.
+    /// The site search answers 403 to non-JP IPs, so Search needs the id in the title.
     /// </summary>
     public class SiteGetchu : IProviderBase
     {
@@ -50,7 +48,7 @@ namespace PhoenixAdult.Sites
             }
             catch (Exception)
             {
-                // 已注册或不支持时忽略
+                // Already registered or unsupported: ignore.
             }
         }
 
@@ -319,7 +317,7 @@ namespace PhoenixAdult.Sites
             }
             catch (Exception)
             {
-                // 编码不可用（未注册 codepage）时退回已解码内容
+                // Codepage unavailable: keep the decoded content.
             }
 
             return content;

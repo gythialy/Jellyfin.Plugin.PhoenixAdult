@@ -20,8 +20,8 @@ using Jellyfin.Data.Enums;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// HeyDouga：ID 形如 1234-abcd（4 位厂商号 + 子号），URL /moviepages/{a}/{b}/index.html。
-    /// 站点有 Cloudflare + 18 岁确认，统一走 Fetcher（自动回落 FlareSolverr）。
+    /// HeyDouga: the id looks like 1234-abcd, URL /moviepages/{a}/{b}/index.html.
+    /// Cloudflare plus an age gate, so use Fetcher.
     /// </summary>
     public class SiteHeyDouga : IProviderBase
     {

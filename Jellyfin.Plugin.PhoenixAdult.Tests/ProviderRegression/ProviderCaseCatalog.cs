@@ -4,25 +4,25 @@ using System.Text.Json.Serialization;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests.ProviderRegression;
 
 /// <summary>
-/// ProviderCases.json 目录根。
+/// Root of ProviderCases.json.
 /// </summary>
 public sealed class ProviderCatalog
 {
-    /// <summary>目录版本。</summary>
+    /// <summary>Catalog version.</summary>
     public int Version { get; init; }
 
-    /// <summary>目录说明。</summary>
+    /// <summary>Catalog note.</summary>
     public string Description { get; init; } = string.Empty;
 
-    /// <summary>历史来源列表。</summary>
+    /// <summary>Sources the cases came from.</summary>
     public List<string> GeneratedFrom { get; init; } = new();
 
-    /// <summary>全部用例。</summary>
+    /// <summary>All cases.</summary>
     public List<ProviderCase> Cases { get; init; } = new();
 }
 
 /// <summary>
-/// 加载内嵌的 ProviderCases.json 统一用例目录。
+/// Load the embedded case catalog.
 /// </summary>
 public static class ProviderCaseCatalog
 {
@@ -30,10 +30,10 @@ public static class ProviderCaseCatalog
 
     private static readonly Lazy<ProviderCatalog> Instance = new(Load);
 
-    /// <summary>当前目录。</summary>
+    /// <summary>Current catalog.</summary>
     public static ProviderCatalog Current => Instance.Value;
 
-    /// <summary>按类型筛选。</summary>
+    /// <summary>Filter by kind.</summary>
     public static IEnumerable<ProviderCase> OfKind(ProviderCaseKind kind)
         => Current.Cases.Where(c => c.Kind == kind);
 

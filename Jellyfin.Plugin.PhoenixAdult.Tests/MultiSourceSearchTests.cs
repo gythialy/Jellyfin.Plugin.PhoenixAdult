@@ -11,14 +11,14 @@ using Xunit;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 多源搜索在线测试：同一个番号应并发检索多个站点并合并结果（不再绑定单一站点）。
+/// Online multi-source test: one code queries several sites in parallel and merges the results.
 /// </summary>
 [Trait("Category", "Online")]
 public class MultiSourceSearchTests
 {
     public static IEnumerable<object[]> Cases => new List<object[]>
     {
-        // 查询词, 期望命中来源里的 group（任一结果带该 group 前缀即可）
+        // Query and the expected group in the merged sources.
         new object[] { "MDSR-0005", 234 },        // 麻豆系：MadouQu
         new object[] { "XJX-0813", 234 },         // 麻豆系：sitemap 采集到的非 MD 厂牌
         new object[] { "SSIS-354", 239 },         // JAV 系：AVBase

@@ -5,8 +5,8 @@ using PhoenixAdult.Web;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 抽帧入口的显示条件离线测试：库的元数据下载器或图片下载器里出现本插件名才算启用，
-/// 避免在没在用本插件的库里显示入口。
+/// Offline tests for the frame grab entry: shown only when the library's
+/// metadata or image provider is this plugin.
 /// </summary>
 public class FrameGrabAvailabilityTests
 {

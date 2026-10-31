@@ -27,14 +27,14 @@ namespace PhoenixAdult.Sites
         {
             var result = new List<RemoteSearchResult>();
 
-            // WordPress 搜索对多词 OR 匹配不可靠：演员名混入标题串会淹没目标。
-            // 文件名格式 Site.YY.MM.DD.Actors.Title，标题在末尾 → 只取末尾 4 词搜索。
+            // WordPress OR matching is unreliable, so search only the tail of the title:
+            // the file name puts the title last, so take its last four words.
             searchTitle = Helper.GetSearchTitle(searchTitle, 4, fromEnd: true);
 
             string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle);
 
-            // wowgirlsblog.com 整站 Cloudflare 挑战（裸请求 403 "Just a moment..."）。
-            // 与 SiteFemjoy / NetworkKink 同范式：配置了 FlareSolverr 时走浏览器上下文，否则直连兜底。
+            // wowgirlsblog.com sits behind a Cloudflare challenge,
+            // so use FlareSolverr when configured.
             string searchHtml;
             if (FlareSolverr.IsConfigured)
             {
@@ -70,7 +70,7 @@ namespace PhoenixAdult.Sites
                     continue;
                 }
 
-                // 翻页页同样受 Cloudflare 保护，与首页保持一致
+                // Pagination is protected the same way as the first page.
                 string pageHtml;
                 if (FlareSolverr.IsConfigured)
                 {
@@ -138,8 +138,8 @@ namespace PhoenixAdult.Sites
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
             }
 
-            // 场景页同样受 Cloudflare 保护，必须与 Search 一致地走 FlareSolverr，
-            // 否则直连只会拿到挑战页，标题/日期/演员全为空。
+            // The scene page is protected too, so use FlareSolverr like Search,
+            // otherwise the title, date and actors are all empty.
             string detailsHtml;
             if (FlareSolverr.IsConfigured)
             {
@@ -171,7 +171,7 @@ namespace PhoenixAdult.Sites
             string tagline = Helper.GetSearchSiteName(siteNum);
             movie.AddStudio(tagline);
 
-            // 日期：优先 article:published_time meta（video-date 元素在新版页面已移除）
+            // Date: prefer the article:published_time meta.
             var dateNode = detailsPageElements.SelectSingleNode("//meta[@property='article:published_time']/@content");
             string dateText = dateNode?.GetAttributeValue("content", string.Empty) ?? string.Empty;
             if (string.IsNullOrEmpty(dateText))
@@ -186,7 +186,7 @@ namespace PhoenixAdult.Sites
             }
             else
             {
-                // 新版页面无 #video-date，改从 meta[itemprop=uploadDate] 取日期（如 2026-07-11T01:59:00+02:00）
+                // Otherwise use meta[itemprop=uploadDate].
                 var uploadDate = detailsPageElements.SelectSingleText("//meta[@itemprop='uploadDate']/@content");
                 var dateMatch = Regex.Match(uploadDate, @"(\d{4}-\d{2}-\d{2})");
                 if (dateMatch.Success && DateTime.TryParseExact(dateMatch.Groups[1].Value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
@@ -237,14 +237,14 @@ namespace PhoenixAdult.Sites
                 sceneUrl = Helper.GetSearchBaseURL(siteNum) + sceneUrl;
             }
 
-            // 兜底：Search 阶段保存的封面（data-src 真图）
+            // Fallback: the cover saved during Search.
             string fallbackImage = providerIds.Length > 1 ? Helper.Decode(providerIds[1]) : string.Empty;
             if (string.IsNullOrEmpty(fallbackImage) || fallbackImage.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
             {
                 fallbackImage = string.Empty;
             }
 
-            // 场景页受 Cloudflare 保护，与 Search/Update 一致地走 FlareSolverr
+            // The scene page is Cloudflare protected; use FlareSolverr like Search and Update.
             string sceneHtml;
             if (FlareSolverr.IsConfigured)
             {
@@ -258,7 +258,7 @@ namespace PhoenixAdult.Sites
 
             if (string.IsNullOrEmpty(sceneHtml))
             {
-                // 取不到场景页时退回 Search 阶段保存的封面
+                // Scene page unavailable: use the cover saved during Search.
                 if (!string.IsNullOrEmpty(fallbackImage))
                 {
                     images.Add(new RemoteImageInfo { Url = fallbackImage, Type = ImageType.Primary });
@@ -269,7 +269,7 @@ namespace PhoenixAdult.Sites
 
             var detailsPageElements = HTML.ElementFromString(sceneHtml);
 
-            // NextGen gallery：相册 post 的原图（1200x675 ~ 1800x1201 高清）
+            // NextGen gallery: the original image of an album post.
             var galleryLinks = detailsPageElements.SelectNodes("//div[contains(@class,'ngg-galleryoverview')]//a/@href");
             var galleryImages = new List<string>();
             if (galleryLinks != null)
@@ -304,7 +304,7 @@ namespace PhoenixAdult.Sites
             }
             else
             {
-                // movie post：og:image 或 fp-splash data-src
+                // Movie post: og:image or the fp-splash data-src.
                 string cover = string.Empty;
                 var ogImage = detailsPageElements.SelectSingleNode("//meta[@property='og:image']/@content");
                 if (ogImage != null)

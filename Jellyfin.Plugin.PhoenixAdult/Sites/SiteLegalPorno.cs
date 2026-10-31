@@ -29,9 +29,9 @@ namespace PhoenixAdult.Sites
             var url = Helper.GetSearchSearchURL(siteNum) + searchTitle;
             var data = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
 
-            // LegalPorno 已迁移到 AnalVids：搜索词精确命中演员时会 301 到 model 页
-            // （页面含 SCENES section + 相关推荐），普通搜索词返回 "Search for ..." 列表页。
-            // 只取 SCENES section 内的卡片，避免把相关推荐混入结果。
+            // LegalPorno moved to AnalVids: an exact actor search redirects to a model page,
+            // other terms return a list page.
+            // Only cards inside the SCENES section are used.
             var scenesTitle = data.SelectSingleNode("//h2[contains(@class, 'section_title')][contains(text(), 'SCENES')]");
             HtmlAgilityPack.HtmlNodeCollection searchResults;
             if (scenesTitle != null)
@@ -124,8 +124,8 @@ namespace PhoenixAdult.Sites
             result.Item.ExternalId = sceneURL;
             result.Item.AddStudio("LegalPorno");
 
-            // 标题: h1.watch__title 含嵌套的 model 链接（演员名）+ featuring span（配角），
-            // 用 Split("featuring") 剥离（与 SiteAnalVids 一致），只保留标题主体
+            // Title: h1.watch__title nests model and featuring spans;
+            // strip them like SiteAnalVids does.
             var titleNode = sceneData.SelectSingleNode("//h1[contains(@class, 'watch__title')]");
             if (titleNode != null)
             {
@@ -148,7 +148,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            // 日期
+            // Date.
             var dateNode = sceneData.SelectSingleNode("//i[contains(@class, 'bi-calendar3')]");
             var sceneDate = dateNode?.InnerText.Trim() ?? string.Empty;
             if (DateTime.TryParseExact(sceneDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
@@ -156,7 +156,7 @@ namespace PhoenixAdult.Sites
                 result.Item.PremiereDate = sceneDateObj;
             }
 
-            // 流派
+            // Genres.
             var genreNodes = sceneData.SelectNodesSafe("//a[contains(@href, '/genre/')]");
             foreach (var genreLink in genreNodes)
             {
@@ -167,7 +167,7 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            // 演员: h1 内的 model 链接（主演员 + featuring 演员）
+            // Actors: model links inside h1.
             var actorNodes = sceneData.SelectNodesSafe("//h1[contains(@class, 'watch__title')]//a[contains(@href, '/model/')]");
             foreach (var actorLink in actorNodes)
             {
@@ -221,9 +221,9 @@ namespace PhoenixAdult.Sites
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
-            // 主图: video[data-poster]
-            // CDN 签名 URL 的 query 参与签名（剥掉即 403），必须原样保留。
-            // HTML 解析会把 &amp; 实体还原，但保险起见再反转义一次。
+            // Main image: video[data-poster].
+            // The signature covers the query string (removing it returns 403), so keep the URL verbatim.
+            // Decode entities as well.
             var posterNode = sceneData.SelectSingleNode("//video[contains(@data-poster, 'http')]");
             if (posterNode != null)
             {
