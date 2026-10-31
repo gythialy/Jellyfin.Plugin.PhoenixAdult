@@ -13,7 +13,7 @@ public class ImageHelperBackdropFallbackTests
     private const string CoverUrl = "https://www.javbus.com/imgs/cover/w77_b.jpg";
 
     [Fact]
-    public async Task 没有横幅时把海报当横幅()
+    public async Task PosterBecomesBackdropWithoutOne()
     {
         var images = await Validate(new RemoteImageInfo
         {
@@ -33,7 +33,7 @@ public class ImageHelperBackdropFallbackTests
     }
 
     [Fact]
-    public async Task 已有横幅时不重复添加()
+    public async Task ExistingBackdropIsNotDuplicated()
     {
         var images = await Validate(
             new RemoteImageInfo { ProviderName = "PhoenixAdult", Url = CoverUrl, Type = ImageType.Primary, Width = 1920, Height = 1080 },
@@ -45,7 +45,7 @@ public class ImageHelperBackdropFallbackTests
     }
 
     [Fact]
-    public async Task 只有横幅没有海报时不做任何兜底()
+    public async Task BackdropOnly_NoFallback()
     {
         var images = await Validate(new RemoteImageInfo
         {

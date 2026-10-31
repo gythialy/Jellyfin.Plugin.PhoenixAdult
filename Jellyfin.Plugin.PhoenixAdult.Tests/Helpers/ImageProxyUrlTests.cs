@@ -10,7 +10,7 @@ public class ImageProxyUrlTests
     private const string JavbusCover = "https://www.javbus.com/imgs/cover/w77_b.jpg";
 
     [Fact]
-    public void Encode_与Decode可以往返()
+    public void Encode_RoundTripsThroughDecode()
     {
         var url = "https://www.javbus.com/pics/cover/abc_b.jpg?x=1&y=中文";
 
@@ -28,13 +28,13 @@ public class ImageProxyUrlTests
     [InlineData("   ")]
     [InlineData("a")]
     [InlineData("!!!not-base64!!!")]
-    public void Decode_非法输入返回null(string? value)
+    public void Decode_ReturnsNullForInvalidInput(string? value)
     {
         Assert.Null(ImageProxyUrl.Decode(value!));
     }
 
     [Fact]
-    public void NeedsProxy_只对命中Referer规则的主机为真()
+    public void NeedsProxy_OnlyForHostsWithRule()
     {
         TestInitializer.Init();
 
@@ -45,7 +45,7 @@ public class ImageProxyUrlTests
     }
 
     [Fact]
-    public void ForDownload_没有代理端点时原样返回()
+    public void ForDownload_WithoutProxy_ReturnsOriginal()
     {
         TestInitializer.Init();
         var previous = ImageProxyUrl.BaseUrl;
@@ -63,7 +63,7 @@ public class ImageProxyUrlTests
     }
 
     [Fact]
-    public void ForDownload_返回绝对代理地址_ForBrowser返回同源相对地址()
+    public void ForDownload_Absolute_ForBrowser_Relative()
     {
         TestInitializer.Init();
         var previous = ImageProxyUrl.BaseUrl;

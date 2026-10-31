@@ -28,7 +28,7 @@ public class SiteListDataTests
     }
 
     [Fact]
-    public void SiteList_Json结构完整()
+    public void SiteList_JsonStructureIsComplete()
     {
         using var doc = LoadSiteList();
         var root = doc.RootElement;
@@ -43,7 +43,7 @@ public class SiteListDataTests
     }
 
     [Fact]
-    public void SiteIDList_每个组号都有对应的Sites组()
+    public void SiteIdList_EveryGroupHasSites()
     {
         using var doc = LoadSiteList();
         var root = doc.RootElement;
@@ -59,7 +59,7 @@ public class SiteListDataTests
     }
 
     [Fact]
-    public void SiteIDList_每个Handler都有实现类()
+    public void SiteIdList_EveryHandlerHasImplementation()
     {
         using var doc = LoadSiteList();
         var root = doc.RootElement;
@@ -80,7 +80,7 @@ public class SiteListDataTests
     }
 
     [Fact]
-    public void SiteIDList_Handler能被TypeGetType解析()
+    public void SiteIdList_HandlersResolveViaTypeGetType()
     {
         // Same lookup as Helper.GetBaseSiteByName: Type.GetType(name, ignoreCase: true).
         using var doc = LoadSiteList();
@@ -104,7 +104,7 @@ public class SiteListDataTests
     }
 
     [Fact]
-    public void Sites_组内站点名唯一()
+    public void Sites_SiteNamesAreUniqueWithinGroup()
     {
         using var doc = LoadSiteList();
         var root = doc.RootElement;
@@ -148,7 +148,7 @@ public class SiteListDataTests
     }
 
     [Fact]
-    public void Sites_URL格式合法()
+    public void Sites_UrlsAreValid()
     {
         using var doc = LoadSiteList();
         var root = doc.RootElement;
@@ -175,7 +175,7 @@ public class SiteListDataTests
     }
 
     [Fact]
-    public void Sites_组内站号唯一()
+    public void Sites_SiteNumbersAreUniqueWithinGroup()
     {
         using var doc = LoadSiteList();
         var root = doc.RootElement;
@@ -190,7 +190,7 @@ public class SiteListDataTests
     }
 
     [Fact]
-    public void Sites_每条记录至少包含站点名()
+    public void Sites_EveryEntryHasName()
     {
         using var doc = LoadSiteList();
         var root = doc.RootElement;
@@ -215,7 +215,7 @@ public class SiteListDataTests
     }
 
     [Fact]
-    public void 合并的andrer站点_已在SiteList中()
+    public void MergedAndrerSites_PresentInSiteList()
     {
         // A few representative andrer sites must be merged in.
         var expectedUrls = new[]
@@ -249,7 +249,7 @@ public class SiteListDataTests
     }
 
     [Fact]
-    public void 本地原有站点_未被覆盖()
+    public void LocalSites_NotOverwritten()
     {
         // Locally added sites must stay.
         using var doc = LoadSiteList();

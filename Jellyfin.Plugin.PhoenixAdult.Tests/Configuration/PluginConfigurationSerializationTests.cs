@@ -11,7 +11,7 @@ namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 public class PluginConfigurationSerializationTests
 {
     [Fact]
-    public void XmlSerializer_可以反射配置类型()
+    public void XmlSerializer_CanReflectConfigurationType()
     {
         // Building the serializer scans every member; an IDictionary member throws here.
         var serializer = new XmlSerializer(typeof(PluginConfiguration));
@@ -20,7 +20,7 @@ public class PluginConfigurationSerializationTests
     }
 
     [Fact]
-    public void XmlSerializer_往返保留ImageReferers()
+    public void XmlSerializer_RoundTripsImageReferers()
     {
         var serializer = new XmlSerializer(typeof(PluginConfiguration));
         var config = new PluginConfiguration();
@@ -37,7 +37,7 @@ public class PluginConfigurationSerializationTests
     }
 
     [Fact]
-    public void 空配置会补上内置Referer规则()
+    public void EmptyConfiguration_GetsBuiltInRefererRules()
     {
         Assert.Equal(
             new[] { "phncdn.com=https://www.pornhub.com/", "javbus.com=https://www.javbus.com/" },
@@ -52,7 +52,7 @@ public class PluginConfigurationSerializationTests
     }
 
     [Fact]
-    public void 内置Referer表由默认规则派生()
+    public void BuiltInReferers_DerivedFromDefaults()
     {
         TestInitializer.Init();
 
@@ -62,7 +62,7 @@ public class PluginConfigurationSerializationTests
     }
 
     [Fact]
-    public void ResolveImageReferer_命中内置规则()
+    public void ResolveImageReferer_MatchesBuiltInRule()
     {
         TestInitializer.Init();
 
@@ -72,7 +72,7 @@ public class PluginConfigurationSerializationTests
     }
 
     [Fact]
-    public void ResolveImageReferer_用户规则覆盖内置规则()
+    public void ResolveImageReferer_UserRuleOverridesBuiltIn()
     {
         TestInitializer.Init();
 
@@ -82,7 +82,7 @@ public class PluginConfigurationSerializationTests
     }
 
     [Fact]
-    public void ResolveImageReferer_空值显式禁用内置规则()
+    public void ResolveImageReferer_EmptyValueDisablesBuiltIn()
     {
         TestInitializer.Init();
 
@@ -90,7 +90,7 @@ public class PluginConfigurationSerializationTests
     }
 
     [Fact]
-    public void ResolveImageReferer_无匹配或畸形规则返回null()
+    public void ResolveImageReferer_ReturnsNullForNoMatchOrMalformed()
     {
         TestInitializer.Init();
 

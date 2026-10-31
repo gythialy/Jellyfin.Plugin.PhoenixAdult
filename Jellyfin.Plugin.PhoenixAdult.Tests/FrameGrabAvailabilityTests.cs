@@ -11,7 +11,7 @@ namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 public class FrameGrabAvailabilityTests
 {
     [Fact]
-    public void 元数据下载器含插件_启用()
+    public void MetadataProviderWithPlugin_Enabled()
     {
         var typeOptions = new TypeOptions { MetadataFetchers = new[] { "MetaTube", "PhoenixAdult" } };
 
@@ -19,7 +19,7 @@ public class FrameGrabAvailabilityTests
     }
 
     [Fact]
-    public void 图片下载器含插件_启用()
+    public void ImageProviderWithPlugin_Enabled()
     {
         var typeOptions = new TypeOptions { ImageFetchers = new[] { "PhoenixAdult", "Screen Grabber" } };
 
@@ -27,7 +27,7 @@ public class FrameGrabAvailabilityTests
     }
 
     [Fact]
-    public void 两个下载器都不含插件_不启用()
+    public void NeitherProviderWithPlugin_Disabled()
     {
         var typeOptions = new TypeOptions
         {
@@ -39,7 +39,7 @@ public class FrameGrabAvailabilityTests
     }
 
     [Fact]
-    public void 空设置_不启用()
+    public void EmptyOptions_Disabled()
     {
         Assert.False(FrameGrabAvailability.IsEnabled(null, "PhoenixAdult"));
         Assert.False(FrameGrabAvailability.IsEnabled(new TypeOptions(), "PhoenixAdult"));
