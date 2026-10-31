@@ -23,7 +23,7 @@ public class IdRoutesDataTests
     }
 
     [Fact]
-    public void IdRoutes_Json结构完整()
+    public void IdRoutes_JsonStructureIsComplete()
     {
         using var doc = LoadRoutes();
         Assert.True(doc.RootElement.TryGetProperty("Routes", out var routes), "缺少 Routes 节点");
@@ -38,7 +38,7 @@ public class IdRoutesDataTests
     }
 
     [Fact]
-    public void IdRoutes_路由Id唯一()
+    public void IdRoutes_RouteIdsAreUnique()
     {
         using var doc = LoadRoutes();
         var ids = doc.RootElement.GetProperty("Routes").EnumerateArray()
@@ -49,7 +49,7 @@ public class IdRoutesDataTests
     }
 
     [Fact]
-    public void IdRoutes_站点引用都能在SiteList中找到()
+    public void IdRoutes_SiteReferencesExistInSiteList()
     {
         using var routesDoc = LoadRoutes();
         using var siteDoc = JsonDocument.Parse(File.ReadAllText(SiteListPath));
@@ -71,7 +71,7 @@ public class IdRoutesDataTests
     }
 
     [Fact]
-    public void IdRoutes_LabelRegex都能编译()
+    public void IdRoutes_LabelRegexesCompile()
     {
         using var doc = LoadRoutes();
         foreach (var route in doc.RootElement.GetProperty("Routes").EnumerateArray())
@@ -89,7 +89,7 @@ public class IdRoutesDataTests
     }
 
     [Fact]
-    public void IdRoutes_厂牌名单合法且不重复()
+    public void IdRoutes_LabelListsAreValidAndUnique()
     {
         using var doc = LoadRoutes();
         foreach (var route in doc.RootElement.GetProperty("Routes").EnumerateArray())
@@ -111,7 +111,7 @@ public class IdRoutesDataTests
     }
 
     [Fact]
-    public void IdRoutes_麻豆路涵盖大量厂牌()
+    public void IdRoutes_MadouRouteCoversManyLabels()
     {
         using var doc = LoadRoutes();
         var madou = doc.RootElement.GetProperty("Routes").EnumerateArray()
@@ -127,7 +127,7 @@ public class IdRoutesDataTests
     }
 
     [Fact]
-    public void IdRoutes_最后一条是兜底路由()
+    public void IdRoutes_LastRouteIsFallback()
     {
         using var doc = LoadRoutes();
         var routes = doc.RootElement.GetProperty("Routes").EnumerateArray().ToList();

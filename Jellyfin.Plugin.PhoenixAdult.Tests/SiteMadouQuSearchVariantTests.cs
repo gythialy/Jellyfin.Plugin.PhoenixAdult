@@ -16,7 +16,7 @@ public class SiteMadouQuSearchVariantTests
     [InlineData("MDSR-0005", new[] { "MDSR0005", "MDSR-0005" })]
     [InlineData("Md 0218", new[] { "Md0218", "Md-0218", "Md 0218" })]
     [InlineData("MD_0334", new[] { "MD0334", "MD-0334", "MD_0334" })]
-    public void 番号_先紧凑后连字符_原样兜底(string searchTitle, string[] expected)
+    public void Code_CompactThenHyphenated_RawLast(string searchTitle, string[] expected)
     {
         Assert.Equal(expected, SiteMadouQu.GetSearchVariants(searchTitle));
     }
@@ -27,13 +27,13 @@ public class SiteMadouQuSearchVariantTests
     [InlineData("MD0165-1")]
     [InlineData("MDSR-0005-1")]
     [InlineData("Interracial 24")]
-    public void 非番号_保持单个候选(string searchTitle)
+    public void NonCode_KeepsSingleCandidate(string searchTitle)
     {
         Assert.Equal(new[] { searchTitle }, SiteMadouQu.GetSearchVariants(searchTitle));
     }
 
     [Fact]
-    public void 空输入_无候选()
+    public void EmptyInput_NoCandidates()
     {
         Assert.Empty(SiteMadouQu.GetSearchVariants(string.Empty));
         Assert.Empty(SiteMadouQu.GetSearchVariants("   "));

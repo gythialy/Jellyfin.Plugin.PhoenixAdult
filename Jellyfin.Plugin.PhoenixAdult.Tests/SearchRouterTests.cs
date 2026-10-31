@@ -62,7 +62,7 @@ public class SearchRouterTests : IDisposable
     [InlineData("FC2-PPV-1234567", "fc2", 238)]
     [InlineData("ABP-123", "jav", 239)]
     [InlineData("SSIS-354", "jav", 239)]
-    public void Ids_按路由表匹配(string id, string expectedFamily, int expectedGroup)
+    public void Ids_MatchRouteTable(string id, string expectedFamily, int expectedGroup)
     {
         Assert.Equal(expectedFamily, SearchRouter.GetFamily(id));
 
@@ -71,7 +71,7 @@ public class SearchRouterTests : IDisposable
     }
 
     [Fact]
-    public void 路由顺序即优先级_兜底不会抢走专属路由()
+    public void RouteOrderIsPriority_FallbackKeepsSpecificRoute()
     {
         Assert.Equal("fc2", SearchRouter.GetFamily("FC2-PPV-4680562"));
         Assert.Equal("madou", SearchRouter.GetFamily("MDCM-0013"));
@@ -79,7 +79,7 @@ public class SearchRouterTests : IDisposable
     }
 
     [Fact]
-    public void 无路由表时返回空_不崩溃()
+    public void NoRouteTable_ReturnsEmpty()
     {
         RouteDb.IdRoutes = null;
 
@@ -88,7 +88,7 @@ public class SearchRouterTests : IDisposable
     }
 
     [Fact]
-    public void 非法正则可以跳过而不抛异常()
+    public void InvalidRegex_IsSkipped()
     {
         RouteDb.IdRoutes = new RouteDb.IdRoutesStructure
         {

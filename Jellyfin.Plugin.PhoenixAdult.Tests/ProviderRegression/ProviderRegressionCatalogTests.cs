@@ -20,13 +20,13 @@ public class ProviderRegressionCatalogTests
     });
 
     [Fact]
-    public void 目录_至少包含用例()
+    public void Catalog_HasCases()
     {
         Assert.True(Catalog.Cases.Count > 0, "ProviderCases.json 用例为空");
     }
 
     [Fact]
-    public void 目录_CaseID唯一()
+    public void Catalog_CaseIdsAreUnique()
     {
         var duplicates = Catalog.Cases
             .GroupBy(c => c.Id)
@@ -38,7 +38,7 @@ public class ProviderRegressionCatalogTests
     }
 
     [Fact]
-    public void 目录_必填字段完整()
+    public void Catalog_RequiredFieldsPresent()
     {
         var problems = new List<string>();
 
@@ -129,7 +129,7 @@ public class ProviderRegressionCatalogTests
     }
 
     [Fact]
-    public void 目录_Handler都有实现类()
+    public void Catalog_HandlersHaveImplementations()
     {
         var assembly = typeof(global::PhoenixAdult.Sites.IProviderBase).Assembly;
         var missing = Catalog.Cases
@@ -143,7 +143,7 @@ public class ProviderRegressionCatalogTests
     }
 
     [Fact]
-    public void 目录_站点存在于SiteList()
+    public void Catalog_SitesExistInSiteList()
     {
         var sites = SiteListDoc.Value.RootElement.GetProperty("Sites");
         var problems = new List<string>();
@@ -166,7 +166,7 @@ public class ProviderRegressionCatalogTests
     }
 
     [Fact]
-    public void 目录_组与Handler在SiteIDList中一致()
+    public void Catalog_GroupAndHandlerMatchSiteIdList()
     {
         var siteIdList = SiteListDoc.Value.RootElement.GetProperty("SiteIDList");
         var problems = new List<string>();
