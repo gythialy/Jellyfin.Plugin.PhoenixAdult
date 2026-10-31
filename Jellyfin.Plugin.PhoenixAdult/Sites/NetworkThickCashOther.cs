@@ -72,7 +72,7 @@ namespace PhoenixAdult.Sites
             {
                 var modelPageElements = HTML.ElementFromString(modelHttp.Content);
 
-                // 老模板是 div.model-grid//a；MilfAF 新模板把场景卡片放在 div.hover-video > a
+                // The old template uses div.model-grid//a; MilfAF puts cards in div.hover-video > a.
                 var modelNodes = modelPageElements.SelectNodes("//div[@class='model-grid']//a | //div[contains(@class, 'hover-video')]/a");
                 if (modelNodes != null)
                 {
@@ -90,7 +90,7 @@ namespace PhoenixAdult.Sites
                                 Name = $"{titleNoFormatting} [Thick Cash/{Helper.GetSearchSiteName(siteNum)}]",
                                 SearchProviderName = Plugin.Instance.Name,
 
-                                // 缩略图常在卡片的兄弟节点里（<a> 只在标题上），先看自身再看父节点
+                                // Thumbnails often sit in a sibling of the card link, so check the parent too.
                                 ImageUrl = Helper.GetImageURL(node, Helper.GetSearchBaseURL(siteNum))
                                     ?? Helper.GetImageURL(node.ParentNode, Helper.GetSearchBaseURL(siteNum)),
                             });
@@ -176,8 +176,8 @@ namespace PhoenixAdult.Sites
 
             if (string.IsNullOrEmpty(posterUrl))
             {
-                // MilfAF 新模板：场景封面在 og:image（https://nookies.com/tour-content/.../main.jpg），
-                // 站点自己的 /images/yearly.webp 之类是通用图，要跳过
+                // MilfAF: the cover is og:image;
+                // the site's own generic images must be skipped.
                 var ogImage = detailsPageElements.SelectSingleNode("//meta[@property='og:image']")?.GetAttributeValue("content", string.Empty);
                 if (!string.IsNullOrEmpty(ogImage) && ogImage.Contains("tour-content", StringComparison.OrdinalIgnoreCase))
                 {

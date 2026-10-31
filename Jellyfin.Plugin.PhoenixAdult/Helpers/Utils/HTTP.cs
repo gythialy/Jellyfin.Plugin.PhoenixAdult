@@ -198,8 +198,8 @@ namespace PhoenixAdult.Helpers.Utils
             => await Request(url, null, null, headers, cookies, cancellationToken, additionalSuccessStatusCodes).ConfigureAwait(false);
 
         /// <summary>
-        /// 用 HEAD 探测图片地址是否可被“裸请求”取到（不带 Referer、不带站点 Cookie）。
-        /// 识别对话框里的缩略图由浏览器直连加载，服务端能下载不代表客户端能显示，故补图前先探一次。
+        /// HEAD probe for an image that must load without a Referer or site cookie:
+        /// the dialog loads it from the browser, which the server side cannot check.
         /// </summary>
         public static async Task<bool> IsUrlLoadable(string url, CancellationToken cancellationToken)
         {

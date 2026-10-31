@@ -7,13 +7,13 @@ using Xunit.Sdk;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests.ProviderRegression;
 
 /// <summary>
-/// 数据驱动的全链路回归：逐条执行 ProviderCases.json 中 kind=e2e 的用例，
-/// 经 MovieProvider 走真实集成路径 Search→GetMetadata，断言标题/日期/演员。
+/// Data-driven full-pipeline cases: ProviderCases.json kind=e2e through MovieProvider,
+/// asserting title, date and actors.
 /// </summary>
 [Trait("Category", "Online")]
 public class ProviderRegressionMovieTests
 {
-    /// <summary>xUnit Theory 参数源。</summary>
+    /// <summary>xUnit Theory source.</summary>
     public static IEnumerable<object[]> Cases
         => ProviderCaseCatalog.OfKind(ProviderCaseKind.E2e).Select(c => new object[] { c });
 
@@ -29,7 +29,7 @@ public class ProviderRegressionMovieTests
 
             if (result.SearchCount == 0 && c.AllowZero)
             {
-                // 站点整站不可达（地域封锁/维护）时允许 0 结果，不判失败
+                // An unreachable site may return nothing without failing the case.
                 Console.WriteLine($"⚠️ {c.Id}: 0 结果（allowZero：站点不可达）");
                 return;
             }
@@ -58,8 +58,8 @@ public class ProviderRegressionMovieTests
                     $"{c.Id}: 缺演员 '{actor}'，实际 [{string.Join(", ", meta.People.Select(p => p.Name))}]");
             }
 
-            // 识别对话框只渲染 Name/ProductionYear：搜索结果的 Name 带日期前缀（到日），
-            // 而 Apply 后的条目标题必须仍是站点原始标题（前缀不能泄漏）。
+            // The dialog renders Name and ProductionYear, so the search name carries a date prefix
+            // while Apply must keep the site title.
             var firstResult = result.SearchResults.FirstOrDefault();
             if (firstResult?.PremiereDate is not null && !string.IsNullOrEmpty(firstResult.Name))
             {
@@ -78,7 +78,7 @@ public class ProviderRegressionMovieTests
                     ratio >= c.MinSearchImageRatio,
                     $"{c.Id}: 搜索结果配图率 {withImage}/{result.SearchResults.Count} ({ratio:P0}) 低于 {c.MinSearchImageRatio:P0}");
 
-                // 识别对话框的缩略图由浏览器直连加载，样例图必须能裸取（无 Referer）才算真的会显示。
+                // Dialog thumbnails load straight from the browser, so samples must be fetchable without a Referer.
                 using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
                 foreach (var imageUrl in result.SearchResults.Where(r => !string.IsNullOrEmpty(r.ImageUrl)).Select(r => r.ImageUrl!).Take(5))
                 {

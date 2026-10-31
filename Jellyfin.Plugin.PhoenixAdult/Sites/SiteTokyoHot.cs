@@ -17,9 +17,9 @@ using PhoenixAdult.Helpers.Utils;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// TOKYO-HOT (my.tokyo-hot.com)。作品编号形如 n1612 / k1234（字母+数字，非 SSIS-277 那种带 '-' 的番号），
-    /// 搜索入口 /product/?q={id}，详情 /product/{id}/?lang=ja，字段在 infowrapper 的 dl 里。
-    /// 封面走固定路径 media/{id}/jacket/{id}.jpg（已实测 200），详情页本身不含封面。
+    /// TOKYO-HOT; the id looks like n1612 (letter plus digits).
+    /// Detail page fields live in the dl list.
+    /// The cover is a fixed path (media/{id}/jacket/{id}.jpg); the page itself has none.
     /// </summary>
     public class SiteTokyoHot : IProviderBase
     {
@@ -324,7 +324,7 @@ namespace PhoenixAdult.Sites
 
                 if (!hasPrimary)
                 {
-                    // 没有封面时（部分作品没有 jacket）退化为第一张 640x480 剧照作为 Primary。
+                    // Without a jacket, use the first 640x480 still as Primary.
                     result.Add(new RemoteImageInfo { Type = ImageType.Primary, Url = img });
                     hasPrimary = true;
                 }

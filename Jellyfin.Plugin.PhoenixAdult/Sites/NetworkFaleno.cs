@@ -18,25 +18,25 @@ using PhoenixAdult.Helpers.Utils;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// FALENO 系两站共用实现：0=DAHLIA（https://dahlia-av.jp）、1=FALENO（https://faleno.jp/top）。
-    /// 两站同一套 WordPress 主题：条目 ID 是 slug（dldss339），
-    /// 搜索 {base}/?s={keyword}（WordPress 关键词搜索，必须去掉 '-'：dldss-339 查不到、dldss339 才能命中），
-    /// 详情 {base}/works/{slug}/，字段在 .bar02_works / .box_works01_* 区块里。
-    /// FALENO 在国内 IP 会被 XSERVER 直接 403（FlareSolverr 同 IP 亦然），走 Fetcher 仍失败时优雅返回空结果。
+    /// Shared implementation for the two FALENO sites: 0=DAHLIA, 1=FALENO.
+    /// Both use the same WordPress theme: scene id is the slug (dldss339),
+    /// search {base}/?s={keyword} (hyphens break it: dldss-339 misses, dldss339 hits),
+    /// detail {base}/works/{slug}/ with fields in .bar02_works / .box_works01_*.
+    /// XSERVER answers 403 to CN IPs even through FlareSolverr, so a failure returns an empty result.
     /// </summary>
     public class NetworkFaleno : IProviderBase
     {
-        // 从文件名/标题里抽番号片段（DLDSS-339 / FSDSS 754 / fcdss072）
+        // Code fragment from the title (DLDSS-339 / FSDSS 754 / fcdss072).
         private static readonly Regex JavIdRegex = new Regex(
             @"(?<![A-Za-z0-9])([A-Za-z]{2,10})[-_ ]?([0-9]{2,5})(?![0-9])",
             RegexOptions.CultureInvariant);
 
-        // slug 形态的番号：dldss339 / fsdss754
+        // Slug style code: dldss339 / fsdss754.
         private static readonly Regex SlugRegex = new Regex(
             @"^([A-Za-z]+)([0-9]+)$",
             RegexOptions.CultureInvariant);
 
-        // 収録時間 "120分"
+        // Runtime "120 min".
         private static readonly Regex RuntimeRegex = new Regex(
             @"([0-9]+)\s*分",
             RegexOptions.CultureInvariant);
@@ -86,7 +86,7 @@ namespace PhoenixAdult.Sites
                         continue;
                     }
 
-                    // 页面完全取不到（403/网络失败）时不必再换关键词重试
+                    // Page unavailable (403 or network failure): no point retrying with another keyword.
                     var pageLoaded = searchData.ChildNodes != null && searchData.ChildNodes.Count > 0;
 
                     foreach (var node in searchData.SelectNodesSafe("//div[@class='box_kanren01']//li[.//div[@class='text_name']/a]"))
@@ -137,7 +137,7 @@ namespace PhoenixAdult.Sites
                     }
                 }
 
-                // 关键词搜索没命中时，再按番号直取详情页（站点改版/搜索索引缺失时兜底）
+                // Keyword search missed: fetch the detail page by code instead.
                 if (result.Count == 0)
                 {
                     var slug = ExtractSlug(searchTitle);
@@ -185,7 +185,7 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            // .bar02_works 是新版模板，.bar02 是旧版兜底
+            // .bar02_works is the current template, .bar02 the old one.
             var title = sceneData.SelectSingleText("//div[@class='bar02_works']/h1");
             if (string.IsNullOrEmpty(title))
             {
@@ -194,7 +194,7 @@ namespace PhoenixAdult.Sites
 
             if (string.IsNullOrEmpty(title))
             {
-                // 403 / 改版 / 空页面：交给上层按“无元数据”处理，不要抛
+                // 403, redesign or empty page: let the caller treat it as no metadata, do not throw.
                 return result;
             }
 
@@ -281,8 +281,7 @@ namespace PhoenixAdult.Sites
             return result;
         }
 
-        // Fetcher.Html 在 404/403 之类异常页面上会抛 NullReferenceException（Helper 层问题），
-        // handler 自己兜住，保证 Update / GetImages 不把异常抛给 Jellyfin。
+        // Fetcher.Html throws on error pages; catch it here so Update and GetImages never throw.
         private static async Task<HtmlNode> GetPage(string url, CancellationToken cancellationToken)
         {
             try
@@ -296,7 +295,7 @@ namespace PhoenixAdult.Sites
             }
         }
 
-        // slug -> 番号：dldss339 -> DLDSS-339（JavId.TryParse 会把 dldss339 误切成 DLDSS3-39）
+        // slug to code: dldss339 -> DLDSS-339 (JavId would misread it as DLDSS3-39).
         private static string NormalizeSlug(string slug)
         {
             if (string.IsNullOrEmpty(slug))
@@ -376,7 +375,7 @@ namespace PhoenixAdult.Sites
             return releaseDate;
         }
 
-        // 模板里用 style="display: none" 藏掉未开卖的档期，别把隐藏日期读出来
+        // Hidden rows mark unreleased items; do not read their date.
         private static bool HasHiddenAncestor(HtmlNode node)
         {
             for (var current = node.ParentNode; current != null; current = current.ParentNode)
@@ -396,7 +395,7 @@ namespace PhoenixAdult.Sites
             var keywords = new List<string>();
             var value = searchTitle.Trim();
 
-            // WordPress 搜索对 '-' 不友好：先试 dldss339，再试原样关键词
+            // WordPress search dislikes hyphens: try dldss339, then the raw keyword.
             var match = JavIdRegex.Match(value);
             if (match.Success)
             {
@@ -450,7 +449,7 @@ namespace PhoenixAdult.Sites
             }
             else
             {
-                // 直接给了 slug
+                // A slug was passed directly.
                 slug = value.Trim('/').ToLowerInvariant();
                 sceneURL = $"{baseUrl}/works/{slug}/";
                 return !string.IsNullOrEmpty(slug);
@@ -523,7 +522,7 @@ namespace PhoenixAdult.Sites
             return index >= 0 ? url.Substring(0, index) : url;
         }
 
-        // 搜索页 .view_timer 里的 "2024/8/22 発売開始"
+        // Release date from .view_timer on the search page.
         private static DateTime? ParseReleaseDate(string text)
         {
             if (string.IsNullOrWhiteSpace(text))

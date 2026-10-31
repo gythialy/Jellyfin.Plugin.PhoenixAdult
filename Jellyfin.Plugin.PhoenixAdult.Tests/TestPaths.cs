@@ -1,9 +1,8 @@
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 统一路径：定位仓库根目录与 data/ 目录。
-/// 测试运行目录: &lt;repo&gt;/Jellyfin.Plugin.PhoenixAdult.Tests/bin/&lt;Config&gt;/net10.0/
-/// 上溯 4 层到仓库根。
+/// Shared paths: repository root and data/.
+/// From bin/<Config>/net10.0/ go up four levels.
 /// </summary>
 public static class TestPaths
 {

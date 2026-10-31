@@ -11,8 +11,8 @@ using PhoenixAdult.Helpers;
 namespace PhoenixAdult.Web
 {
     /// <summary>
-    /// 把抽帧脚本注入 Jellyfin web 客户端的 index.html：
-    /// 插件无法直接改 web 目录里的静态文件（容器里通常只读），所以在管道最外层缓冲 HTML 响应后插入 script 标签。
+    /// Injects the frame grab script into index.html:
+    /// the web folder is read-only, so the HTML response is buffered and the script tag inserted.
     /// </summary>
     internal sealed class ScriptInjectionStartupFilter : IStartupFilter
     {
@@ -28,7 +28,7 @@ namespace PhoenixAdult.Web
     }
 
     /// <summary>
-    /// 实际执行注入的中间件：只处理 index.html，失败一律回退原始响应，绝不影响页面加载。
+    /// The middleware: index.html only, and any failure falls back to the original response.
     /// </summary>
     internal sealed class ScriptInjectionMiddleware
     {
@@ -51,7 +51,7 @@ namespace PhoenixAdult.Web
                 return;
             }
 
-            // 压缩中间件在内层：去掉 Accept-Encoding，保证拿到的响应体是明文 HTML。
+            // Drop Accept-Encoding so the body arrives as plain HTML.
             var acceptEncoding = context.Request.Headers.AcceptEncoding.ToString();
             context.Request.Headers.Remove("Accept-Encoding");
 

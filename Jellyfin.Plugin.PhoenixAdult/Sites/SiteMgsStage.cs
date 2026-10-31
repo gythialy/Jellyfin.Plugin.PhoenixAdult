@@ -17,10 +17,9 @@ using PhoenixAdult.Helpers.Utils;
 namespace PhoenixAdult.Sites
 {
     /// <summary>
-    /// MGS動画 (mgstage.com)。条目 ID 就是 JAV 番号（ABP-177 / 300MAAN-778），
-    /// 详情页为 /product/product_detail/{id}/，字段在 tr/th 表里。
-    /// 站点对非日本 IP 返回 CloudFront 403，统一走 Fetcher（自动回落 FlareSolverr），
-    /// 并带 adc=1 / age_check_done=1 跳过年龄确认。
+    /// MGS (mgstage.com); scene id is the JAV code.
+    /// Detail is /product/product_detail/{id}/ with tr/th fields.
+    /// Non-JP IPs get a CloudFront 403, so it uses Fetcher with adc=1 and age_check_done=1.
     /// </summary>
     public class SiteMgsStage : IProviderBase
     {

@@ -11,8 +11,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace PhoenixAdult.Web
 {
     /// <summary>
-    /// 条目「抽帧」入口的后端：提供注入到 web 客户端的脚本，以及「该条目所在库是否启用了本插件」的查询。
-    /// 抓帧与上传都在浏览器侧完成（canvas + Jellyfin 官方图片上传接口），这里不碰 ffmpeg。
+    /// Backend for the frame grab entry: serves the injected script and reports whether the item's library
+    /// uses this plugin. Grabbing and uploading happen in the browser.
     /// </summary>
     [ApiController]
     [Route("PhoenixAdult")]
@@ -25,16 +25,16 @@ namespace PhoenixAdult.Web
         /// <summary>
         /// Initializes a new instance of the <see cref="FrameGrabController"/> class.
         /// </summary>
-        /// <param name="libraryManager">库管理器。</param>
+        /// <param name="libraryManager">Library manager.</param>
         public FrameGrabController(ILibraryManager libraryManager)
         {
             _libraryManager = libraryManager;
         }
 
         /// <summary>
-        /// 输出注入到 web 客户端的抽帧脚本。
+        /// The script injected into the web client.
         /// </summary>
-        /// <returns>JavaScript 文本。</returns>
+        /// <returns>JavaScript text.</returns>
         [HttpGet("framegrab.js")]
         [AllowAnonymous]
         public ActionResult GetScript()
@@ -58,10 +58,10 @@ namespace PhoenixAdult.Web
         }
 
         /// <summary>
-        /// 查询某条目所在库是否启用了本插件（元数据下载器或图片下载器含 PhoenixAdult）。
+        /// Whether the item's library uses this plugin (metadata or image provider).
         /// </summary>
-        /// <param name="itemId">条目 Id。</param>
-        /// <returns>启用状态。</returns>
+        /// <param name="itemId">Item id.</param>
+        /// <returns>Enabled state.</returns>
         [HttpGet("framegrab/enabled")]
         [Authorize]
         public ActionResult<FrameGrabAvailabilityResult> GetEnabled([FromQuery] Guid itemId)
@@ -83,12 +83,12 @@ namespace PhoenixAdult.Web
         }
 
         /// <summary>
-        /// 「抽帧」入口的可用性。
+        /// Availability of the frame grab entry.
         /// </summary>
         public class FrameGrabAvailabilityResult
         {
             /// <summary>
-            /// Gets or sets a value indicating whether 该条目所在库启用了本插件且入口未被配置关闭。
+            /// Gets or sets a value indicating whether the library uses the plugin and the entry is enabled.
             /// </summary>
             public bool Enabled { get; set; }
         }

@@ -91,7 +91,7 @@ namespace PhoenixAdult.Sites
                 }
                 else
                 {
-                    // 新版页面: pornworld.com/videos?q={term}，卡片 article.card.scene
+                    // Current template: /videos?q={term} with article.card.scene cards.
                     string searchUrl = Helper.GetSearchSearchURL(siteNum) + Uri.EscapeDataString(searchTitle.Replace(' ', '+'));
                     var httpResult = await HTTP.Request(searchUrl, HttpMethod.Get, cancellationToken);
                     if (httpResult.IsOK)
@@ -114,14 +114,14 @@ namespace PhoenixAdult.Sites
                                     continue;
                                 }
 
-                                // 标题: img[alt] 或 card-title a
+                                // Title: img[alt] or the card title link.
                                 var titleNoFormatting = node.SelectSingleText(".//img/@alt");
                                 if (string.IsNullOrEmpty(titleNoFormatting))
                                 {
                                     titleNoFormatting = node.SelectSingleText(".//p[contains(@class, 'card-title')]/a");
                                 }
 
-                                // 日期: div.release-date "2026 August, 11"
+                                // Date: div.release-date.
                                 var releaseDate = string.Empty;
                                 var dateNode = node.SelectSingleNode(".//div[contains(@class, 'release-date')]");
                                 if (dateNode != null)
@@ -234,8 +234,8 @@ namespace PhoenixAdult.Sites
             var posterNode = detailsPageElements.SelectSingleNode("//video");
             if (posterNode != null)
             {
-                // 与 SiteLegalPorno 一致：data-poster 是 CDN 签名 URL，query 参与签名，
-                // HTML 实体（&amp;）必须还原成 & 才能原样保留参数，否则 CDN 返回 403。
+                // data-poster is a signed URL; decode entities so the query stays byte-identical,
+                // otherwise the CDN answers 403.
                 var posterUrl = System.Net.WebUtility.HtmlDecode(posterNode.GetAttributeValue("data-poster", string.Empty));
                 if (!string.IsNullOrEmpty(posterUrl))
                 {

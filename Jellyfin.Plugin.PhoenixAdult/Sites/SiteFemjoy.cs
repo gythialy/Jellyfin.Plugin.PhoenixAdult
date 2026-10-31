@@ -30,8 +30,8 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            // Femjoy 没有站内搜索 API（旧 /api/v2/search/videos 已死）。
-            // 用 FlareSolverr 分页浏览 /videos，按标题/演员名过滤。
+            // Femjoy has no search API,
+            // so browse /videos through FlareSolverr and filter by name.
             var searchTerms = searchTitle.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             var needTerms = searchTerms.Where(t => t.Length >= 3).Select(t => t.ToLowerInvariant()).ToArray();
             if (needTerms.Length == 0)
@@ -144,7 +144,7 @@ namespace PhoenixAdult.Sites
             result.Item.ExternalId = sceneUrl;
             result.HasMetadata = true;
 
-            // 场景页 h1: <a title="演员">演员</a><small>in</small><span>标题</span>
+            // Scene h1 holds the actor link and the title span.
             var titleMatch = Regex.Match(html, @"<h1[^>]*>(.*?)</h1>", RegexOptions.Singleline);
             if (titleMatch.Success)
             {
@@ -172,14 +172,14 @@ namespace PhoenixAdult.Sites
                 result.Item.ProductionYear = parsedDate.Year;
             }
 
-            // 描述: post_text / description 区块
+            // Description: the post_text block.
             var descMatch = Regex.Match(html, @"class=""[^""]*(?:post_text|description|entry-content)[^""]*"">(.*?)</div>", RegexOptions.Singleline);
             if (descMatch.Success)
             {
                 result.Item.Overview = System.Net.WebUtility.HtmlDecode(Regex.Replace(descMatch.Groups[1].Value, @"<.*?>", string.Empty)).Trim();
             }
 
-            // 演员: h2 里 by 前面的链接
+            // Actors: links before "by" in h2.
             var actorMatches = Regex.Matches(html, @"<h2><a[^>]*title=""([^""]*)""[^>]*>([^<]*)</a>");
             foreach (Match actorMatch in actorMatches)
             {

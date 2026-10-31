@@ -134,10 +134,9 @@ namespace PhoenixAdult.Helpers.Utils
                     {
                         await EnsureSession(flareSolverrUrl, cancellationToken).ConfigureAwait(false);
 
-                        // 不预热：某些站（sexart.com）首页会触发 Cloudflare 挑战导致 tab 崩溃，
-                        // 但 API 路径本身可正常访问。API GET 不需要浏览器上下文预热。
-                        // 注意：FlareSolverr v2+ 的 request.get 忽略 headers 参数（仅 contentType=json 时生效），
-                        // 这里不传以避免 WARNING 噪音。
+                        // No warm-up: some home pages crash the tab with a Cloudflare challenge
+                        // while the API path still works.
+                        // v2+ ignores headers unless contentType=json, so they are not sent.
                         var request = new JObject
                         {
                             ["cmd"] = "request.get",
@@ -191,8 +190,8 @@ namespace PhoenixAdult.Helpers.Utils
         }
 
         /// <summary>
-        /// 通过浏览器上下文取站点 Cookie（Cloudflare 挑战通过后的 Set-Cookie），
-        /// 用于需要特定 Cookie 才能访问 API 的站点（如 aylo 的 instance_token）。
+        /// Cookies from the browser context (set when a challenge passes),
+        /// for APIs that need one (e.g. aylo's instance_token).
         /// </summary>
         public static async Task<IReadOnlyDictionary<string, string>> GetCookies(string url, CancellationToken cancellationToken = default)
         {
@@ -318,8 +317,8 @@ namespace PhoenixAdult.Helpers.Utils
             }
             catch (Exception e)
             {
-                // 预热只是让浏览器建立目标站上下文；某些站（如 sexart.com）首页会触发
-                // Cloudflare 挑战导致 tab 崩溃，但具体 API 路径仍可正常访问。预热失败不阻断后续请求。
+                // Warm-up only builds the site context;
+                // a crash there does not block later requests.
                 Logger.Warning($"FlareSolverr warmup failed for {host}: {e.Message}");
             }
         }

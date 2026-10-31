@@ -9,20 +9,20 @@ using PhoenixAdult.Helpers.Utils;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 测试环境初始化：mock Jellyfin 依赖，构造 Plugin 实例，
-/// 供在线冒烟测试使用（离线数据测试不依赖此初始化）。
+/// Test host setup: mock the Jellyfin dependencies and build a Plugin instance
+/// for the online tests.
 /// </summary>
 public static class TestInitializer
 {
     private static bool initialized;
 
     /// <summary>
-    /// 初始化 global::PhoenixAdult.Plugin.Instance / Plugin.Http / Plugin.Log，
-    /// 加载 data/ 下的 JSON 数据库。线程安全，只执行一次。
+    /// Initialise Plugin.Instance, Http and Log,
+    /// and load the JSON database from data/. Thread safe, runs once.
     /// </summary>
     public static void Init()
     {
-        // .NET Core 默认不含 codepages，站点实现里用到 "Cyrillic" 等编码
+        // .NET Core lacks the codepages some handlers use ("Cyrillic").
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
         if (initialized)
@@ -53,21 +53,20 @@ public static class TestInitializer
 
             _ = new global::PhoenixAdult.Plugin(appPaths, serializer, httpFactory, logger);
 
-            // 让 HTTP 类的静态构造读取 global::PhoenixAdult.Plugin.Instance.Configuration
-            // （通过触发一个无害访问）
+            // Make the HTTP static constructor read Plugin.Instance.Configuration.
             if (global::PhoenixAdult.Plugin.Instance == null)
             {
                 throw new InvalidOperationException("global::PhoenixAdult.Plugin.Instance 初始化失败");
             }
 
-            // 可选：从环境变量注入 FlareSolverr（CF 站点在线测试需要）
+            // Optional: FlareSolverr endpoint from the environment.
             var flareSolverrUrl = Environment.GetEnvironmentVariable("PHOENIX_FLARESOLVERR_URL");
             if (!string.IsNullOrWhiteSpace(flareSolverrUrl))
             {
                 global::PhoenixAdult.Plugin.Instance.Configuration.FlareSolverrURL = flareSolverrUrl;
             }
 
-            // 直接加载本地 data 目录的 JSON（不依赖 DataFolderPath 下下载）
+            // Load the local data folder directly (no download).
             LoadDatabaseDirect(dataDir);
 
             initialized = true;
@@ -76,7 +75,7 @@ public static class TestInitializer
 
     private static void LoadDatabaseDirect(string dataDir)
     {
-        // Database 是 internal static，通过反射加载
+        // Database is internal static, so load it through reflection.
         var dbType = typeof(global::PhoenixAdult.Helpers.Utils.Database);
         var siteListProp = dbType.GetProperty("SiteList", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
         var actorsProp = dbType.GetProperty("Actors", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
@@ -96,7 +95,7 @@ public static class TestInitializer
             File.ReadAllText(Path.Combine(dataDir, "Genres.json")), serializer);
         genresProp!.SetValue(null, genres);
 
-        // 番号 → 站点 路由表（多源检索用）
+        // Code to site routes, used by the multi-source search.
         var idRoutesPath = Path.Combine(dataDir, "IdRoutes.json");
         if (File.Exists(idRoutesPath))
         {

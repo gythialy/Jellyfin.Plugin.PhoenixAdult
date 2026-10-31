@@ -5,8 +5,8 @@ using Xunit;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests.ProviderRegression;
 
 /// <summary>
-/// 统一回归用例目录的离线校验：不发起网络请求，保证用例始终与
-/// data/SiteList.json、handler 实现保持一致（改站点/删组后能立即发现陈旧用例）。
+/// Offline checks on the case catalog so it always matches
+/// SiteList.json and the handlers.
 /// </summary>
 public class ProviderRegressionCatalogTests
 {
