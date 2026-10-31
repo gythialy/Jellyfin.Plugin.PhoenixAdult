@@ -27,9 +27,10 @@ namespace PhoenixAdult.Sites
 
             var splitedSearchTitle = searchTitle.Split();
             var movieID = string.Empty;
-            if (int.TryParse(splitedSearchTitle[0], out _))
+            if (int.TryParse(splitedSearchTitle[0], out var searchNumber))
             {
-                movieID = splitedSearchTitle[0];
+                // 详情页路径统一 4 位编号（/moviepages/0929/），HEYZO-929 这类 3 位写法要补零。
+                movieID = searchNumber.ToString(CultureInfo.InvariantCulture).PadLeft(4, '0');
             }
 
             if (!string.IsNullOrEmpty(movieID))
@@ -170,6 +171,14 @@ namespace PhoenixAdult.Sites
             }
 
             var movieID = sceneURL.Replace("/index.html", string.Empty, StringComparison.OrdinalIgnoreCase).Split("/").Last();
+
+            // heyzo 的详情/图片路径用 4 位编号（/moviepages/0929/），而文件名常写成 HEYZO-929。
+            // metatube 的 heyzo provider 也是按 %04s 补零后再拼路径，这里对齐，避免 3 位号拼出 404。
+            if (!string.IsNullOrEmpty(movieID) && int.TryParse(movieID, out var movieNumber))
+            {
+                movieID = movieNumber.ToString(CultureInfo.InvariantCulture).PadLeft(4, '0');
+            }
+
             if (!string.IsNullOrEmpty(movieID) && int.TryParse(movieID, out _))
             {
                 result.Add(new RemoteImageInfo
