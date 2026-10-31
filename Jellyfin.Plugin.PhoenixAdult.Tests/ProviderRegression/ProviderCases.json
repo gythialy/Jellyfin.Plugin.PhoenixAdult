@@ -1662,6 +1662,118 @@
       "chain": true,
       "expectName": true,
       "expectImages": true
+    },
+    {
+      "id": "search-javbus-heyzo-0929",
+      "kind": "search",
+      "handler": "NetworkJavBus",
+      "group": 96,
+      "site": 0,
+      "siteName": "JavBus",
+      "searchTerms": [
+        "HEYZO-0929"
+      ],
+      "expectMinResults": 1,
+      "expectedFirstContains": "HEYZO-0929",
+      "chain": true,
+      "expectName": true,
+      "expectMinActors": 1,
+      "expectImages": true,
+      "source": [
+        "user-report-2026-10-31"
+      ],
+      "note": "无码番号只命中 uncensored 搜索；依赖 dv=1 cookie 过驱动校验，封面 /imgs/cover/*_b.jpg 需站点 Referer；日期取页面 2015-08-16（中文页标签为「發行日期」，解析按日期本体正则）",
+      "expectPremiereDate": true
+    },
+    {
+      "id": "update-javbus-heyzo-0929",
+      "kind": "update",
+      "handler": "NetworkJavBus",
+      "group": 96,
+      "site": 0,
+      "siteName": "JavBus",
+      "sceneUrl": "https://www.javbus.com/HEYZO-0929",
+      "expectName": true,
+      "expectMinActors": 1,
+      "expectImages": true,
+      "source": [
+        "user-report-2026-10-31"
+      ],
+      "note": "无码作品页直抓：标题/日期/厂牌/演员齐全，封面原图即 Primary"
+    },
+    {
+      "id": "e2e-heyzo-0929",
+      "kind": "e2e",
+      "fileName": "HEYZO-0929",
+      "siteName": "JavBus",
+      "expectDate": "2015-08-16",
+      "source": [
+        "user-report-2026-10-31"
+      ],
+      "note": "番号里的 HEYZO 会命中站点名 Heyzo（官方站整站维护 403），必须回落 JavBus 多源才有结果"
+    },
+    {
+      "id": "search-javdb-ssis-354",
+      "kind": "search",
+      "handler": "SiteJavDB",
+      "group": 255,
+      "site": 0,
+      "siteName": "JavDB",
+      "searchTerms": [
+        "SSIS-354"
+      ],
+      "expectMinResults": 1,
+      "expectedFirstContains": "SSIS-354",
+      "chain": true,
+      "expectName": true,
+      "expectMinActors": 1,
+      "expectImages": true,
+      "source": [
+        "user-report-2026-10-31"
+      ],
+      "note": "有码作品详情页免登录；封面/样图在 c0.jdbstatic.com，无 Referer 校验",
+      "expectPremiereDate": true
+    },
+    {
+      "id": "e2e-javdb-ssis-354",
+      "kind": "e2e",
+      "fileName": "SSIS-354",
+      "siteName": "JavDB",
+      "expectDate": "2022-03-18",
+      "source": [
+        "user-report-2026-10-31"
+      ],
+      "note": "多源合并首个来源是 JavBus（发行日期 2022-03-18）；JavDB 面板日期为 2022-03-22（数字版首发）。e2e 只钉住合并结果，JavDB 自身日期由 search-javdb-ssis-354 断言"
+    },
+    {
+      "id": "images-javbus-heyzo-0929",
+      "kind": "images",
+      "handler": "NetworkJavBus",
+      "group": 96,
+      "site": 0,
+      "siteName": "JavBus",
+      "sceneId": [
+        "Y2iXpRRkNSnyJLh63dxxFGg6fMGZxBdS46rqftYh6eyzQ"
+      ],
+      "source": [
+        "user-report-2026-10-31"
+      ],
+      "note": "无码页只有一张封面（无截图集）：验证 Primary 存在且 Backdrop 由海报兜底生成；图片需带 Referer，走插件代理"
+    },
+    {
+      "id": "images-javbus-ssis-354",
+      "kind": "images",
+      "handler": "NetworkJavBus",
+      "group": 96,
+      "site": 0,
+      "siteName": "JavBus",
+      "sceneId": [
+        "2bP4pJr4wVin8K5UzWvP7sJtgX2XEchhUJW76Pm8bGo"
+      ],
+      "source": [
+        "user-report-2026-10-31"
+      ],
+      "note": "有码页有 sample-box 截图：验证 Backdrop 来自真实截图而不是海报兜底"
     }
   ]
 }
