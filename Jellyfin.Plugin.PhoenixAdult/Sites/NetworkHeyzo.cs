@@ -29,7 +29,7 @@ namespace PhoenixAdult.Sites
             var movieID = string.Empty;
             if (int.TryParse(splitedSearchTitle[0], out var searchNumber))
             {
-                // 详情页路径统一 4 位编号（/moviepages/0929/），HEYZO-929 这类 3 位写法要补零。
+                // Detail pages use a four digit number (/moviepages/0929/), so pad three digit codes.
                 movieID = searchNumber.ToString(CultureInfo.InvariantCulture).PadLeft(4, '0');
             }
 
@@ -172,8 +172,7 @@ namespace PhoenixAdult.Sites
 
             var movieID = sceneURL.Replace("/index.html", string.Empty, StringComparison.OrdinalIgnoreCase).Split("/").Last();
 
-            // heyzo 的详情/图片路径用 4 位编号（/moviepages/0929/），而文件名常写成 HEYZO-929。
-            // metatube 的 heyzo provider 也是按 %04s 补零后再拼路径，这里对齐，避免 3 位号拼出 404。
+            // Same padding for image URLs: file names often use three digits.
             if (!string.IsNullOrEmpty(movieID) && int.TryParse(movieID, out var movieNumber))
             {
                 movieID = movieNumber.ToString(CultureInfo.InvariantCulture).PadLeft(4, '0');

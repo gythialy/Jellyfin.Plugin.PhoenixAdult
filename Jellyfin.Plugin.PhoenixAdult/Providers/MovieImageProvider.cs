@@ -79,11 +79,11 @@ namespace PhoenixAdult.Providers
                         }, cancellationToken).ConfigureAwait(false);
                 }
 
-                // 少数站点给的是协议相对地址（//host/path），ImageHelper 里的 Uri 解析会直接抛 UriFormatException
+                // Complete protocol relative URLs; Uri parsing throws on them.
                 images = NormalizeUrls(images);
                 images = await ImageHelper.GetImagesSizeAndValidate(images, cancellationToken).ConfigureAwait(false);
 
-                // 需要 Referer 防盗链的图（JavBus 封面等）Jellyfin 自己下载会 403，改成插件代理地址
+                // Referer protected images must go through the plugin proxy.
                 images = ImageProxyUrl.WrapForDownload(images);
             }
 

@@ -6,7 +6,7 @@ using PhoenixAdult.Sites;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 识别对话框结果的展示名：多源检索要标来源站点，JavBus 卡片标题里不能残留番号/日期/按钮文字。
+/// Dialog display names: prefix the source site and keep card noise out of the title.
 /// </summary>
 public class SearchResultLabelTests
 {
@@ -28,7 +28,7 @@ public class SearchResultLabelTests
         Assert.Equal("[JavDB] bar", results[1].Name);
         Assert.Equal("baz", results[2].Name);
 
-        // 幂等：重复调用不会叠加标记
+        // Idempotent: repeated calls do not stack prefixes.
         MovieProvider.AddSourcePrefix(results);
         Assert.Equal("[JavBus] foo", results[0].Name);
         Assert.Equal("[JavDB] bar", results[1].Name);

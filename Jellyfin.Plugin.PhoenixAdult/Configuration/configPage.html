@@ -6,9 +6,8 @@
 <body>
     <div id="phoenixAdultConfigurationPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-button">
         <style>
-            /* 重要：Jellyfin 12 的插件页加载器只把 div[data-role="page"] 子树注入主文档，
-               <head> 里的样式会被丢弃，所以样式必须写在这个容器内部。
-               这里的规则自足：即使页面拿不到主题的 .emby-* 样式，排版也必须是正确的。 */
+            /* The 12.x loader injects the div[data-role="page"] subtree only, so styles in <head> are dropped.
+               Keep these rules self-contained: layout must hold without the theme classes. */
             #phoenixAdultConfigurationPage { display: block; padding: .2em 0 1em; }
             #phoenixAdultConfigurationPage .inputContainer { margin: 0 0 1.35em; }
             #phoenixAdultConfigurationPage .inputContainer > label.inputLabel,
@@ -303,8 +302,8 @@
                 pluginUniqueId: '8f97371f-8617-463c-9859-a33072182494'
             };
 
-            // 配置页 i18n：需要翻译的节点用 data-i18n（文本）/ data-i18n-placeholder（占位提示）标记，
-            // 英文原文直接留在 DOM 里当兜底词典，新增语种只要在 phoenixAdultI18n 里加一个键。
+            // i18n: data-i18n marks text and data-i18n-placeholder marks placeholders; the English original
+            // stays in the DOM as the fallback dictionary, so a new language only needs one more key.
             var phoenixAdultI18n = {
                 en: {},
                 'zh-cn': {
@@ -374,7 +373,7 @@
 
             var phoenixAdultActiveDictionary = null;
 
-            // 英文词典直接用 DOM 里的原文（data-i18n 节点的初始内容），漏翻的键自动回退英文。
+            // The English dictionary is collected from the DOM; missing keys fall back to it.
             function phoenixAdultCollectEnglish() {
                 $('[data-i18n]').each(function () {
                     var key = this.getAttribute('data-i18n');
@@ -390,7 +389,7 @@
                 });
             }
 
-            // 语言优先级：Jellyfin 用户文化 > 浏览器语言列表 > en；zh-* 一律落到 zh-cn。
+            // Priority: Jellyfin user culture, browser languages, then en; zh-* maps to zh-cn.
             function phoenixAdultApplyLanguage(locale) {
                 var languages = [];
                 if (locale) {
@@ -451,7 +450,7 @@
                         }
                     });
                 } catch (e) {
-                    // 取不到用户文化时保持浏览器语言
+                    // Keep the browser language when the user culture is unavailable.
                 }
             }
 
@@ -464,7 +463,7 @@
                 node.textContent = text || '';
             }
 
-            // 「检测 Cookie」：把页面上（可能还没保存）的值发给插件后端做一次真实探测。
+            // Test cookie: send the current (possibly unsaved) value to the plugin for a real probe.
             $('#TestJavDBCookie').on('click', function () {
                 var button = this;
                 var cookie = ($('#JavDBCookie').val() || '').trim();
@@ -535,7 +534,7 @@
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(phoenixAdultConfig.pluginUniqueId).then(function (config) {
                     config.FlareSolverrURL = $('#FlareSolverrURL').val();
-                    // 规则以 "host=referer" 行列表存储：插件配置走 XML 序列化，不能使用字典对象
+                    // Rules are stored as "host=referer" lines: the configuration is XML serialized, so no dictionaries.
                     config.ImageReferers = ($('#ImageReferers').val() || '').split('\n')
                         .map(function (line) { return line.trim(); })
                         .filter(function (line) { return line.indexOf('=') > 0; });

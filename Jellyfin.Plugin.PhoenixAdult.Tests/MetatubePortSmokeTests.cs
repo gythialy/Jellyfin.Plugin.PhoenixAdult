@@ -14,9 +14,7 @@ using Xunit.Sdk;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// MetaTube 移植站点的冒烟测试：Search → Update → GetImages → 图片 URL 可达。
-/// 每条用例对应一个站点/一条真实样例；站点维护或被 Cloudflare/地域封锁的用例标 allowZero
-/// （只验证不崩溃，站点恢复后应改为严格档）。
+/// Smoke test for ported sites: Search, Update, GetImages and image reachability. allowZero marks sites in maintenance.
 /// </summary>
 [Trait("Category", "Online")]
 public class MetatubePortSmokeTests
@@ -52,7 +50,7 @@ public class MetatubePortSmokeTests
         new object[] { "SiteFanza", 251, 0, "SSIS-123", 1, false },
         new object[] { "SiteGcolle", 252, 0, "123456", 0, true },
 
-        // 既有 JAV handler（P2 修复后的回归基线）
+        // Existing JAV handlers (regression baseline).
         new object[] { "NetworkJavBus", 96, 0, "ABP-123", 1, false },
         new object[] { "NetworkJAVLibrary", 38, 0, "ABP-123", 0, true },
         new object[] { "NetworkR18", 17, 0, "ABP-123", 0, true },

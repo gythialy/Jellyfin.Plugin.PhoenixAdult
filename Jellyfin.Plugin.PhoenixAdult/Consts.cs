@@ -9,10 +9,9 @@ namespace PhoenixAdult
         public const string DatabaseUpdateURL = "https://api.github.com/repos/gythialy/Jellyfin.Plugin.PhoenixAdult/contents/data";
 
         /// <summary>
-        /// 需要 Referer 防盗链的图片主机 → 该主机要求的 Referer 值。
-        /// 这些 CDN 对签名 URL 做 Referer 校验，缺少或错误的 Referer 会直接返回 403。
-        /// 默认值来自 <see cref="ImageRefererDefaults"/>（同时会写进插件默认配置，可在设置页里改），
-        /// 这里再派生一份用于运行时兜底：用户规则没命中时仍按内置表来。
+        /// Image hosts that require a Referer, keyed by host.
+        /// Derived from <see cref="ImageRefererDefaults"/> and used as a runtime fallback
+        /// when no user rule matches.
         /// </summary>
         public static readonly IReadOnlyDictionary<string, string> ImageReferers = BuildImageReferers();
 

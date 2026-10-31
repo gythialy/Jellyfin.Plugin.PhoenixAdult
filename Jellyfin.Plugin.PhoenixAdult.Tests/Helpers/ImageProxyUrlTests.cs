@@ -3,9 +3,7 @@ using PhoenixAdult.Helpers.Utils;
 namespace Jellyfin.Plugin.PhoenixAdult.Tests;
 
 /// <summary>
-/// 图片代理地址的构造规则回归测试。
-/// 背景：JavBus 封面 / phncdn 签名图要求 Referer，而 Jellyfin 下载远程图片不带 Referer、
-/// 浏览器直连也只带本站 Referer，直接给原始地址必然 403 —— 表现为「元数据有了，海报背景图都没有」。
+/// Proxy URL building: CDNs that require a Referer answer 403 to the downloader and to a browser.
 /// </summary>
 public class ImageProxyUrlTests
 {
@@ -81,7 +79,7 @@ public class ImageProxyUrlTests
                 JavbusCover,
                 ImageProxyUrl.Decode(download.Substring(download.IndexOf("?u=", System.StringComparison.Ordinal) + 3)));
 
-            // 不需要 Referer 的图保持原地址（不要无谓地绕一圈代理）
+            // URLs without a rule keep the original address.
             Assert.Equal("https://c0.jdbstatic.com/covers/ab/abc.jpg", ImageProxyUrl.ForDownload("https://c0.jdbstatic.com/covers/ab/abc.jpg"));
         }
         finally
