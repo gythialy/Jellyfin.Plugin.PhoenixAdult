@@ -75,10 +75,17 @@ namespace PhoenixAdult.Web
             var libraryOptions = _libraryManager.GetLibraryOptions(item);
             var typeOptions = libraryOptions?.GetTypeOptions(item.GetType().Name);
 
+            // A duplicate install leaves the extra copy without a plugin instance.
+            var plugin = Plugin.Instance;
+            if (plugin?.Configuration == null)
+            {
+                return new FrameGrabAvailabilityResult { Enabled = false };
+            }
+
             return new FrameGrabAvailabilityResult
             {
-                Enabled = Plugin.Instance.Configuration.EnableFrameGrabMenu
-                    && FrameGrabAvailability.IsEnabled(typeOptions, Plugin.Instance.Name),
+                Enabled = plugin.Configuration.EnableFrameGrabMenu
+                    && FrameGrabAvailability.IsEnabled(typeOptions, plugin.Name),
             };
         }
 
