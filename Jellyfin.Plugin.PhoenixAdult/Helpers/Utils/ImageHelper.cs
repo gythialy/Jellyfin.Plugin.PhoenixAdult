@@ -16,6 +16,9 @@ namespace PhoenixAdult.Helpers.Utils
         // 低于该宽度的 backdrop 在自动下载时会被静默跳过（手动设置不受此限制）
         private const int BackdropMinWidth = 1280;
 
+        /// <summary>海报兜底成横幅时追加的 URL 片段（片段不会被发送到服务器，只用于区分两个条目的 URL）。</summary>
+        private const string PrimaryAsBackdropSuffix = "#backdrop";
+
         public static async Task<List<RemoteImageInfo>> GetImagesSizeAndValidate(IEnumerable<RemoteImageInfo> images, CancellationToken cancellationToken)
         {
             var result = new List<RemoteImageInfo>();
@@ -105,6 +108,32 @@ namespace PhoenixAdult.Helpers.Utils
                 }
             }
 
+            // 站点只给了一张海报时（JavBus 无码页、多数单图站点），详情页会没有横幅。
+            // 这里用海报兜底：URL 追加 #backdrop 片段，服务端请求时不会发送它，
+            // 但 Jellyfin 按 URL 字符串去重，这样横幅才不会被当成重复项丢掉。
+            if (result.Count > 0 && !result.Any(o => o.Type == ImageType.Backdrop))
+            {
+                var primary = result.FirstOrDefault(o => o.Type == ImageType.Primary);
+                if (primary != null && !string.IsNullOrEmpty(primary.Url))
+                {
+                    var backdrop = new RemoteImageInfo
+                    {
+                        ProviderName = primary.ProviderName,
+                        Url = primary.Url + PrimaryAsBackdropSuffix,
+                        Type = ImageType.Backdrop,
+                    };
+
+                    // 与 Primary 同图，尺寸照样复用；宽度不够时同样不填，避免被 Jellyfin 的 MinWidth 过滤
+                    if (!primary.Width.HasValue || primary.Width.Value >= BackdropMinWidth)
+                    {
+                        backdrop.Width = primary.Width;
+                        backdrop.Height = primary.Height;
+                    }
+
+                    result.Add(backdrop);
+                }
+            }
+
             return result;
         }
 
@@ -125,15 +154,14 @@ namespace PhoenixAdult.Helpers.Utils
                 }
             }
 
-            var backdrops = clearImages.Where(o => o.Type == ImageType.Backdrop);
-            if (backdrops.Any())
+            // 站点只返回横幅（没有海报）时，下面的 First() 会抛 "Sequence contains no elements"，
+            // 整个 GetImages 直接挂掉 —— 用 FirstOrDefault 判空。
+            var backdrops = clearImages.Where(o => o.Type == ImageType.Backdrop).ToList();
+            var primaryUrl = clearImages.FirstOrDefault(o => o.Type == ImageType.Primary)?.Url;
+            if (backdrops.Count > 0 && primaryUrl != null && primaryUrl == backdrops[0].Url)
             {
-                var firstBackdrop = backdrops.First();
-                if (firstBackdrop != null && clearImages.Where(o => o.Type == ImageType.Primary).First().Url == firstBackdrop.Url)
-                {
-                    clearImages.Remove(firstBackdrop);
-                    clearImages.Add(firstBackdrop);
-                }
+                clearImages.Remove(backdrops[0]);
+                clearImages.Add(backdrops[0]);
             }
 
             return clearImages;
