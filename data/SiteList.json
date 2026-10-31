@@ -9167,6 +9167,13 @@
                 "https://theporndb.net",
                 "https://api.theporndb.net"
             ]
+        },
+        "255": {
+            "0": [
+                "JavDB",
+                "https://javdb.com",
+                "/search?q="
+            ]
         }
     },
     "SiteIDList": {
@@ -9411,7 +9418,8 @@
         "251": "SiteFanza",
         "252": "SiteGcolle",
         "253": "SiteHeyDouga",
-        "254": "NetworkD2Pass"
+        "254": "NetworkD2Pass",
+        "255": "SiteJavDB"
     },
     "Abbrieviations": {
         "^18og": "18OnlyGirls",
