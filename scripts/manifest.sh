@@ -7,6 +7,9 @@
 # TARGET_ABI overrides the derived targetAbi (the release workflow pins it to
 # 12.0.0.0). Anything below MINIMUM_TARGET_ABI is rejected: this fork only
 # supports Jellyfin 12+ (net10.0 / Jellyfin.Controller 12.x) since v2026.912.926.0.
+#
+# CHANGELOG sets the entry text shown in the client's plugin list; the release workflow
+# passes the commit subject. Unset or empty falls back to a placeholder.
 set -euo pipefail
 
 MANIFEST_URL="https://raw.githubusercontent.com/gythialy/Jellyfin.Plugin.PhoenixAdult/dist/manifest.json"
@@ -60,6 +63,7 @@ if (( ${target_abi%%.*} < ${MINIMUM_TARGET_ABI%%.*} )); then
     exit 1
 fi
 
+changelog="${CHANGELOG:-Auto Released by Actions}"
 timestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 
 source_url="https://github.com/gythialy/Jellyfin.Plugin.PhoenixAdult/releases/download/v${version}/Jellyfin.plugin.PhoenixAdult@v${version}.zip"
@@ -75,13 +79,14 @@ curl -fsSL "${MANIFEST_URL}" > "${current_manifest}"
 
 # Prepend the new version entry to [0].versions
 jq --arg checksum "${checksum}" \
+    --arg changelog "${changelog}" \
     --arg targetAbi "${target_abi}" \
     --arg sourceUrl "${source_url}" \
     --arg timestamp "${timestamp}" \
     --arg version "${version}" \
     '.[0].versions = ([{
         "checksum": $checksum,
-        "changelog": "Auto Released by Actions",
+        "changelog": $changelog,
         "targetAbi": $targetAbi,
         "sourceUrl": $sourceUrl,
         "timestamp": $timestamp,
