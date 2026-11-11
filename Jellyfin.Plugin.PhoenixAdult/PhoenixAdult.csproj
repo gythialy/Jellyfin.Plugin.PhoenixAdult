@@ -78,7 +78,7 @@
 
   <ItemGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">
     <PackageReference Include="Jellyfin.Controller" Version="12.4.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="11.0.0" />
     <!-- 抽帧入口需要往 web 客户端注入脚本：IPluginServiceRegistrator + IStartupFilter 依赖 ASP.NET Core 共享框架 -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
