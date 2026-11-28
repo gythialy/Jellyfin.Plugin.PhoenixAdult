@@ -148,7 +148,7 @@ namespace PhoenixAdult.Sites
             {
                 "Family XXX" => Site.FamilyXXX,
                 "HotwifeXXX" => Site.HotWifeXXX,
-                _ => Site.Default
+                _ => Site.Default,
             };
             Logger.Info(site.ToString());
 
